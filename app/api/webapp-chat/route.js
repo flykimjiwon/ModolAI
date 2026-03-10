@@ -61,7 +61,7 @@ export async function GET(request) {
     const userPayload = verifyToken(request);
     if (!userPayload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -168,7 +168,7 @@ export async function POST(request) {
     const userPayload = verifyToken(request);
     if (!userPayload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }

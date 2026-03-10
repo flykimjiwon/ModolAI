@@ -8,7 +8,7 @@ export function verifyAdmin(request) {
   const authHeader = request.headers.get("authorization");
   
   if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
   const token = authHeader.split(" ")[1];
@@ -18,7 +18,7 @@ export function verifyAdmin(request) {
     
     // 관리자 권한 확인
     if (payload.role !== 'admin') {
-      return NextResponse.json({ error: "관리자 권한이 필요합니다." }, { status: 403 });
+      return NextResponse.json({ error: "Admin privileges required." }, { status: 403 });
     }
     
     return { 
@@ -32,7 +32,7 @@ export function verifyAdmin(request) {
     };
   } catch (error) {
     console.log('[Admin Auth] JWT 토큰 검증 실패:', error.message, 'Token length:', token?.length || 0);
-    return NextResponse.json({ error: "잘못된 토큰입니다." }, { status: 401 });
+    return NextResponse.json({ error: "Invalid token." }, { status: 401 });
   }
 }
 
@@ -43,7 +43,7 @@ export function verifyUser(request) {
   const authHeader = request.headers.get("authorization");
   
   if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   }
 
   const token = authHeader.split(" ")[1];
@@ -63,6 +63,6 @@ export function verifyUser(request) {
       }
     };
   } catch (error) {
-    return NextResponse.json({ error: "잘못된 토큰입니다." }, { status: 401 });
+    return NextResponse.json({ error: "Invalid token." }, { status: 401 });
   }
 }

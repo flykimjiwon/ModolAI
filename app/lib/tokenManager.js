@@ -337,7 +337,7 @@ export class TokenManager {
     const token = localStorage.getItem('token');
     if (!token) {
       TokenManager.logout();
-      throw new Error('토큰이 없습니다.');
+      throw new Error('No token provided.');
     }
 
     const headers = {
@@ -352,7 +352,7 @@ export class TokenManager {
     const response = await fetch(url, { ...options, headers });
     if (response.status === 401) {
       // 글로벌 인터셉터가 처리하지만, safeFetch도 명시적으로 처리
-      throw new Error('인증이 만료되었습니다.');
+      throw new Error('Authentication expired.');
     }
     return response;
   }

@@ -129,11 +129,11 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('모델 설정 조회 실패:', error);
-    // 에러 상세 정보 로깅
+    console.error('Model settings query failed:', error);
+    // Log error details
     if (error.message) {
-      console.error('에러 상세:', error.message);
-      console.error('에러 코드:', error.code);
+      console.error('Error details:', error.message);
+      console.error('Error code:', error.code);
       console.error('에러 스택:', error.stack);
     }
     return NextResponse.json(

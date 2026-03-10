@@ -231,7 +231,7 @@ export async function POST(request) {
 
     const row = result.rows[0];
     return NextResponse.json({
-      message: '에이전트 설정이 저장되었습니다.',
+      message: '에이전트 Settings saved.',
       settings: {
         selectedModelId: row.selected_model_id || '',
         defaultSlideCount: row.default_slide_count,

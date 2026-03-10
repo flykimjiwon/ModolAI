@@ -22,7 +22,7 @@ function getPostgresPool() {
   const connectionString = process.env.POSTGRES_URI || process.env.DATABASE_URL;
   if (!connectionString) {
     const errorMsg =
-      '❌ POSTGRES_URI 또는 DATABASE_URL 환경 변수가 설정되지 않았습니다.\n' +
+      '❌ POSTGRES_URI 또는 DATABASE_URL Environment variable not set.\n' +
       '   .env.development 파일에 다음을 추가하세요:\n' +
       '   POSTGRES_URI=postgresql://사용자명:비밀번호@호스트:포트/데이터베이스명\n' +
       '   또는\n' +
@@ -106,7 +106,7 @@ async function createAdmin(customEmail = null, customPassword = null) {
       process.env.POSTGRES_URI || process.env.DATABASE_URL;
     if (!connectionString) {
       throw new Error(
-        '❌ POSTGRES_URI 또는 DATABASE_URL 환경 변수가 설정되지 않았습니다.\n' +
+        '❌ POSTGRES_URI 또는 DATABASE_URL Environment variable not set.\n' +
           '   Docker 환경: docker.env 파일 확인\n' +
           '   로컬 환경: .env.development 파일 확인'
       );
@@ -125,7 +125,7 @@ async function createAdmin(customEmail = null, customPassword = null) {
       do {
         email = await getUserInput('📧 관리자 이메일을 입력하세요: ');
         if (!validateEmail(email)) {
-          console.log('❌ error 올바른 이메일 형식이 아닙니다.');
+          console.log('❌ error Invalid email format.');
         }
       } while (!validateEmail(email));
 
@@ -160,7 +160,7 @@ async function createAdmin(customEmail = null, customPassword = null) {
 
       // 검증
       if (!validateEmail(email)) {
-        throw new Error('❌ error 올바른 이메일 형식이 아닙니다.');
+        throw new Error('❌ error Invalid email format.');
       }
       const passwordError = validatePassword(password);
       if (passwordError) {
@@ -274,7 +274,7 @@ async function createAdmin(customEmail = null, customPassword = null) {
     if (result.rows.length > 0) {
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
-      console.log('✅ 관리자 계정이 성공적으로 생성되었습니다!');
+      console.log('✅ 관리자 계정이 성공적으로 Created!');
       console.log('');
       console.log('📋 관리자 계정 정보:');
       console.log(`📧 이메일: ${adminData.email}`);

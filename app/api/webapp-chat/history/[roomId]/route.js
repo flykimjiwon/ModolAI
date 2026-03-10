@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -36,7 +36,7 @@ export async function GET(request, { params }) {
     if (roomResult.rows.length === 0) {
       return NextResponse.json(
         {
-          error: '채팅방을 찾을 수 없습니다.',
+          error: '채팅방을 Not found.',
           shouldLogout: false,
         },
         { status: 404 }
@@ -54,9 +54,9 @@ export async function GET(request, { params }) {
     if (ownerResult.rows.length === 0 || ownerResult.rows[0].email !== payload.email) {
       return NextResponse.json(
         {
-          error: '채팅방에 접근할 권한이 없습니다.',
+          error: '채팅방에 접근할 Unauthorized.',
           shouldLogout: true,
-          message: '인증이 만료되었습니다. 다시 로그인해주세요.',
+          message: 'Authentication expired. Please log in again.',
         },
         { status: 403 }
       );
@@ -148,7 +148,7 @@ export const POST = withErrorHandler(async (request, { params }) => {
   if (roomResult.rows.length === 0) {
     return NextResponse.json(
       {
-        error: '채팅방을 찾을 수 없습니다.',
+        error: '채팅방을 Not found.',
         shouldLogout: false,
       },
       { status: 404 }
@@ -166,9 +166,9 @@ export const POST = withErrorHandler(async (request, { params }) => {
   if (ownerResult.rows.length === 0 || ownerResult.rows[0].email !== payload.email) {
     return NextResponse.json(
       {
-        error: '채팅방에 접근할 권한이 없습니다.',
+        error: '채팅방에 접근할 Unauthorized.',
         shouldLogout: true,
-        message: '인증이 만료되었습니다. 다시 로그인해주세요.',
+        message: 'Authentication expired. Please log in again.',
       },
       { status: 403 }
     );

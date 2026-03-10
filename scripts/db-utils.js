@@ -23,7 +23,7 @@ function createPool() {
 
   if (!connectionString) {
     const errorMsg = [
-      '❌ POSTGRES_URI 또는 DATABASE_URL 환경 변수가 설정되지 않았습니다.',
+      '❌ POSTGRES_URI 또는 DATABASE_URL Environment variable not set.',
       '',
       '💡 해결 방법:',
       '  1. Docker 환경: docker.env 파일에 POSTGRES_URI 설정',
@@ -95,7 +95,7 @@ async function waitForDatabase(pool, maxRetries = 30, retryDelay = 2000) {
         if (error.code === 'ECONNREFUSED') {
           console.log('   ℹ️  PostgreSQL 서버가 아직 시작되지 않았습니다.');
         } else if (error.code === 'ENOTFOUND') {
-          console.log('   ℹ️  호스트를 찾을 수 없습니다. DNS 확인 중...');
+          console.log('   ℹ️  호스트를 Not found. DNS 확인 중...');
         } else if (error.code === '3D000') {
           console.log('   ℹ️  데이터베이스가 존재하지 않습니다.');
         }

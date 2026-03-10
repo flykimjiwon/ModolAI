@@ -66,7 +66,7 @@ export async function GET(request) {
   try {
     const tokenPayload = verifyToken(request);
     if (!tokenPayload || tokenPayload.role !== 'admin') {
-      return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 403 });
+      return NextResponse.json({ error: 'Admin privileges required.' }, { status: 403 });
     }
 
     await ensureSSOLogsTable();

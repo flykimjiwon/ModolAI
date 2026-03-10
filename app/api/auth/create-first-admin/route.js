@@ -42,7 +42,7 @@ export async function POST(request) {
 
     if (existingUser.rows.length > 0) {
       return NextResponse.json(
-        { error: '이미 등록된 이메일입니다.' },
+        { error: 'Email already registered.' },
         { status: 409 }
       );
     }
@@ -71,14 +71,14 @@ export async function POST(request) {
     );
 
     return NextResponse.json(
-      { ok: true, message: '관리자 계정이 생성되었습니다.', token },
+      { ok: true, message: '관리자 계정이 Created.', token },
       { status: 201 }
     );
   } catch (error) {
     console.error('[create-first-admin] 오류:', error);
     if (error.code === '23505') {
       return NextResponse.json(
-        { error: '이미 등록된 이메일입니다.' },
+        { error: 'Email already registered.' },
         { status: 409 }
       );
     }

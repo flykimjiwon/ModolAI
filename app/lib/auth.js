@@ -46,14 +46,14 @@ export function verifyTokenWithResult(request) {
   const token = extractBearerToken(request);
   
   if (!token) {
-    return { valid: false, error: '인증 토큰이 없습니다.' };
+    return { valid: false, error: 'No authentication token.' };
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET || process.env.JWT_SECRET);
     return { valid: true, user: decoded };
   } catch (error) {
-    return { valid: false, error: '유효하지 않은 토큰입니다.' };
+    return { valid: false, error: 'Invalid token.' };
   }
 }
 
@@ -66,17 +66,17 @@ export function verifyAdminWithResult(request) {
   const token = extractBearerToken(request);
   
   if (!token) {
-    return { valid: false, error: '토큰이 없습니다' };
+    return { valid: false, error: 'No token provided' };
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET || process.env.JWT_SECRET);
     if (decoded.role !== 'admin') {
-      return { valid: false, error: '관리자 권한이 필요합니다' };
+      return { valid: false, error: 'Admin privileges required' };
     }
     return { valid: true, user: decoded };
   } catch (error) {
-    return { valid: false, error: '유효하지 않은 토큰입니다' };
+    return { valid: false, error: 'Invalid token' };
   }
 }
 

@@ -43,7 +43,7 @@ export async function PATCH(request, { params }) {
       const userResult = await query('SELECT id FROM users WHERE id = $1', [id]);
       if (userResult.rows.length === 0) {
         return NextResponse.json(
-          { error: '사용자를 찾을 수 없습니다.' },
+          { error: 'User not found.' },
           { status: 404 }
         );
       }
@@ -98,7 +98,7 @@ export async function PATCH(request, { params }) {
     const userResult = await query('SELECT id, role FROM users WHERE id = $1', [id]);
     if (userResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }
@@ -159,7 +159,7 @@ export async function DELETE(request, { params }) {
     const userResult = await query('SELECT id FROM users WHERE id = $1', [id]);
     if (userResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }
@@ -193,7 +193,7 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: '사용자가 성공적으로 삭제되었습니다.',
+      message: '사용자가 성공적으로 Deleted.',
     });
   } catch (error) {
     console.error('사용자 삭제 실패:', error);

@@ -8,7 +8,7 @@ export async function GET(request) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -21,7 +21,7 @@ export async function GET(request) {
 
     if (userResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }
@@ -66,7 +66,7 @@ export async function POST(request) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(request) {
 
     if (userResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }

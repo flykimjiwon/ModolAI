@@ -638,7 +638,7 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error('[Model Servers Models] 모델 목록 조회 실패:', error);
-    console.error('[Model Servers Models] 에러 상세:', {
+    console.error('[Model Servers Models] Error details:', {
       name: error.name,
       message: error.message,
       code: error.code,

@@ -57,7 +57,7 @@ export async function GET(request, { params }) {
 
     if (noticeResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '공지사항을 찾을 수 없습니다.' },
+        { error: '공지사항을 Not found.' },
         { status: 404 }
       );
     }
@@ -107,7 +107,7 @@ export async function PUT(request, { params }) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -115,7 +115,7 @@ export async function PUT(request, { params }) {
     // 관리자 권한 확인
     if (payload.role !== 'admin') {
       return NextResponse.json(
-        { error: '관리자 권한이 필요합니다.' },
+        { error: 'Admin privileges required.' },
         { status: 403 }
       );
     }
@@ -141,7 +141,7 @@ export async function PUT(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { error: '공지사항을 찾을 수 없습니다.' },
+        { error: '공지사항을 Not found.' },
         { status: 404 }
       );
     }
@@ -172,7 +172,7 @@ export async function DELETE(request, { params }) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -180,7 +180,7 @@ export async function DELETE(request, { params }) {
     // 관리자 권한 확인
     if (payload.role !== 'admin') {
       return NextResponse.json(
-        { error: '관리자 권한이 필요합니다.' },
+        { error: 'Admin privileges required.' },
         { status: 403 }
       );
     }
@@ -193,7 +193,7 @@ export async function DELETE(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { error: '공지사항을 찾을 수 없습니다.' },
+        { error: '공지사항을 Not found.' },
         { status: 404 }
       );
     }

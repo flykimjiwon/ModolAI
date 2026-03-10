@@ -168,7 +168,7 @@ export async function logExternalApiRequest(logData) {
       source: resolvedSource,
     };
 
-    // conversation_id 및 room_id 컬럼 존재 여부 확인
+    // conversation_id 및 room_id Check if columns exist
     let hasConversationIdColumn = false;
     let hasRoomIdColumn = false;
     let hasFirstResponseTimeColumn = false;

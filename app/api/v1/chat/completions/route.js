@@ -169,7 +169,7 @@ async function getModelConfig() {
 
     return categories ? { categories } : null;
   } catch (error) {
-    console.warn('[Model Config] 모델 설정 조회 실패:', error.message);
+    console.warn('[Model Config] Model settings query failed:', error.message);
     return null;
   }
 }
@@ -1205,7 +1205,7 @@ export async function POST(request) {
         roundRobinIndex = serverEndpoint.index;
       } else {
         console.error(
-          `[OpenAI Chat Completions] 서버 이름 "${serverName}"을 찾을 수 없습니다. 모델 "${model}"은(는) 해당 서버 그룹에만 존재합니다.`
+          `[OpenAI Chat Completions] 서버 이름 "${serverName}"을 Not found. 모델 "${model}"은(는) 해당 서버 그룹에만 존재합니다.`
         );
         return NextResponse.json(
           {
@@ -1962,7 +1962,7 @@ export async function POST(request) {
       if (!modelServerRes.ok) {
         const responseTime = Date.now() - startTime;
         console.error(
-          `[OpenAI Chat Completions] 모델 서버 오류: ${modelServerRes.status}`,
+          `[OpenAI Chat Completions] 모델 Server error: ${modelServerRes.status}`,
           {
             url: modelServerUrl,
             status: modelServerRes.status,
@@ -2822,7 +2822,7 @@ export async function POST(request) {
       });
     }
   } catch (error) {
-    console.error('[OpenAI Chat Completions] 서버 오류:', error);
+    console.error('[OpenAI Chat Completions] Server error:', error);
 
     const responseTime = Date.now() - startTime;
     const errorMessage = error.message || 'Internal server error';
@@ -2858,7 +2858,7 @@ export async function POST(request) {
         statusCode: 500,
         isStream: false,
         error: errorMessage,
-        retryCount: 0, // 서버 오류로 재시도 전에 실패
+        retryCount: 0, // Server error로 재시도 전에 실패
         clientIP,
         userAgent,
         jwtUserId: userInfo?.userId,

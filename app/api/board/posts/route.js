@@ -48,7 +48,7 @@ export async function GET(request) {
 
     if (!(await isBoardEnabled())) {
       return NextResponse.json(
-        { error: '자유게시판이 비활성화되어 있습니다.' },
+        { error: 'Board is disabled.' },
         { status: 403 }
       );
     }
@@ -144,7 +144,7 @@ export async function POST(request) {
 
     if (!(await isBoardEnabled())) {
       return NextResponse.json(
-        { error: '자유게시판이 비활성화되어 있습니다.' },
+        { error: 'Board is disabled.' },
         { status: 403 }
       );
     }

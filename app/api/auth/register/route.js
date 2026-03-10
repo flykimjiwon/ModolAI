@@ -44,7 +44,7 @@ export async function POST(request) {
 
     if (existingResult.rows.length > 0) {
       return new Response(
-        JSON.stringify({ error: '이미 등록된 이메일입니다.' }),
+        JSON.stringify({ error: 'Email already registered.' }),
         {
           status: 409,
         }
@@ -72,7 +72,7 @@ export async function POST(request) {
     // 중복 이메일(Unique constraint) 오류
     if (e.code === '23505') {
       return new Response(
-        JSON.stringify({ error: '이미 등록된 이메일입니다.' }),
+        JSON.stringify({ error: 'Email already registered.' }),
         {
           status: 409,
         }

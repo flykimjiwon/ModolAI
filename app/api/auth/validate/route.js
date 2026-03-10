@@ -52,7 +52,7 @@ export async function POST(request) {
       
       if (jwtError.name === 'JsonWebTokenError') {
         return NextResponse.json({ 
-          error: "유효하지 않은 토큰입니다.", 
+          error: "Invalid token.", 
           errorType: "invalid" 
         }, { status: 401 });
       }
@@ -66,7 +66,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Auth Validate] 토큰 검증 중 오류:', error);
     return NextResponse.json({ 
-      error: "서버 오류가 발생했습니다.",
+      error: "Server error occurred.",
       errorType: "server_error" 
     }, { status: 500 });
   }

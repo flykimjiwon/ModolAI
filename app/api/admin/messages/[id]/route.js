@@ -29,7 +29,7 @@ export async function DELETE(request, { params }) {
     
     if (checkResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '메시지를 찾을 수 없습니다.' },
+        { error: '메시지를 Not found.' },
         { status: 404 }
       );
     }
@@ -49,7 +49,7 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: '메시지가 성공적으로 삭제되었습니다.',
+      message: '메시지가 성공적으로 Deleted.',
     });
   } catch (error) {
     console.error('메시지 삭제 실패:', error);

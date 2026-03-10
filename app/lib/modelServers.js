@@ -35,7 +35,7 @@ async function getModelConfig() {
 
     return categories ? { configType: 'models', categories } : null;
   } catch (error) {
-    console.warn('[Model Config] 모델 설정 조회 실패:', error.message);
+    console.warn('[Model Config] Model settings query failed:', error.message);
     return null;
   }
 }
@@ -177,7 +177,7 @@ export async function resolveModelId(modelName) {
     }
   } catch (error) {
     console.warn(
-      '[Model Resolver] 모델 설정 조회 실패, 원본 이름 사용:',
+      '[Model Resolver] Model settings query failed, 원본 이름 사용:',
       error.message
     );
   }
@@ -339,7 +339,7 @@ export async function getServerNameForModel(modelId) {
       }
     }
   } catch (error) {
-    console.warn('[Model Server Resolver] 모델 설정 조회 실패:', error.message);
+    console.warn('[Model Server Resolver] Model settings query failed:', error.message);
   }
 
   return null;
@@ -527,7 +527,7 @@ export async function initModelServerEndpoints() {
         );
       } else {
         console.warn(
-          '[프로덕션] DB 설정에서 모델서버 정보를 찾을 수 없습니다. 관리자 설정에서 모델서버를 등록해주세요.'
+          '[프로덕션] DB 설정에서 모델서버 정보를 Not found. 관리자 설정에서 모델서버를 등록해주세요.'
         );
         // 프로덕션에서는 기본값을 사용하지 않음
         parsed = [];
@@ -1016,7 +1016,7 @@ export async function getNextModelServerEndpoint() {
 
   // ep가 undefined인 경우 처리
   if (!ep) {
-    console.warn('[Model Servers] 모델 서버 엔드포인트를 찾을 수 없습니다.');
+    console.warn('[Model Servers] 모델 서버 엔드포인트를 Not found.');
     return null;
   }
 

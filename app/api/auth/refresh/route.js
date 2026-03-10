@@ -113,7 +113,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Auth Refresh] 오류:', error);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.', errorType: 'server_error' },
+      { error: 'Server error occurred.', errorType: 'server_error' },
       { status: 500 }
     );
   }

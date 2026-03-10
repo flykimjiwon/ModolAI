@@ -131,7 +131,7 @@ export function getPostgresPool() {
 
       // 호스트를 찾을 수 없는 오류
       if (err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN') {
-        console.error('💡 PostgreSQL 호스트를 찾을 수 없습니다.');
+        console.error('💡 PostgreSQL 호스트를 Not found.');
         console.error('   확인 사항:');
         console.error('   1. 호스트 이름이 올바른지 확인');
         console.error(

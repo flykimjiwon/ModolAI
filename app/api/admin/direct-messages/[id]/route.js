@@ -30,14 +30,14 @@ export async function DELETE(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { success: false, error: '쪽지를 찾을 수 없거나 삭제 권한이 없습니다.' },
+        { success: false, error: '쪽지를 찾을 수 없거나 삭제 Unauthorized.' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: '쪽지가 삭제되었습니다.',
+      message: '쪽지가 Deleted.',
     });
   } catch (error) {
     console.error('쪽지 삭제 실패:', error);

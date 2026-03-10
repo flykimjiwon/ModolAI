@@ -24,7 +24,7 @@ export async function DELETE(request, { params }) {
 
     if (!(await isBoardEnabled())) {
       return NextResponse.json(
-        { error: '자유게시판이 비활성화되어 있습니다.' },
+        { error: 'Board is disabled.' },
         { status: 403 }
       );
     }
@@ -43,7 +43,7 @@ export async function DELETE(request, { params }) {
     );
     if (commentResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '댓글을 찾을 수 없습니다.' },
+        { error: '댓글을 Not found.' },
         { status: 404 }
       );
     }
@@ -52,7 +52,7 @@ export async function DELETE(request, { params }) {
     const isAdmin = auth.user?.role === 'admin';
     if (!isAdmin && commentResult.rows[0].user_id !== userId) {
       return NextResponse.json(
-        { error: '삭제 권한이 없습니다.' },
+        { error: '삭제 Unauthorized.' },
         { status: 403 }
       );
     }
@@ -75,7 +75,7 @@ export async function PUT(request, { params }) {
 
     if (!(await isBoardEnabled())) {
       return NextResponse.json(
-        { error: '자유게시판이 비활성화되어 있습니다.' },
+        { error: 'Board is disabled.' },
         { status: 403 }
       );
     }
@@ -97,7 +97,7 @@ export async function PUT(request, { params }) {
     );
     if (commentResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '댓글을 찾을 수 없습니다.' },
+        { error: '댓글을 Not found.' },
         { status: 404 }
       );
     }
@@ -106,7 +106,7 @@ export async function PUT(request, { params }) {
     const isAdmin = auth.user?.role === 'admin';
     if (!isAdmin && commentResult.rows[0].user_id !== userId) {
       return NextResponse.json(
-        { error: '수정 권한이 없습니다.' },
+        { error: '수정 Unauthorized.' },
         { status: 403 }
       );
     }

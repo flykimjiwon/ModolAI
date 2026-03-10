@@ -320,7 +320,7 @@ export async function POST(request) {
 
       return NextResponse.json(
         {
-          error: `모델 서버 오류: ${modelServerRes.status}`,
+          error: `모델 Server error: ${modelServerRes.status}`,
           details: errorText,
         },
         { status: modelServerRes.status, headers: corsHeaders }
@@ -470,7 +470,7 @@ export async function POST(request) {
       });
     }
   } catch (error) {
-    console.error('[Model Server Chat Proxy] 서버 오류:', error);
+    console.error('[Model Server Chat Proxy] Server error:', error);
 
     await logModelServerProxyRequest({
       provider: provider || 'model-server',

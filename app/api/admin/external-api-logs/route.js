@@ -529,7 +529,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[External API Logs] 조회 실패:', error);
     console.error('[External API Logs] 에러 스택:', error.stack);
-    console.error('[External API Logs] 에러 상세:', {
+    console.error('[External API Logs] Error details:', {
       message: error.message,
       name: error.name,
       code: error.code,

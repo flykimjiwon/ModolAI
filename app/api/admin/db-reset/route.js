@@ -14,7 +14,7 @@ export async function POST(req) {
     // 인증 확인
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     }
 
     const token = authHeader.substring(7);
@@ -22,13 +22,13 @@ export async function POST(req) {
     try {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (error) {
-      return NextResponse.json({ error: '유효하지 않은 토큰입니다.' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
     // 관리자 권한 확인
     if (decoded.role !== 'admin') {
       return NextResponse.json(
-        { error: '관리자 권한이 필요합니다.' },
+        { error: 'Admin privileges required.' },
         { status: 403 }
       );
     }

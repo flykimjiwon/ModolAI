@@ -197,7 +197,7 @@ export async function GET(request) {
       } else if (errorCount > 0) {
         systemStatus.modelServers = {
           status: 'error',
-          message: `${errorCount}개 모델 서버 오류`,
+          message: `${errorCount}개 모델 Server error`,
           responseTime: null,
         };
       } else if (warningCount > 0) {

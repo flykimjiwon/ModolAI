@@ -138,7 +138,7 @@ export async function DELETE(request) {
 
     await query('DELETE FROM agent_permissions WHERE id = $1', [permissionId]);
 
-    return NextResponse.json({ message: '권한이 삭제되었습니다' });
+    return NextResponse.json({ message: '권한이 Deleted' });
   } catch (error) {
     console.error('[DELETE /api/admin/agents] error:', error);
     return createServerError(error);

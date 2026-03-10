@@ -9,7 +9,7 @@ export async function POST(request, { params }) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
 
     if (messageResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '메시지를 찾을 수 없습니다.' },
+        { error: '메시지를 Not found.' },
         { status: 404 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(request, { params }) {
     // 메시지 소유자 확인 (user_id로 확인)
     if (message.user_id !== payload.sub) {
       return NextResponse.json(
-        { error: '이 메시지에 대한 권한이 없습니다.' },
+        { error: '이 메시지에 대한 Unauthorized.' },
         { status: 403 }
       );
     }

@@ -28,7 +28,7 @@ export async function GET(request) {
 
     if (!res.ok) {
       console.error(
-        `[OpenAI Models] 모델 서버 오류: ${res.status} ${res.statusText}`
+        `[OpenAI Models] 모델 Server error: ${res.status} ${res.statusText}`
       );
       return NextResponse.json(
         {
@@ -65,7 +65,7 @@ export async function GET(request) {
       headers: corsHeaders,
     });
   } catch (error) {
-    console.error('[OpenAI Models] 서버 오류:', error);
+    console.error('[OpenAI Models] Server error:', error);
 
     return NextResponse.json(
       {

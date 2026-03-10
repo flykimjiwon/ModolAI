@@ -37,14 +37,14 @@ export function withApiHandler(handler, options = {}) {
       if (needsAdmin) {
         const adminResult = requireAdmin(request);
         if (!adminResult) {
-          return createForbiddenError('관리자 권한이 필요합니다.');
+          return createForbiddenError('Admin privileges required.');
         }
         // context에 user 정보 추가
         context.user = adminResult.user;
       } else if (needsAuth) {
         const authResult = requireAuth(request);
         if (!authResult) {
-          return createAuthError('인증이 필요합니다.');
+          return createAuthError('Authentication required.');
         }
         // context에 user 정보 추가
         context.user = authResult.user;
@@ -143,7 +143,7 @@ export async function validateRequestBody(request, requiredFields = []) {
     if (error instanceof ValidationError) {
       throw error;
     }
-    throw new ValidationError('요청 본문을 파싱할 수 없습니다.');
+    throw new ValidationError('Failed to parse request body.');
   }
 }
 

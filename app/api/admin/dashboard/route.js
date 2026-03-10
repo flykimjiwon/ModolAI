@@ -86,7 +86,7 @@ async function getModelLabelMap() {
       }
     }
   } catch (error) {
-    console.warn('[Dashboard] 모델 설정 조회 실패:', error.message);
+    console.warn('[Dashboard] Model settings query failed:', error.message);
   }
 
   return { modelLabelMap, allModels };
@@ -381,15 +381,15 @@ export async function GET(request) {
         label = model.model_name;
       } else if (modelId) {
         // 디버깅: 실제 모델 ID 로그
-        console.log('[Dashboard] 매칭 시도 - 모델 ID:', modelId);
+        console.log('[Dashboard] 매칭 시도 - Model ID:', modelId);
         
         label = findModelLabel(modelId, modelLabelMap, allModels);
         
         // 디버깅: 매칭 결과 로그
         if (!label) {
-          console.log('[Dashboard] 매칭 실패 - 모델 ID:', modelId, '사용 가능한 모델 ID들:', Array.from(modelLabelMap.keys()).slice(0, 5));
+          console.log('[Dashboard] 매칭 실패 - Model ID:', modelId, '사용 가능한 모델 ID들:', Array.from(modelLabelMap.keys()).slice(0, 5));
         } else {
-          console.log('[Dashboard] 매칭 성공 - 모델 ID:', modelId, '-> 라벨:', label);
+          console.log('[Dashboard] 매칭 성공 - Model ID:', modelId, '-> 라벨:', label);
         }
         
         // 여전히 없으면 모델 ID 자체를 사용

@@ -459,7 +459,7 @@ export async function GET(request) {
     const hasPermission = await checkAgentPermissionForUser(authResult.user, '7');
     if (!hasPermission) {
         return NextResponse.json(
-          { error: 'PPT 에이전트 접근 권한이 없습니다.' },
+          { error: 'PPT 에이전트 Access denied.' },
           { status: 403 }
         );
     }
@@ -486,7 +486,7 @@ export async function POST(request) {
     const hasPermission = await checkAgentPermissionForUser(authResult.user, '7');
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'PPT 에이전트 접근 권한이 없습니다.' },
+        { error: 'PPT 에이전트 Access denied.' },
         { status: 403 }
       );
     }

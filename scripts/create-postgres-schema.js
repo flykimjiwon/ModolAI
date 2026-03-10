@@ -40,7 +40,7 @@ const POSTGRES_URI = process.env.POSTGRES_URI || process.env.DATABASE_URL;
 // 환경 변수가 필수입니다
 if (!POSTGRES_URI) {
   console.error(
-    '❌ POSTGRES_URI 또는 DATABASE_URL 환경 변수가 설정되지 않았습니다.'
+    '❌ POSTGRES_URI 또는 DATABASE_URL Environment variable not set.'
   );
   console.error('');
   console.error('💡 환경 변수를 설정하세요:');
@@ -512,7 +512,7 @@ async function createSchema() {
       END $$;
     `);
 
-    // 13. model_server_error_history 테이블 (모델 서버 오류 이력)
+    // 13. model_server_error_history 테이블 (모델 Server error 이력)
     await createTableIfNotExists(
       client,
       'model_server_error_history',
@@ -530,7 +530,7 @@ async function createSchema() {
         metadata JSONB
       )
     `,
-      '13. model_server_error_history 테이블 (모델 서버 오류 이력)'
+      '13. model_server_error_history 테이블 (모델 Server error 이력)'
     );
 
     // 인덱스는 아래 배치 처리로 이동
@@ -1163,7 +1163,7 @@ async function initializeDatabase() {
         throw schemaError;
       }
     } else {
-      console.log('✅ 데이터베이스 스키마가 이미 존재합니다.\n');
+      console.log('✅ 데이터베이스 스키마가 Already exists.\n');
     }
 
     // 6. 기본 데이터 생성
@@ -1190,7 +1190,7 @@ async function initializeDatabase() {
       }
     } else {
        console.log(
-         '✅ 기본 관리자 계정(admin@modol.ai)이 이미 존재합니다.\n'
+         '✅ 기본 관리자 계정(admin@modol.ai)이 Already exists.\n'
        );
     }
 

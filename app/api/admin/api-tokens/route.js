@@ -242,7 +242,7 @@ export async function POST(request) {
     );
     
     if (userResult.rows.length === 0) {
-      return createNotFoundError('사용자를 찾을 수 없습니다.');
+      return createNotFoundError('User not found.');
     }
     
     const user = userResult.rows[0];
@@ -355,12 +355,12 @@ export async function DELETE(request) {
     );
 
     if (result.rowCount === 0) {
-      return createNotFoundError('키를 찾을 수 없습니다.');
+      return createNotFoundError('키를 Not found.');
     }
 
     return NextResponse.json({
       success: true,
-      message: '키가 삭제되었습니다.',
+      message: '키가 Deleted.',
     });
   } catch (error) {
     console.error('[API Tokens DELETE] 오류:', error);
@@ -394,7 +394,7 @@ export async function PATCH(request) {
     );
 
     if (result.rowCount === 0) {
-      return createNotFoundError('키를 찾을 수 없습니다.');
+      return createNotFoundError('키를 Not found.');
     }
 
     return NextResponse.json({

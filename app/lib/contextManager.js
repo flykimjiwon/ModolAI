@@ -64,7 +64,7 @@ export function validateUserQuestion(
   if (!userPrompt || typeof userPrompt !== 'string') {
     return {
       valid: false,
-      error: '질문을 입력해주세요.',
+      error: 'Please enter a question.',
     };
   }
   

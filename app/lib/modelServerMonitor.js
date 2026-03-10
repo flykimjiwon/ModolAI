@@ -319,7 +319,7 @@ async function getInactiveUrls() {
   }
 }
 
-// 모델 서버 오류 이력 저장
+// 모델 Server error 이력 저장
 async function saveModelServerErrorHistory(
   endpoint,
   error,

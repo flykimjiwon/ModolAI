@@ -7,7 +7,7 @@ import {
   createServerError,
 } from '@/lib/errorHandler';
 
-// 모델 서버 오류 이력 조회
+// 모델 Server error 이력 조회
 export async function GET(request) {
   try {
     // 관리자 권한 확인
@@ -139,12 +139,12 @@ export async function GET(request) {
       })),
     });
   } catch (error) {
-    console.error('모델 서버 오류 이력 조회 실패:', error);
+    console.error('모델 Server error 이력 조회 실패:', error);
     return createServerError(error, '오류 이력을 불러오는데 실패했습니다.');
   }
 }
 
-// 모델 서버 오류 이력 삭제
+// 모델 Server error 이력 삭제
 export async function DELETE(request) {
   try {
     // 관리자 권한 확인
@@ -169,11 +169,11 @@ export async function DELETE(request) {
 
     return NextResponse.json({
       success: true,
-      message: '오류 이력이 성공적으로 삭제되었습니다.',
+      message: '오류 이력이 성공적으로 Deleted.',
       deletedCount: result.rowCount || 0,
     });
   } catch (error) {
-    console.error('모델 서버 오류 이력 삭제 실패:', error);
+    console.error('모델 Server error 이력 삭제 실패:', error);
     return createServerError(error, '오류 이력 삭제에 실패했습니다.');
   }
 }

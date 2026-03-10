@@ -24,7 +24,7 @@ export async function POST(request) {
 
     if (!(await isBoardEnabled())) {
       return NextResponse.json(
-        { error: '자유게시판이 비활성화되어 있습니다.' },
+        { error: 'Board is disabled.' },
         { status: 403 }
       );
     }
@@ -47,7 +47,7 @@ export async function POST(request) {
     );
     if (postExists.rows.length === 0) {
       return NextResponse.json(
-        { error: '게시글을 찾을 수 없습니다.' },
+        { error: '게시글을 Not found.' },
         { status: 404 }
       );
     }

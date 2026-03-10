@@ -9,7 +9,7 @@ export async function POST(request) {
     // 토큰 검증 (로그인한 사용자만)
     const payload = verifyToken(request);
     if (!payload) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     }
 
     const data = await request.formData();

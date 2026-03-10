@@ -409,10 +409,10 @@ export async function POST(request) {
 
     if (resultCode === '500') {
       logData.errorType = 'SSO_SERVER_ERROR';
-      logData.errorMessage = 'SSO 서버 오류가 발생했습니다.';
+      logData.errorMessage = 'SSO Server error occurred.';
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: 'SSO 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', errorCode: 'SSO_SERVER_ERROR' },
+        { error: 'SSO Server error occurred. 잠시 후 다시 시도해주세요.', errorCode: 'SSO_SERVER_ERROR' },
         { status: 502 }
       );
     }
@@ -544,11 +544,11 @@ export async function POST(request) {
   } catch (error) {
     console.error('[SSO] 로그인 오류:', error);
     logData.errorType = 'SERVER_ERROR';
-    logData.errorMessage = '서버 오류가 발생했습니다.';
+    logData.errorMessage = 'Server error occurred.';
     logData.errorDetail = error.message;
     await logSSOAttempt(logData);
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', errorCode: 'SERVER_ERROR' },
+      { error: 'Server error occurred. 잠시 후 다시 시도해주세요.', errorCode: 'SERVER_ERROR' },
       { status: 500 }
     );
   }

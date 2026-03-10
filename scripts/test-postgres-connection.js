@@ -123,7 +123,7 @@ async function testConnection() {
       console.error('      - lsof -i :5432 (macOS/Linux)');
       console.error('      - netstat -an | grep 5432 (Windows)');
     } else if (error.code === 'ENOTFOUND' || error.code === 'EAI_AGAIN') {
-      console.error('💡 호스트를 찾을 수 없습니다.');
+      console.error('💡 호스트를 Not found.');
       console.error('');
       console.error('   확인 사항:');
       console.error('   1. 호스트 이름이 올바른지 확인');

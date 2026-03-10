@@ -23,7 +23,7 @@ export async function POST(request) {
   try {
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: '인증이 필요합니다.' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
     }
 
     const token = authHeader.split(' ')[1];

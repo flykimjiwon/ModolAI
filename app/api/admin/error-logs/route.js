@@ -6,7 +6,7 @@ export async function GET(request) {
   const auth = verifyAdminWithResult(request);
   if (!auth.valid) {
     return NextResponse.json(
-      { success: false, error: auth.error || '권한이 없습니다.' },
+      { success: false, error: auth.error || 'Unauthorized.' },
       { status: 403 }
     );
   }

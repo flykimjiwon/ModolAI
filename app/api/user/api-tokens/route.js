@@ -39,7 +39,7 @@ export async function GET(request) {
   try {
     const tokenPayload = verifyToken(request);
     if (!tokenPayload) {
-      return createAuthError('인증이 필요합니다.');
+      return createAuthError('Authentication required.');
     }
 
     const userId = tokenPayload.sub || tokenPayload.id;
@@ -159,7 +159,7 @@ export async function POST(request) {
   try {
     const tokenPayload = verifyToken(request);
     if (!tokenPayload) {
-      return createAuthError('인증이 필요합니다.');
+      return createAuthError('Authentication required.');
     }
 
     const userId = tokenPayload.sub || tokenPayload.id;
@@ -178,7 +178,7 @@ export async function POST(request) {
     );
 
     if (userResult.rows.length === 0) {
-      return createNotFoundError('사용자를 찾을 수 없습니다.');
+      return createNotFoundError('User not found.');
     }
 
     const user = userResult.rows[0];
@@ -264,7 +264,7 @@ export async function DELETE(request) {
   try {
     const tokenPayload = verifyToken(request);
     if (!tokenPayload) {
-      return createAuthError('인증이 필요합니다.');
+      return createAuthError('Authentication required.');
     }
 
     const userId = tokenPayload.sub || tokenPayload.id;
@@ -287,12 +287,12 @@ export async function DELETE(request) {
     );
 
     if (result.rowCount === 0) {
-      return createNotFoundError('키를 찾을 수 없거나 삭제 권한이 없습니다.');
+      return createNotFoundError('키를 찾을 수 없거나 삭제 Unauthorized.');
     }
 
     return NextResponse.json({
       success: true,
-      message: '키가 삭제되었습니다.',
+      message: '키가 Deleted.',
     });
   } catch (error) {
     console.error('[User API Tokens DELETE] 오류:', {
@@ -311,7 +311,7 @@ export async function PATCH(request) {
   try {
     const tokenPayload = verifyToken(request);
     if (!tokenPayload) {
-      return createAuthError('인증이 필요합니다.');
+      return createAuthError('Authentication required.');
     }
 
     const userId = tokenPayload.sub || tokenPayload.id;
@@ -334,7 +334,7 @@ export async function PATCH(request) {
     );
 
     if (result.rowCount === 0) {
-      return createNotFoundError('키를 찾을 수 없거나 수정 권한이 없습니다.');
+      return createNotFoundError('키를 찾을 수 없거나 수정 Unauthorized.');
     }
 
     return NextResponse.json({

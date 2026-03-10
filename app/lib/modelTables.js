@@ -2,11 +2,11 @@ import { query, transaction } from '@/lib/postgres';
 import { isValidUUID } from '@/lib/utils';
 
 /**
- * 새 테이블 구조에서 모델 설정을 categories 형태로 조회
+ * Query model settings in categories format from new table structure
  */
 export async function getModelsFromTables() {
   try {
-    // 먼저 테이블 존재 여부 확인
+    // First check if tables exist
     const tablesCheck = await query(`
       SELECT table_name 
       FROM information_schema.tables 
@@ -16,24 +16,24 @@ export async function getModelsFromTables() {
 
     const existingTables = tablesCheck.rows.map((row) => row.table_name);
 
-    // model_categories 또는 model_info 테이블이 없으면 null 반환
+    // Return null if model_categories or model_info table does not exist
     if (
       !existingTables.includes('model_categories') &&
       !existingTables.includes('model_info')
     ) {
       console.log(
-        '[modelTables] model_categories 또는 model_info 테이블이 존재하지 않습니다.'
+        '[modelTables] model_categories or model_info table does not exist.'
       );
       return null;
     }
 
-    // models 테이블이 없으면 null 반환
+    // Return null if models table does not exist
     if (!existingTables.includes('models')) {
-      console.log('[modelTables] models 테이블이 존재하지 않습니다.');
+      console.log('[modelTables] models table does not exist.');
       return null;
     }
 
-    // 컬럼 존재 여부 확인
+    // Check if columns exist
     const columnCheckResult = await query(
       `SELECT column_name
        FROM information_schema.columns
@@ -56,8 +56,8 @@ export async function getModelsFromTables() {
       columnNames.has('pii_response_mxt_vrf') &&
       columnNames.has('pii_response_mask_opt');
 
-    // 카테고리 조회 (display_order 순서대로)
-    // model_info와 model_categories 모두 확인 (하위 호환성)
+    // Query categories (ordered by display_order)
+    // Check both model_info and model_categories (backward compatibility)
     let categoriesResult;
     try {
       if (existingTables.includes('model_info')) {
@@ -74,8 +74,8 @@ export async function getModelsFromTables() {
         );
       }
     } catch (error) {
-      // 테이블이 존재하지만 조회 실패한 경우
-      console.error('[modelTables] 카테고리 조회 실패:', error.message);
+      // Table exists but query failed
+      console.error('[modelTables] Category query failed:', error.message);
       return null;
     }
 
@@ -85,9 +85,9 @@ export async function getModelsFromTables() {
 
     const categories = {};
 
-    // 각 카테고리에 대해 모델 조회
+    // Query models for each category
     for (const category of categoriesResult.rows) {
-      // endpoint 컬럼이 있으면 포함, 없으면 제외
+      // Include endpoint column if exists, exclude otherwise
       const selectFields = [
         'id, model_name, label, tooltip, is_default, admin_only, system_prompt',
         hasEndpointColumn ? 'endpoint, api_config, api_key' : null,
@@ -114,14 +114,14 @@ export async function getModelsFromTables() {
         categories[category.category_key] = {
           label: category.label,
           models: modelsResult.rows.map((model) => ({
-            id: model.label || model.model_name || model.id, // label 우선, 없으면 model_name 사용
-            dbId: model.id, // 저장 시 UUID 유지용
-            modelName: model.model_name || model.id, // 원본 모델명 유지
-            label: model.label || model.model_name || model.id, // label 필수, 없으면 model_name 사용
+            id: model.label || model.model_name || model.id, // Prefer label, fall back to model_name
+            dbId: model.id, // Preserve UUID on save
+            modelName: model.model_name || model.id, // Keep original model name
+            label: model.label || model.model_name || model.id, // Label required, fall back to model_name
             tooltip: model.tooltip,
             isDefault: model.is_default,
             adminOnly: model.admin_only,
-            visible: hasVisibleColumn ? (model.visible !== false) : true, // 기본값 true
+            visible: hasVisibleColumn ? (model.visible !== false) : true, // Default true
             systemPrompt: model.system_prompt || [],
             endpoint: hasEndpointColumn ? model.endpoint || '' : '',
             apiConfig: hasEndpointColumn ? model.api_config || null : null,
@@ -149,9 +149,9 @@ export async function getModelsFromTables() {
           })),
         };
       } catch (error) {
-        // 특정 카테고리의 모델 조회 실패 시 로깅하고 계속 진행
+        // Log and continue on model query failure for specific category
         console.warn(
-          `[modelTables] 카테고리 ${category.category_key}의 모델 조회 실패:`,
+          `[modelTables] 카테고리 ${category.category_key}model query failed:`,
           error.message
         );
         categories[category.category_key] = {
@@ -163,22 +163,22 @@ export async function getModelsFromTables() {
 
     return categories;
   } catch (error) {
-    console.error('[modelTables] 모델 조회 실패:', error);
-    // 에러 상세 정보 로깅
+    console.error('[modelTables] Model query failed:', error);
+    // Log error details
     if (error.message) {
-      console.error('[modelTables] 에러 상세:', error.message);
-      console.error('[modelTables] 에러 코드:', error.code);
+      console.error('[modelTables] Error details:', error.message);
+      console.error('[modelTables] Error code:', error.code);
     }
     return null;
   }
 }
 
 /**
- * 외래 키 제약 조건을 확인하고 수정 (트랜잭션 외부에서 호출)
+ * Check and fix foreign key constraints (called outside transaction)
  */
 async function fixForeignKeyConstraints() {
   try {
-    // models 테이블 존재 여부 확인
+    // Check if models table exists
     const modelsTableCheck = await query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -188,10 +188,10 @@ async function fixForeignKeyConstraints() {
     `);
 
     if (!modelsTableCheck.rows[0].exists) {
-      return; // 테이블이 없으면 제약 조건 수정 불필요
+      return; // No constraint fix needed if table does not exist
     }
 
-    // 외래 키 제약 조건 확인
+    // Check foreign key constraints
     const fkCheck = await query(`
       SELECT 
         tc.constraint_name,
@@ -210,18 +210,18 @@ async function fixForeignKeyConstraints() {
         AND kcu.column_name = 'category_id'
     `);
 
-    // 잘못된 외래 키 제약 조건이 있으면 삭제하고 재생성
+    // Delete and recreate if invalid foreign key constraint found
     if (fkCheck.rows.length > 0) {
       const fk = fkCheck.rows[0];
       if (fk.foreign_table_name !== 'model_categories') {
         console.warn(
-          `[modelTables] 잘못된 외래 키 제약 조건 발견: ${fk.constraint_name}, 참조 테이블: ${fk.foreign_table_name}`
+          `[modelTables] Invalid foreign key constraint found: ${fk.constraint_name}, Referenced table: ${fk.foreign_table_name}`
         );
-        // 잘못된 제약 조건 삭제 (별도 트랜잭션으로 처리)
+        // Delete invalid constraint (separate transaction)
         await query(
           `ALTER TABLE models DROP CONSTRAINT IF EXISTS ${fk.constraint_name}`
         );
-        // 올바른 외래 키 제약 조건 추가
+        // Add correct foreign key constraint
         await query(`
           ALTER TABLE models 
           ADD CONSTRAINT models_category_id_fkey 
@@ -229,10 +229,10 @@ async function fixForeignKeyConstraints() {
           REFERENCES model_categories(id) 
           ON DELETE CASCADE
         `);
-        console.log('[modelTables] 외래 키 제약 조건 수정 완료');
+        console.log('[modelTables] Foreign key constraint fix complete');
       }
     } else {
-      // 외래 키 제약 조건이 없으면 추가
+      // Add foreign key constraint if missing
       await query(`
         ALTER TABLE models 
         ADD CONSTRAINT models_category_id_fkey 
@@ -242,32 +242,32 @@ async function fixForeignKeyConstraints() {
       `);
     }
   } catch (error) {
-    // 제약 조건 확인/수정 실패 시 경고만 출력하고 계속 진행
+    // Only warn and continue on constraint check/fix failure
     console.warn(
-      '[modelTables] 외래 키 제약 조건 확인 실패 (무시):',
+      '[modelTables] Foreign key constraint check failed (ignored):',
       error.message
     );
   }
 }
 
 /**
- * 필요한 테이블이 존재하는지 확인하고 없으면 생성
+ * Check if required tables exist and create if not
  */
 async function ensureTablesExist(client) {
-  // UUID 확장 활성화 (필요한 경우)
+  // Enable UUID extension (if needed)
   try {
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
   } catch (error) {
-    // 확장이 이미 존재하거나 권한이 없는 경우 무시
+    // Ignore if extension already exists or no permission
     if (!error.message.includes('already exists')) {
       console.warn(
-        '[modelTables] UUID 확장 활성화 실패 (무시):',
+        '[modelTables] UUID extension activation failed (ignored):',
         error.message
       );
     }
   }
 
-  // model_categories 테이블 확인 및 생성
+  // Check and create model_categories table
   const categoriesTableCheck = await client.query(`
     SELECT EXISTS (
       SELECT FROM information_schema.tables 
@@ -289,7 +289,7 @@ async function ensureTablesExist(client) {
     `);
   }
 
-  // models 테이블 확인 및 생성
+  // Check and create models table
   const modelsTableCheck = await client.query(`
     SELECT EXISTS (
       SELECT FROM information_schema.tables 
@@ -319,7 +319,7 @@ async function ensureTablesExist(client) {
     `);
   }
 
-  // models 테이블에 endpoint 컬럼이 없으면 추가
+  // Add endpoint column to models table if missing
   const endpointColumnCheck = await client.query(`
     SELECT EXISTS (
       SELECT FROM information_schema.columns 
@@ -333,7 +333,7 @@ async function ensureTablesExist(client) {
     `);
   }
 
-  // models 테이블에 multi_turn_limit 컬럼이 없으면 추가
+  // Add multi_turn_limit column to models table if missing
   const multiTurnLimitCheck = await client.query(`
     SELECT EXISTS (
       SELECT FROM information_schema.columns 
@@ -347,7 +347,7 @@ async function ensureTablesExist(client) {
     `);
   }
 
-  // models 테이블에 multi_turn_unlimited 컬럼이 없으면 추가
+  // Add multi_turn_unlimited column to models table if missing
   const multiTurnUnlimitedCheck = await client.query(`
     SELECT EXISTS (
       SELECT FROM information_schema.columns 
@@ -363,17 +363,17 @@ async function ensureTablesExist(client) {
 }
 
 /**
- * 새 테이블 구조에 모델 설정 저장
+ * Save model settings to new table structure
  */
 export async function saveModelsToTables(categories) {
-  // 트랜잭션 시작 전에 외래 키 제약 조건 수정 (별도 트랜잭션으로 처리)
+  // Fix foreign key constraints before starting transaction (separate transaction)
   await fixForeignKeyConstraints();
 
   return await transaction(async (client) => {
-    // 트랜잭션 내에서 테이블 존재 여부 확인 및 생성
+    // Check table existence and create within transaction
     await ensureTablesExist(client);
 
-    // 컬럼 존재 여부 확인
+    // Check if columns exist
     const columnCheckResult = await client.query(
       `SELECT column_name
        FROM information_schema.columns
@@ -396,27 +396,27 @@ export async function saveModelsToTables(categories) {
       columnNames.has('pii_response_mxt_vrf') &&
       columnNames.has('pii_response_mask_opt');
 
-    // 전달받은 카테고리 키 목록
+    // List of received category keys
     const providedCategoryKeys = Object.keys(categories);
 
-    // 전달받은 모델의 dbId 목록 (나중에 삭제되지 않은 모델 확인용)
+    // List of received model dbIds (for checking undeleted models later)
     const providedModelDbIds = new Set();
 
-    // 카테고리별로 처리 (전체 삭제 대신 UPSERT 방식 사용)
+    // Process per category (use UPSERT instead of full delete)
     let categoryOrder = 0;
     for (const [categoryKey, categoryData] of Object.entries(categories)) {
-      // 카테고리 삽입/업데이트 (테이블은 이미 존재함이 보장됨)
-      // 트랜잭션 에러 방지를 위해 INSERT 전에 존재 여부 확인
+      // Insert/update category (table existence guaranteed)
+      // Check existence before INSERT to prevent transaction errors
       let categoryResult;
 
-      // 먼저 기존 카테고리 확인
+      // First check existing category
       const existingCategory = await client.query(
         `SELECT id FROM model_categories WHERE category_key = $1`,
         [categoryKey]
       );
 
       if (existingCategory.rows.length > 0) {
-        // 기존 카테고리가 있으면 업데이트
+        // Update if existing category found
         categoryResult = await client.query(
           `UPDATE model_categories 
            SET label = $1, display_order = $2, updated_at = $3
@@ -430,7 +430,7 @@ export async function saveModelsToTables(categories) {
           ]
         );
       } else {
-        // 기존 카테고리가 없으면 삽입
+        // Insert if no existing category
         categoryResult = await client.query(
           `INSERT INTO model_categories (category_key, label, display_order, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5)
@@ -447,7 +447,7 @@ export async function saveModelsToTables(categories) {
 
       const categoryId = categoryResult.rows[0].id;
 
-      // 해당 카테고리의 기존 모델들 조회 (나중에 삭제되지 않은 모델 확인용)
+      // Query existing models in category (for checking undeleted models later)
       const existingModelsInCategory = await client.query(
         `SELECT id FROM models WHERE category_id = $1`,
         [categoryId]
@@ -456,7 +456,7 @@ export async function saveModelsToTables(categories) {
         existingModelsInCategory.rows.map((row) => row.id)
       );
 
-      // 모델 삽입/업데이트 (id 기반으로 처리)
+      // Insert/update models (by id)
       if (categoryData.models && Array.isArray(categoryData.models)) {
         let modelOrder = 0;
         for (const model of categoryData.models) {
@@ -467,7 +467,7 @@ export async function saveModelsToTables(categories) {
             let effectiveDbId =
               model.dbId || (isValidUUID(model.id) ? model.id : null);
             if (!effectiveDbId && actualModelName && model.label) {
-              // model_name과 label 조합으로 기존 모델 찾기 (같은 모델명, 다른 라벨은 별도 모델)
+              // Find existing model by model_name+label (same name, different label = separate model)
               const existingByName = await client.query(
                 `SELECT id FROM models WHERE model_name = $1 AND label = $2 LIMIT 1`,
                 [actualModelName, model.label]
@@ -476,23 +476,23 @@ export async function saveModelsToTables(categories) {
                 effectiveDbId = existingByName.rows[0].id;
               }
             }
-            // id(dbId) 기반으로 처리: dbId가 있으면 업데이트, 없으면 신규 등록
+            // Process by id(dbId): update if dbId exists, register new otherwise
             if (effectiveDbId) {
-              // dbId가 있으면 id 기반으로 업데이트
+              // Update by id if dbId exists
               const existingModelResult = await client.query(
                 `SELECT id FROM models WHERE id = $1`,
                 [effectiveDbId]
               );
 
               if (existingModelResult.rows.length > 0) {
-                // 기존 모델이 있으면 id 기반으로 업데이트
+                // Update by id if existing model found
                 const modelId = existingModelResult.rows[0].id;
                 providedModelDbIds.add(modelId);
                 persistedModelId = modelId;
 
-                // 업데이트 쿼리 (id 기반)
-                // modelName 우선, 없으면 id 사용
-                // actualModelName는 상단에서 계산
+                // Update query (by id)
+                // Prefer modelName, fall back to id
+                // actualModelName is computed above
                  if (hasEndpointColumn) {
                   if (hasMultiturnColumns) {
                     if (hasVisibleColumn) {
@@ -805,9 +805,9 @@ export async function saveModelsToTables(categories) {
                   }
                 }
               } else {
-                // dbId가 있지만 해당 id의 레코드가 없으면 신규 등록 (id 지정)
-                // modelName 우선, 없으면 id 사용
-                // actualModelName는 상단에서 계산
+                // Register new with specified id if dbId exists but no record found
+                // Prefer modelName, fall back to id
+                // actualModelName is computed above
                 let insertResult;
                 if (hasEndpointColumn) {
                   if (hasMultiturnColumns) {
@@ -1024,7 +1024,7 @@ export async function saveModelsToTables(categories) {
                     );
                   }
                 }
-                // 새로 삽입된 모델의 dbId 기록
+                // Record dbId of newly inserted model
                 if (insertResult.rows.length > 0) {
                   providedModelDbIds.add(insertResult.rows[0].id);
                   persistedModelId = insertResult.rows[0].id;
@@ -1063,9 +1063,9 @@ export async function saveModelsToTables(categories) {
                 }
               }
             } else {
-              // dbId가 없으면 신규 등록 (id는 자동 생성)
-              // modelName 우선, 없으면 id 사용
-              // actualModelName는 상단에서 계산
+              // Register new if no dbId (id auto-generated)
+              // Prefer modelName, fall back to id
+              // actualModelName is computed above
               let insertResult;
               if (hasEndpointColumn) {
                 if (hasMultiturnColumns) {
@@ -1275,7 +1275,7 @@ export async function saveModelsToTables(categories) {
                   );
                 }
               }
-              // 새로 삽입된 모델의 dbId 기록
+              // Record dbId of newly inserted model
               if (insertResult.rows.length > 0) {
                 const insertedId = insertResult.rows[0].id;
                 providedModelDbIds.add(insertedId);
@@ -1315,39 +1315,39 @@ export async function saveModelsToTables(categories) {
               }
             }
           } catch (error) {
-            // 트랜잭션 내에서 에러가 발생하면 트랜잭션이 중단(aborted) 상태가 됩니다.
-            // catch 블록에서 추가 쿼리를 실행하려고 하면 "current transaction is aborted" 에러가 발생합니다.
-            // 따라서 에러를 즉시 throw하여 트랜잭션을 롤백해야 합니다.
+            // When an error occurs within a transaction, the transaction enters an aborted state.
+            // Attempting additional queries in the catch block causes "current transaction is aborted" error.
+            // Therefore, throw the error immediately to rollback the transaction.
 
-            // 외래 키 제약 조건 위반 시 상세 에러 로깅
+            // Detailed error logging on foreign key constraint violation
             if (error.code === '23503') {
               console.error(
-                `[modelTables] 외래 키 제약 조건 위반: category_id=${categoryId}가 model_categories 테이블에 존재하지 않습니다.`
+                `[modelTables] Foreign key constraint violation: category_id=${categoryId}does not exist in model_categories table.`
               );
               console.error(
-                `[modelTables] 카테고리 키: ${categoryKey}, 모델 ID: ${model.id}`
+                `[modelTables] Category key: ${categoryKey}, Model ID: ${model.id}`
               );
-              // 트랜잭션이 이미 중단된 상태이므로 추가 쿼리 실행 불가
-              // 에러를 즉시 throw하여 트랜잭션 롤백
+              // Transaction already aborted, cannot execute additional queries
+              // Throw error immediately to rollback transaction
               throw new Error(
-                `카테고리 ID ${categoryId}가 존재하지 않습니다. 카테고리 삽입이 실패했을 수 있습니다. 원본 에러: ${error.message}`
+                `카테고리 ID ${categoryId}does not exist. Category insert may have failed. Original error: ${error.message}`
               );
             }
 
-            // 기타 에러도 즉시 throw
+            // Also throw other errors immediately
             throw error;
           }
         }
 
-        // 해당 카테고리에서 전달받지 않은 모델 삭제 (전달받은 모델만 유지)
-        // 전달받은 모델의 dbId와 기존 모델의 id를 비교하여 삭제
+        // Delete models not received for this category (keep only received models)
+        // Delete by comparing received model dbIds with existing model ids
         const modelsToDelete = Array.from(existingModelIdsInCategory).filter(
           (id) => !providedModelDbIds.has(id)
         );
 
         if (modelsToDelete.length > 0) {
           console.log(
-            `[modelTables] 카테고리 ${categoryKey}에서 ${modelsToDelete.length}개의 모델 삭제`
+            `[modelTables] 카테고리 ${categoryKey}에서 ${modelsToDelete.length}model(s) deleted`
           );
           await client.query(`DELETE FROM models WHERE id = ANY($1::uuid[])`, [
             modelsToDelete,

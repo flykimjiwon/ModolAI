@@ -16,7 +16,7 @@ export async function GET(request) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -33,7 +33,7 @@ export async function GET(request) {
     );
 
     if (result.rows.length === 0) {
-      return createNotFoundError('사용자를 찾을 수 없습니다.');
+      return createNotFoundError('User not found.');
     }
 
     const user = result.rows[0];
@@ -61,7 +61,7 @@ export async function PATCH(request) {
     // 토큰 검증
     const payload = verifyToken(request);
     if (!payload) {
-      return createAuthError('인증이 필요합니다.');
+      return createAuthError('Authentication required.');
     }
 
     const body = await request.json();
@@ -98,7 +98,7 @@ export async function PATCH(request) {
     );
 
     if (userResult.rows.length === 0) {
-      return createNotFoundError('사용자를 찾을 수 없습니다.');
+      return createNotFoundError('User not found.');
     }
 
     const user = userResult.rows[0];
@@ -128,7 +128,7 @@ export async function PATCH(request) {
       if (!passwordHash) {
         return createServerError(
           null,
-          '사용자 비밀번호 정보를 찾을 수 없습니다.'
+          '사용자 비밀번호 정보를 Not found.'
         );
       }
 
@@ -138,7 +138,7 @@ export async function PATCH(request) {
         passwordHash
       );
       if (!isCurrentPasswordValid) {
-        return createValidationError('현재 비밀번호가 일치하지 않습니다.');
+        return createValidationError('현재 Password does not match.');
       }
 
       // 새 비밀번호 검증
@@ -164,7 +164,7 @@ export async function PATCH(request) {
     // PostgreSQL에서는 값이 변경되지 않았을 때도 rowCount가 0일 수 있음
     // 따라서 업데이트가 실행되었는지만 확인
     if (updateResult.rowCount === 0) {
-      return createNotFoundError('사용자를 찾을 수 없습니다.');
+      return createNotFoundError('User not found.');
     }
 
     // 정규화 후: messages 테이블에는 사용자 정보가 없으므로 업데이트 불필요

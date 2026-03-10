@@ -30,7 +30,7 @@ export function sanitizeInput(input) {
 // 문자열 길이 검증
 export function validateLength(text, minLength = 0, maxLength = 100000) {
   if (typeof text !== 'string')
-    return { valid: false, error: '텍스트가 아닙니다.' };
+    return { valid: false, error: 'Not a text value.' };
   if (text.length < minLength)
     return { valid: false, error: `최소 ${minLength}자 이상이어야 합니다.` };
   if (text.length > maxLength)
@@ -42,7 +42,7 @@ export function validateLength(text, minLength = 0, maxLength = 100000) {
 export function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    return { valid: false, error: '올바른 이메일 형식이 아닙니다.' };
+    return { valid: false, error: 'Invalid email format.' };
   }
   return { valid: true };
 }
@@ -52,7 +52,7 @@ export function validateUUID(id) {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(id)) {
-    return { valid: false, error: '올바른 UUID 형식이 아닙니다.' };
+    return { valid: false, error: 'Invalid UUID format.' };
   }
   return { valid: true };
 }
@@ -61,7 +61,7 @@ export function validateUUID(id) {
 export function validateRole(role) {
   const allowedRoles = ['user', 'assistant', 'admin'];
   if (!allowedRoles.includes(role)) {
-    return { valid: false, error: '허용되지 않은 역할입니다.' };
+    return { valid: false, error: 'Role not allowed.' };
   }
   return { valid: true };
 }
@@ -70,7 +70,7 @@ export function validateRole(role) {
 export function validateUserRole(userRole) {
   const allowedUserRoles = ['user', 'admin'];
   if (!allowedUserRoles.includes(userRole)) {
-    return { valid: false, error: '허용되지 않은 사용자 역할입니다.' };
+    return { valid: false, error: 'User role not allowed.' };
   }
   return { valid: true };
 }
@@ -83,11 +83,11 @@ export function validateModel(model) {
   // 확장: OpenAI/HuggingFace 모델명, label (예: "Gemma 3 4B (복사)")
   const modelRegex = /^[a-zA-Z0-9_\-:./() ㄱ-ㅎ가-힣]+$/;
   if (!modelRegex.test(model)) {
-    return { valid: false, error: '허용되지 않은 모델명 형식입니다.' };
+    return { valid: false, error: 'Model name format not allowed.' };
   }
 
   if (model.length > 100) {
-    return { valid: false, error: '모델명은 100자를 초과할 수 없습니다.' };
+    return { valid: false, error: 'Model name cannot exceed 100 characters.' };
   }
 
   return { valid: true };
@@ -124,7 +124,7 @@ export function validatePagination(page, limit) {
   const limitNum = parseInt(limit) || 20;
 
   if (pageNum < 1)
-    return { valid: false, error: '페이지 번호는 1 이상이어야 합니다.' };
+    return { valid: false, error: 'Page number must be 1 or greater.' };
   if (limitNum < 1 || limitNum > 100)
     return {
       valid: false,
@@ -138,7 +138,7 @@ export function validatePagination(page, limit) {
 export function validateDateRange(dateRange) {
   const allowedRanges = ['1d', '7d', '30d', '90d', '365d', 'all'];
   if (!allowedRanges.includes(dateRange)) {
-    return { valid: false, error: '허용되지 않은 날짜 범위입니다.' };
+    return { valid: false, error: 'Date range not allowed.' };
   }
   return { valid: true };
 }

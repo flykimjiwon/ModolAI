@@ -9,7 +9,7 @@ export async function PATCH(request, { params }) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -40,7 +40,7 @@ export async function PATCH(request, { params }) {
 
     if (userResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }
@@ -59,7 +59,7 @@ export async function PATCH(request, { params }) {
     // 채팅방이 존재하지 않는 경우
     if (roomResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '채팅방을 찾을 수 없습니다.' },
+        { error: '채팅방을 Not found.' },
         { status: 404 }
       );
     }
@@ -70,9 +70,9 @@ export async function PATCH(request, { params }) {
     if (room.email !== payload.email) {
       return NextResponse.json(
         {
-          error: '채팅방에 접근할 권한이 없습니다.',
+          error: '채팅방에 접근할 Unauthorized.',
           shouldLogout: true,
-          message: '인증이 만료되었습니다. 다시 로그인해주세요.',
+          message: 'Authentication expired. Please log in again.',
         },
         { status: 403 }
       );
@@ -96,7 +96,7 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: '채팅방 이름이 수정되었습니다.',
+      message: '채팅방 이름이 Updated.',
     });
   } catch (error) {
     console.error('채팅방 수정 실패:', error);
@@ -116,7 +116,7 @@ export async function DELETE(request, { params }) {
     payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -151,7 +151,7 @@ export async function DELETE(request, { params }) {
 
     if (userResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
+        { error: 'User not found.' },
         { status: 404 }
       );
     }
@@ -172,7 +172,7 @@ export async function DELETE(request, { params }) {
     // 채팅방이 존재하지 않는 경우
     if (roomResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '채팅방을 찾을 수 없습니다.' },
+        { error: '채팅방을 Not found.' },
         { status: 404 }
       );
     }
@@ -183,9 +183,9 @@ export async function DELETE(request, { params }) {
     if (room.email !== payload.email) {
       return NextResponse.json(
         {
-          error: '채팅방에 접근할 권한이 없습니다.',
+          error: '채팅방에 접근할 Unauthorized.',
           shouldLogout: true,
-          message: '인증이 만료되었습니다. 다시 로그인해주세요.',
+          message: 'Authentication expired. Please log in again.',
         },
         { status: 403 }
       );
@@ -224,7 +224,7 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: '채팅방이 삭제되었습니다.',
+      message: '채팅방이 Deleted.',
     });
   } catch (error) {
     console.error('채팅방 삭제 실패:', {
@@ -256,17 +256,17 @@ export async function DELETE(request, { params }) {
       error.message.includes('ECONNREFUSED')
     ) {
       return NextResponse.json(
-        { error: '데이터베이스 연결 실패' },
+        { error: 'Database connection failed' },
         { status: 500 }
       );
     }
 
-    // 일반적인 서버 오류
+    // 일반적인 Server error
     return NextResponse.json(
       {
         error: '채팅방 삭제 중 오류가 발생했습니다.',
         details:
-          process.env.NODE_ENV === 'development' ? error.message : '서버 오류',
+          process.env.NODE_ENV === 'development' ? error.message : 'Server error',
       },
       { status: 500 }
     );

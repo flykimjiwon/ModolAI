@@ -49,21 +49,21 @@ export function createSuccessResponse(data, status = 200) {
 /**
  * 인증 에러 응답
  */
-export function createAuthError(message = '인증이 필요합니다.') {
+export function createAuthError(message = 'Authentication required.') {
   return createErrorResponse(new Error(message), 401);
 }
 
 /**
  * 권한 에러 응답
  */
-export function createForbiddenError(message = '접근 권한이 없습니다.') {
+export function createForbiddenError(message = 'Access denied.') {
   return createErrorResponse(new Error(message), 403);
 }
 
 /**
  * 찾을 수 없음 에러 응답
  */
-export function createNotFoundError(message = '요청한 리소스를 찾을 수 없습니다.') {
+export function createNotFoundError(message = 'Requested resource not found.') {
   return createErrorResponse(new Error(message), 404);
 }
 
@@ -77,7 +77,7 @@ export function createValidationError(message) {
 /**
  * 서버 에러 응답
  */
-export function createServerError(error, message = '서버 내부 오류가 발생했습니다.') {
+export function createServerError(error, message = 'Internal server error.') {
   return createErrorResponse(error || new Error(message), 500);
 }
 
@@ -130,21 +130,21 @@ export class ValidationError extends Error {
 }
 
 export class UnauthorizedError extends Error {
-  constructor(message = '인증이 필요합니다.') {
+  constructor(message = 'Authentication required.') {
     super(message);
     this.name = 'UnauthorizedError';
   }
 }
 
 export class ForbiddenError extends Error {
-  constructor(message = '접근 권한이 없습니다.') {
+  constructor(message = 'Access denied.') {
     super(message);
     this.name = 'ForbiddenError';
   }
 }
 
 export class NotFoundError extends Error {
-  constructor(message = '요청한 리소스를 찾을 수 없습니다.') {
+  constructor(message = 'Requested resource not found.') {
     super(message);
     this.name = 'NotFoundError';
   }

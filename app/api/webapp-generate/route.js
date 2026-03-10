@@ -235,7 +235,7 @@ async function findModelRecord(modelId) {
     }
     return found || null;
   } catch (error) {
-    console.warn('[Model Config] 모델 설정 조회 실패:', error.message);
+    console.warn('[Model Config] Model settings query failed:', error.message);
     return null;
   }
 }
@@ -328,7 +328,7 @@ export async function POST(request) {
     if (!authHeader?.startsWith('Bearer ')) {
       logWarn('인증 실패: Bearer 토큰 없음');
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -1487,7 +1487,7 @@ export async function POST(request) {
             mentionedModel === normalizedModel ||
             (mentionedModel && !mentionedModel.includes('models/'));
 
-          let finalErrorMessage = `Gemini 모델을 찾을 수 없습니다.`;
+          let finalErrorMessage = `Gemini 모델을 Not found.`;
 
           if (isAlreadyNormalized) {
             // 이미 정규화된 경우

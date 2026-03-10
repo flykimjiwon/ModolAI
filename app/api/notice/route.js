@@ -139,7 +139,7 @@ export async function POST(request) {
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
-        { error: '인증이 필요합니다.' },
+        { error: 'Authentication required.' },
         { status: 401 }
       );
     }
@@ -147,7 +147,7 @@ export async function POST(request) {
     // 관리자 권한 확인
     if (payload.role !== 'admin') {
       return NextResponse.json(
-        { error: '관리자 권한이 필요합니다.' },
+        { error: 'Admin privileges required.' },
         { status: 403 }
       );
     }

@@ -86,7 +86,7 @@ async function getModelLabelMap() {
       }
     }
   } catch (error) {
-    console.warn('[Messages] 모델 설정 조회 실패:', error.message);
+    console.warn('[Messages] Model settings query failed:', error.message);
   }
 
   return { modelLabelMap, allModels };

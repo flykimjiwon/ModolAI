@@ -23,7 +23,7 @@ export async function POST(request) {
       JSON.stringify({
         available: !existingUser,
         message: existingUser
-          ? '이미 등록된 이메일입니다.'
+          ? 'Email already registered.'
           : '사용 가능한 이메일입니다.',
       }),
       {
@@ -33,7 +33,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('이메일 검증 오류:', error);
     return new Response(
-      JSON.stringify({ error: '서버 오류가 발생했습니다.' }),
+      JSON.stringify({ error: 'Server error occurred.' }),
       {
         status: 500,
       }

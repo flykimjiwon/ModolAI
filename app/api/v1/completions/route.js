@@ -447,7 +447,7 @@ export async function POST(request) {
       headers: corsHeaders,
     });
   } catch (error) {
-    console.error('[v1/completions] 서버 오류:', error);
+    console.error('[v1/completions] Server error:', error);
     return NextResponse.json(
       {
         error: {
