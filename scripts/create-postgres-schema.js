@@ -954,7 +954,7 @@ async function createSchema() {
       END $$;
     `);
 
-    console.log('\n📊 인덱스 생성 중...\n');
+    console.log('\n📊 Creating indexes...\n');
 
     const indexQueries = [
       'CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)',
@@ -994,81 +994,81 @@ async function createSchema() {
       'CREATE INDEX IF NOT EXISTS idx_agent_permissions_type ON agent_permissions(permission_type)',
     ];
 
-    // 인덱스를 순차 실행 (트랜잭션 내에서 안전하게 처리)
-    console.log('\n📊 인덱스 생성 중...\n');
+    // Run indexes sequentially (safely within transaction)
+    console.log('\n📊 Creating indexes...\n');
     for (let i = 0; i < indexQueries.length; i++) {
       const query = indexQueries[i];
       try {
         await client.query(query);
         if ((i + 1) % 5 === 0 || i === indexQueries.length - 1) {
           console.log(
-            `  ✅ 인덱스 생성 진행 중... (${i + 1}/${indexQueries.length})`
+            `  ✅ Index creation in progress... (${i + 1}/${indexQueries.length})`
           );
         }
       } catch (error) {
         console.error(
-          `  ❌ 인덱스 생성 실패 (${i + 1}/${indexQueries.length}):`,
+          `  ❌ Index creation failed (${i + 1}/${indexQueries.length}):`,
           error.message
         );
         throw error;
       }
     }
-    console.log('✅ 모든 인덱스 생성 완료\n');
+    console.log('✅ All indexes created\n');
 
-    // 트랜잭션 커밋
-    console.log('💾 트랜잭션 커밋 중...');
+    // Commit transaction
+    console.log('💾 Committing transaction...');
     await client.query('COMMIT');
-    console.log('✅ 트랜잭션 커밋 완료');
-    console.log('✅ 스키마 생성 완료');
+    console.log('✅ Transaction committed');
+    console.log('✅ Schema creation completed');
   } catch (error) {
-    // 오류 발생 시 롤백
-    console.error('\n❌ 오류 발생! 트랜잭션 롤백 중...');
+    // Roll back on error
+    console.error('\n❌ Error occurred! Rolling back transaction...');
     try {
       await client.query('ROLLBACK');
-      console.error('✅ 트랜잭션 롤백 완료');
+      console.error('✅ Transaction rollback completed');
     } catch (rollbackError) {
-      console.error('⚠️  롤백 중 오류:', rollbackError.message);
+      console.error('⚠️  Rollback error:', rollbackError.message);
     }
-    console.error('❌ 스키마 생성 실패:', error.message);
+    console.error('❌ Schema creation failed:', error.message);
     if (error.code) {
-      console.error(`   오류 코드: ${error.code}`);
+      console.error(`   Error code: ${error.code}`);
     }
     if (error.stack && process.env.DEBUG) {
-      console.error('\n상세 오류 스택:');
+      console.error('\nDetailed error stack:');
       console.error(error.stack);
     }
     throw error;
   } finally {
-    console.log('🔌 데이터베이스 클라이언트 연결 해제 중...');
+    console.log('🔌 Releasing database client connection...');
     client.release();
-    console.log('✅ 데이터베이스 클라이언트 연결 해제 완료');
+    console.log('✅ Database client connection released');
   }
 }
 
 /**
- * 기본 데이터 생성
+ * Create default data
  */
 async function setupDefaultData() {
   const client = await pool.connect();
 
   try {
-    // 기본 설정 생성
+    // Create default settings
     const settingsResult = await client.query(
       'SELECT COUNT(*) FROM settings WHERE config_type = $1',
       ['general']
     );
 
     if (parseInt(settingsResult.rows[0].count) === 0) {
-      console.log('기본 설정 생성 중...');
+      console.log('Creating default settings...');
       await client.query(
         `INSERT INTO settings (config_type, multiturn_count, tooltip_enabled, tooltip_message)
          VALUES ($1, $2, $3, $4)`,
-        ['general', 10, true, '더 고성능의 모델도 사용할 수 있어요']
+        ['general', 10, true, 'You can also use higher-performance models']
       );
-      console.log('✅ 기본 설정 생성 완료');
+      console.log('✅ Default settings created');
     }
 
-    // 공지사항 생성
+    // Create notice
     const adminResult = await client.query(
       'SELECT id, name FROM users WHERE role = $1 LIMIT 1',
       ['admin']
@@ -1079,24 +1079,24 @@ async function setupDefaultData() {
       const noticeResult = await client.query('SELECT COUNT(*) FROM notices');
 
       if (parseInt(noticeResult.rows[0].count) === 0) {
-        console.log('공지사항 생성 중...');
+        console.log('Creating notice...');
         await client.query(
           `INSERT INTO notices (title, content, is_popup, is_active, author_id, author_name)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [
-            '환영합니다!',
-            '시스템이 성공적으로 설치되었습니다.',
+            'Welcome!',
+            'The system has been installed successfully.',
             true,
             true,
             admin.id,
             admin.name,
           ]
         );
-        console.log('✅ 공지사항 생성 완료');
+        console.log('✅ Notice created');
       }
     }
 
-    // RAG 설정 생성
+    // Create RAG settings
     if (adminResult.rows.length > 0) {
       const admin = adminResult.rows[0];
       const ragSettingsResult = await client.query(
@@ -1104,17 +1104,17 @@ async function setupDefaultData() {
       );
 
       if (parseInt(ragSettingsResult.rows[0].count) === 0) {
-        console.log('RAG 설정 생성 중...');
+        console.log('Creating RAG settings...');
         await client.query(
           `INSERT INTO rag_settings (updated_by)
            VALUES ($1)`,
           [admin.id]
         );
-        console.log('✅ RAG 설정 생성 완료');
+        console.log('✅ RAG settings created');
       }
     }
   } catch (error) {
-    console.error('❌ error 기본 데이터 생성 실패:', error);
+    console.error('❌ Error creating default data:', error);
     throw error;
   } finally {
     client.release();
@@ -1122,112 +1122,112 @@ async function setupDefaultData() {
 }
 
 /**
- * 메인 초기화 함수
+ * Main initialization function
  */
 async function initializeDatabase() {
   const startTime = Date.now();
 
   try {
     console.log('═══════════════════════════════════════════════════');
-    console.log('🚀 데이터베이스 초기화 시작');
+    console.log('🚀 Starting database initialization');
     console.log('═══════════════════════════════════════════════════\n');
 
-    // 1. 환경 변수 검증
-    console.log('📊 PostgreSQL 연결 정보:', maskConnectionString(POSTGRES_URI));
+    // 1. Validate environment variables
+    console.log('📊 PostgreSQL connection info:', maskConnectionString(POSTGRES_URI));
     console.log('');
 
-    // 2. PostgreSQL 연결 풀 생성
-    console.log('🔌 PostgreSQL 연결 풀 생성 중...');
+    // 2. Create PostgreSQL connection pool
+    console.log('🔌 Creating PostgreSQL connection pool...');
     pool = createPool();
-    console.log('✅ 연결 풀 생성 완료\n');
+    console.log('✅ Connection pool created\n');
 
-    // 3. PostgreSQL 연결 대기 (Docker 환경 대응)
+    // 3. Wait for PostgreSQL connection (Docker-compatible)
     await waitForDatabase(pool);
     console.log('');
 
-    // 4. 스키마 존재 여부 확인
-    console.log('🔍 데이터베이스 스키마 확인 중...');
+    // 4. Check whether schema exists
+    console.log('🔍 Checking database schema...');
     const client = await pool.connect();
     const hasSchema = await dbUtilsTableExists(client, 'users');
     client.release();
 
-    // 5. 스키마 생성 (필요한 경우)
+    // 5. Create schema (if needed)
     if (!hasSchema) {
-      console.log('📋 데이터베이스 스키마가 없습니다. 생성을 시작합니다...\n');
+      console.log('📋 Database schema does not exist. Starting creation...\n');
       try {
         await createSchema();
-        console.log('\n✅ 스키마 생성 완료\n');
+        console.log('\n✅ Schema creation completed\n');
       } catch (schemaError) {
-        console.error('\n❌ 스키마 생성 중 오류 발생');
-        console.error('오류 메시지:', schemaError.message);
+        console.error('\n❌ Error occurred during schema creation');
+        console.error('Error message:', schemaError.message);
         if (schemaError.code) {
-          console.error('오류 코드:', schemaError.code);
+          console.error('Error code:', schemaError.code);
         }
         throw schemaError;
       }
     } else {
-      console.log('✅ 데이터베이스 스키마가 Already exists.\n');
+      console.log('✅ Database schema already exists.\n');
     }
 
-    // 6. 기본 데이터 생성
-    console.log('🔍 기본 데이터 확인 중...');
+    // 6. Create default data
+    console.log('🔍 Checking default data...');
     await setupDefaultData();
     console.log('');
 
-    // 7. 관리자 계정 확인
-    console.log('🔍 관리자 계정 확인 중...');
+    // 7. Check admin account
+    console.log('🔍 Checking admin account...');
     const client2 = await pool.connect();
      const hasAdmin = await userExists(client2, 'admin@modol.ai');
     client2.release();
 
-    // 8. 관리자 계정 생성 (필요한 경우)
+    // 8. Create admin account (if needed)
     if (!hasAdmin) {
-      console.log('👤 기본 관리자 계정이 없습니다. 생성을 시작합니다...\n');
+      console.log('👤 Default admin account does not exist. Starting creation...\n');
       const adminScriptPath = path.join(__dirname, 'create-admin.js');
 
       try {
         await runScript(adminScriptPath);
-        console.log('\n✅ 관리자 계정 생성 완료\n');
+        console.log('\n✅ Admin account created\n');
       } catch (error) {
-        throw new Error(`관리자 계정 생성 실패: ${error.message}`);
+        throw new Error(`Failed to create admin account: ${error.message}`);
       }
     } else {
        console.log(
-         '✅ 기본 관리자 계정(admin@modol.ai)이 Already exists.\n'
+          '✅ Default admin account (admin@modol.ai) already exists.\n'
        );
     }
 
-    // 9. 초기화 완료
+    // 9. Initialization complete
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log('═══════════════════════════════════════════════════');
-    console.log('✅ 데이터베이스 초기화 완료!');
-    console.log(`⏱️  소요 시간: ${duration}초`);
+    console.log('✅ Database initialization completed!');
+    console.log(`⏱️  Elapsed time: ${duration}s`);
     console.log('═══════════════════════════════════════════════════\n');
 
     process.exit(0);
   } catch (error) {
-    console.error('\n❌ 데이터베이스 초기화 실패');
+    console.error('\n❌ Database initialization failed');
     console.error('═══════════════════════════════════════════════════');
-    console.error(`오류: ${error.message}`);
+    console.error(`Error: ${error.message}`);
 
     if (error.stack && process.env.DEBUG) {
-      console.error('\n상세 오류 (DEBUG 모드):');
+      console.error('\nDetailed error (DEBUG mode):');
       console.error(error.stack);
     }
 
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
       console.error('');
-      console.error('💡 PostgreSQL이 실행 중인지 확인하세요:');
-      console.error('   1. PostgreSQL 설치 확인: psql --version');
+      console.error('💡 Check whether PostgreSQL is running:');
+      console.error('   1. Verify PostgreSQL installation: psql --version');
       console.error(
-        '   2. PostgreSQL 실행 확인: brew services list (macOS) 또는 systemctl status postgresql (Linux)'
+        '   2. Check PostgreSQL status: brew services list (macOS) or systemctl status postgresql (Linux)'
       );
       console.error(
-        '   3. PostgreSQL 시작: brew services start postgresql (macOS)'
+        '   3. Start PostgreSQL: brew services start postgresql (macOS)'
       );
-      console.error('   4. 데이터베이스 생성: createdb modol');
+      console.error('   4. Create database: createdb modol');
       console.error('');
-      console.error('   또는 Docker를 사용하는 경우:');
+      console.error('   Or if you are using Docker:');
       console.error(
         '   docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=modol -p 5432:5432 postgres:15'
       );
@@ -1236,19 +1236,19 @@ async function initializeDatabase() {
     console.error('═══════════════════════════════════════════════════\n');
     process.exit(1);
   } finally {
-    // 연결 정리
+    // Clean up connections
     if (pool) {
       try {
         await pool.end();
-        console.log('🔌 PostgreSQL 연결 종료\n');
+        console.log('🔌 PostgreSQL connection closed\n');
       } catch (error) {
-        console.error('⚠️  연결 종료 중 오류:', error.message);
+        console.error('⚠️  Error while closing connection:', error.message);
       }
     }
   }
 }
 
-// 스크립트가 직접 실행된 경우에만 실행
+// Run only when script is executed directly
 if (require.main === module) {
   initializeDatabase();
 }

@@ -872,7 +872,7 @@ export async function POST(request) {
             ...identificationHeaders,
           }),
         ]).catch((logError) => {
-          console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+          console.error('[OpenAI Chat Completions] Logging failed:', logError);
         });
 
         return NextResponse.json(
@@ -1037,7 +1037,7 @@ export async function POST(request) {
                   ...identificationHeaders,
                 }),
               ]).catch((logError) => {
-                console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+                console.error('[OpenAI Chat Completions] Logging failed:', logError);
               });
 
               controller.enqueue(encoder.encode('data: [DONE]\n\n'));
@@ -1147,7 +1147,7 @@ export async function POST(request) {
           ...identificationHeaders,
         }),
       ]).catch((logError) => {
-        console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+        console.error('[OpenAI Chat Completions] Logging failed:', logError);
       });
 
       return NextResponse.json(openaiResponse, {
@@ -1156,48 +1156,48 @@ export async function POST(request) {
       });
     }
 
-    // 모델 ID가 변환되었으면 다시 파싱하여 서버 이름 추출
-    // (부분 일치로 변환된 경우 서버 이름이 달라질 수 있음)
+    // If model ID was converted, parse again to extract server name
+    // (Server name may change when converted by partial match)
     const reparsed = parseModelName(model);
 
-    // DB 설정에서 서버 이름 확인 (가장 정확함)
+    // Check server name from DB configuration (most accurate)
     const { getServerNameForModel, getModelServerEndpointsByName } =
       await import('@/lib/modelServers');
     const dbServerName = await getServerNameForModel(model);
 
     if (dbServerName) {
-      // DB 설정에서 찾은 서버 이름이 실제로 존재하는지 확인
+      // Verify server name found in DB config actually exists
       const serverEndpoints = await getModelServerEndpointsByName(dbServerName);
       if (serverEndpoints && serverEndpoints.length > 0) {
-        // 실제로 존재하는 서버 이름이므로 사용
+        // Use it because this server name actually exists
         serverName = dbServerName;
       } else {
-        // DB에서 찾은 서버 이름이 실제로 존재하지 않으므로 무시
+        // Ignore it because server name from DB does not actually exist
         console.warn(
-          `[OpenAI Chat Completions] DB에서 찾은 서버 이름 "${dbServerName}"이 실제로 존재하지 않습니다. 서버 이름을 사용하지 않습니다.`
+          `[OpenAI Chat Completions] Server name "${dbServerName}" found in DB does not actually exist. Server name will not be used.`
         );
         serverName = null;
       }
     } else if (!serverName && reparsed.serverName) {
-      // DB에서 찾지 못했고 원본 파싱에 서버 이름이 없으면, 재파싱 결과 검증 후 사용
+      // If not found in DB and original parse has no server name, validate reparsed result before use
       const serverEndpoints = await getModelServerEndpointsByName(
         reparsed.serverName
       );
       if (serverEndpoints && serverEndpoints.length > 0) {
         serverName = reparsed.serverName;
       } else {
-        // 파싱된 서버 이름이 실제로 존재하지 않으므로 무시
+        // Ignore parsed server name because it does not actually exist
         serverName = null;
       }
     }
 
-    // 서버 이름이 지정된 경우 해당 서버로 직접 호출, 없으면 라운드로빈 사용
+    // If server name is specified, call that server directly; otherwise use round robin
     let modelServerEndpoint;
     let provider;
     let roundRobinIndex = null;
 
     if (serverName) {
-      // 지정된 서버 이름으로 호출 (같은 이름의 서버가 여러 개 있으면 라운드로빈)
+      // Call using specified server name (round robin if multiple servers share same name)
       const serverEndpoint = await getModelServerEndpointByName(serverName);
       if (serverEndpoint) {
         modelServerEndpoint = serverEndpoint.endpoint;
@@ -1205,7 +1205,7 @@ export async function POST(request) {
         roundRobinIndex = serverEndpoint.index;
       } else {
         console.error(
-          `[OpenAI Chat Completions] 서버 이름 "${serverName}"을 Not found. 모델 "${model}"은(는) 해당 서버 그룹에만 존재합니다.`
+          `[OpenAI Chat Completions] Server name "${serverName}" not found. Model "${model}" exists only in that server group.`
         );
         return NextResponse.json(
           {
@@ -1218,14 +1218,14 @@ export async function POST(request) {
         );
       }
     } else {
-      // 서버 이름이 없는 경우, 표시 이름 기반 라운드로빈 시도
+      // If server name is missing, try display-name-based round robin
       const labelBasedEndpoint = await getModelServerEndpointByLabel(model);
       if (labelBasedEndpoint) {
         modelServerEndpoint = labelBasedEndpoint.endpoint;
         provider = labelBasedEndpoint.provider;
         roundRobinIndex = labelBasedEndpoint.index;
       } else {
-        // 표시 이름 기반 라운드로빈도 실패하면 전체 라운드로빈 사용
+        // If display-name-based round robin also fails, use global round robin
         const roundRobinResult = await getNextModelServerEndpointWithIndex();
         modelServerEndpoint = roundRobinResult.endpoint;
         provider = roundRobinResult.provider;
@@ -1235,7 +1235,7 @@ export async function POST(request) {
 
     if (!modelServerEndpoint) {
       console.error(
-        '[OpenAI Chat Completions] 모델 서버 엔드포인트가 설정되지 않았습니다.'
+        '[OpenAI Chat Completions] Model server endpoint is not configured.'
       );
       return NextResponse.json(
         {
@@ -1249,7 +1249,7 @@ export async function POST(request) {
       );
     }
 
-    // API key 가져오기 (Gemini provider용)
+    // Retrieve API key (for Gemini provider)
     let apiKey = '';
     if (provider === 'gemini') {
       try {
@@ -1268,7 +1268,7 @@ export async function POST(request) {
           }
         }
       } catch (e) {
-        console.warn('[OpenAI Chat Completions] API key 조회 실패:', e.message);
+        console.warn('[OpenAI Chat Completions] Failed to retrieve API key:', e.message);
       }
       if (!apiKey) {
         return NextResponse.json(
@@ -1283,7 +1283,7 @@ export async function POST(request) {
       }
     }
 
-    // provider에 따라 엔드포인트 경로 결정
+    // Determine endpoint path based on provider
     // openai-compatible: /v1/chat/completions
     // gemini: https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
     // model-server (Ollama): /api/chat
@@ -1293,29 +1293,29 @@ export async function POST(request) {
         modelServerEndpoint.replace(/\/+$/, '') ||
         'https://generativelanguage.googleapis.com';
 
-      // Gemini 모델 이름 정규화
-      // 1. "models/" 접두사 제거 (Gemini API에서 반환하는 형식)
-      // 2. 버전 태그(:latest 등) 제거
-      // 3. 공백 제거
-      // 예: "models/gemini-pro:latest" -> "gemini-pro"
+      // Normalize Gemini model name
+      // 1. Remove "models/" prefix (format returned by Gemini API)
+      // 2. Remove version tag (:latest, etc.)
+      // 3. Trim whitespace
+      // Example: "models/gemini-pro:latest" -> "gemini-pro"
       let normalizedModel = model.trim();
 
-      // "models/" 접두사 제거
+      // Remove "models/" prefix
       if (normalizedModel.startsWith('models/')) {
         normalizedModel = normalizedModel.substring(7);
       }
 
-      // 버전 태그 제거 (콜론 이후 부분)
+      // Remove version tag (part after colon)
       normalizedModel = normalizedModel.split(':')[0].trim();
 
-      // 슬래시가 남아있으면 제거 (안전장치)
+      // Remove remaining slash if present (safety guard)
       normalizedModel = normalizedModel.split('/').pop().trim();
 
       if (!normalizedModel) {
         return NextResponse.json(
           {
             error: {
-              message: `유효하지 않은 모델 이름입니다: "${model}"`,
+                message: `Invalid model name: "${model}"`,
               type: 'invalid_request_error',
             },
           },
@@ -1327,7 +1327,7 @@ export async function POST(request) {
       modelServerUrl = `${baseUrl}/v1beta/models/${normalizedModel}:${action}?key=${apiKey}`;
 
       console.log(
-        `[OpenAI Chat Completions] Gemini API 호출: 모델=${normalizedModel} (원본=${model})`
+        `[OpenAI Chat Completions] Calling Gemini API: model=${normalizedModel} (original=${model})`
       );
     } else {
       const endpointPath =
@@ -1335,17 +1335,17 @@ export async function POST(request) {
       modelServerUrl = `${modelServerEndpoint}${endpointPath}`;
     }
 
-    // provider에 따라 요청 본문 형식 결정
+    // Determine request body format based on provider
     let requestBody;
     if (provider === 'gemini') {
-      // Gemini API 형식으로 변환
+      // Convert to Gemini API format
       const convertToGeminiFormat = (messages) => {
         const contents = [];
         for (const msg of messages) {
           const role = msg.role === 'assistant' ? 'model' : 'user';
           const parts = [];
 
-          // content를 문자열로 변환
+          // Convert content to string
           let textContent = '';
           if (typeof msg.content === 'string') {
             textContent = msg.content;
@@ -1377,7 +1377,7 @@ export async function POST(request) {
 
       requestBody = convertToGeminiFormat(messages);
     } else if (provider === 'openai-compatible') {
-      // OpenAI 호환 서버: 원본 OpenAI 형식 그대로 사용 (tools, tool_choice 포함 모든 파라미터 pass-through)
+      // OpenAI-compatible server: use original OpenAI format as-is (pass through all params including tools/tool_choice)
       requestBody = {
         model,
         messages,
@@ -1396,69 +1396,69 @@ export async function POST(request) {
         ...(user !== undefined && { user }),
       };
     } else {
-      // Ollama 서버: OpenAI 형식을 Ollama 형식으로 변환
-      // Ollama는 content를 문자열로만 받지만, OpenAI는 배열(멀티모달)도 지원
+      // Ollama server: convert OpenAI format to Ollama format
+      // Ollama only accepts string content, while OpenAI also supports arrays (multimodal)
       const convertContentToString = (content) => {
         if (typeof content === 'string') {
           return content;
         }
         if (Array.isArray(content)) {
-          // 멀티모달 콘텐츠 배열 처리
+          // Handle multimodal content arrays
           return content
             .map((item) => {
               if (typeof item === 'string') {
                 return item;
               }
               if (item && typeof item === 'object') {
-                // OpenAI 멀티모달 형식 처리
+                // Handle OpenAI multimodal format
                 if (item.type === 'text' && item.text) {
                   return item.text;
                 }
                 if (item.type === 'image_url') {
-                  // Ollama는 이미지 미지원이므로 경고만 남기고 무시
+                  // Ollama does not support images, so warn and ignore
                   console.warn(
-                    '[OpenAI Chat Completions] 이미지 콘텐츠는 Ollama에서 지원되지 않습니다.'
+                    '[OpenAI Chat Completions] Image content is not supported by Ollama.'
                   );
                   return '';
                 }
-                // type 필드가 없는 일반 객체인 경우 JSON 문자열로 변환
+                // For plain objects without a type field, convert to JSON string
                 try {
                   return JSON.stringify(item, null, 2);
                 } catch (e) {
                   console.warn(
-                    '[OpenAI Chat Completions] 배열 항목 직렬화 실패:',
+                    '[OpenAI Chat Completions] Failed to serialize array item:',
                     e
                   );
                   return String(item);
                 }
               }
-              // 기타 타입은 문자열로 변환
+              // Convert other types to strings
               return String(item || '');
             })
             .filter(Boolean)
             .join('\n');
         }
-        // 객체인 경우 JSON 문자열로 변환
+        // Convert object to JSON string
         if (content && typeof content === 'object') {
           try {
             return JSON.stringify(content, null, 2);
           } catch (e) {
             console.warn(
-              `[OpenAI Chat Completions] ⚠️ content 객체 직렬화 실패: 원본 타입=${typeof content}, 값=${JSON.stringify(
+              `[OpenAI Chat Completions] ⚠️ Failed to serialize content object: original type=${typeof content}, value=${JSON.stringify(
                 content
               )}`
             );
             return String(content || '');
           }
         }
-        // 기타 타입은 문자열로 변환
+        // Convert other types to strings
         const converted = String(content || '');
         if (
           converted === '[object Object]' ||
           converted.includes('[object Object]')
         ) {
           console.warn(
-            `[OpenAI Chat Completions] ⚠️ content가 "[object Object]"로 변환됨: 원본 타입=${typeof content}, 값=${JSON.stringify(
+            `[OpenAI Chat Completions] ⚠️ content converted to "[object Object]": original type=${typeof content}, value=${JSON.stringify(
               content
             )}`
           );
@@ -1476,7 +1476,7 @@ export async function POST(request) {
         };
       });
 
-      // Ollama options 구성 (temperature 등은 options 하위에 위치)
+      // Build Ollama options (temperature, etc. under options)
       const ollamaOptions = {};
       if (temperature !== undefined) ollamaOptions.temperature = temperature;
       if (top_p !== undefined) ollamaOptions.top_p = top_p;
@@ -1494,18 +1494,18 @@ export async function POST(request) {
     }
 
     /**
-     * 단일 모델 서버 호출 실행
-     * @param {string} url - 모델 서버 URL
-     * @param {object} options - fetch 옵션
-     * @returns {Promise<Response>} 모델 서버 응답
+     * Execute a single model server call
+     * @param {string} url - model server URL
+     * @param {object} options - fetch options
+     * @returns {Promise<Response>} model server response
      */
     async function fetchModelServer(url, options) {
-      // 타임아웃 설정 (환경변수로 설정 가능)
+      // Configure timeout (can be set via environment variable)
       const timeoutMs = stream
         ? MODEL_SERVER_TIMEOUT_STREAM
         : MODEL_SERVER_TIMEOUT_NORMAL;
 
-      // AbortController를 사용한 타임아웃 설정
+      // Configure timeout with AbortController
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
@@ -1519,27 +1519,27 @@ export async function POST(request) {
 
         const response = await fetch(url, fetchOptions);
 
-        // 성공 시 타임아웃 정리
+        // Clear timeout on success
         clearTimeout(timeoutId);
 
         return response;
       } catch (fetchErr) {
-        // fetch 실패 시 타임아웃 정리
+        // Clear timeout when fetch fails
         clearTimeout(timeoutId);
         throw fetchErr;
       }
     }
 
     /**
-     * 모델 서버 호출 헬퍼 (재시도 로직 포함)
-     * 첫 번째 시도에서 성공하면 재시도 로직을 실행하지 않음
-     * @param {string} url - 모델 서버 URL
-     * @param {object} options - fetch 옵션
-     * @param {number} maxRetries - 최대 재시도 횟수
-     * @param {string} specifiedServerName - 지정된 서버 이름 (있는 경우)
+     * Model server call helper (includes retry logic)
+     * If first attempt succeeds, retry logic is not executed
+     * @param {string} url - model server URL
+     * @param {object} options - fetch options
+     * @param {number} maxRetries - maximum retry count
+     * @param {string} specifiedServerName - specified server name (if any)
      * @param {string} currentProvider - 현재 provider
-     * @param {string} modelId - 모델 ID (표시 이름 기반 라운드로빈용)
-     * @returns {Promise<{response: Response, retryCount: number}>} 모델 서버 응답과 재시도 횟수
+     * @param {string} modelId - model ID (for display-name-based round robin)
+     * @returns {Promise<{response: Response, retryCount: number}>} model server response and retry count
      */
     async function fetchWithRetry(
       url,
@@ -1549,11 +1549,11 @@ export async function POST(request) {
       currentProvider = 'model-server',
       modelId = null
     ) {
-      // 첫 번째 시도 (1번만에 성공하면 재시도 로직 실행 안 함)
+      // First attempt (skip retry logic if it succeeds immediately)
       try {
         const response = await fetchModelServer(url, options);
 
-        // HTTP 응답 상태 코드 확인
+        // Check HTTP response status code
         if (!response.ok) {
           const status = response.status;
           const isRetryableHttpError =
@@ -1562,25 +1562,25 @@ export async function POST(request) {
             status === 503 || // Service Unavailable
             status === 504; // Gateway Timeout
 
-          // HTTP 오류 응답 본문 읽기 (에러 정보 확인용)
+          // Read HTTP error response body (to inspect error details)
           let errorBody = '';
           try {
             const clonedResponse = response.clone();
             errorBody = await clonedResponse.text();
           } catch (e) {
             console.warn(
-              '[OpenAI Chat Completions] 응답 본문 읽기 실패:',
+              '[OpenAI Chat Completions] Failed to read response body:',
               e?.message || e
             );
           }
 
           if (isRetryableHttpError && maxRetries > 0) {
             console.error(
-              `[OpenAI Chat Completions] HTTP ${status} 오류, 재시도 예정`
+              `[OpenAI Chat Completions] HTTP ${status} error, will retry`
             );
           } else {
             console.error(
-              `[OpenAI Chat Completions] HTTP ${status} 오류: ${errorBody.substring(
+              `[OpenAI Chat Completions] HTTP ${status} error: ${errorBody.substring(
                 0,
                 200
               )}`
@@ -1588,13 +1588,13 @@ export async function POST(request) {
             return { response, retryCount: 1 };
           }
 
-          // 재시도 가능한 오류면 재시도 로직으로 진행
+          // If retryable error, proceed to retry logic
         } else {
-          // 첫 번째 시도에서 성공 - 재시도 로직 실행 안 함
+          // Succeeded on first attempt - do not run retry logic
           return { response, retryCount: 1 };
         }
       } catch (error) {
-        // 네트워크 오류인지 확인
+        // Check whether this is a network error
         const isRetryable =
           error.name === 'AbortError' ||
           error.name === 'TimeoutError' ||
@@ -1603,24 +1603,24 @@ export async function POST(request) {
           error.message?.includes('fetch failed') ||
           error.message?.includes('timeout');
 
-        // 재시도 불가능한 오류면 바로 throw
+        // If not retryable, throw immediately
         if (!isRetryable || maxRetries === 0) {
           console.error(
-            `[OpenAI Chat Completions] 모델 서버 호출 실패 (재시도 불가): ${error.message}`
+            `[OpenAI Chat Completions] Model server call failed (not retryable): ${error.message}`
           );
           throw error;
         }
 
-        // 재시도 가능한 오류면 재시도 로직으로 진행
+        // If retryable error, proceed to retry logic
         console.warn(
-          `[OpenAI Chat Completions] 모델 서버 호출 실패, 재시도 예정: ${error.message}`
+          `[OpenAI Chat Completions] Model server call failed, will retry: ${error.message}`
         );
       }
 
-      // 재시도 로직 (첫 번째 시도가 실패한 경우에만 실행)
+      // Retry logic (runs only when first attempt fails)
       let lastError;
       let lastResponse;
-      let retryUrl = url; // 초기값은 원본 URL
+      let retryUrl = url; // Initial value is the original URL
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
