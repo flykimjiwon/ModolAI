@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import DarkModeToggle from './DarkModeToggle';
 import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
@@ -307,7 +309,7 @@ export default function ChatWidget() {
   return (
     <>
       <div className="fixed top-5 right-5 z-50">
-        <div className="flex items-center justify-center w-16 h-16 rounded-full border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full border border-border bg-background shadow-lg">
           <div className="scale-125">
             <DarkModeToggle />
           </div>
@@ -316,25 +318,25 @@ export default function ChatWidget() {
       {showChatWidget && (
         <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-4">
           {isOpen && (
-            <div className="w-80 h-[768px] bg-white rounded-lg shadow-xl flex flex-col dark:bg-gray-800"> {/* 세로 길이 2배 */}
-              <div className="bg-gray-800 text-white p-3 rounded-t-lg flex justify-between items-center dark:bg-gray-700">
-                <h3 className="text-lg font-semibold">실시간 채팅</h3>
+            <Card className="w-80 h-[768px] py-0 gap-0 overflow-hidden shadow-xl">
+              <CardHeader className="flex flex-row items-center justify-between bg-primary text-primary-foreground p-3 rounded-t-xl gap-2">
+                <CardTitle className="text-lg text-primary-foreground">실시간 채팅</CardTitle>
                 <label className="flex items-center text-xs cursor-pointer">
                   <input
                     type="checkbox"
                     checked={autoScroll}
                     onChange={(e) => setAutoScroll(e.target.checked)}
-                    className="mr-1 h-4 w-4 rounded accent-blue-500"
+                    className="mr-1 h-4 w-4 rounded accent-primary"
                   />
                   자동 스크롤
                 </label>
-              </div>
-              <div className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-4 dark:bg-gray-700">
+              </CardHeader>
+              <CardContent className="flex-1 p-4 overflow-y-auto bg-muted space-y-4">
                 {hasMore && (
                   <div className="text-center">
-                    <button onClick={loadMoreMessages} disabled={isLoadingMore} className="text-sm text-blue-600 hover:underline disabled:text-gray-400 dark:text-blue-400">
+                    <Button variant="link" onClick={loadMoreMessages} disabled={isLoadingMore} className="text-sm">
                       {isLoadingMore ? '로딩 중...' : '이전 대화 보기'}
-                    </button>
+                    </Button>
                   </div>
                 )}
                 {messages.map((msg) => {
@@ -350,14 +352,14 @@ export default function ChatWidget() {
                     <div key={msg._id} className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} ${isOptimistic ? 'opacity-60' : ''}`}>
                       <div className="max-w-[75%]">
                         <div className={`flex items-baseline gap-2 mb-1 ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
-                          <p className={`text-xs font-medium ${isMyMessage ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                          <p className={`text-xs font-medium ${isMyMessage ? 'text-primary' : 'text-muted-foreground'}`}>
                             {displayName}
                           </p>
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                          <span className="text-[10px] text-muted-foreground">
                             {formatTime(msg.createdAt)}
                           </span>
                         </div>
-                        <div className={`px-4 py-2 rounded-lg inline-block break-words ${isMyMessage ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900 dark:bg-gray-600 dark:text-gray-50'}`}>
+                        <div className={`px-4 py-2 rounded-lg inline-block break-words ${isMyMessage ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
                           {msg.text}
                         </div>
                       </div>
@@ -365,8 +367,8 @@ export default function ChatWidget() {
                   );
                 })}
                 <div ref={messagesEndRef} />
-              </div>
-              <form onSubmit={handleSendMessage} className="p-2 border-t flex items-center bg-white dark:bg-gray-800 dark:border-gray-700">
+              </CardContent>
+              <form onSubmit={handleSendMessage} className="p-2 border-t border-border flex items-center bg-background">
                 <input
                   type="text"
                   value={newMessage}
@@ -378,28 +380,30 @@ export default function ChatWidget() {
                     }
                   }}
                   placeholder={sending ? "전송 중..." : "메시지를 입력하세요... (Enter: 전송)"}
-                  className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-50 ${sending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground bg-background ${sending ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={sending}
                   autoComplete="off"
                 />
-                <button 
+                <Button 
                   type="submit" 
-                  className={`ml-2 p-2 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none transition-all ${sending ? 'opacity-50 cursor-not-allowed bg-gray-400' : ''}`}
+                  size="icon"
+                  className="ml-2 rounded-full"
                   disabled={sending}
                   title="메시지 전송 (Enter)"
                 >
                   <Send size={18} className={sending ? 'animate-pulse' : ''} />
-                </button>
+                </Button>
               </form>
-            </div>
+            </Card>
           )}
-          <button 
+          <Button 
             onClick={() => setIsOpen(!isOpen)} 
-            className="mt-4 ml-auto flex items-center justify-center w-16 h-16 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            size="icon"
+            className="mt-4 ml-auto size-16 rounded-full shadow-lg"
             aria-label={isOpen ? '채팅창 닫기' : '채팅창 열기'}
           >
             {isOpen ? <X size={30} /> : <MessageCircle size={30} />}
-          </button>
+          </Button>
         </div>
       )}
     </>
