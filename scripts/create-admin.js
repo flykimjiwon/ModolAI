@@ -175,8 +175,8 @@ async function createAdmin(customEmail = null, customPassword = null) {
       cell = '시스템관리팀';
     } else {
       // 기본값 모드 (기존 동작)
-      email = 'admin@shinhan.com';
-      password = 'shinhan@1';
+      email = 'admin@modol.ai';
+      password = 'modol@admin';
       name = '시스템 관리자';
       department = 'tech혁신unit';
       cell = '시스템관리팀';

@@ -1,6 +1,6 @@
 export const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
+if (!JWT_SECRET && process.env.SKIP_DB_CONNECTION !== 'true') {
   throw new Error('JWT_SECRET is not defined in the environment variables. Please check your .env file.');
 }
 

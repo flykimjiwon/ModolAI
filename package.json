@@ -1,6 +1,7 @@
 {
-  "name": "shb-techai",
+  "name": "modol",
   "version": "0.1.0",
+  "description": "Modol - AI-powered chat and agent platform",
   "private": true,
   "scripts": {
     "dev": "node scripts/dev-safe.js",

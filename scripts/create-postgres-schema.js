@@ -5,7 +5,7 @@
  * 1. PostgreSQL 연결 대기 (Docker 환경 대응)
  * 2. 스키마 생성 (테이블이 없는 경우)
  * 3. 기본 데이터 생성 (설정, 공지사항, RAG 설정)
- * 4. 기본 관리자 계정 생성 (admin@shinhan.com, 필요한 경우)
+ * 4. 기본 관리자 계정 생성 (admin@modol.ai, 필요한 경우)
  *
  * 사용법:
  *   node scripts/create-postgres-schema.js
@@ -1174,7 +1174,7 @@ async function initializeDatabase() {
     // 7. 관리자 계정 확인
     console.log('🔍 관리자 계정 확인 중...');
     const client2 = await pool.connect();
-    const hasAdmin = await userExists(client2, 'admin@shinhan.com');
+     const hasAdmin = await userExists(client2, 'admin@modol.ai');
     client2.release();
 
     // 8. 관리자 계정 생성 (필요한 경우)
@@ -1189,9 +1189,9 @@ async function initializeDatabase() {
         throw new Error(`관리자 계정 생성 실패: ${error.message}`);
       }
     } else {
-      console.log(
-        '✅ 기본 관리자 계정(admin@shinhan.com)이 이미 존재합니다.\n'
-      );
+       console.log(
+         '✅ 기본 관리자 계정(admin@modol.ai)이 이미 존재합니다.\n'
+       );
     }
 
     // 9. 초기화 완료

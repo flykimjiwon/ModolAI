@@ -63,8 +63,8 @@ export async function POST(request) {
     [user.id]
   );
 
-  // admin@shinhan.com 로그인 시 초기 스키마 + 마이그레이션 자동 실행 (백그라운드, 로그인 응답 지연 없음)
-  if (normalizedEmail === 'admin@shinhan.com') {
+  // admin 역할 로그인 시 초기 스키마 + 마이그레이션 자동 실행 (백그라운드, 로그인 응답 지연 없음)
+  if (user.role === 'admin') {
     runAutoMigration().catch((err) =>
       console.warn('[AutoMigrate] 백그라운드 실패:', err.message)
     );

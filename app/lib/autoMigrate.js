@@ -1,7 +1,7 @@
 /**
  * 자동 마이그레이션 유틸 (2026-02-27)
  *
- * admin@shinhan.com 로그인 시 자동으로 호출된다.
+ * admin 역할 로그인 시 자동으로 호출된다.
  * init-schema(테이블 생성) + migrate-models(컬럼 추가) 로직을 통합.
  * 모든 쿼리가 IF NOT EXISTS / nullable 처리라 멱등성 보장.
  */
