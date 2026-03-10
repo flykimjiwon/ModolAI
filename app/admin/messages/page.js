@@ -445,12 +445,12 @@ export default function MessagesPage() {
   // 역할에 따른 아이콘 반환
   const getRoleIcon = (role, text = '') => {
     if (isSystemMessage(text)) {
-      return <Bot className='h-5 w-5 text-purple-600' />;
+      return <Bot className='h-5 w-5 text-primary' />;
     }
     return role === 'user' ? (
-      <User className='h-5 w-5 text-blue-600' />
+      <User className='h-5 w-5 text-primary' />
     ) : (
-      <Bot className='h-5 w-5 text-green-600' />
+      <Bot className='h-5 w-5 text-primary' />
     );
   };
 
@@ -458,7 +458,7 @@ export default function MessagesPage() {
     // 시스템 요청 메시지 확인 (방제목 생성 요청 등)
     if (isSystemMessage(text)) {
       return (
-        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'>
+        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
           <Bot className='h-3 w-3 mr-1' />
           시스템
         </span>
@@ -467,14 +467,14 @@ export default function MessagesPage() {
 
     if (role === 'user') {
       return (
-        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'>
+        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
           <User className='h-3 w-3 mr-1' />
           사용자
         </span>
       );
     }
     return (
-      <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+      <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
         <Bot className='h-3 w-3 mr-1' />
         AI
       </span>
@@ -538,7 +538,7 @@ export default function MessagesPage() {
 
     if (normalizedFeedback === 'like') {
       return (
-        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'>
+        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
           <ThumbsUp className='h-3 w-3 mr-1' />
           좋아요
         </span>
@@ -546,61 +546,61 @@ export default function MessagesPage() {
     }
     if (normalizedFeedback === 'dislike') {
       return (
-        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'>
+        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive'>
           <ThumbsDown className='h-3 w-3 mr-1' />
           싫어요
         </span>
       );
     }
-    return <span className='text-xs text-gray-400 dark:text-gray-500'>-</span>;
+    return <span className='text-xs text-muted-foreground'>-</span>;
   };
 
   return (
     <div className='space-y-6'>
       {/* 페이지 헤더 */}
-      <div className='bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 border border-blue-100 dark:border-gray-600'>
+      <div className='bg-muted rounded-lg p-6 border border-border'>
         <div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
           <div className='flex-1'>
-            <h1 className='text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3'>
-              <div className='bg-blue-600 p-2 rounded-lg'>
+            <h1 className='text-3xl font-bold text-foreground flex items-center gap-3'>
+              <div className='bg-primary p-2 rounded-lg'>
                 <MessageCircle className='h-7 w-7 text-white' />
               </div>
               메시지 관리
             </h1>
-            <p className='text-gray-600 dark:text-gray-300 mt-2 text-sm'>
+            <p className='text-muted-foreground mt-2 text-sm'>
               시스템의 모든 메시지를 실시간으로 조회하고 관리합니다
             </p>
 
             {/* 통계 요약 */}
             <div className='flex flex-wrap items-center gap-4 mt-4'>
-              <div className='flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm'>
-                <BarChart3 className='h-4 w-4 text-blue-600' />
-                <span className='text-sm text-gray-600 dark:text-gray-400'>
+              <div className='flex items-center gap-2 bg-card px-4 py-2 rounded-lg shadow-sm'>
+                <BarChart3 className='h-4 w-4 text-primary' />
+                <span className='text-sm text-muted-foreground'>
                   총 메시지:
                 </span>
-                <span className='text-lg font-bold text-gray-900 dark:text-white'>
+                <span className='text-lg font-bold text-foreground'>
                   {totalCount.toLocaleString()}
                 </span>
               </div>
 
-              <div className='flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm'>
+              <div className='flex items-center gap-2 bg-card px-4 py-2 rounded-lg shadow-sm'>
                 <div
                   className={`w-2 h-2 rounded-full ${
                     isPollingEnabled
-                      ? 'bg-green-500 animate-pulse'
-                      : 'bg-gray-400'
+                      ? 'bg-primary animate-pulse'
+                      : 'bg-muted-foreground'
                   }`}
                 ></div>
-                <span className='text-sm text-gray-600 dark:text-gray-400'>
+                <span className='text-sm text-muted-foreground'>
                   {isPollingEnabled
                     ? '자동 새로고침 활성'
                     : '자동 새로고침 비활성'}
                 </span>
               </div>
 
-              <div className='flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm'>
-                <Clock className='h-4 w-4 text-gray-600 dark:text-gray-400' />
-                <span className='text-sm text-gray-600 dark:text-gray-400'>
+              <div className='flex items-center gap-2 bg-card px-4 py-2 rounded-lg shadow-sm'>
+                <Clock className='h-4 w-4 text-muted-foreground' />
+                <span className='text-sm text-muted-foreground'>
                   {lastRefresh.toLocaleTimeString('ko-KR', {
                     timeZone: 'Asia/Seoul',
                   })}
@@ -611,13 +611,13 @@ export default function MessagesPage() {
 
           {/* 액션 버튼 그룹 */}
           <div className='flex flex-wrap items-center gap-2'>
-            <div className='flex items-center gap-2 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-sm'>
+            <div className='flex items-center gap-2 bg-card p-1 rounded-lg shadow-sm'>
               <button
                 onClick={() => setViewMode('table')}
                 className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   viewMode === 'table'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-accent'
                 }`}
                 title='테이블 뷰'
               >
@@ -627,8 +627,8 @@ export default function MessagesPage() {
                 onClick={() => setViewMode('card')}
                 className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                   viewMode === 'card'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-accent'
                 }`}
                 title='카드 뷰'
               >
@@ -640,8 +640,8 @@ export default function MessagesPage() {
               onClick={() => setIsPollingEnabled(!isPollingEnabled)}
               className={`inline-flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all shadow-sm ${
                 isPollingEnabled
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                  : 'bg-green-500 hover:bg-green-600 text-white'
+                  ? 'bg-muted hover:bg-muted/80 text-foreground'
+                  : 'bg-primary hover:bg-primary/90 text-primary-foreground'
               }`}
               title={
                 isPollingEnabled ? '자동 새로고침 중지' : '자동 새로고침 시작'
@@ -658,7 +658,7 @@ export default function MessagesPage() {
             <button
               onClick={() => fetchMessages()}
               disabled={loading}
-              className='inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white text-sm font-medium rounded-lg transition-all shadow-sm'
+              className='inline-flex items-center px-4 py-2.5 bg-primary hover:bg-primary/90 disabled:bg-muted text-white text-sm font-medium rounded-lg transition-all shadow-sm'
               title='수동 새로고침'
             >
               <RefreshCw
@@ -669,7 +669,7 @@ export default function MessagesPage() {
 
             <button
               onClick={exportData}
-              className='inline-flex items-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-all shadow-sm'
+              className='inline-flex items-center px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-all shadow-sm'
             >
               <Download className='h-4 w-4 mr-2' />
               CSV
@@ -679,17 +679,17 @@ export default function MessagesPage() {
       </div>
 
       {/* 검색 및 필터 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden'>
+      <div className='bg-card rounded-lg border border-border shadow-sm overflow-hidden'>
         {/* 필터 헤더 */}
-        <div className='bg-gray-50 dark:bg-gray-700/50 px-6 py-4 border-b border-gray-200 dark:border-gray-600'>
+        <div className='bg-muted px-6 py-4 border-b border-border'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
-              <Filter className='h-5 w-5 text-gray-700 dark:text-gray-300' />
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+              <Filter className='h-5 w-5 text-foreground' />
+              <h3 className='text-lg font-semibold text-foreground'>
                 필터 및 검색
               </h3>
               {getActiveFiltersCount() > 0 && (
-                <span className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'>
+                <span className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
                   {getActiveFiltersCount()}개 활성
                 </span>
               )}
@@ -698,7 +698,7 @@ export default function MessagesPage() {
               {getActiveFiltersCount() > 0 && (
                 <button
                   onClick={clearAllFilters}
-                  className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors'
+                  className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors'
                 >
                   <XCircle className='h-4 w-4 mr-1' />
                   모두 초기화
@@ -706,7 +706,7 @@ export default function MessagesPage() {
               )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors'
+                className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition-colors'
               >
                 {showFilters ? (
                   <>
@@ -731,23 +731,23 @@ export default function MessagesPage() {
               {/* 검색 영역 */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div className={dateRange === 'custom' ? 'lg:col-span-3' : ''}>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <Search className='inline h-4 w-4 mr-1' />
                     메시지 내용 검색
                   </label>
                   <div className='relative'>
-                    <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+                    <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                     <input
                       type='text'
                       placeholder='메시지 내용을 입력하세요...'
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className='w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                      className='w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                     />
                     {searchTerm && (
                       <button
                         onClick={() => setSearchTerm('')}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                       >
                         <XCircle className='h-4 w-4' />
                       </button>
@@ -756,23 +756,23 @@ export default function MessagesPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <User className='inline h-4 w-4 mr-1' />
                     사용자 검색
                   </label>
                   <div className='relative'>
-                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4' />
+                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                     <input
                       type='text'
                       placeholder='이름 또는 이메일로 검색...'
                       value={selectedUser}
                       onChange={(e) => setSelectedUser(e.target.value)}
-                      className='w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                      className='w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                     />
                     {selectedUser && (
                       <button
                         onClick={() => setSelectedUser('')}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                       >
                         <XCircle className='h-4 w-4' />
                       </button>
@@ -784,14 +784,14 @@ export default function MessagesPage() {
               {/* 필터 옵션 */}
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <Building className='inline h-4 w-4 mr-1' />
                     부서
                   </label>
                   <select
                     value={deptFilter}
                     onChange={(e) => { setDeptFilter(e.target.value); setCurrentPage(1); }}
-                    className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                    className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
                     <option value=''>모든 부서</option>
                     {departments.map((dept) => (
@@ -803,14 +803,14 @@ export default function MessagesPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <User className='inline h-4 w-4 mr-1' />
                     역할
                   </label>
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                    className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
                     <option value=''>모든 역할</option>
                     <option value='user'>사용자</option>
@@ -819,14 +819,14 @@ export default function MessagesPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <ThumbsUp className='inline h-4 w-4 mr-1' />
                     피드백
                   </label>
                   <select
                     value={selectedFeedback}
                     onChange={(e) => setSelectedFeedback(e.target.value)}
-                    className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                    className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
                     <option value=''>모든 피드백</option>
                     <option value='like'>좋아요</option>
@@ -836,7 +836,7 @@ export default function MessagesPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <Bot className='inline h-4 w-4 mr-1' />
                     모델
                   </label>
@@ -846,12 +846,12 @@ export default function MessagesPage() {
                       placeholder='모델명 입력...'
                       value={selectedModel}
                       onChange={(e) => setSelectedModel(e.target.value)}
-                      className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                      className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                     />
                     {selectedModel && (
                       <button
                         onClick={() => setSelectedModel('')}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                       >
                         <XCircle className='h-4 w-4' />
                       </button>
@@ -860,7 +860,7 @@ export default function MessagesPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <Hash className='inline h-4 w-4 mr-1' />
                     채팅방 ID 검색
                   </label>
@@ -870,12 +870,12 @@ export default function MessagesPage() {
                       placeholder='채팅방 ID를 입력하세요...'
                       value={selectedRoomId}
                       onChange={(e) => setSelectedRoomId(e.target.value)}
-                      className='w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white font-mono text-sm transition-all'
+                      className='w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground font-mono text-sm transition-all'
                     />
                     {selectedRoomId && (
                       <button
                         onClick={() => setSelectedRoomId('')}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                       >
                         <XCircle className='h-4 w-4' />
                       </button>
@@ -890,14 +890,14 @@ export default function MessagesPage() {
                     dateRange === 'custom' ? 'sm:col-span-2 lg:col-span-2' : ''
                   }
                 >
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-foreground mb-2'>
                     <Calendar className='inline h-4 w-4 mr-1' />
                     기간
                   </label>
                   <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
-                    className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                    className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
                     {dateRangeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -912,14 +912,14 @@ export default function MessagesPage() {
                         value={customStartDate}
                         onChange={(e) => setCustomStartDate(e.target.value)}
                         onClick={(e) => e.currentTarget.showPicker?.()}
-                        className='w-full min-w-[140px] px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                        className='w-full min-w-[140px] px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                       />
                       <input
                         type='date'
                         value={customEndDate}
                         onChange={(e) => setCustomEndDate(e.target.value)}
                         onClick={(e) => e.currentTarget.showPicker?.()}
-                        className='w-full min-w-[140px] px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all'
+                        className='w-full min-w-[140px] px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                       />
                     </div>
                   )}
@@ -928,41 +928,41 @@ export default function MessagesPage() {
 
               {/* 활성 필터 태그 표시 */}
               {getActiveFiltersCount() > 0 && (
-                <div className='pt-4 border-t border-gray-200 dark:border-gray-600'>
+                <div className='pt-4 border-t border-border'>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <span className='text-sm font-medium text-foreground'>
                       활성 필터:
                     </span>
                     {searchTerm && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
                         검색: {searchTerm.substring(0, 20)}
                         {searchTerm.length > 20 ? '...' : ''}
                         <button
                           onClick={() => setSearchTerm('')}
-                          className='ml-1.5 hover:text-blue-900 dark:hover:text-blue-100'
+                          className='ml-1.5 hover:text-primary'
                         >
                           <X className='h-3 w-3' />
                         </button>
                       </span>
                     )}
                     {selectedRoomId && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-mono'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary font-mono'>
                         방ID: {formatRoomId(selectedRoomId)}
                         <button
                           onClick={() => setSelectedRoomId('')}
-                          className='ml-1.5 hover:text-blue-900 dark:hover:text-blue-100'
+                          className='ml-1.5 hover:text-primary'
                         >
                           <X className='h-3 w-3' />
                         </button>
                       </span>
                     )}
                     {selectedUser && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
                         사용자: {selectedUser.substring(0, 20)}
                         {selectedUser.length > 20 ? '...' : ''}
                         <button
                           onClick={() => setSelectedUser('')}
-                          className='ml-1.5 hover:text-cyan-900 dark:hover:text-cyan-100'
+                          className='ml-1.5 hover:text-primary'
                         >
                           <X className='h-3 w-3' />
                         </button>
@@ -972,7 +972,7 @@ export default function MessagesPage() {
                       (dateRange !== 'custom' ||
                         customStartDate ||
                         customEndDate)) && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
                         기간:{' '}
                         {dateRange === 'custom'
                           ? `${customStartDate || '시작 없음'} ~ ${
@@ -987,36 +987,36 @@ export default function MessagesPage() {
                             setCustomStartDate('');
                             setCustomEndDate('');
                           }}
-                          className='ml-1.5 hover:text-purple-900 dark:hover:text-purple-100'
+                          className='ml-1.5 hover:text-primary'
                         >
                           <X className='h-3 w-3' />
                         </button>
                       </span>
                     )}
                     {deptFilter && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
                         부서: {departments.find((d) => d.value === deptFilter)?.label || deptFilter.split('|')[0]}
                         <button
                           onClick={() => setDeptFilter('')}
-                          className='ml-1.5 hover:text-green-900 dark:hover:text-green-100'
+                          className='ml-1.5 hover:text-primary'
                         >
                           <X className='h-3 w-3' />
                         </button>
                       </span>
                     )}
                     {selectedRole && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground'>
                         역할: {selectedRole === 'user' ? '사용자' : 'AI'}
                         <button
                           onClick={() => setSelectedRole('')}
-                          className='ml-1.5 hover:text-yellow-900 dark:hover:text-yellow-100'
+                          className='ml-1.5 hover:text-foreground'
                         >
                           <X className='h-3 w-3' />
                         </button>
                       </span>
                     )}
                     {selectedFeedback && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground'>
                         피드백:{' '}
                         {selectedFeedback === 'like'
                           ? '좋아요'
@@ -1025,18 +1025,18 @@ export default function MessagesPage() {
                           : '없음'}
                         <button
                           onClick={() => setSelectedFeedback('')}
-                          className='ml-1.5 hover:text-pink-900 dark:hover:text-pink-100'
+                          className='ml-1.5 hover:text-foreground'
                         >
                           <X className='h-3 w-3' />
                         </button>
                       </span>
                     )}
                     {selectedModel && (
-                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'>
+                      <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
                         모델: {selectedModel}
                         <button
                           onClick={() => setSelectedModel('')}
-                          className='ml-1.5 hover:text-indigo-900 dark:hover:text-indigo-100'
+                          className='ml-1.5 hover:text-primary'
                         >
                           <X className='h-3 w-3' />
                         </button>
@@ -1051,23 +1051,23 @@ export default function MessagesPage() {
       </div>
 
       {/* 메시지 목록 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden'>
+      <div className='bg-card rounded-lg border border-border shadow-sm overflow-hidden'>
         {loading ? (
           <div className='flex flex-col items-center justify-center h-64 space-y-4'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary'></div>
+            <p className='text-sm text-muted-foreground'>
               데이터를 불러오는 중...
             </p>
           </div>
         ) : messages.length === 0 ? (
           <div className='text-center py-16'>
-            <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 mb-4'>
-              <MessageCircle className='h-8 w-8 text-gray-400' />
+            <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4'>
+              <MessageCircle className='h-8 w-8 text-muted-foreground' />
             </div>
-            <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-2'>
+            <h3 className='text-lg font-medium text-foreground mb-2'>
               메시지가 없습니다
             </h3>
-            <p className='text-sm text-gray-500 dark:text-gray-400'>
+            <p className='text-sm text-muted-foreground'>
               {getActiveFiltersCount() > 0
                 ? '검색 조건과 일치하는 메시지가 없습니다. 필터를 조정해보세요.'
                 : '아직 메시지가 없습니다.'}
@@ -1075,7 +1075,7 @@ export default function MessagesPage() {
             {getActiveFiltersCount() > 0 && (
               <button
                 onClick={clearAllFilters}
-                className='mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors'
+                className='mt-4 inline-flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors'
               >
                 <XCircle className='h-4 w-4 mr-2' />
                 필터 초기화
@@ -1090,7 +1090,7 @@ export default function MessagesPage() {
               {messages.map((message) => (
                 <div
                   key={message._id}
-                  className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-lg transition-all duration-200 hover:border-blue-300 dark:hover:border-blue-600'
+                  className='bg-card border border-border rounded-lg p-5 hover:shadow-lg transition-all duration-200 hover:border-primary'
                   onDoubleClick={() => openMessageModal(message)}
                 >
                   {/* 카드 헤더 */}
@@ -1103,7 +1103,7 @@ export default function MessagesPage() {
                             setSelectedUser(message.name || message.email);
                             setCurrentPage(1);
                           }}
-                          className='font-medium text-gray-900 dark:text-white text-sm truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors block text-left w-full'
+                          className='font-medium text-foreground text-sm truncate hover:text-primary transition-colors block text-left w-full'
                           title={`이 사용자의 메시지만 보기 (${message.name || message.email})`}
                         >
                           {message.name || '이름 없음'}
@@ -1113,7 +1113,7 @@ export default function MessagesPage() {
                             setSelectedUser(message.email);
                             setCurrentPage(1);
                           }}
-                          className='text-xs text-gray-500 dark:text-gray-400 truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors block text-left w-full'
+                          className='text-xs text-muted-foreground truncate hover:text-primary transition-colors block text-left w-full'
                           title={`이 이메일의 메시지만 보기 (${message.email})`}
                         >
                           {message.email}
@@ -1125,7 +1125,7 @@ export default function MessagesPage() {
 
                   {/* 메시지 내용 */}
                   <div className='mb-3'>
-                    <div className='text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-2'>
+                    <div className='text-sm text-foreground line-clamp-3 mb-2'>
                       {truncateText(message.text, 150)}
                     </div>
                     <button
@@ -1133,7 +1133,7 @@ export default function MessagesPage() {
                         setSelectedRoomId(message.roomId);
                         setCurrentPage(1);
                       }}
-                      className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-medium transition-colors font-mono'
+                      className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
                       title={`이 채팅방의 메시지만 보기 (${message.roomId})`}
                     >
                       <Hash className='h-3 w-3' />
@@ -1144,13 +1144,13 @@ export default function MessagesPage() {
                   {/* 메타 정보 */}
                   <div className='space-y-2 mb-3'>
                     {message.department && (
-                      <div className='flex items-center text-xs text-gray-600 dark:text-gray-400'>
+                      <div className='flex items-center text-xs text-muted-foreground'>
                         <Building className='h-3 w-3 mr-1 flex-shrink-0' />
                         <span className='truncate'>{message.department}</span>
                       </div>
                     )}
                     <div className='flex items-center justify-between text-xs'>
-                      <span className='inline-flex items-center text-gray-600 dark:text-gray-400'>
+                      <span className='inline-flex items-center text-muted-foreground'>
                         <Clock className='h-3 w-3 mr-1' />
                         {formatDate(message.createdAt)}
                       </span>
@@ -1167,7 +1167,7 @@ export default function MessagesPage() {
                       if (!hasLabel && !hasModel) return null;
 
                       return (
-                        <div className='text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded inline-block'>
+                        <div className='text-xs bg-muted text-foreground px-2 py-1 rounded inline-block'>
                           {hasLabel ? message.modelLabel : message.model}
                         </div>
                       );
@@ -1175,10 +1175,10 @@ export default function MessagesPage() {
                   </div>
 
                   {/* 액션 버튼 */}
-                  <div className='flex items-center justify-end gap-2 pt-3 border-t border-gray-200 dark:border-gray-600'>
+                  <div className='flex items-center justify-end gap-2 pt-3 border-t border-border'>
                     <button
                       onClick={() => openMessageModal(message)}
-                      className='inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors'
+                      className='inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors'
                       title='메시지 상세 보기'
                     >
                       <Eye className='h-3 w-3 mr-1' />
@@ -1186,7 +1186,7 @@ export default function MessagesPage() {
                     </button>
                     <button
                       onClick={() => deleteMessage(message._id)}
-                      className='inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors'
+                      className='inline-flex items-center px-3 py-1.5 text-xs font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors'
                       title='메시지 삭제'
                     >
                       <Trash2 className='h-3 w-3 mr-1' />
@@ -1202,8 +1202,8 @@ export default function MessagesPage() {
           /* 테이블 뷰 */
           <>
             {/* 테이블 헤더 */}
-            <div className='bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 px-6 py-4 border-b-2 border-gray-300 dark:border-gray-500'>
-              <div className='grid grid-cols-12 gap-4 text-xs font-bold text-gray-700 dark:text-gray-200 uppercase tracking-wider'>
+            <div className='bg-muted px-6 py-4 border-b-2 border-border'>
+              <div className='grid grid-cols-12 gap-4 text-xs font-bold text-foreground uppercase tracking-wider'>
                 <div className='col-span-2 flex items-center gap-1'>
                   <User className='h-3.5 w-3.5' />
                   사용자
@@ -1234,15 +1234,15 @@ export default function MessagesPage() {
 
             {/* 메시지 목록 */}
             <div className='max-h-[70vh] overflow-y-auto'>
-              <div className='divide-y divide-gray-200 dark:divide-gray-600'>
+              <div className='divide-y divide-border'>
               {messages.map((message, index) => (
                 <div
                   key={message._id}
                   className={`px-6 py-4 transition-all duration-150 ${
                     index % 2 === 0
-                      ? 'bg-white dark:bg-gray-800'
-                      : 'bg-gray-50/50 dark:bg-gray-800/70'
-                  } hover:bg-blue-50 dark:hover:bg-blue-900/10 hover:shadow-sm`}
+                      ? 'bg-card'
+                      : 'bg-muted/50'
+                  } hover:bg-accent hover:shadow-sm`}
                   onDoubleClick={() => openMessageModal(message)}
                 >
                   <div className='grid grid-cols-12 gap-4 items-center'>
@@ -1254,7 +1254,7 @@ export default function MessagesPage() {
                             setSelectedUser(message.name || message.email);
                             setCurrentPage(1);
                           }}
-                          className='font-semibold text-gray-900 dark:text-white truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left'
+                          className='font-semibold text-foreground truncate hover:text-primary transition-colors text-left'
                           title={`이 사용자의 메시지만 보기 (${message.name || message.email})`}
                         >
                           {message.name || '이름 없음'}
@@ -1264,13 +1264,13 @@ export default function MessagesPage() {
                             setSelectedUser(message.email);
                             setCurrentPage(1);
                           }}
-                          className='block text-gray-500 dark:text-gray-400 text-xs truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-left'
+                          className='block text-muted-foreground text-xs truncate hover:text-primary transition-colors text-left'
                           title={`이 이메일의 메시지만 보기 (${message.email})`}
                         >
                           {message.email}
                         </button>
                         {message.department && (
-                          <div className='flex items-center mt-1.5 text-xs text-gray-600 dark:text-gray-400'>
+                          <div className='flex items-center mt-1.5 text-xs text-muted-foreground'>
                             <Building className='h-3 w-3 mr-1 flex-shrink-0' />
                             <span className='truncate'>
                               {message.department}
@@ -1287,7 +1287,7 @@ export default function MessagesPage() {
 
                     {/* 메시지 내용 */}
                     <div className='col-span-3'>
-                      <div className='text-sm text-gray-900 dark:text-white leading-relaxed mb-2'>
+                      <div className='text-sm text-foreground leading-relaxed mb-2'>
                         {truncateText(message.text, 120)}
                       </div>
                       <div className='flex items-center flex-wrap gap-2'>
@@ -1296,14 +1296,14 @@ export default function MessagesPage() {
                             setSelectedRoomId(message.roomId);
                             setCurrentPage(1);
                           }}
-                          className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-medium transition-colors font-mono'
+                          className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
                           title={`이 채팅방의 메시지만 보기 (${message.roomId})`}
                         >
                           <Hash className='h-3 w-3' />
                           {formatRoomId(message.roomId)}
                         </button>
                         {message.clientIP && (
-                          <span className='text-xs text-gray-500 dark:text-gray-400 font-mono'>
+                          <span className='text-xs text-muted-foreground font-mono'>
                             {message.clientIP}
                           </span>
                         )}
@@ -1313,7 +1313,7 @@ export default function MessagesPage() {
                     {/* 모델 */}
                     <div className='col-span-1 min-w-0'>
                       <div className='flex flex-col gap-1.5'>
-                        <span className='text-xs bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-800 dark:text-gray-200 px-2.5 py-1 rounded-md break-words overflow-wrap-anywhere font-medium'>
+                        <span className='text-xs bg-muted text-foreground px-2.5 py-1 rounded-md break-words overflow-wrap-anywhere font-medium'>
                           {(() => {
                             const hasLabel =
                               message.modelLabel &&
@@ -1333,8 +1333,8 @@ export default function MessagesPage() {
                           <span
                             className={`text-xs px-2 py-0.5 rounded-md font-medium ${
                               message.retryCount === 2
-                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                ? 'bg-muted text-muted-foreground'
+                                : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             재시도 {message.retryCount}회
@@ -1350,7 +1350,7 @@ export default function MessagesPage() {
 
                     {/* 시간 */}
                     <div className='col-span-2'>
-                      <div className='flex items-center text-xs text-gray-600 dark:text-gray-400'>
+                      <div className='flex items-center text-xs text-muted-foreground'>
                         <Calendar className='h-3.5 w-3.5 mr-1.5 flex-shrink-0' />
                         <span className='leading-tight'>
                           {formatDate(message.createdAt)}
@@ -1364,7 +1364,7 @@ export default function MessagesPage() {
                         {/* 상세 보기 */}
                         <button
                           onClick={() => openMessageModal(message)}
-                          className='p-2 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-150 hover:scale-105'
+                          className='p-2 text-primary hover:text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all duration-150 hover:scale-105'
                           title='메시지 상세 보기'
                         >
                           <Eye className='h-4 w-4' />
@@ -1373,7 +1373,7 @@ export default function MessagesPage() {
                         {/* 메시지 삭제 */}
                         <button
                           onClick={() => deleteMessage(message._id)}
-                          className='p-2 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/50 rounded-lg transition-all duration-150 hover:scale-105'
+                          className='p-2 text-destructive hover:text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-all duration-150 hover:scale-105'
                           title='메시지 삭제'
                         >
                           <Trash2 className='h-4 w-4' />
@@ -1391,19 +1391,19 @@ export default function MessagesPage() {
 
       {/* 페이지네이션 */}
       {totalPages > 1 && (
-        <div className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4'>
+        <div className='bg-card border border-border rounded-lg shadow-sm p-4'>
           <div className='flex flex-col sm:flex-row items-center justify-between gap-4'>
             {/* 페이지 정보 */}
-            <div className='text-sm text-gray-600 dark:text-gray-400'>
-              <span className='font-medium text-gray-900 dark:text-white'>
+            <div className='text-sm text-muted-foreground'>
+              <span className='font-medium text-foreground'>
                 {((currentPage - 1) * 20 + 1).toLocaleString()}
               </span>
               {' - '}
-              <span className='font-medium text-gray-900 dark:text-white'>
+              <span className='font-medium text-foreground'>
                 {Math.min(currentPage * 20, totalCount).toLocaleString()}
               </span>
               {' / '}
-              <span className='font-medium text-gray-900 dark:text-white'>
+              <span className='font-medium text-foreground'>
                 {totalCount.toLocaleString()}
               </span>
               {' 개 메시지'}
@@ -1415,7 +1415,7 @@ export default function MessagesPage() {
               <button
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className='px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                className='px-3 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
                 title='첫 페이지'
               >
                 ««
@@ -1425,7 +1425,7 @@ export default function MessagesPage() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                className='px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
               >
                 ‹ 이전
               </button>
@@ -1455,8 +1455,8 @@ export default function MessagesPage() {
                         onClick={() => setCurrentPage(i)}
                         className={`min-w-[40px] px-3 py-2 text-sm font-medium rounded-lg transition-all ${
                           currentPage === i
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                            ? 'bg-primary text-primary-foreground shadow-md'
+                            : 'text-foreground bg-card border border-border hover:bg-accent'
                         }`}
                       >
                         {i}
@@ -1473,7 +1473,7 @@ export default function MessagesPage() {
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                className='px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
               >
                 다음 ›
               </button>
@@ -1482,7 +1482,7 @@ export default function MessagesPage() {
               <button
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className='px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                className='px-3 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
                 title='마지막 페이지'
               >
                 »»
@@ -1502,10 +1502,10 @@ export default function MessagesPage() {
                     setCurrentPage(page);
                   }
                 }}
-                className='w-20 px-3 py-2 text-sm text-center border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                className='w-20 px-3 py-2 text-sm text-center border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground'
                 placeholder='페이지'
               />
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
+              <span className='text-sm text-muted-foreground'>
                 / {totalPages}
               </span>
             </div>
@@ -1523,14 +1523,14 @@ export default function MessagesPage() {
           ></div>
 
           {/* 모달 내용 */}
-          <div className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl max-h-[90vh] overflow-y-auto p-6'>
+          <div className='relative bg-card rounded-lg shadow-xl w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl max-h-[90vh] overflow-y-auto p-6'>
             <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+              <h3 className='text-lg font-medium text-foreground'>
                 메시지 상세 정보
               </h3>
               <button
                 onClick={() => setShowMessageModal(false)}
-                className='text-gray-400 hover:text-gray-500 dark:hover:text-gray-300'
+                className='text-muted-foreground hover:text-foreground'
               >
                 <X className='h-5 w-5' />
               </button>
@@ -1541,7 +1541,7 @@ export default function MessagesPage() {
               <div>
                 <div className='flex flex-wrap items-center gap-2 mb-3'>
                   {getRoleIcon(selectedMessage.role, selectedMessage.text)}
-                  <h4 className='text-lg font-medium text-gray-900 dark:text-white'>
+                  <h4 className='text-lg font-medium text-foreground'>
                     {isSystemMessage(selectedMessage.text)
                       ? '시스템 메시지'
                       : selectedMessage.role === 'user'
@@ -1553,8 +1553,8 @@ export default function MessagesPage() {
                       onClick={() => setMessageViewMode('markdown')}
                       className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                         messageViewMode === 'markdown'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground hover:bg-accent'
                       }`}
                     >
                       마크다운
@@ -1563,26 +1563,26 @@ export default function MessagesPage() {
                       onClick={() => setMessageViewMode('raw')}
                       className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                         messageViewMode === 'raw'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-foreground hover:bg-accent'
                       }`}
                     >
                       원본
                     </button>
                   </div>
                 </div>
-                <div className='text-xs text-gray-600 dark:text-gray-300 mb-2'>
+                <div className='text-xs text-muted-foreground mb-2'>
                   글자수: {normalizeMessageText(selectedMessage.text).length}
                   {hasMessageOverflow ? ' · 스크롤 있음' : ''}
                 </div>
                 <div
                   ref={messageContentRef}
-                  className={`bg-gray-50 dark:bg-gray-700 p-4 rounded-lg border-l-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/70 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800 ${
+                  className={`bg-muted p-4 rounded-lg border-l-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/70 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800 ${
                     isSystemMessage(selectedMessage.text)
-                      ? 'border-purple-500'
+                      ? 'border-primary'
                       : selectedMessage.role === 'user'
-                      ? 'border-blue-500'
-                      : 'border-green-500'
+                      ? 'border-primary'
+                      : 'border-primary'
                   }`}
                 >
                   {messageViewMode === 'markdown' ? (
@@ -1592,7 +1592,7 @@ export default function MessagesPage() {
                       />
                     </div>
                   ) : (
-                    <div className='whitespace-pre-wrap text-sm text-gray-900 dark:text-white leading-relaxed font-mono'>
+                    <div className='whitespace-pre-wrap text-sm text-foreground leading-relaxed font-mono'>
                       {normalizeMessageText(selectedMessage.text)}
                     </div>
                   )}
@@ -1602,40 +1602,40 @@ export default function MessagesPage() {
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 {/* 사용자 정보 */}
                 <div>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
+                  <h4 className='text-sm font-medium text-foreground mb-3 flex items-center gap-2'>
                     <User className='h-4 w-4' />
                     사용자 정보
                   </h4>
-                  <div className='bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2'>
+                  <div className='bg-muted p-4 rounded-lg space-y-2'>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         이름:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white'>
+                      <span className='font-medium text-foreground'>
                         {selectedMessage.name || '이름 없음'}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         이메일:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white'>
+                      <span className='font-medium text-foreground'>
                         {selectedMessage.email}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         부서:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white'>
+                      <span className='font-medium text-foreground'>
                         {selectedMessage.department || '미설정'}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         Cell:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white'>
+                      <span className='font-medium text-foreground'>
                         {selectedMessage.cell || '미설정'}
                       </span>
                     </div>
@@ -1644,16 +1644,16 @@ export default function MessagesPage() {
 
                 {/* 메시지 메타데이터 */}
                 <div>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2'>
+                  <h4 className='text-sm font-medium text-foreground mb-3 flex items-center gap-2'>
                     <MessageCircle className='h-4 w-4' />
                     메시지 정보
                   </h4>
-                  <div className='bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-2'>
+                  <div className='bg-muted p-4 rounded-lg space-y-2'>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         모델:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white'>
+                      <span className='font-medium text-foreground'>
                         {(() => {
                           const hasLabel =
                             selectedMessage.modelLabel &&
@@ -1667,7 +1667,7 @@ export default function MessagesPage() {
 
                           return (
                             <div className='flex flex-col gap-1 items-end max-w-full'>
-                              <span className='px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs break-words overflow-wrap-anywhere'>
+                              <span className='px-2 py-1 bg-primary/10 text-primary rounded text-xs break-words overflow-wrap-anywhere'>
                                 {hasLabel
                                   ? selectedMessage.modelLabel
                                   : selectedMessage.model}
@@ -1677,8 +1677,8 @@ export default function MessagesPage() {
                                   <span
                                     className={`text-xs px-2 py-0.5 rounded ${
                                       selectedMessage.retryCount === 2
-                                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                                        : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                                        ? 'bg-muted text-muted-foreground'
+                                        : 'bg-muted text-muted-foreground'
                                     }`}
                                   >
                                     재시도 {selectedMessage.retryCount}회
@@ -1691,16 +1691,16 @@ export default function MessagesPage() {
                     </div>
                     {selectedMessage.role === 'assistant' && (
                       <div className='flex justify-between'>
-                        <span className='text-gray-600 dark:text-gray-400'>
+                        <span className='text-muted-foreground'>
                           피드백:
                         </span>
-                        <span className='font-medium text-gray-900 dark:text-white'>
+                        <span className='font-medium text-foreground'>
                           {getFeedbackBadge(selectedMessage.feedback)}
                         </span>
                       </div>
                     )}
                     <div className='flex justify-between items-center'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         방 ID:
                       </span>
                       <button
@@ -1709,7 +1709,7 @@ export default function MessagesPage() {
                           setCurrentPage(1);
                           setShowMessageModal(false);
                         }}
-                        className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-medium transition-colors font-mono'
+                        className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
                         title={`이 채팅방의 메시지만 보기 (${selectedMessage.roomId})`}
                       >
                         <Hash className='h-3 w-3' />
@@ -1717,18 +1717,18 @@ export default function MessagesPage() {
                       </button>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         IP 주소:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white font-mono text-xs'>
+                      <span className='font-medium text-foreground font-mono text-xs'>
                         {selectedMessage.clientIP || '미기록'}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         시간:
                       </span>
-                      <span className='font-medium text-gray-900 dark:text-white text-xs'>
+                      <span className='font-medium text-foreground text-xs'>
                         {formatDate(selectedMessage.createdAt)}
                       </span>
                     </div>
@@ -1740,7 +1740,7 @@ export default function MessagesPage() {
             <div className='mt-6 flex justify-end'>
               <button
                 onClick={() => setShowMessageModal(false)}
-                className='px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg transition-colors'
+                className='px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors'
               >
                 닫기
               </button>

@@ -122,21 +122,21 @@ export default function DbSchemaPage() {
       <div className='card p-6'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
-            <h1 className='text-xl font-semibold text-gray-900 dark:text-white'>
+            <h1 className='text-xl font-semibold text-foreground'>
               DB 스키마
             </h1>
-            <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+            <p className='text-sm text-muted-foreground mt-2'>
               선택한 데이터베이스의 테이블과 컬럼 구성을 표시합니다.
             </p>
           </div>
           <div className='flex items-end gap-2'>
-            <label className='text-xs text-gray-600 dark:text-gray-400'>
+            <label className='text-xs text-muted-foreground'>
               DB 대상
             </label>
             <select
               value={selectedTarget}
               onChange={handleTargetChange}
-              className='px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              className='px-3 py-1.5 text-sm border border-border rounded-md bg-card text-foreground'
             >
               {availableTargets.map((target) => (
                 <option key={target.value} value={target.value}>
@@ -157,10 +157,10 @@ export default function DbSchemaPage() {
       <div className='card p-6'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+            <h2 className='text-lg font-semibold text-foreground'>
               폴더형 요약
             </h2>
-            <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+            <p className='text-sm text-muted-foreground mt-2'>
               테이블을 폴더처럼 펼쳐서 컬럼, 타입, NULL 허용 여부를 확인합니다.
             </p>
           </div>
@@ -168,14 +168,14 @@ export default function DbSchemaPage() {
             <button
               type='button'
               onClick={handleExpandAll}
-              className='px-3 py-1.5 text-xs rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+              className='px-3 py-1.5 text-xs rounded bg-muted text-foreground'
             >
               모두 펼치기
             </button>
             <button
               type='button'
               onClick={handleCollapseAll}
-              className='px-3 py-1.5 text-xs rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+              className='px-3 py-1.5 text-xs rounded bg-muted text-foreground'
             >
               모두 접기
             </button>
@@ -187,17 +187,17 @@ export default function DbSchemaPage() {
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder='테이블/컬럼 검색'
-            className='w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 text-sm border border-border rounded-md bg-card text-foreground'
           />
         </div>
         <div className='mt-4 space-y-2'>
           {loading && (
-            <div className='text-sm text-gray-500 dark:text-gray-400'>
+            <div className='text-sm text-muted-foreground'>
               스키마를 불러오는 중...
             </div>
           )}
           {!loading && filteredTables.length === 0 && (
-            <div className='text-sm text-gray-500 dark:text-gray-400'>
+            <div className='text-sm text-muted-foreground'>
               표시할 테이블이 없습니다.
             </div>
           )}
@@ -205,12 +205,12 @@ export default function DbSchemaPage() {
             filteredTables.map((table) => (
               <div
                 key={`${table.name}-tree`}
-                className='rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-3 py-2'
+                className='rounded-md border border-border bg-muted px-3 py-2'
               >
                 <button
                   type='button'
                   onClick={() => toggleTable(table.name)}
-                  className='w-full text-left text-sm font-medium text-gray-900 dark:text-gray-100'
+                  className='w-full text-left text-sm font-medium text-foreground'
                 >
                   {expandedTables.has(table.name) ? '📂' : '📁'} {table.name} (
                   {table.columns.length})
@@ -220,11 +220,11 @@ export default function DbSchemaPage() {
                     {table.columns.map((column) => (
                       <div
                         key={`${table.name}-${column.name}-tree`}
-                        className='text-xs text-gray-600 dark:text-gray-300 pl-4'
+                        className='text-xs text-muted-foreground pl-4'
                       >
                         📄 {column.name}{' '}
-                        <span className='text-gray-400'>({column.type})</span>
-                        <span className='ml-2 text-gray-400'>
+                        <span className='text-muted-foreground'>({column.type})</span>
+                        <span className='ml-2 text-muted-foreground'>
                           NULL {column.nullable ? 'YES' : 'NO'}
                         </span>
                       </div>

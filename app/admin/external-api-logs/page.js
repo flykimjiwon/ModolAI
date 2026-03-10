@@ -221,18 +221,18 @@ export default function ExternalApiLogsPage() {
   // 상태 코드 아이콘
   const getStatusIcon = (statusCode) => {
     if (statusCode >= 200 && statusCode < 300)
-      return <CheckCircle className='h-4 w-4 text-green-500' />;
+      return <CheckCircle className='h-4 w-4 text-primary' />;
     if (statusCode >= 400 && statusCode < 500)
-      return <AlertTriangle className='h-4 w-4 text-yellow-500' />;
-    if (statusCode >= 500) return <XCircle className='h-4 w-4 text-red-500' />;
-    return <Info className='h-4 w-4 text-gray-500' />;
+      return <AlertTriangle className='h-4 w-4 text-muted-foreground' />;
+    if (statusCode >= 500) return <XCircle className='h-4 w-4 text-destructive' />;
+    return <Info className='h-4 w-4 text-muted-foreground' />;
   };
 
   const getSourceBadge = (source) => {
     if (source === 'external') {
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      return 'bg-primary/10 text-primary';
     }
-    return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    return 'bg-muted text-muted-foreground';
   };
 
   const getSourceLabel = (source) => {
@@ -242,9 +242,9 @@ export default function ExternalApiLogsPage() {
 
   // 응답 시간 색상
   const getResponseTimeColor = (responseTime) => {
-    if (responseTime < 1000) return 'text-green-600 dark:text-green-400';
-    if (responseTime < 5000) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    if (responseTime < 1000) return 'text-primary';
+    if (responseTime < 5000) return 'text-muted-foreground';
+    return 'text-destructive';
   };
 
   // 시간 포맷팅
@@ -383,10 +383,10 @@ export default function ExternalApiLogsPage() {
       {/* 헤더 */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+          <h1 className='text-2xl font-bold text-foreground'>
             API 로깅
           </h1>
-          <p className='text-gray-600 dark:text-gray-400 mt-1'>
+          <p className='text-muted-foreground mt-1'>
             내부/외부 API 호출 기록을 한 곳에서 모니터링합니다
           </p>
         </div>
@@ -406,69 +406,69 @@ export default function ExternalApiLogsPage() {
           <div className='card p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-sm text-gray-600 dark:text-gray-400'>
+                <p className='text-sm text-muted-foreground'>
                   총 요청
                 </p>
-                <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                <p className='text-2xl font-bold text-foreground'>
                   {stats.overall.totalRequests?.toLocaleString() || 0}
                 </p>
               </div>
-              <Activity className='h-8 w-8 text-blue-500' />
+              <Activity className='h-8 w-8 text-primary' />
             </div>
           </div>
 
           <div className='card p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-sm text-gray-600 dark:text-gray-400'>
+                <p className='text-sm text-muted-foreground'>
                   총 토큰
                 </p>
-                <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                <p className='text-2xl font-bold text-foreground'>
                   {formatTokens(stats.overall.totalTokens)}
                 </p>
               </div>
-              <Zap className='h-8 w-8 text-yellow-500' />
+              <Zap className='h-8 w-8 text-muted-foreground' />
             </div>
           </div>
 
           <div className='card p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-sm text-gray-600 dark:text-gray-400'>
+                <p className='text-sm text-muted-foreground'>
                   평균 최초 응답시간
                 </p>
-                <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                <p className='text-2xl font-bold text-foreground'>
                   {Math.round(stats.overall.avgFirstResponseTime || 0)}ms
                 </p>
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                <p className='text-xs text-muted-foreground mt-1'>
                   최초 응답 기준
                 </p>
               </div>
-              <Clock className='h-8 w-8 text-green-500' />
+              <Clock className='h-8 w-8 text-primary' />
             </div>
           </div>
 
           <div className='card p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-sm text-gray-600 dark:text-gray-400'>
+                <p className='text-sm text-muted-foreground'>
                   평균 최종 응답시간
                 </p>
-                <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                <p className='text-2xl font-bold text-foreground'>
                   {Math.round(stats.overall.avgFinalResponseTime || 0)}ms
                 </p>
               </div>
-              <Clock className='h-8 w-8 text-green-500' />
+              <Clock className='h-8 w-8 text-primary' />
             </div>
           </div>
 
           <div className='card p-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-sm text-gray-600 dark:text-gray-400'>
+                <p className='text-sm text-muted-foreground'>
                   성공률
                 </p>
-                <p className='text-2xl font-bold text-gray-900 dark:text-white'>
+                <p className='text-2xl font-bold text-foreground'>
                   {stats.overall.totalRequests > 0
                     ? Math.round(
                         (stats.overall.successRequests /
@@ -479,7 +479,7 @@ export default function ExternalApiLogsPage() {
                   %
                 </p>
               </div>
-              <BarChart3 className='h-8 w-8 text-purple-500' />
+              <BarChart3 className='h-8 w-8 text-primary' />
             </div>
           </div>
         </div>
@@ -489,15 +489,15 @@ export default function ExternalApiLogsPage() {
       {stats.byEndpoint && stats.byEndpoint.length > 0 && (
         <button
           onClick={() => setShowDetailedStats(!showDetailedStats)}
-          className='w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors'
+          className='w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-accent rounded-lg transition-colors'
         >
-          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <span className='text-sm font-medium text-foreground'>
             상세 통계 {showDetailedStats ? '숨기기' : '보기'}
           </span>
           {showDetailedStats ? (
-            <ChevronUp className='h-4 w-4 text-gray-500' />
+            <ChevronUp className='h-4 w-4 text-muted-foreground' />
           ) : (
-            <ChevronDown className='h-4 w-4 text-gray-500' />
+            <ChevronDown className='h-4 w-4 text-muted-foreground' />
           )}
         </button>
       )}
@@ -508,10 +508,10 @@ export default function ExternalApiLogsPage() {
         stats.byEndpoint.length > 0 && (
           <div className='card p-4'>
             <div className='flex items-center justify-between mb-3'>
-              <h3 className='font-medium text-gray-900 dark:text-white'>
+              <h3 className='font-medium text-foreground'>
                 엔드포인트별 통계
               </h3>
-              <span className='text-xs text-gray-500 dark:text-gray-400'>
+              <span className='text-xs text-muted-foreground'>
                 총 {stats.byEndpoint.length}개 중 상위 8개
               </span>
             </div>
@@ -522,20 +522,20 @@ export default function ExternalApiLogsPage() {
                   className='flex items-center justify-between text-sm'
                 >
                   <div className='truncate max-w-[70%]'>
-                    <span className='font-mono text-gray-800 dark:text-gray-200'>
+                    <span className='font-mono text-foreground'>
                       {ep._id || '(unknown)'}
                     </span>
                   </div>
-                  <div className='flex items-center gap-4 text-gray-600 dark:text-gray-400'>
+                  <div className='flex items-center gap-4 text-muted-foreground'>
                     <span>
                       건수:{' '}
-                      <strong className='text-gray-900 dark:text-white'>
+                      <strong className='text-foreground'>
                         {ep.count}
                       </strong>
                     </span>
                     <span>
                       평균(최초/최종):{' '}
-                      <strong className='text-gray-900 dark:text-white'>
+                      <strong className='text-foreground'>
                         {Math.round(ep.avgFirstResponseTime || 0)}ms /{' '}
                         {Math.round(ep.avgFinalResponseTime || 0)}ms
                       </strong>
@@ -549,23 +549,23 @@ export default function ExternalApiLogsPage() {
 
       {/* 필터 */}
       <div className='card'>
-        <div className='flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between px-4 py-3 border-b border-border'>
           <div className='flex items-center gap-3'>
-            <Filter className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-            <h3 className='font-semibold text-gray-900 dark:text-white'>
+            <Filter className='h-5 w-5 text-primary' />
+            <h3 className='font-semibold text-foreground'>
               필터
             </h3>
           </div>
           <div className='flex items-center gap-2'>
             <button
               onClick={handleResetFilters}
-              className='px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors'
+              className='px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors'
             >
               초기화
             </button>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className='px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors flex items-center gap-1'
+              className='px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-md transition-colors flex items-center gap-1'
             >
               {showFilters ? (
                 <>
@@ -588,7 +588,7 @@ export default function ExternalApiLogsPage() {
             <div className='space-y-4'>
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                  <label className='block text-sm font-medium text-foreground mb-1.5'>
                     시간 범위
                   </label>
                   <select
@@ -596,7 +596,7 @@ export default function ExternalApiLogsPage() {
                     onChange={(e) =>
                       handleFilterChange('timeRange', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option value='1h'>최근 1시간</option>
                     <option value='6h'>최근 6시간</option>
@@ -608,7 +608,7 @@ export default function ExternalApiLogsPage() {
                 </div>
                 {filters.timeRange === 'custom' && (
                   <div className='md:col-span-2 lg:col-span-5'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                    <label className='block text-sm font-medium text-foreground mb-1.5'>
                       기간 지정
                     </label>
                     <div className='flex items-center gap-3 flex-wrap'>
@@ -617,21 +617,21 @@ export default function ExternalApiLogsPage() {
                         value={customStartDate}
                         onChange={(e) => setCustomStartDate(e.target.value)}
                         onClick={(e) => e.currentTarget.showPicker?.()}
-                        className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]'
+                        className='px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent min-w-[140px]'
                         placeholder='시작 날짜'
                       />
-                      <span className='text-sm text-gray-500 dark:text-gray-400'>~</span>
+                      <span className='text-sm text-muted-foreground'>~</span>
                       <input
                         type='date'
                         value={customEndDate}
                         onChange={(e) => setCustomEndDate(e.target.value)}
                         onClick={(e) => e.currentTarget.showPicker?.()}
-                        className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]'
+                        className='px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent min-w-[140px]'
                         placeholder='종료 날짜'
                       />
                       <button
                         onClick={() => fetchLogs(true)}
-                        className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium'
+                        className='px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium'
                       >
                         조회
                       </button>
@@ -640,7 +640,7 @@ export default function ExternalApiLogsPage() {
                 )}
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                  <label className='block text-sm font-medium text-foreground mb-1.5'>
                     카테고리
                   </label>
                   <select
@@ -648,7 +648,7 @@ export default function ExternalApiLogsPage() {
                     onChange={(e) =>
                       handleFilterChange('source', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option value=''>전체</option>
                     <option value='external'>외부 API</option>
@@ -657,7 +657,7 @@ export default function ExternalApiLogsPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                  <label className='block text-sm font-medium text-foreground mb-1.5'>
                     API 타입
                   </label>
                   <select
@@ -665,7 +665,7 @@ export default function ExternalApiLogsPage() {
                     onChange={(e) =>
                       handleFilterChange('apiType', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option value=''>전체</option>
                     <option value='generate'>Generate</option>
@@ -675,7 +675,7 @@ export default function ExternalApiLogsPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                  <label className='block text-sm font-medium text-foreground mb-1.5'>
                     Provider
                   </label>
                   <select
@@ -683,7 +683,7 @@ export default function ExternalApiLogsPage() {
                     onChange={(e) =>
                       handleFilterChange('provider', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option key='all-provider' value=''>
                       전체
@@ -699,7 +699,7 @@ export default function ExternalApiLogsPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                  <label className='block text-sm font-medium text-foreground mb-1.5'>
                     클라이언트 도구
                   </label>
                   <select
@@ -707,7 +707,7 @@ export default function ExternalApiLogsPage() {
                     onChange={(e) =>
                       handleFilterChange('clientTool', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option key='all' value=''>
                       전체
@@ -726,7 +726,7 @@ export default function ExternalApiLogsPage() {
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                  <label className='block text-sm font-medium text-foreground mb-1.5'>
                     모델 검색
                   </label>
                   <input
@@ -734,12 +734,12 @@ export default function ExternalApiLogsPage() {
                     placeholder='모델명으로 검색...'
                     value={filters.model}
                     onChange={(e) => handleFilterChange('model', e.target.value)}
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500'
+                    className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent placeholder:text-muted-foreground'
                   />
                 </div>
 
                 <div className='flex items-end'>
-                  <label className='flex items-center gap-2 cursor-pointer px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors'>
+                  <label className='flex items-center gap-2 cursor-pointer px-3 py-2 hover:bg-accent rounded-lg transition-colors'>
                     <input
                       type='checkbox'
                       checked={filters.groupByConversation}
@@ -749,9 +749,9 @@ export default function ExternalApiLogsPage() {
                           e.target.checked
                         )
                       }
-                      className='w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500'
+                      className='w-4 h-4 text-primary border-border rounded focus:ring-ring'
                     />
-                    <span className='text-sm font-medium text-gray-900 dark:text-white'>
+                    <span className='text-sm font-medium text-foreground'>
                       대화 세션별로 그룹화
                     </span>
                   </label>
@@ -760,10 +760,10 @@ export default function ExternalApiLogsPage() {
             </div>
 
             {/* 고급 필터 (디버깅용) */}
-            <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
+            <div className='mt-4 pt-4 border-t border-border'>
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors'
+                className='flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors'
               >
                 {showAdvancedFilters ? (
                   <ChevronUp className='h-4 w-4' />
@@ -777,7 +777,7 @@ export default function ExternalApiLogsPage() {
                 <div className='mt-4 space-y-4'>
                   <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                     <div>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                      <label className='block text-sm font-medium text-foreground mb-1.5'>
                         IP 주소
                       </label>
                       <input
@@ -787,12 +787,12 @@ export default function ExternalApiLogsPage() {
                         onChange={(e) =>
                           handleFilterChange('clientIP', e.target.value)
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground font-mono text-sm focus:ring-2 focus:ring-ring focus:border-transparent'
                       />
                     </div>
 
                     <div>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                      <label className='block text-sm font-medium text-foreground mb-1.5'>
                         Session Hash
                       </label>
                       <input
@@ -802,12 +802,12 @@ export default function ExternalApiLogsPage() {
                         onChange={(e) =>
                           handleFilterChange('sessionHash', e.target.value)
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground font-mono text-sm focus:ring-2 focus:ring-ring focus:border-transparent'
                       />
                     </div>
 
                     <div>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5'>
+                      <label className='block text-sm font-medium text-foreground mb-1.5'>
                         User ID
                       </label>
                       <input
@@ -817,12 +817,12 @@ export default function ExternalApiLogsPage() {
                         onChange={(e) =>
                           handleFilterChange('userId', e.target.value)
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                        className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground font-mono text-sm focus:ring-2 focus:ring-ring focus:border-transparent'
                       />
                     </div>
                   </div>
                   
-                  <p className='text-xs text-gray-500 dark:text-gray-400 italic'>
+                  <p className='text-xs text-muted-foreground italic'>
                     💡 고급 필터는 기술적인 디버깅 목적으로만 사용됩니다.
                   </p>
                 </div>
@@ -835,10 +835,10 @@ export default function ExternalApiLogsPage() {
       {/* 로그 테이블 */}
       <div className='card p-6'>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='font-medium text-gray-900 dark:text-white'>
+          <h3 className='font-medium text-foreground'>
             로그 기록 ({pagination.totalCount?.toLocaleString() || 0})
             {pagination.totalPages > 1 && (
-              <span className='ml-2 text-sm text-gray-500 dark:text-gray-400 font-normal'>
+              <span className='ml-2 text-sm text-muted-foreground font-normal'>
                 {pagination.page} / {pagination.totalPages} 페이지
               </span>
             )}
@@ -847,10 +847,10 @@ export default function ExternalApiLogsPage() {
 
         {loading ? (
           <div className='flex items-center justify-center py-8'>
-            <RefreshCw className='h-6 w-6 animate-spin text-gray-400' />
+            <RefreshCw className='h-6 w-6 animate-spin text-muted-foreground' />
           </div>
         ) : logs.length === 0 ? (
-          <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+          <div className='text-center py-8 text-muted-foreground'>
             로그가 없습니다
           </div>
         ) : filters.groupByConversation ? (
@@ -870,11 +870,11 @@ export default function ExternalApiLogsPage() {
               return (
                 <div
                   key={uniqueKey}
-                  className='border border-blue-200 dark:border-blue-800 rounded-lg overflow-hidden bg-blue-50/30 dark:bg-blue-900/20'
+                  className='border border-primary/30 rounded-lg overflow-hidden bg-primary/5'
                 >
                   {/* 대화 세션 헤더 */}
                   <div
-                    className='p-4 cursor-pointer hover:bg-blue-100/50 dark:hover:bg-blue-900/30 transition-colors'
+                    className='p-4 cursor-pointer hover:bg-accent transition-colors'
                     onClick={() =>
                       toggleConversationExpansion(conversation.conversationId)
                     }
@@ -888,34 +888,34 @@ export default function ExternalApiLogsPage() {
                               conversation.conversationId
                             );
                           }}
-                          className='p-1 hover:bg-blue-200 dark:hover:bg-blue-800 rounded transition-colors'
+                          className='p-1 hover:bg-accent rounded transition-colors'
                         >
                           {isExpanded ? (
-                            <ChevronUp className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+                            <ChevronUp className='h-4 w-4 text-primary' />
                           ) : (
-                            <ChevronDown className='h-4 w-4 text-blue-600 dark:text-blue-400' />
+                            <ChevronDown className='h-4 w-4 text-primary' />
                           )}
                         </button>
                         <div className='flex items-center gap-2'>
-                          <Hash className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                          <span className='text-sm font-mono text-blue-700 dark:text-blue-300'>
+                          <Hash className='h-4 w-4 text-primary' />
+                          <span className='text-sm font-mono text-primary'>
                             {conversation.conversationId || 'no-conversation'}
                           </span>
                         </div>
-                        <span className='text-xs text-gray-600 dark:text-gray-400'>
+                        <span className='text-xs text-muted-foreground'>
                           {conversation.totalRequests}개 요청
                         </span>
-                        <span className='text-xs text-gray-600 dark:text-gray-400'>
+                        <span className='text-xs text-muted-foreground'>
                           {formatTokens(conversation.totalTokens)} 토큰
                         </span>
                       </div>
-                      <div className='text-right text-xs text-gray-600 dark:text-gray-400'>
+                      <div className='text-right text-xs text-muted-foreground'>
                         <div>{formatTime(conversation.startTime)}</div>
                         <div>~ {formatTime(conversation.endTime)}</div>
                       </div>
                     </div>
                     {conversation.firstMessage && (
-                      <div className='mt-2 text-sm text-gray-700 dark:text-gray-300 truncate'>
+                      <div className='mt-2 text-sm text-foreground truncate'>
                         {conversation.firstMessage}...
                       </div>
                     )}
@@ -923,14 +923,14 @@ export default function ExternalApiLogsPage() {
 
                   {/* 대화 세션 내 로그 목록 */}
                   {isExpanded && (
-                    <div className='border-t border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-800'>
+                    <div className='border-t border-primary/30 bg-card'>
                       <div className='p-2 space-y-2'>
                         {conversationLogs.map((log) => {
                           const isLogExpanded = expandedLogs.has(log._id);
                           return (
                             <div
                               key={log._id}
-                              className='border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                              className='border border-border rounded-lg p-3 hover:bg-accent transition-colors'
                             >
                               <div
                                 className='flex items-start justify-between mb-2 cursor-pointer'
@@ -942,21 +942,21 @@ export default function ExternalApiLogsPage() {
                                       e.stopPropagation();
                                       toggleLogExpansion(log._id);
                                     }}
-                                    className='p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors'
+                                    className='p-1 hover:bg-accent rounded transition-colors'
                                   >
                                     {isLogExpanded ? (
-                                      <ChevronUp className='h-3 w-3 text-gray-500' />
+                                      <ChevronUp className='h-3 w-3 text-muted-foreground' />
                                     ) : (
-                                      <ChevronDown className='h-3 w-3 text-gray-500' />
+                                      <ChevronDown className='h-3 w-3 text-muted-foreground' />
                                     )}
                                   </button>
                                   <span
                                     className={`px-2 py-0.5 rounded text-xs font-medium ${
                                       log.apiType === 'generate'
-                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                        ? 'bg-primary/10 text-primary'
                                         : log.apiType === 'image-analysis'
-                                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                          ? 'bg-muted text-muted-foreground'
+                                          : 'bg-primary/10 text-primary'
                                     }`}
                                   >
                                     {log.apiType?.toUpperCase()}
@@ -975,19 +975,19 @@ export default function ExternalApiLogsPage() {
                                     </span>
                                   </div>
                                   {(log.userName || log.userEmail) && (
-                                    <span className='text-xs text-gray-700 dark:text-gray-300 font-medium'>
+                                    <span className='text-xs text-foreground font-medium'>
                                       {log.userName || log.userEmail}
                                     </span>
                                   )}
-                                  <span className='text-xs text-gray-500 dark:text-gray-500'>•</span>
-                                  <span className='text-xs text-gray-600 dark:text-gray-400'>
+                                  <span className='text-xs text-muted-foreground'>•</span>
+                                  <span className='text-xs text-muted-foreground'>
                                     {log.modelLabel || log.model}
                                   </span>
-                                  <span className='text-xs text-gray-500 dark:text-gray-500'>•</span>
-                                  <span className='text-xs text-gray-600 dark:text-gray-400'>
+                                  <span className='text-xs text-muted-foreground'>•</span>
+                                  <span className='text-xs text-muted-foreground'>
                                     {formatTime(log.timestamp)}
                                   </span>
-                                  <span className='text-xs text-gray-500 dark:text-gray-500'>•</span>
+                                  <span className='text-xs text-muted-foreground'>•</span>
                                   <span
                                     className={`text-xs font-medium ${getResponseTimeColor(
                                       log.finalResponseTime ?? log.responseTime
@@ -999,45 +999,45 @@ export default function ExternalApiLogsPage() {
                                 </div>
                               </div>
                               {isLogExpanded && (
-                                <div className='mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-4'>
+                                <div className='mt-3 pt-3 border-t border-border space-y-4'>
                                   {/* 기본 정보 그리드 */}
                                   <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
                                     {/* 클라이언트 정보 */}
                                     <div>
-                                      <div className='text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2'>
+                                      <div className='text-xs font-semibold text-muted-foreground mb-2'>
                                         클라이언트
                                       </div>
                                       <div className='flex items-center gap-2 mb-1'>
                                         {getClientToolIcon(
                                           getClientToolLabel(log)
                                         )}
-                                        <span className='text-sm font-medium text-gray-900 dark:text-white'>
+                                        <span className='text-sm font-medium text-foreground'>
                                           {getClientToolLabel(log)}
                                         </span>
                                       </div>
-                                      <div className='text-xs text-gray-600 dark:text-gray-400'>
+                                      <div className='text-xs text-muted-foreground'>
                                         {log.clientIP}
                                       </div>
                                     </div>
 
                                     {/* 사용자 & 설정 정보 */}
                                     <div>
-                                      <div className='text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2'>
+                                      <div className='text-xs font-semibold text-muted-foreground mb-2'>
                                         사용자 & 설정
                                       </div>
                                       <div className='text-sm space-y-1'>
                                         {log.userName || log.userEmail ? (
-                                          <div className='text-gray-900 dark:text-white'>
+                                          <div className='text-foreground'>
                                             {log.userName || '이름 없음'} (
                                             {log.userEmail || '이메일 없음'})
                                             {log.userDepartment && (
-                                              <span className='ml-2 text-xs text-gray-500 dark:text-gray-400'>
+                                              <span className='ml-2 text-xs text-muted-foreground'>
                                                 [{log.userDepartment}]
                                               </span>
                                             )}
                                           </div>
                                         ) : null}
-                                        <div className='text-xs text-gray-600 dark:text-gray-400 space-y-1'>
+                                        <div className='text-xs text-muted-foreground space-y-1'>
                                           {log.tokenName && (
                                             <div>
                                               <strong>토큰:</strong>{' '}
@@ -1071,7 +1071,7 @@ export default function ExternalApiLogsPage() {
                                                     log.tokenHash || ''
                                                   );
                                                 }}
-                                                className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-medium transition-colors font-mono'
+                                                className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
                                                 title='이 세션의 모든 요청 보기'
                                               >
                                                 <Hash className='h-3 w-3' />
@@ -1102,7 +1102,7 @@ export default function ExternalApiLogsPage() {
                                                     log.tokenHash || ''
                                                   );
                                                 }}
-                                                className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 text-xs font-medium transition-colors font-mono'
+                                                className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
                                                 title='이 사용자의 같은 토큰으로 보낸 요청 보기'
                                               >
                                                 {log.userId.substring(0, 8)}...
@@ -1115,29 +1115,29 @@ export default function ExternalApiLogsPage() {
 
                                     {/* 토큰 사용량 */}
                                     <div>
-                                      <div className='text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2'>
+                                      <div className='text-xs font-semibold text-muted-foreground mb-2'>
                                         토큰 사용량
                                       </div>
-                                      <div className='text-sm text-gray-600 dark:text-gray-400 space-y-1'>
+                                      <div className='text-sm text-muted-foreground space-y-1'>
                                         <div className='flex justify-between'>
                                           <span>입력:</span>
-                                          <span className='font-medium text-gray-900 dark:text-white'>
+                                          <span className='font-medium text-foreground'>
                                             {formatTokens(log.promptTokenCount)}
                                           </span>
                                         </div>
                                         <div className='flex justify-between'>
                                           <span>출력:</span>
-                                          <span className='font-medium text-gray-900 dark:text-white'>
+                                          <span className='font-medium text-foreground'>
                                             {formatTokens(
                                               log.responseTokenCount
                                             )}
                                           </span>
                                         </div>
-                                        <div className='flex justify-between border-t border-gray-200 dark:border-gray-700 pt-1'>
+                                        <div className='flex justify-between border-t border-border pt-1'>
                                           <span>
                                             <strong>총계:</strong>
                                           </span>
-                                          <span className='font-bold text-gray-900 dark:text-white'>
+                                          <span className='font-bold text-foreground'>
                                             {formatTokens(log.totalTokenCount)}
                                           </span>
                                         </div>
@@ -1147,9 +1147,9 @@ export default function ExternalApiLogsPage() {
 
                                   {/* 프롬프트 미리보기 */}
                                   {log.prompt && (
-                                    <div className='pt-3 border-t border-gray-200 dark:border-gray-700'>
+                                    <div className='pt-3 border-t border-border'>
                                       <div className='flex items-start justify-between'>
-                                        <p className='text-sm text-gray-600 dark:text-gray-400 flex-1'>
+                                        <p className='text-sm text-muted-foreground flex-1'>
                                           <strong>프롬프트:</strong>{' '}
                                           {typeof log.prompt === 'string'
                                             ? log.prompt.length > 100
@@ -1163,7 +1163,7 @@ export default function ExternalApiLogsPage() {
                                             e.stopPropagation();
                                             openPromptModal(log);
                                           }}
-                                          className='ml-2 p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200'
+                                          className='ml-2 p-1 text-primary hover:text-primary'
                                           title='프롬프트 전체 보기'
                                         >
                                           <Eye className='h-4 w-4' />
@@ -1176,8 +1176,8 @@ export default function ExternalApiLogsPage() {
                                   {log.messages &&
                                     Array.isArray(log.messages) &&
                                     log.messages.length > 0 && (
-                                      <div className='pt-3 border-t border-gray-200 dark:border-gray-700'>
-                                        <div className='text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2'>
+                                      <div className='pt-3 border-t border-border'>
+                                        <div className='text-xs font-semibold text-muted-foreground mb-2'>
                                           메시지 ({log.messages.length}개)
                                         </div>
                                         <div className='space-y-2 max-h-64 overflow-y-auto'>
@@ -1200,7 +1200,7 @@ export default function ExternalApiLogsPage() {
                                                           log._id
                                                         );
                                                       }}
-                                                      className='w-full text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-center py-2 px-3 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors'
+                                                      className='w-full text-xs text-primary hover:text-primary text-center py-2 px-3 rounded-md hover:bg-primary/10 transition-colors'
                                                     >
                                                       ... 이전{' '}
                                                       {log.messages.length - 3}
@@ -1216,7 +1216,7 @@ export default function ExternalApiLogsPage() {
                                                           log._id
                                                         );
                                                       }}
-                                                      className='w-full text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 text-center py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                                                      className='w-full text-xs text-muted-foreground hover:text-foreground text-center py-2 px-3 rounded-md hover:bg-accent transition-colors'
                                                     >
                                                       최신 3개만 보기
                                                     </button>
@@ -1260,9 +1260,9 @@ export default function ExternalApiLogsPage() {
                                                     return (
                                                       <div
                                                         key={originalIdx}
-                                                        className='bg-gray-50 dark:bg-gray-900 rounded p-2 text-xs'
+                                                        className='bg-muted rounded p-2 text-xs'
                                                       >
-                                                        <div className='font-semibold text-gray-700 dark:text-gray-300 mb-1'>
+                                                        <div className='font-semibold text-foreground mb-1'>
                                                           {(() => {
                                                             const role = typeof msg === 'object' && msg !== null 
                                                               ? (msg.role || msg.type || 'unknown')
@@ -1273,7 +1273,7 @@ export default function ExternalApiLogsPage() {
                                                             return `📝 ${role}`;
                                                           })()}
                                                         </div>
-                                                        <div className='text-gray-600 dark:text-gray-400 whitespace-pre-wrap break-words'>
+                                                        <div className='text-muted-foreground whitespace-pre-wrap break-words'>
                                                           {shouldTruncate &&
                                                           !isContentExpanded
                                                             ? contentStr.substring(
@@ -1291,7 +1291,7 @@ export default function ExternalApiLogsPage() {
                                                                 originalIdx
                                                               );
                                                             }}
-                                                            className='mt-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-xs underline'
+                                                            className='mt-1 text-primary hover:text-primary text-xs underline'
                                                           >
                                                             {isContentExpanded
                                                               ? '접기'
@@ -1311,20 +1311,20 @@ export default function ExternalApiLogsPage() {
 
                                   {/* 오류 메시지 */}
                                   {log.error && (
-                                    <div className='pt-3 border-t border-red-200 dark:border-red-700'>
-                                      <p className='text-sm text-red-600 dark:text-red-400'>
+                                    <div className='pt-3 border-t border-destructive/30'>
+                                      <p className='text-sm text-destructive'>
                                         <strong>오류:</strong> {log.error}
                                       </p>
                                     </div>
                                   )}
 
                                   {/* HTTP Request/Response 상세 정보 */}
-                                  <div className='pt-3 border-t border-gray-200 dark:border-gray-700 space-y-4'>
+                                  <div className='pt-3 border-t border-border space-y-4'>
                                     {/* HTTP Request 정보 */}
                                     <div>
                                       <div className='flex items-center justify-between mb-2'>
-                                        <h4 className='font-medium text-gray-900 dark:text-white flex items-center gap-2 text-sm'>
-                                          <span className='px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-mono'>
+                                        <h4 className='font-medium text-foreground flex items-center gap-2 text-sm'>
+                                          <span className='px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-mono'>
                                             POST
                                           </span>
                                           HTTP Request
@@ -1368,7 +1368,7 @@ export default function ExternalApiLogsPage() {
                                             };
                                             copyJson(requestData);
                                           }}
-                                          className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors'
+                                          className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
                                           title='Request 복사'
                                         >
                                           <Copy className='h-3 w-3' />
@@ -1376,13 +1376,13 @@ export default function ExternalApiLogsPage() {
                                         </button>
                                       </div>
 
-                                      <div className='bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-2'>
+                                      <div className='bg-muted rounded-lg p-3 space-y-2'>
                                         {/* URL */}
                                         <div>
-                                          <div className='text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1'>
+                                          <div className='text-xs font-semibold text-foreground mb-1'>
                                             URL
                                           </div>
-                                          <div className='text-xs font-mono text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700'>
+                                          <div className='text-xs font-mono text-foreground bg-card p-2 rounded border border-border'>
                                             {log.endpoint ||
                                               '/api/v1/chat/completions'}
                                           </div>
@@ -1390,11 +1390,11 @@ export default function ExternalApiLogsPage() {
 
                                         {/* Request Body */}
                                         <div>
-                                          <div className='text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1'>
+                                          <div className='text-xs font-semibold text-foreground mb-1'>
                                             Request Body
                                           </div>
-                                          <div className='bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700 max-h-48 overflow-y-auto'>
-                                            <pre className='text-xs font-mono text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words'>
+                                          <div className='bg-card p-2 rounded border border-border max-h-48 overflow-y-auto'>
+                                            <pre className='text-xs font-mono text-foreground whitespace-pre-wrap break-words'>
                                               {log.requestBody
                                                 ? JSON.stringify(
                                                     log.requestBody,
@@ -1438,16 +1438,16 @@ export default function ExternalApiLogsPage() {
                                     {/* HTTP Response 정보 */}
                                     <div>
                                       <div className='flex items-center justify-between mb-2'>
-                                        <h4 className='font-medium text-gray-900 dark:text-white flex items-center gap-2 text-sm'>
+                                        <h4 className='font-medium text-foreground flex items-center gap-2 text-sm'>
                                           <span
                                             className={`px-2 py-0.5 rounded text-xs font-mono ${
                                               log.statusCode >= 200 &&
                                               log.statusCode < 300
-                                                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                                ? 'bg-primary/10 text-primary'
                                                 : log.statusCode >= 400 &&
                                                   log.statusCode < 500
-                                                ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                                                : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                                                ? 'bg-muted text-muted-foreground'
+                                                : 'bg-destructive/10 text-destructive'
                                             }`}
                                           >
                                             {log.statusCode}
@@ -1486,7 +1486,7 @@ export default function ExternalApiLogsPage() {
                                             };
                                             copyJson(responseData);
                                           }}
-                                          className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors'
+                                          className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
                                           title='Response 복사'
                                         >
                                           <Copy className='h-3 w-3' />
@@ -1494,26 +1494,26 @@ export default function ExternalApiLogsPage() {
                                         </button>
                                       </div>
 
-                                      <div className='bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-2'>
+                                      <div className='bg-muted rounded-lg p-3 space-y-2'>
                                         {/* Response Body / Error */}
                                         <div>
-                                          <div className='text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1'>
+                                          <div className='text-xs font-semibold text-foreground mb-1'>
                                             {log.error
                                               ? 'Error Message'
                                               : 'Response Body'}
                                           </div>
                                           <div
-                                            className={`bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700 max-h-48 overflow-y-auto ${
+                                            className={`bg-card p-2 rounded border border-border max-h-48 overflow-y-auto ${
                                               log.error
-                                                ? 'border-red-200 dark:border-red-700'
+                                                ? 'border-destructive/30'
                                                 : ''
                                             }`}
                                           >
                                             <pre
                                               className={`text-xs font-mono whitespace-pre-wrap break-words ${
                                                 log.error
-                                                  ? 'text-red-600 dark:text-red-400'
-                                                  : 'text-gray-900 dark:text-gray-100'
+                                                  ? 'text-destructive'
+                                                  : 'text-foreground'
                                               }`}
                                             >
                                               {log.error
@@ -1558,7 +1558,7 @@ export default function ExternalApiLogsPage() {
               return (
                 <div
                   key={uniqueKey}
-                  className='border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                  className='border border-border rounded-lg hover:bg-accent transition-colors'
                 >
                   {/* 간결한 요약 헤더 */}
                   <div
@@ -1572,12 +1572,12 @@ export default function ExternalApiLogsPage() {
                           e.stopPropagation();
                           toggleLogExpansion(log._id);
                         }}
-                        className='p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors'
+                        className='p-1 hover:bg-accent rounded transition-colors'
                       >
                         {isExpanded ? (
-                          <ChevronUp className='h-4 w-4 text-gray-500' />
+                          <ChevronUp className='h-4 w-4 text-muted-foreground' />
                         ) : (
-                          <ChevronDown className='h-4 w-4 text-gray-500' />
+                          <ChevronDown className='h-4 w-4 text-muted-foreground' />
                         )}
                       </button>
 
@@ -1585,10 +1585,10 @@ export default function ExternalApiLogsPage() {
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
                           log.apiType === 'generate'
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                            ? 'bg-primary/10 text-primary'
                             : log.apiType === 'image-analysis'
-                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              ? 'bg-muted text-muted-foreground'
+                              : 'bg-primary/10 text-primary'
                         }`}
                       >
                         {log.apiType?.toUpperCase()} {log.isStream && 'STREAM'}
@@ -1606,8 +1606,8 @@ export default function ExternalApiLogsPage() {
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${
                             log.retryCount === 2
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+                              ? 'bg-muted text-muted-foreground'
+                              : 'bg-muted text-muted-foreground'
                           }`}
                         >
                           재시도 {log.retryCount}회
@@ -1623,7 +1623,7 @@ export default function ExternalApiLogsPage() {
                       </div>
 
                        {/* 핵심 정보 한 줄에 */}
-                       <div className='flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400'>
+                       <div className='flex items-center gap-2 text-xs text-muted-foreground'>
                          <span className='flex items-center gap-1'>
                            {getClientToolIcon(getClientToolLabel(log))}
                            {getClientToolLabel(log)}
@@ -1631,7 +1631,7 @@ export default function ExternalApiLogsPage() {
                          {(log.userName || log.userEmail) && (
                            <>
                              <span>•</span>
-                             <span className='text-gray-700 dark:text-gray-300 font-medium'>
+                             <span className='text-foreground font-medium'>
                                {log.userName || log.userEmail}
                              </span>
                            </>
@@ -1646,7 +1646,7 @@ export default function ExternalApiLogsPage() {
                      </div>
 
                     <div className='text-right'>
-                      <div className='text-xs text-gray-600 dark:text-gray-400'>
+                      <div className='text-xs text-muted-foreground'>
                         {formatTime(log.timestamp)}
                       </div>
                       <div
@@ -1662,8 +1662,8 @@ export default function ExternalApiLogsPage() {
 
                   {/* 오류 메시지 (항상 표시) */}
                   {log.error && !isExpanded && (
-                    <div className='px-4 pb-4 border-t border-red-200 dark:border-red-700 pt-3'>
-                      <p className='text-sm text-red-600 dark:text-red-400'>
+                    <div className='px-4 pb-4 border-t border-destructive/30 pt-3'>
+                      <p className='text-sm text-destructive'>
                         <strong>오류:</strong> {log.error}
                       </p>
                     </div>
@@ -1671,40 +1671,40 @@ export default function ExternalApiLogsPage() {
 
                   {/* 펼쳐진 상세 정보 */}
                   {isExpanded && (
-                    <div className='border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50'>
+                    <div className='border-t border-border bg-muted/50'>
                       <div className='p-4 space-y-4'>
                         {/* 사용자 & 세션 정보 */}
-                        <div className='bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm'>
-                          <h4 className='text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3'>
+                        <div className='bg-card rounded-lg p-4 shadow-sm'>
+                          <h4 className='text-sm font-semibold text-foreground mb-3'>
                             요청 정보
                           </h4>
                           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
                             <div className='space-y-2'>
                               <div>
-                                <span className='text-gray-500 dark:text-gray-400'>
+                                <span className='text-muted-foreground'>
                                   클라이언트:
                                 </span>
-                                <span className='ml-2 text-gray-900 dark:text-white font-medium'>
+                                <span className='ml-2 text-foreground font-medium'>
                                   {getClientToolLabel(log)}
                                 </span>
                               </div>
                               <div>
-                                <span className='text-gray-500 dark:text-gray-400'>
+                                <span className='text-muted-foreground'>
                                   IP:
                                 </span>
-                                <span className='ml-2 text-gray-900 dark:text-white font-mono text-xs'>
+                                <span className='ml-2 text-foreground font-mono text-xs'>
                                   {log.clientIP}
                                 </span>
                               </div>
                               {log.userName && (
                                 <div>
-                                  <span className='text-gray-500 dark:text-gray-400'>
+                                  <span className='text-muted-foreground'>
                                     사용자:
                                   </span>
-                                  <span className='ml-2 text-gray-900 dark:text-white'>
+                                  <span className='ml-2 text-foreground'>
                                     {log.userName} ({log.userEmail})
                                     {log.userDepartment && (
-                                      <span className='ml-1 text-xs text-gray-500 dark:text-gray-400'>
+                                      <span className='ml-1 text-xs text-muted-foreground'>
                                         [{log.userDepartment}]
                                       </span>
                                     )}
@@ -1713,10 +1713,10 @@ export default function ExternalApiLogsPage() {
                               )}
                               {log.tokenName && (
                                 <div>
-                                  <span className='text-gray-500 dark:text-gray-400'>
+                                  <span className='text-muted-foreground'>
                                     토큰:
                                   </span>
-                                  <span className='ml-2 text-gray-900 dark:text-white'>
+                                  <span className='ml-2 text-foreground'>
                                     {log.tokenName}
                                   </span>
                                 </div>
@@ -1725,7 +1725,7 @@ export default function ExternalApiLogsPage() {
                             <div className='space-y-2'>
                               {log.sessionHash && (
                                 <div className='flex items-center gap-2'>
-                                  <span className='text-gray-500 dark:text-gray-400'>
+                                  <span className='text-muted-foreground'>
                                     세션:
                                   </span>
                                   <button
@@ -1748,7 +1748,7 @@ export default function ExternalApiLogsPage() {
                                         log.tokenHash || ''
                                       );
                                     }}
-                                    className='inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-xs font-mono transition-colors'
+                                    className='inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono transition-colors'
                                     title='이 세션의 모든 요청 보기'
                                   >
                                     <Hash className='h-3 w-3' />
@@ -1758,7 +1758,7 @@ export default function ExternalApiLogsPage() {
                               )}
                               {log.conversationId && (
                                 <div className='flex items-center gap-2'>
-                                  <span className='text-gray-500 dark:text-gray-400'>
+                                  <span className='text-muted-foreground'>
                                     대화:
                                   </span>
                                   <button
@@ -1773,7 +1773,7 @@ export default function ExternalApiLogsPage() {
                                         false
                                       );
                                     }}
-                                    className='inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-xs font-mono transition-colors'
+                                    className='inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono transition-colors'
                                     title='이 대화 세션의 모든 요청 보기'
                                   >
                                     <Hash className='h-3 w-3' />
@@ -1782,13 +1782,13 @@ export default function ExternalApiLogsPage() {
                                 </div>
                               )}
                               <div>
-                                <span className='text-gray-500 dark:text-gray-400'>
+                                <span className='text-muted-foreground'>
                                   토큰 사용:
                                 </span>
-                                <span className='ml-2 text-gray-900 dark:text-white font-medium'>
+                                <span className='ml-2 text-foreground font-medium'>
                                   {formatTokens(log.promptTokenCount)} →{' '}
                                   {formatTokens(log.responseTokenCount)}
-                                  <span className='ml-1 text-gray-500 dark:text-gray-400 text-xs'>
+                                  <span className='ml-1 text-muted-foreground text-xs'>
                                     (총 {formatTokens(log.totalTokenCount)})
                                   </span>
                                 </span>
@@ -1801,9 +1801,9 @@ export default function ExternalApiLogsPage() {
                         {log.messages &&
                           Array.isArray(log.messages) &&
                           log.messages.length > 0 && (
-                            <div className='bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm'>
+                            <div className='bg-card rounded-lg p-4 shadow-sm'>
                               <div className='flex items-center justify-between mb-3'>
-                                <h4 className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
+                                <h4 className='text-sm font-semibold text-foreground'>
                                   메시지 ({log.messages.length}개)
                                 </h4>
                                 <button
@@ -1811,7 +1811,7 @@ export default function ExternalApiLogsPage() {
                                     e.stopPropagation();
                                     openPromptModal(log);
                                   }}
-                                  className='text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 flex items-center gap-1'
+                                  className='text-xs text-primary hover:text-primary flex items-center gap-1'
                                 >
                                   <Eye className='h-3 w-3' />
                                   전체 보기
@@ -1834,7 +1834,7 @@ export default function ExternalApiLogsPage() {
                                               e.stopPropagation();
                                               toggleMessagesExpansion(log._id);
                                             }}
-                                            className='w-full text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-center py-2 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors'
+                                            className='w-full text-xs text-primary hover:text-primary text-center py-2 rounded hover:bg-primary/10 transition-colors'
                                           >
                                             + {log.messages.length - 2}개 더
                                             보기
@@ -1875,9 +1875,9 @@ export default function ExternalApiLogsPage() {
                                         return (
                                           <div
                                             key={originalIdx}
-                                            className='bg-gray-50 dark:bg-gray-900 rounded p-3 text-xs'
+                                            className='bg-muted rounded p-3 text-xs'
                                           >
-                                            <div className='font-semibold text-gray-700 dark:text-gray-300 mb-1'>
+                                            <div className='font-semibold text-foreground mb-1'>
                                               {(() => {
                                                 const role = typeof msg === 'object' && msg !== null 
                                                   ? (msg.role || msg.type || 'unknown')
@@ -1888,7 +1888,7 @@ export default function ExternalApiLogsPage() {
                                                 return `📝 ${role}`;
                                               })()}
                                             </div>
-                                            <div className='text-gray-600 dark:text-gray-400 whitespace-pre-wrap break-words'>
+                                            <div className='text-muted-foreground whitespace-pre-wrap break-words'>
                                               {shouldTruncate &&
                                               !isContentExpanded
                                                 ? contentStr.substring(0, 100) +
@@ -1904,7 +1904,7 @@ export default function ExternalApiLogsPage() {
                                                     originalIdx
                                                   );
                                                 }}
-                                                className='mt-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 text-xs'
+                                                className='mt-1 text-primary hover:text-primary text-xs'
                                               >
                                                 {isContentExpanded
                                                   ? '접기'
@@ -1921,7 +1921,7 @@ export default function ExternalApiLogsPage() {
                                               e.stopPropagation();
                                               toggleMessagesExpansion(log._id);
                                             }}
-                                            className='w-full text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 text-center py-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                                            className='w-full text-xs text-muted-foreground hover:text-foreground text-center py-2 rounded hover:bg-accent transition-colors'
                                           >
                                             최신 2개만 보기
                                           </button>
@@ -1935,19 +1935,19 @@ export default function ExternalApiLogsPage() {
 
                         {/* 오류 메시지 */}
                         {log.error && (
-                          <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4'>
-                            <p className='text-sm text-red-700 dark:text-red-300'>
+                          <div className='bg-destructive/10 border border-destructive/30 rounded-lg p-4'>
+                            <p className='text-sm text-destructive'>
                               <strong>오류:</strong> {log.error}
                             </p>
                           </div>
                         )}
 
                         {/* HTTP Request 정보 */}
-                        <details className='bg-white dark:bg-gray-800 rounded-lg shadow-sm'>
-                          <summary className='cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+                        <details className='bg-card rounded-lg shadow-sm'>
+                          <summary className='cursor-pointer p-4 hover:bg-accent rounded-lg transition-colors'>
                             <div className='flex items-center justify-between'>
-                              <h4 className='text-sm font-semibold text-gray-700 dark:text-gray-300 inline-flex items-center gap-2'>
-                                <span className='px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs font-mono'>
+                              <h4 className='text-sm font-semibold text-foreground inline-flex items-center gap-2'>
+                                <span className='px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-mono'>
                                   POST
                                 </span>
                                 HTTP Request
@@ -1985,7 +1985,7 @@ export default function ExternalApiLogsPage() {
                                   };
                                   copyJson(requestData);
                                 }}
-                                className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors'
+                                className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
                                 title='Request 복사'
                               >
                                 <Copy className='h-3 w-3' />
@@ -1997,20 +1997,20 @@ export default function ExternalApiLogsPage() {
                           <div className='p-4 pt-0 space-y-2'>
                             {/* URL */}
                             <div className='text-xs'>
-                              <span className='text-gray-500 dark:text-gray-400'>
+                              <span className='text-muted-foreground'>
                                 URL:
                               </span>
-                              <code className='ml-2 font-mono text-gray-900 dark:text-gray-100'>
+                              <code className='ml-2 font-mono text-foreground'>
                                 {log.endpoint || '/api/v1/chat/completions'}
                               </code>
                             </div>
 
                             {/* Request Body 요약 */}
                             <div className='text-xs'>
-                              <span className='text-gray-500 dark:text-gray-400'>
+                              <span className='text-muted-foreground'>
                                 Body:
                               </span>
-                              <span className='ml-2 text-gray-900 dark:text-white'>
+                              <span className='ml-2 text-foreground'>
                                 model:{' '}
                                 <code className='font-mono'>
                                   {log.modelLabel || log.model}
@@ -2027,19 +2027,19 @@ export default function ExternalApiLogsPage() {
                         </details>
 
                         {/* HTTP Response 정보 */}
-                        <details className='bg-white dark:bg-gray-800 rounded-lg shadow-sm'>
-                          <summary className='cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+                        <details className='bg-card rounded-lg shadow-sm'>
+                          <summary className='cursor-pointer p-4 hover:bg-accent rounded-lg transition-colors'>
                             <div className='flex items-center justify-between'>
-                              <h4 className='text-sm font-semibold text-gray-700 dark:text-gray-300 inline-flex items-center gap-2'>
+                              <h4 className='text-sm font-semibold text-foreground inline-flex items-center gap-2'>
                                 <span
                                   className={`px-2 py-0.5 rounded text-xs font-mono ${
                                     log.statusCode >= 200 &&
                                     log.statusCode < 300
-                                      ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                      ? 'bg-primary/10 text-primary'
                                       : log.statusCode >= 400 &&
                                         log.statusCode < 500
-                                      ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                                      : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                                      ? 'bg-muted text-muted-foreground'
+                                      : 'bg-destructive/10 text-destructive'
                                   }`}
                                 >
                                   {log.statusCode}
@@ -2065,7 +2065,7 @@ export default function ExternalApiLogsPage() {
                                   };
                                   copyJson(responseData);
                                 }}
-                                className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors'
+                                className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
                                 title='Response 복사'
                               >
                                 <Copy className='h-3 w-3' />
@@ -2077,21 +2077,21 @@ export default function ExternalApiLogsPage() {
                           <div className='p-4 pt-0 space-y-2'>
                             {/* Response Body 요약 */}
                             {log.error ? (
-                              <div className='text-xs bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-2'>
-                                <span className='text-red-700 dark:text-red-300'>
+                              <div className='text-xs bg-destructive/10 border border-destructive/30 rounded p-2'>
+                                <span className='text-destructive'>
                                   {log.error}
                                 </span>
                               </div>
                             ) : log.responseBody ? (
                               <div className='text-xs'>
-                                <pre className='font-mono text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-2 rounded'>
+                                <pre className='font-mono text-foreground whitespace-pre-wrap break-words max-h-48 overflow-y-auto bg-muted p-2 rounded'>
                                   {typeof log.responseBody === 'string'
                                     ? log.responseBody
                                     : JSON.stringify(log.responseBody, null, 2)}
                                 </pre>
                               </div>
                             ) : (
-                              <div className='text-xs text-gray-500 dark:text-gray-400'>
+                              <div className='text-xs text-muted-foreground'>
                                 {log.isStream
                                   ? 'Streaming response (콘텐츠 미저장)'
                                   : 'Response body 없음'}
@@ -2101,10 +2101,10 @@ export default function ExternalApiLogsPage() {
                         </details>
 
                         {/* 전체 Raw JSON (접을 수 있게) */}
-                        <details className='bg-white dark:bg-gray-800 rounded-lg shadow-sm'>
-                          <summary className='cursor-pointer p-4 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors'>
+                        <details className='bg-card rounded-lg shadow-sm'>
+                          <summary className='cursor-pointer p-4 hover:bg-accent rounded-lg transition-colors'>
                             <div className='flex items-center justify-between'>
-                              <h4 className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
+                              <h4 className='text-sm font-semibold text-foreground'>
                                 전체 Raw JSON 데이터
                               </h4>
                               <button
@@ -2112,7 +2112,7 @@ export default function ExternalApiLogsPage() {
                                   e.stopPropagation();
                                   copyJson(log);
                                 }}
-                                className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors'
+                                className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
                                 title='전체 JSON 복사'
                               >
                                 <Copy className='h-3 w-3' />
@@ -2121,7 +2121,7 @@ export default function ExternalApiLogsPage() {
                             </div>
                           </summary>
                           <div className='p-4 pt-0'>
-                            <pre className='text-xs font-mono text-gray-900 dark:text-gray-100 whitespace-pre-wrap break-words max-h-96 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-3 rounded'>
+                            <pre className='text-xs font-mono text-foreground whitespace-pre-wrap break-words max-h-96 overflow-y-auto bg-muted p-3 rounded'>
                               {JSON.stringify(log, null, 2)}
                             </pre>
                           </div>
@@ -2141,7 +2141,7 @@ export default function ExternalApiLogsPage() {
             <button
               onClick={() => handlePageChange(filters.page - 1)}
               disabled={!pagination.hasPrev || loading}
-              className='flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600'
+              className='flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
             >
               <ChevronLeft className='h-4 w-4' />
               이전
@@ -2158,8 +2158,8 @@ export default function ExternalApiLogsPage() {
                       onClick={() => handlePageChange(page)}
                       className={`px-3 py-2 text-sm rounded-md ${
                         page === filters.page
-                          ? 'bg-blue-600 text-white'
-                          : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'border border-border bg-card text-foreground hover:bg-accent'
                       }`}
                     >
                       {page}
@@ -2172,7 +2172,7 @@ export default function ExternalApiLogsPage() {
             <button
               onClick={() => handlePageChange(filters.page + 1)}
               disabled={!pagination.hasNext || loading}
-              className='flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600'
+              className='flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
             >
               다음
               <ChevronRight className='h-4 w-4' />
@@ -2190,22 +2190,22 @@ export default function ExternalApiLogsPage() {
             onClick={closePromptModal}
           />
           {/* 모달 내용 */}
-          <div className='relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl max-h-[80vh] overflow-hidden'>
-            <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-              <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+          <div className='relative bg-card rounded-lg w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl max-h-[80vh] overflow-hidden'>
+            <div className='flex items-center justify-between p-4 border-b border-border'>
+              <h3 className='text-lg font-medium text-foreground'>
                 프롬프트 전체 보기
               </h3>
               <div className='flex items-center gap-2'>
                 <button
                   onClick={() => copyPrompt(promptModal.log.prompt)}
-                  className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  className='p-2 text-muted-foreground hover:text-foreground'
                   title='복사'
                 >
                   <Copy className='h-4 w-4' />
                 </button>
                 <button
                   onClick={closePromptModal}
-                  className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                  className='p-2 text-muted-foreground hover:text-foreground'
                 >
                   <X className='h-4 w-4' />
                 </button>
@@ -2213,7 +2213,7 @@ export default function ExternalApiLogsPage() {
             </div>
             <div className='p-4 overflow-y-auto max-h-[calc(80vh-120px)]'>
               <div className='mb-4'>
-                <div className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
+                <div className='text-sm text-muted-foreground mb-2'>
                   <strong>API:</strong> {promptModal.log.apiType} |
                   <strong> 모델:</strong>{' '}
                   {promptModal.log.modelLabel || promptModal.log.model} |
@@ -2222,8 +2222,8 @@ export default function ExternalApiLogsPage() {
                   {formatTime(promptModal.log.timestamp)}
                 </div>
               </div>
-              <div className='bg-gray-50 dark:bg-gray-900 rounded-lg p-4'>
-                <pre className='whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100 font-mono overflow-x-auto'>
+              <div className='bg-muted rounded-lg p-4'>
+                <pre className='whitespace-pre-wrap text-sm text-foreground font-mono overflow-x-auto'>
                   {typeof promptModal.log.prompt === 'string'
                     ? promptModal.log.prompt
                     : JSON.stringify(promptModal.log.prompt, null, 2)}
@@ -2232,10 +2232,10 @@ export default function ExternalApiLogsPage() {
               {promptModal.log.messages &&
                 Array.isArray(promptModal.log.messages) && (
                   <div className='mt-4'>
-                    <h4 className='font-medium text-gray-900 dark:text-white mb-2'>
+                    <h4 className='font-medium text-foreground mb-2'>
                       메시지 배열 ({promptModal.log.messages.length}개):
                     </h4>
-                    <div className='bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-3'>
+                    <div className='bg-muted rounded-lg p-4 space-y-3'>
                       {promptModal.log.messages.map((msg, index) => {
                         // 메시지 내용 추출 (다양한 형식 지원)
                         let messageContent = null;
@@ -2259,12 +2259,12 @@ export default function ExternalApiLogsPage() {
                         return (
                           <div
                             key={index}
-                            className='bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700'
+                            className='bg-card p-3 rounded border border-border'
                           >
-                            <div className='text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1'>
+                            <div className='text-xs font-semibold text-foreground mb-1'>
                               [{index + 1}] {role === 'user' ? '👤 User' : role === 'assistant' ? '🤖 Assistant' : role === 'system' ? '⚙️ System' : `📝 ${role}`}
                             </div>
-                            <pre className='whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100 font-mono overflow-x-auto'>
+                            <pre className='whitespace-pre-wrap text-sm text-foreground font-mono overflow-x-auto'>
                               {renderContent(messageContent)}
                             </pre>
                           </div>
@@ -2274,7 +2274,7 @@ export default function ExternalApiLogsPage() {
                     <div className='mt-2'>
                       <button
                         onClick={() => copyPrompt(promptModal.log.messages)}
-                        className='flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors'
+                        className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
                         title='메시지 배열 복사'
                       >
                         <Copy className='h-3 w-3' />

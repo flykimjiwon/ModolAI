@@ -64,20 +64,20 @@ function getOriginalText(log) {
 function StatusBadge({ meta }) {
   if (meta.skipped || meta.reason) {
     return (
-      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'>
+      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive'>
         <XCircle className='w-3 h-3' /> 실패
       </span>
     );
   }
   if (meta.detected) {
     return (
-      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'>
+      <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground'>
         <ShieldAlert className='w-3 h-3' /> PII 검출
       </span>
     );
   }
   return (
-    <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'>
+    <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary'>
       <ShieldCheck className='w-3 h-3' /> 정상
     </span>
   );
@@ -88,48 +88,48 @@ function LogDetail({ log, meta }) {
   const isFailed = meta.skipped || !!meta.reason;
 
   return (
-    <div className='px-4 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 space-y-4'>
+    <div className='px-4 py-4 bg-muted border-t border-border space-y-4'>
       <div>
-        <div className='text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2'>
+        <div className='text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2'>
           입력 (Request)
         </div>
         <div className='flex gap-4 mb-2 text-xs'>
           <div className='flex gap-1.5'>
-            <span className='text-gray-500'>mxt_vrf:</span>
-            <span className='font-mono font-medium text-gray-800 dark:text-gray-200'>
+            <span className='text-muted-foreground'>mxt_vrf:</span>
+            <span className='font-mono font-medium text-foreground'>
               {String(log?.requestBody?.mxt_vrf ?? true)}
             </span>
           </div>
           <div className='flex gap-1.5'>
-            <span className='text-gray-500'>mask_opt:</span>
-            <span className='font-mono font-medium text-gray-800 dark:text-gray-200'>
+            <span className='text-muted-foreground'>mask_opt:</span>
+            <span className='font-mono font-medium text-foreground'>
               {String(log?.requestBody?.mask_opt ?? true)}
             </span>
           </div>
         </div>
-        <div className='text-xs text-gray-500 mb-1'>original_text</div>
-        <pre className='text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200 max-h-40 overflow-y-auto'>
+        <div className='text-xs text-muted-foreground mb-1'>original_text</div>
+        <pre className='text-xs bg-card border border-border rounded-lg p-3 whitespace-pre-wrap break-all text-foreground max-h-40 overflow-y-auto'>
           {originalText || '(없음)'}
         </pre>
       </div>
 
       {!isFailed && (
         <div>
-          <div className='text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2'>
+          <div className='text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2'>
             응답 (Response)
           </div>
           <div className='flex gap-4 mb-2 text-xs'>
             <div className='flex gap-1.5'>
-              <span className='text-gray-500'>detected:</span>
+              <span className='text-muted-foreground'>detected:</span>
               <span
-                className={`font-medium ${meta.detected ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}
+                className={`font-medium ${meta.detected ? 'text-muted-foreground' : 'text-primary'}`}
               >
                 {String(meta.detected)}
               </span>
             </div>
             <div className='flex gap-1.5'>
-              <span className='text-gray-500'>detected_cnt:</span>
-              <span className='font-mono font-medium text-gray-800 dark:text-gray-200'>
+              <span className='text-muted-foreground'>detected_cnt:</span>
+              <span className='font-mono font-medium text-foreground'>
                 {meta.detectedCnt}
               </span>
             </div>
@@ -137,8 +137,8 @@ function LogDetail({ log, meta }) {
 
           {meta.maskedText && (
             <div className='mb-3'>
-              <div className='text-xs text-gray-500 mb-1'>masked_text</div>
-              <pre className='text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200 max-h-40 overflow-y-auto'>
+              <div className='text-xs text-muted-foreground mb-1'>masked_text</div>
+              <pre className='text-xs bg-card border border-border rounded-lg p-3 whitespace-pre-wrap break-all text-foreground max-h-40 overflow-y-auto'>
                 {meta.maskedText}
               </pre>
             </div>
@@ -146,19 +146,19 @@ function LogDetail({ log, meta }) {
 
           {meta.detectedList.length > 0 && (
             <div>
-              <div className='text-xs text-gray-500 mb-1'>
+              <div className='text-xs text-muted-foreground mb-1'>
                 detected_list ({meta.detectedList.length}건)
               </div>
               <div className='space-y-1'>
                 {meta.detectedList.map((item, i) => (
                   <div
                     key={i}
-                    className='text-xs bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded px-3 py-2 flex gap-3'
+                    className='text-xs bg-muted border border-border rounded px-3 py-2 flex gap-3'
                   >
-                    <span className='font-medium text-orange-700 dark:text-orange-400 shrink-0'>
+                    <span className='font-medium text-muted-foreground shrink-0'>
                       {item.pattern || item.type || `#${i + 1}`}
                     </span>
-                    <span className='font-mono text-gray-700 dark:text-gray-300 break-all'>
+                    <span className='font-mono text-foreground break-all'>
                       {item.masked_text || item.maskedText || JSON.stringify(item)}
                     </span>
                   </div>
@@ -168,7 +168,7 @@ function LogDetail({ log, meta }) {
           )}
 
           {!meta.detected && meta.detectedCnt === 0 && !meta.maskedText && (
-            <div className='text-xs text-gray-400 italic'>
+            <div className='text-xs text-muted-foreground italic'>
               PII가 탐지되지 않았습니다.
             </div>
           )}
@@ -177,30 +177,30 @@ function LogDetail({ log, meta }) {
 
       {isFailed && (
         <div>
-          <div className='text-xs font-semibold text-red-500 dark:text-red-400 uppercase tracking-wide mb-2'>
+          <div className='text-xs font-semibold text-destructive uppercase tracking-wide mb-2'>
             오류 (Error)
           </div>
-          <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 space-y-1.5 text-xs'>
+          <div className='bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-1.5 text-xs'>
             {meta.reason && (
               <div className='flex gap-2'>
-                <span className='text-red-500 shrink-0 min-w-[70px]'>reason:</span>
-                <span className='font-mono font-medium text-red-700 dark:text-red-400'>
+                <span className='text-destructive shrink-0 min-w-[70px]'>reason:</span>
+                <span className='font-mono font-medium text-destructive'>
                   {meta.reason}
                 </span>
               </div>
             )}
             {log.statusCode != null && (
               <div className='flex gap-2'>
-                <span className='text-red-500 shrink-0 min-w-[70px]'>statusCode:</span>
-                <span className='font-mono font-medium text-red-700 dark:text-red-400'>
+                <span className='text-destructive shrink-0 min-w-[70px]'>statusCode:</span>
+                <span className='font-mono font-medium text-destructive'>
                   {log.statusCode}
                 </span>
               </div>
             )}
             {log.error && (
               <div className='flex gap-2'>
-                <span className='text-red-500 shrink-0 min-w-[70px]'>error:</span>
-                <span className='text-red-700 dark:text-red-400 break-all'>
+                <span className='text-destructive shrink-0 min-w-[70px]'>error:</span>
+                <span className='text-destructive break-all'>
                   {log.error}
                 </span>
               </div>
@@ -208,8 +208,8 @@ function LogDetail({ log, meta }) {
           </div>
           {log.responseBody && (
             <div className='mt-2'>
-              <div className='text-xs text-gray-500 mb-1'>응답 body</div>
-              <pre className='text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200 max-h-32 overflow-y-auto'>
+              <div className='text-xs text-muted-foreground mb-1'>응답 body</div>
+              <pre className='text-xs bg-card border border-border rounded-lg p-3 whitespace-pre-wrap break-all text-foreground max-h-32 overflow-y-auto'>
                 {typeof log.responseBody === 'string'
                   ? log.responseBody
                   : JSON.stringify(log.responseBody, null, 2)}
@@ -316,16 +316,16 @@ export default function AdminPiiLogsPage() {
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+          <h1 className='text-2xl font-bold text-foreground'>
             PII 로그
           </h1>
-          <p className='text-sm text-gray-600 dark:text-gray-300 mt-1'>
+          <p className='text-sm text-muted-foreground mt-1'>
             PII API 호출 이력 — 입력/출력값 및 성공/실패 상세 확인
           </p>
         </div>
         <button
           onClick={() => fetchLogs(true)}
-          className='px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-2'
+          className='btn-primary px-4 py-2 rounded-lg inline-flex items-center gap-2'
         >
           <RefreshCw className='w-4 h-4' />
           새로고침
@@ -333,37 +333,37 @@ export default function AdminPiiLogsPage() {
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
-        <div className='p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'>
-          <div className='text-xs text-gray-500'>총 로그</div>
-          <div className='text-2xl font-semibold text-gray-900 dark:text-white'>
+        <div className='p-4 rounded-xl border border-border bg-card'>
+          <div className='text-xs text-muted-foreground'>총 로그</div>
+          <div className='text-2xl font-semibold text-foreground'>
             {summary.total}
           </div>
         </div>
-        <div className='p-4 rounded-xl border border-orange-200 dark:border-orange-800 bg-white dark:bg-gray-800'>
-          <div className='text-xs text-gray-500 inline-flex items-center gap-1'>
-            <ShieldAlert className='w-4 h-4 text-orange-600' /> PII 검출
+        <div className='p-4 rounded-xl border border-border bg-card'>
+          <div className='text-xs text-muted-foreground inline-flex items-center gap-1'>
+            <ShieldAlert className='w-4 h-4 text-muted-foreground' /> PII 검출
           </div>
-          <div className='text-2xl font-semibold text-orange-700 dark:text-orange-400'>
+          <div className='text-2xl font-semibold text-muted-foreground'>
             {summary.detected}
           </div>
         </div>
-        <div className='p-4 rounded-xl border border-red-200 dark:border-red-800 bg-white dark:bg-gray-800'>
-          <div className='text-xs text-gray-500 inline-flex items-center gap-1'>
-            <XCircle className='w-4 h-4 text-red-600' /> 실패/스킵
+        <div className='p-4 rounded-xl border border-destructive/30 bg-card'>
+          <div className='text-xs text-muted-foreground inline-flex items-center gap-1'>
+            <XCircle className='w-4 h-4 text-destructive' /> 실패/스킵
           </div>
-          <div className='text-2xl font-semibold text-red-700 dark:text-red-400'>
+          <div className='text-2xl font-semibold text-destructive'>
             {summary.failed}
           </div>
         </div>
       </div>
 
-      <div className='p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 grid grid-cols-1 md:grid-cols-5 gap-3'>
+      <div className='p-4 rounded-xl border border-border bg-card grid grid-cols-1 md:grid-cols-5 gap-3'>
         <select
           value={filters.timeRange}
           onChange={(e) =>
             setFilters((p) => ({ ...p, timeRange: e.target.value, page: 1 }))
           }
-          className='px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'
+          className='px-3 py-2 rounded-lg border border-border bg-background'
         >
           <option value='1h'>최근 1시간</option>
           <option value='24h'>최근 24시간</option>
@@ -376,7 +376,7 @@ export default function AdminPiiLogsPage() {
             setFilters((p) => ({ ...p, endpoint: e.target.value, page: 1 }))
           }
           placeholder='endpoint 필터'
-          className='px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'
+          className='px-3 py-2 rounded-lg border border-border bg-background'
         />
         <input
           value={filters.model}
@@ -384,14 +384,14 @@ export default function AdminPiiLogsPage() {
             setFilters((p) => ({ ...p, model: e.target.value, page: 1 }))
           }
           placeholder='model 필터'
-          className='px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'
+          className='px-3 py-2 rounded-lg border border-border bg-background'
         />
         <select
           value={filters.detected}
           onChange={(e) =>
             setFilters((p) => ({ ...p, detected: e.target.value, page: 1 }))
           }
-          className='px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900'
+          className='px-3 py-2 rounded-lg border border-border bg-background'
         >
           <option value=''>검출 상태 전체</option>
           <option value='detected'>PII 검출</option>
@@ -400,20 +400,20 @@ export default function AdminPiiLogsPage() {
         </select>
         <button
           onClick={() => fetchLogs(true)}
-          className='px-3 py-2 rounded-lg bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+          className='px-3 py-2 rounded-lg bg-foreground text-background'
         >
           조회
         </button>
       </div>
 
       {loading ? (
-        <div className='py-16 text-center text-gray-500'>로딩 중...</div>
+        <div className='py-16 text-center text-muted-foreground'>로딩 중...</div>
       ) : filteredLogs.length === 0 ? (
-        <div className='py-16 text-center text-gray-500'>
+        <div className='py-16 text-center text-muted-foreground'>
           조회 결과가 없습니다.
         </div>
       ) : (
-        <div className='rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-800'>
+        <div className='rounded-xl border border-border overflow-hidden divide-y divide-border bg-card'>
           {filteredLogs.map((log) => {
             const meta = getPiiMeta(log);
             const id = log._id || log.timestamp;
@@ -424,18 +424,18 @@ export default function AdminPiiLogsPage() {
             return (
               <div key={id}>
                 <button
-                  className='w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors'
+                  className='w-full text-left px-4 py-3 hover:bg-accent transition-colors'
                   onClick={() => toggleExpand(id)}
                 >
                   <div className='flex items-center gap-3 flex-wrap'>
-                    <span className='text-xs text-gray-500 whitespace-nowrap min-w-[130px]'>
+                    <span className='text-xs text-muted-foreground whitespace-nowrap min-w-[130px]'>
                       {new Date(log.timestamp).toLocaleString('ko-KR')}
                     </span>
 
                     <StatusBadge meta={meta} />
 
                     {meta.detected && (
-                      <span className='text-xs font-medium text-orange-600 dark:text-orange-400'>
+                      <span className='text-xs font-medium text-muted-foreground'>
                         {meta.detectedCnt}건
                       </span>
                     )}
@@ -444,8 +444,8 @@ export default function AdminPiiLogsPage() {
                       <span
                         className={`text-xs font-mono px-1.5 py-0.5 rounded ${
                           log.statusCode >= 200 && log.statusCode < 300
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-destructive/10 text-destructive'
                         }`}
                       >
                         {log.statusCode}
@@ -453,19 +453,19 @@ export default function AdminPiiLogsPage() {
                     )}
 
                     {log.responseTime != null && (
-                      <span className='text-xs text-gray-400 inline-flex items-center gap-1'>
+                      <span className='text-xs text-muted-foreground inline-flex items-center gap-1'>
                         <Clock className='w-3 h-3' />
                         {log.responseTime}ms
                       </span>
                     )}
 
-                    <span className='text-xs text-gray-400 truncate flex-1 min-w-0 text-left'>
+                    <span className='text-xs text-muted-foreground truncate flex-1 min-w-0 text-left'>
                       {preview
                         ? `"${preview}${original.length > 80 ? '…' : ''}"`
                         : log.endpoint}
                     </span>
 
-                    <span className='ml-auto text-gray-400 shrink-0'>
+                    <span className='ml-auto text-muted-foreground shrink-0'>
                       {isExpanded ? (
                         <ChevronUp className='w-4 h-4' />
                       ) : (
@@ -483,7 +483,7 @@ export default function AdminPiiLogsPage() {
       )}
 
       <div className='flex items-center justify-between text-sm'>
-        <span className='text-gray-600 dark:text-gray-300'>
+        <span className='text-muted-foreground'>
           페이지 {pagination.page || 1} / {pagination.totalPages || 1}
         </span>
         <div className='flex gap-2'>
@@ -495,7 +495,7 @@ export default function AdminPiiLogsPage() {
                 page: Math.max((p.page || 1) - 1, 1),
               }))
             }
-            className='px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50'
+            className='px-3 py-1.5 rounded border border-border disabled:opacity-50'
           >
             이전
           </button>
@@ -507,7 +507,7 @@ export default function AdminPiiLogsPage() {
                 page: Math.min((p.page || 1) + 1, pagination.totalPages || 1),
               }))
             }
-            className='px-3 py-1.5 rounded border border-gray-300 dark:border-gray-600 disabled:opacity-50'
+            className='px-3 py-1.5 rounded border border-border disabled:opacity-50'
           >
             다음
           </button>

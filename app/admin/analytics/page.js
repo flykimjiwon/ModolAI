@@ -57,10 +57,10 @@ const downloadFile = (blob, filename) => {
 const LoadingSkeleton = () => (
   <div className='space-y-6'>
     <div className='animate-pulse'>
-      <div className='h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4'></div>
+      <div className='h-8 bg-muted rounded w-1/4 mb-4'></div>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className='h-64 bg-gray-200 dark:bg-gray-700 rounded' />
+          <div key={i} className='h-64 bg-muted rounded' />
         ))}
       </div>
     </div>
@@ -175,10 +175,10 @@ export default function Analytics() {
       <div>
         <div className='md:flex md:items-center md:justify-between'>
           <div className='min-w-0 flex-1'>
-            <h2 className='text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl'>
+            <h2 className='text-2xl font-bold leading-7 text-foreground sm:truncate sm:text-3xl'>
               통계 분석
             </h2>
-            <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-sm text-muted-foreground'>
               사용자 활동과 시스템 사용량을 분석합니다
             </p>
           </div>
@@ -194,12 +194,12 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+      <div className='bg-card shadow rounded-lg p-6'>
         <div className='space-y-4'>
           <div className='flex items-center gap-4 flex-wrap'>
             <div className='flex items-center gap-2'>
-              <Filter className='h-4 w-4 text-gray-400' />
-              <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <Filter className='h-4 w-4 text-muted-foreground' />
+              <span className='text-sm font-medium text-foreground'>
                 필터:
               </span>
             </div>
@@ -232,7 +232,7 @@ export default function Analytics() {
 
           {selectedPeriod === 'custom' && (
             <div className='flex items-center gap-3 flex-wrap pl-6'>
-              <span className='text-sm text-gray-600 dark:text-gray-400'>
+              <span className='text-sm text-muted-foreground'>
                 기간:
               </span>
               <input
@@ -243,7 +243,7 @@ export default function Analytics() {
                 className='input-primary w-auto min-w-[140px]'
                 placeholder='시작 날짜'
               />
-              <span className='text-sm text-gray-500 dark:text-gray-400'>~</span>
+              <span className='text-sm text-muted-foreground'>~</span>
               <input
                 type='date'
                 value={customEndDate}

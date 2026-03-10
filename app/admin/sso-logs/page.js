@@ -93,7 +93,7 @@ export default function SSOLogsPage() {
   const getStatusBadge = (log) => {
     if (log.login_success) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
           <CheckCircle className="h-3 w-3" />
           성공
         </span>
@@ -101,14 +101,14 @@ export default function SSOLogsPage() {
     }
     if (log.sso_login_deny_yn === 'Y') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
           <AlertTriangle className="h-3 w-3" />
           거부
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive">
         <XCircle className="h-3 w-3" />
         실패
       </span>
@@ -117,9 +117,9 @@ export default function SSOLogsPage() {
 
   const getDeviceIcon = (deviceType) => {
     if (deviceType === 'Mobile' || deviceType === 'Tablet') {
-      return <Smartphone className="h-4 w-4 text-gray-400" />;
+      return <Smartphone className="h-4 w-4 text-muted-foreground" />;
     }
-    return <Monitor className="h-4 w-4 text-gray-400" />;
+    return <Monitor className="h-4 w-4 text-muted-foreground" />;
   };
 
   return (
@@ -127,10 +127,10 @@ export default function SSOLogsPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             SSO 로그인 로그
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             모든 SSO 로그인 시도 기록을 확인합니다.
           </p>
         </div>
@@ -147,39 +147,39 @@ export default function SSOLogsPage() {
       {/* 통계 카드 */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-2xl font-bold text-foreground">
               {stats.total}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               전체 (7일)
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-2xl font-bold text-green-600">
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-2xl font-bold text-primary">
               {stats.success_count}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">성공</div>
+            <div className="text-sm text-muted-foreground">성공</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-2xl font-bold text-red-600">
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-2xl font-bold text-destructive">
               {stats.fail_count}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">실패</div>
+            <div className="text-sm text-muted-foreground">실패</div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-2xl font-bold text-orange-600">
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-2xl font-bold text-muted-foreground">
               {stats.deny_count}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               로그인 거부
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className="bg-card rounded-lg border border-border p-4">
+            <div className="text-2xl font-bold text-muted-foreground">
               {stats.client_error_count}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               클라이언트 오류
             </div>
           </div>
@@ -187,10 +187,10 @@ export default function SSOLogsPage() {
       )}
 
       {/* 필터 */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+      <div className="bg-card rounded-lg border border-border p-4">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+          className="flex items-center gap-2 text-sm font-medium text-foreground"
         >
           <Filter className="h-4 w-4" />
           필터
@@ -204,7 +204,7 @@ export default function SSOLogsPage() {
         {showFilters && (
           <form onSubmit={handleSearch} className="mt-4 grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 사번
               </label>
               <input
@@ -218,7 +218,7 @@ export default function SSOLogsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 결과
               </label>
               <select
@@ -234,7 +234,7 @@ export default function SSOLogsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 시작일
               </label>
               <input
@@ -247,7 +247,7 @@ export default function SSOLogsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
                 종료일
               </label>
               <input
@@ -270,47 +270,47 @@ export default function SSOLogsPage() {
       </div>
 
       {/* 로그 테이블 */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900">
+            <thead className="bg-muted">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   시간
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   사번
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   이름
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   부서
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   결과
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   브라우저
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   오류
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   상세
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     로딩 중...
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                     로그가 없습니다.
                   </td>
                 </tr>
@@ -318,32 +318,32 @@ export default function SSOLogsPage() {
                 logs.map((log) => (
                   <Fragment key={log.id}>
                     <tr
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      className="hover:bg-accent"
                     >
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                      <td className="px-4 py-3 text-sm text-foreground whitespace-nowrap">
                         {formatDate(log.created_at)}
                       </td>
-                      <td className="px-4 py-3 text-sm font-mono text-gray-900 dark:text-gray-100">
+                      <td className="px-4 py-3 text-sm font-mono text-foreground">
                         {log.employee_no || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                      <td className="px-4 py-3 text-sm text-foreground">
                         {log.sso_employee_name || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
                         {log.sso_department_name || '-'}
                       </td>
                       <td className="px-4 py-3">{getStatusBadge(log)}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           {getDeviceIcon(log.device_type)}
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-sm text-muted-foreground">
                             {log.browser_name} {log.browser_version}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
                         {log.error_type ? (
-                          <span className="text-red-600 dark:text-red-400">
+                          <span className="text-destructive">
                             {log.error_type}
                           </span>
                         ) : (
@@ -355,7 +355,7 @@ export default function SSOLogsPage() {
                           onClick={() =>
                             setExpandedLog(expandedLog === log.id ? null : log.id)
                           }
-                          className="text-blue-600 hover:text-blue-700 text-sm"
+                          className="text-primary hover:text-primary/80 text-sm"
                         >
                           {expandedLog === log.id ? '닫기' : '보기'}
                         </button>
@@ -363,81 +363,81 @@ export default function SSOLogsPage() {
                     </tr>
                     {expandedLog === log.id && (
                       <tr>
-                        <td colSpan={8} className="px-4 py-4 bg-gray-50 dark:bg-gray-900">
+                        <td colSpan={8} className="px-4 py-4 bg-muted">
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 SSO Result Code
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100">
+                              <div className="text-foreground">
                                 {log.sso_result_code || '-'}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 Auth Result
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100">
+                              <div className="text-foreground">
                                 {log.sso_auth_result || '-'}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 Login Deny
                               </div>
-                              <div className={log.sso_login_deny_yn === 'Y' ? 'text-red-600' : 'text-gray-900 dark:text-gray-100'}>
+                              <div className={log.sso_login_deny_yn === 'Y' ? 'text-destructive' : 'text-foreground'}>
                                 {log.sso_login_deny_yn || 'N'}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 JWT 발급
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100">
+                              <div className="text-foreground">
                                 {log.jwt_issued ? '예' : '아니오'}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 Client IP
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100 font-mono">
+                              <div className="text-foreground font-mono">
                                 {log.client_ip || '-'}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 OS
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100">
+                              <div className="text-foreground">
                                 {log.os_name} {log.os_version}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 Transaction ID
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100 font-mono text-xs">
+                              <div className="text-foreground font-mono text-xs">
                                 {log.sso_transaction_id || '-'}
                               </div>
                             </div>
                             <div>
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              <div className="text-xs font-medium text-muted-foreground mb-1">
                                 회사
                               </div>
-                              <div className="text-gray-900 dark:text-gray-100">
+                              <div className="text-foreground">
                                 {log.sso_company_name || '-'} ({log.sso_company_code || '-'})
                               </div>
                             </div>
                             {log.error_message && (
                               <div className="col-span-2 md:col-span-4">
-                                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">
                                   오류 메시지
                                 </div>
-                                <div className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                                <div className="text-destructive bg-destructive/10 p-2 rounded">
                                   {log.error_message}
                                   {log.error_detail && (
-                                    <div className="text-xs mt-1 text-red-500">
+                                    <div className="text-xs mt-1 text-destructive/80">
                                       상세: {log.error_detail}
                                     </div>
                                   )}
@@ -446,20 +446,20 @@ export default function SSOLogsPage() {
                             )}
                             {log.sso_auth_result_message && (
                               <div className="col-span-2 md:col-span-4">
-                                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">
                                   SSO Auth Result Message
                                 </div>
-                                <div className="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 p-2 rounded">
+                                <div className="text-foreground bg-muted p-2 rounded">
                                   {log.sso_auth_result_message}
                                 </div>
                               </div>
                             )}
                             {log.client_error_type && (
                               <div className="col-span-2 md:col-span-4">
-                                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                <div className="text-xs font-medium text-muted-foreground mb-1">
                                   클라이언트 오류
                                 </div>
-                                <div className="text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded">
+                                <div className="text-muted-foreground bg-muted p-2 rounded">
                                   [{log.client_error_type}] {log.client_error_message}
                                 </div>
                               </div>
@@ -477,8 +477,8 @@ export default function SSOLogsPage() {
 
         {/* 페이지네이션 */}
         {pagination.totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="px-4 py-3 border-t border-border flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
               총 {pagination.totalCount}개 중 {(pagination.page - 1) * pagination.limit + 1}-
               {Math.min(pagination.page * pagination.limit, pagination.totalCount)}
             </div>
