@@ -38,7 +38,7 @@ const CopyButton = memo(function CopyButton({ text }) {
   return (
     <button
       onClick={handleCopy}
-      className='absolute top-2 right-2 p-1.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 bg-white/80 dark:bg-gray-800/80 rounded-md shadow-sm hover:shadow-md transition-all opacity-70 group-hover:opacity-100 z-[1]'
+      className='absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground bg-background/80 rounded-md shadow-sm hover:shadow-md transition-all opacity-70 group-hover:opacity-100 z-[1]'
       title={copied ? '복사됨!' : '답변 전체 복사'}
     >
       {copied ? (
@@ -119,10 +119,10 @@ const FeedbackButton = memo(function FeedbackButton({
         disabled={loading || !messageId}
         className={`p-1.5 rounded-md transition-colors ${
           !messageId
-            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+            ? 'text-muted-foreground/30 cursor-not-allowed'
             : feedback === 'like'
-            ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/30'
-            : 'text-gray-400 hover:text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-800'
+            ? 'text-primary bg-primary/10'
+            : 'text-muted-foreground hover:text-primary hover:bg-accent'
         }`}
         title={!messageId ? '메시지 저장 중...' : '좋아요'}
       >
@@ -133,10 +133,10 @@ const FeedbackButton = memo(function FeedbackButton({
         disabled={loading || !messageId}
         className={`p-1.5 rounded-md transition-colors ${
           !messageId
-            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+            ? 'text-muted-foreground/30 cursor-not-allowed'
             : feedback === 'dislike'
-            ? 'text-red-600 bg-red-50 dark:bg-red-900/30'
-            : 'text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-800'
+            ? 'text-destructive bg-destructive/10'
+            : 'text-muted-foreground hover:text-destructive hover:bg-accent'
         }`}
         title={!messageId ? '메시지 저장 중...' : '싫어요'}
       >
@@ -473,11 +473,11 @@ function MessageList({
           data-testid='message-list-empty'
           className='flex flex-col items-center justify-center h-64 text-center'
         >
-          <MessageCircle className='h-16 w-16 text-gray-300 mb-4' />
-          <h3 className='text-lg font-medium text-gray-600 dark:text-gray-400 mb-2'>
+          <MessageCircle className='h-16 w-16 text-muted-foreground/40 mb-4' />
+          <h3 className='text-lg font-medium text-muted-foreground mb-2'>
             새로운 대화를 시작하세요
           </h3>
-          <p className='text-sm text-gray-500 dark:text-gray-500'>
+          <p className='text-sm text-muted-foreground'>
             아래 입력창에 질문을 입력하면 AI가 답변해드립니다.
             <br />
             전체 화면에 이미지 드래그 또는 클립보드 붙여넣기도 가능합니다.
@@ -519,18 +519,18 @@ function MessageList({
               <div
                 className={`absolute -top-5 text-xs font-medium ${
                   msg.role === 'user'
-                    ? 'right-0 text-blue-600 dark:text-blue-400'
-                    : 'left-0 text-gray-500 dark:text-gray-400'
+                    ? 'right-0 text-foreground'
+                    : 'left-0 text-muted-foreground'
                 }`}
               >
                 #{idx + 1}
               </div>
               {/* AI 답변에 모델 정보 표시 */}
               {msg.role === 'assistant' && msg.model && (
-                <div className='absolute -top-5 left-8 text-xs text-gray-400 dark:text-gray-500 font-normal'>
+                <div className='absolute -top-5 left-8 text-xs text-muted-foreground font-normal'>
                   {getModelLabel(msg.model)}
                   {getModelServerName(msg.model) && (
-                    <span className='ml-2 text-gray-500 dark:text-gray-600'>
+                    <span className='ml-2 text-muted-foreground/60'>
                       [{getModelServerName(msg.model)}]
                     </span>
                   )}
@@ -547,7 +547,7 @@ function MessageList({
               )}
               {msg.role === 'user' && userImages.length > 0 && (
                 <div className='mt-3'>
-                  <div className='text-[11px] text-gray-500 dark:text-gray-400 mb-2'>
+                  <div className='text-[11px] text-muted-foreground mb-2'>
                     첨부 이미지 {userImages.length}개
                   </div>
                   <div className='grid grid-cols-5 gap-1.5'>
@@ -570,18 +570,18 @@ function MessageList({
                           className='group text-left'
                           title={label}
                         >
-                          <div className='relative w-12 h-12 sm:w-14 sm:h-14 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'>
+                          <div className='relative w-12 h-12 sm:w-14 sm:h-14 rounded-md overflow-hidden border border-border bg-muted'>
                             <img
                               src={src}
                               alt={label}
                               className='w-full h-full object-cover'
                             />
                           </div>
-                          <div className='mt-1 text-[10px] text-gray-500 dark:text-gray-400 truncate'>
+                          <div className='mt-1 text-[10px] text-muted-foreground truncate'>
                             {label}
                           </div>
                           {sizeLabel && (
-                            <div className='text-[10px] text-gray-400 dark:text-gray-500'>
+                            <div className='text-[10px] text-muted-foreground/70'>
                               {sizeLabel}
                             </div>
                           )}
@@ -618,22 +618,22 @@ function MessageList({
           >
             <button
               type='button'
-              className='absolute -top-4 -right-4 bg-white text-gray-800 rounded-full shadow px-3 py-1 text-sm'
+              className='absolute -top-4 -right-4 bg-background text-foreground rounded-full shadow px-3 py-1 text-sm'
               onClick={() => setPreviewImage(null)}
             >
               닫기
             </button>
-            <div className='bg-gray-900 rounded-lg overflow-hidden'>
+            <div className='bg-black rounded-lg overflow-hidden'>
               <img
                 src={previewImage.src}
                 alt={previewImage.name || '첨부 이미지'}
                 className='w-full max-h-[80vh] object-contain'
               />
             </div>
-            <div className='mt-3 text-sm text-gray-200 flex items-center gap-2'>
+            <div className='mt-3 text-sm text-white/80 flex items-center gap-2'>
               <span>{previewImage.name}</span>
               {previewImage.size && (
-                <span className='text-gray-400'>({previewImage.size})</span>
+                <span className='text-white/50'>({previewImage.size})</span>
               )}
             </div>
           </div>

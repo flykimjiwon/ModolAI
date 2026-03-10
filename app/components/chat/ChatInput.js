@@ -1,6 +1,7 @@
 'use client';
 import { memo, useRef, useState, useEffect, useCallback } from 'react';
 import { LucideImage, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import ModelSelector from './ModelSelector';
 import { useAlert } from '@/contexts/AlertContext';
 
@@ -275,11 +276,11 @@ const ChatInput = memo(function ChatInput({
   }, [addImagesFromFiles]);
 
   return (
-    <footer className='w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700'>
+    <footer className='w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-4 bg-background border-t border-border'>
       {isGlobalDragging && (
         <div className='fixed inset-0 z-50 flex items-center justify-center pointer-events-none'>
-          <div className='absolute inset-0 bg-blue-500/10' />
-          <div className='relative px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white shadow-lg'>
+          <div className='absolute inset-0 bg-primary/10' />
+          <div className='relative px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground shadow-lg'>
             이미지를 놓으면 업로드됩니다
           </div>
         </div>
@@ -290,7 +291,7 @@ const ChatInput = memo(function ChatInput({
             {selectedImages.map((image) => (
               <div
                 key={image.id}
-                className='relative w-16 h-16 rounded-md overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
+                className='relative w-16 h-16 rounded-md overflow-hidden border border-border bg-muted'
               >
                 <img
                   src={image.dataUrl}
@@ -317,7 +318,7 @@ const ChatInput = memo(function ChatInput({
           rows={3}
           className={`input-primary w-full resize-none min-h-[48px] max-h-96 pr-48 ${
             isDragging
-              ? 'border-blue-400 ring-2 ring-blue-200 bg-blue-50 dark:bg-blue-900/20'
+              ? 'border-ring ring-2 ring-ring/30 bg-accent'
               : ''
           }`}
           placeholder={
@@ -340,27 +341,29 @@ const ChatInput = memo(function ChatInput({
         />
         {isDragging && (
           <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
-            <div className='px-3 py-1.5 rounded-full text-xs font-medium bg-blue-600 text-white shadow'>
+            <div className='px-3 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground shadow'>
               이미지를 놓으면 업로드됩니다
             </div>
           </div>
         )}
 
         <div className='absolute top-2 right-2 flex items-center gap-2'>
-          <button
+          <Button
             type='button'
-            className='inline-flex items-center justify-center w-8 h-8 rounded-md text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer'
+            variant='ghost'
+            size='icon-sm'
+            className='text-muted-foreground hover:text-foreground cursor-pointer'
             aria-label='이미지 업로드'
             title={`이미지 업로드 (${currentImageCount}/${maxImages})`}
             onClick={() => imageInputRef.current?.click()}
           >
             <LucideImage className='h-4 w-4' />
             {currentImageCount > 0 && (
-              <span className='ml-1 text-[10px] text-blue-600'>
+              <span className='ml-1 text-[10px] text-muted-foreground'>
                 {currentImageCount}/{maxImages}
               </span>
             )}
-          </button>
+          </Button>
           {/* 문서 업로드는 추후 기능 추가를 위해 비활성화 */}
           <input
             ref={imageInputRef}
@@ -384,20 +387,18 @@ const ChatInput = memo(function ChatInput({
             />
           )}
 
-          <button
+          <Button
             id='chat-send-button'
             data-testid='chat-send-button'
-            className={`
-              p-2 rounded-md font-medium transition-all duration-200
-              flex items-center justify-center min-w-[36px]
-              ${
-                loading || !currentRoom
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : input.trim().length > 0
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-300 hover:bg-gray-400 text-gray-600'
-              }
-            `}
+            variant={
+              loading || !currentRoom
+                ? 'secondary'
+                : input.trim().length > 0 || hasImages
+                ? 'default'
+                : 'secondary'
+            }
+            size='icon-sm'
+            className='min-w-[36px]'
             onClick={(e) => {
               e.preventDefault();
               if ((input.trim() || hasImages) && !loading) {
@@ -413,7 +414,7 @@ const ChatInput = memo(function ChatInput({
             aria-label='메시지 전송'
           >
             <Send className='h-4 w-4' />
-          </button>
+          </Button>
         </div>
       </div>
     </footer>

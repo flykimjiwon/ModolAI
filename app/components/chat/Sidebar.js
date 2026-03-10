@@ -16,6 +16,8 @@ import {
   Key,
   Mail,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';
 import DirectMessageModal from '@/components/DirectMessageModal';
 
@@ -236,65 +238,71 @@ function Sidebar({
       {/* 접힌 사이드바 (아이콘만) */}
       <div
         className={`
-          fixed left-0 top-0 h-full w-16 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-40
+          fixed left-0 top-0 h-full w-16 bg-background border-r border-border z-40
           flex flex-col items-center py-4
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
       >
         {/* 메뉴 버튼 (열기/닫기 토글) */}
-        <button
+        <Button
           id='sidebar-toggle-button'
           data-testid='sidebar-toggle-button'
+          variant='ghost'
+          size='icon'
           onClick={handleHamburgerClick}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-4'
+          className='mb-4'
           title='사이드바 열기'
         >
-          <Menu className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-        </button>
+          <Menu className='h-5 w-5 text-muted-foreground' />
+        </Button>
 
         {/* 채팅방 추가 */}
-        <button
+        <Button
           id='sidebar-create-room-button'
           data-testid='sidebar-create-room-button'
+          variant='ghost'
+          size='icon'
           onClick={handleCreateRoom}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-4'
+          className='mb-4'
           title='새 채팅방'
           disabled={loading}
         >
-          <Plus className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-        </button>
+          <Plus className='h-5 w-5 text-muted-foreground' />
+        </Button>
 
         {/* 쪽지 */}
         <div className='relative'>
-          <button
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={() => !loading && setShowDmModal(true)}
-            className={`relative p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+            className={`relative ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             title='받은 쪽지'
             disabled={loading}
           >
-            <Mail className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+            <Mail className='h-5 w-5 text-muted-foreground' />
             {unreadDmCount > 0 && (
-              <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-red-500 text-white'>
+              <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-destructive text-destructive-foreground'>
                 {unreadDmCount > 99 ? '99+' : unreadDmCount}
               </span>
             )}
-          </button>
+          </Button>
 
           {/* 새 쪽지 알림 말풍선 */}
           {showDmNotification && (
             <div className='absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 animate-bounce'>
-              <div className='relative bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
-                <div className='absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-blue-600'></div>
+              <div className='relative bg-primary text-primary-foreground text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
+                <div className='absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-primary'></div>
                 새 쪽지 {newDmCount}개가 도착했습니다
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDmNotification(false);
                   }}
-                  className='ml-2 hover:text-blue-200'
+                  className='ml-2 hover:text-primary-foreground/70'
                 >
                   <X className='h-3 w-3 inline' />
                 </button>
@@ -304,9 +312,11 @@ function Sidebar({
         </div>
 
         {/* 로그아웃 */}
-        <button
+        <Button
           id='sidebar-logout-button'
           data-testid='sidebar-logout-button'
+          variant='ghost'
+          size='icon'
           onClick={() => {
             if (!loading) {
               setConfirmModal({
@@ -322,39 +332,40 @@ function Sidebar({
               });
             }
           }}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-auto'
+          className='mt-auto'
           title='로그아웃'
           disabled={loading}
         >
-          <LogOut className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-        </button>
+          <LogOut className='h-5 w-5 text-muted-foreground' />
+        </Button>
       </div>
 
       {/* 펼쳐진 사이드바 */}
       <div
         className={`
-          fixed left-0 top-0 h-full w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-50
+          fixed left-0 top-0 h-full w-80 bg-background border-r border-border z-50
           flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         {/* 사이드바 헤더 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-          <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
+        <div className='flex items-center justify-between p-4 border-b border-border'>
+          <h2 className='text-lg font-semibold text-foreground'>
             채팅방
           </h2>
-          <button
+          <Button
+            variant='ghost'
+            size='icon-sm'
             onClick={handleCloseClick}
-            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
             title='사이드바 닫기'
           >
-            <X className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-          </button>
+            <X className='h-5 w-5 text-muted-foreground' />
+          </Button>
         </div>
 
         {/* 새 방 추가 버튼 */}
-        <div className='p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0'>
+        <div className='p-4 border-b border-border flex-shrink-0'>
           <button
             id='sidebar-create-room-button-full'
             data-testid='sidebar-create-room-button-full'
@@ -367,10 +378,10 @@ function Sidebar({
         </div>
 
         {/* 방 목록 (스크롤 가능 영역) */}
-        <div
+        <ScrollArea
           id='sidebar-rooms-list'
           data-testid='sidebar-rooms-list'
-          className='flex-1 overflow-y-scroll min-h-0'
+          className='flex-1 min-h-0'
         >
           <div className='p-4 space-y-2'>
             {rooms.map((room) => (
@@ -383,8 +394,8 @@ function Sidebar({
                   transition-all duration-200
                   ${
                     room._id === currentRoom
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : 'bg-muted hover:bg-accent text-foreground'
                   }
                   ${editingRoom === room._id ? '' : 'cursor-pointer'}
                   ${loading ? 'pointer-events-none opacity-50' : ''}
@@ -411,7 +422,7 @@ function Sidebar({
                           }
                         }}
                         onBlur={saveEdit}
-                        className='flex-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1 rounded text-sm font-medium min-w-0'
+                        className='flex-1 bg-background text-foreground px-2 py-1 rounded text-sm font-medium min-w-0'
                         maxLength={15}
                         autoFocus
                       />
@@ -419,7 +430,7 @@ function Sidebar({
                       <>
                         <span
                           className={`truncate font-medium ${
-                            room._id === currentRoom ? 'text-white' : ''
+                            room._id === currentRoom ? 'text-primary-foreground' : ''
                           }`}
                         >
                           {room.name}
@@ -428,8 +439,8 @@ function Sidebar({
                           <div
                             className={`flex flex-col gap-0.5 text-xs mt-0.5 ${
                               room._id === currentRoom
-                                ? 'text-white/70'
-                                : 'text-gray-500 dark:text-gray-400'
+                                ? 'text-primary-foreground/70'
+                                : 'text-muted-foreground'
                             }`}
                           >
                             {room.createdAt && (
@@ -476,8 +487,8 @@ function Sidebar({
                           p-1.5 rounded-md transition-colors duration-200
                           ${
                             room._id === currentRoom
-                              ? 'text-white/80 hover:text-white hover:bg-white/20'
-                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+                              ? 'text-primary-foreground/80 hover:text-primary-foreground hover:bg-primary-foreground/20'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                           }
                         `}
                         onClick={(e) => {
@@ -499,8 +510,8 @@ function Sidebar({
                             p-1.5 rounded-md transition-colors duration-200
                             ${
                               room._id === currentRoom
-                                ? 'text-white/80 hover:text-white hover:bg-red-500/20'
-                                : 'text-gray-500 hover:text-red-600 hover:bg-red-100'
+                                ? 'text-primary-foreground/80 hover:text-primary-foreground hover:bg-destructive/20'
+                                : 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'
                             }
                           `}
                           onClick={(e) => {
@@ -529,84 +540,89 @@ function Sidebar({
               </div>
             ))}
           </div>
-        </div>
+        </ScrollArea>
 
         {/* 관리자/사용자 기능 버튼 */}
-        <div className='p-4 space-y-2 border-t border-gray-200 dark:border-gray-700 flex-shrink-0'>
+        <div className='p-4 space-y-2 border-t border-border flex-shrink-0'>
           {/* 공지사항 */}
-          <button
+          <Button
+            variant='ghost'
             onClick={() => !loading && router.push('/notice')}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
+            className={`w-full justify-start gap-3 px-3 py-2 text-sm font-medium text-foreground ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             disabled={loading}
           >
             <Bell className='h-4 w-4' />
             공지사항
-          </button>
+          </Button>
 
           {boardEnabled && (
-            <button
+            <Button
+              variant='ghost'
               onClick={() => !loading && router.push('/board')}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
+              className={`w-full justify-start gap-3 px-3 py-2 text-sm font-medium text-foreground ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               disabled={loading}
             >
               <MessageSquare className='h-4 w-4' />
               자유게시판
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
+            variant='ghost'
             onClick={() => !loading && router.push('/my-api-keys')}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
+            className={`w-full justify-start gap-3 px-3 py-2 text-sm font-medium text-foreground ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             disabled={loading}
           >
             <Key className='h-4 w-4' />내 API 키
-          </button>
+          </Button>
 
           {/* 프로필 수정 */}
           {profileEditEnabled && (
-            <button
+            <Button
+              variant='ghost'
               onClick={() => !loading && router.push('/profile')}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
+              className={`w-full justify-start gap-3 px-3 py-2 text-sm font-medium text-foreground ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               disabled={loading}
             >
               <User className='h-4 w-4' />
               프로필 수정
-            </button>
+            </Button>
           )}
 
           {/* 관리자 패널 (관리자만 표시) */}
           {userRole === 'admin' && (
-            <button
+            <Button
               id='sidebar-admin-button'
               data-testid='sidebar-admin-button'
+              variant='ghost'
               onClick={() => !loading && router.push('/admin')}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors ${
+              className={`w-full justify-start gap-3 px-3 py-2 text-sm font-medium text-primary hover:bg-accent ${
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               disabled={loading}
             >
               <Shield className='h-4 w-4' />
               관리자 페이지
-            </button>
+            </Button>
           )}
         </div>
 
         {/* 하단 사용자 정보 */}
-        <div className='p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0'>
+        <div className='p-4 border-t border-border bg-muted flex-shrink-0'>
           <div className='flex items-center justify-between'>
             <div className='min-w-0 flex-1'>
-              <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <p className='text-sm font-medium text-foreground'>
                 로그인 계정
               </p>
-              <p className='text-xs text-gray-600 dark:text-gray-400 truncate'>
+              <p className='text-xs text-muted-foreground truncate'>
                 {userEmail}
               </p>
               {userRole === 'admin' && (
@@ -618,43 +634,47 @@ function Sidebar({
             <div className='flex items-center gap-1'>
               {/* 쪽지 버튼 */}
               <div className='relative'>
-                <button
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
                   onClick={() => !loading && setShowDmModal(true)}
-                  className={`relative p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+                  className={`relative ${
                     loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   title='받은 쪽지'
                   disabled={loading}
                 >
-                  <Mail className='h-4 w-4 text-gray-600 dark:text-gray-400' />
+                  <Mail className='h-4 w-4 text-muted-foreground' />
                   {unreadDmCount > 0 && (
-                    <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-red-500 text-white'>
+                    <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-destructive text-destructive-foreground'>
                       {unreadDmCount > 99 ? '99+' : unreadDmCount}
                     </span>
                   )}
-                </button>
+                </Button>
 
                 {/* 새 쪽지 알림 말풍선 */}
                 {showDmNotification && (
                   <div className='absolute bottom-full mb-2 right-0 z-50 animate-bounce'>
-                    <div className='relative bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
+                    <div className='relative bg-primary text-primary-foreground text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
                       새 쪽지 {newDmCount}개가 도착했습니다
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setShowDmNotification(false);
                         }}
-                        className='ml-2 hover:text-blue-200'
+                        className='ml-2 hover:text-primary-foreground/70'
                       >
                         <X className='h-3 w-3 inline' />
                       </button>
-                      <div className='absolute -bottom-2 right-4 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-blue-600'></div>
+                      <div className='absolute -bottom-2 right-4 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-primary'></div>
                     </div>
                   </div>
                 )}
               </div>
               {/* 로그아웃 버튼 */}
-              <button
+              <Button
+                variant='ghost'
+                size='icon-sm'
                 onClick={() => {
                   if (!loading) {
                     setConfirmModal({
@@ -670,14 +690,14 @@ function Sidebar({
                     });
                   }
                 }}
-                className={`p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
+                className={`${
                   loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 title='로그아웃'
                 disabled={loading}
               >
-                <LogOut className='h-4 w-4 text-gray-600 dark:text-gray-400' />
-              </button>
+                <LogOut className='h-4 w-4 text-muted-foreground' />
+              </Button>
             </div>
           </div>
         </div>
