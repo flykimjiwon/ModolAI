@@ -8,24 +8,33 @@ import {
   Copy,
   Trash2,
   Eye,
-  EyeOff,
   RefreshCw,
   Calendar,
   Zap,
   AlertCircle,
-  X,
   ArrowLeft,
   CheckCircle,
   Power,
   PowerOff,
-  RotateCw,
   ExternalLink,
-  Settings,
   Check,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 export default function MyApiKeysPage() {
   const router = useRouter();
@@ -61,7 +70,6 @@ export default function MyApiKeysPage() {
     cancelText: '취소'
   });
 
-  // 키 목록 조회
   const fetchTokens = useCallback(async () => {
     try {
       setLoading(true);
@@ -126,7 +134,6 @@ export default function MyApiKeysPage() {
     }
   }, [currentPage, router]);
 
-  // 키 발급
   const createToken = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -169,7 +176,6 @@ export default function MyApiKeysPage() {
     }
   };
 
-  // 키 삭제
   const deleteToken = async (tokenId) => {
     setConfirmModal({
       isOpen: true,
@@ -218,7 +224,6 @@ export default function MyApiKeysPage() {
     });
   };
 
-  // 키 활성화/비활성화
   const toggleTokenStatus = async (tokenId, currentStatus) => {
     try {
       const token = localStorage.getItem('token');
@@ -256,12 +261,10 @@ export default function MyApiKeysPage() {
     }
   };
 
-  // 키 복사
   const copyToken = async (token, key = 'token') => {
     await copyToClipboard(token, key);
   };
 
-  // 키 재발급
   const regenerateToken = async (tokenId, tokenName, expiresInDays) => {
     setConfirmModal({
       isOpen: true,
@@ -274,7 +277,6 @@ export default function MyApiKeysPage() {
         try {
           const token = localStorage.getItem('token');
 
-          // 기존 키 비활성화
           await fetch('/api/user/api-keys', {
             method: 'PATCH',
             headers: {
@@ -287,7 +289,6 @@ export default function MyApiKeysPage() {
             }),
           });
 
-          // 새 키 발급
           const response = await fetch('/api/user/api-keys', {
             method: 'POST',
             headers: {
@@ -333,19 +334,16 @@ export default function MyApiKeysPage() {
     fetchTokens();
   }, [fetchTokens]);
 
-  // 날짜 포맷팅
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
   };
 
-  // 만료 여부 확인
   const isExpired = (expiresAt) => {
     if (!expiresAt) return false;
     return new Date(expiresAt) < new Date();
   };
 
-  // 현재 서버의 기본 URL(프로토콜 + 호스트)을 가져옵니다.
   const getServerUrl = () => {
     if (typeof window !== 'undefined') {
       return window.location.origin;
@@ -353,7 +351,6 @@ export default function MyApiKeysPage() {
     return 'http://localhost:3000';
   };
 
-  // API Base URL을 반환합니다.
   const apiBaseUrl = getServerUrl();
   const normalizeBaseWithV1 = (value, fallback) => {
     const trimmed =
@@ -382,7 +379,6 @@ export default function MyApiKeysPage() {
     fetchPresetSettings();
   }, [fetchPresetSettings]);
 
-  // 클립보드 복사 함수 (HTTP 환경 지원)
   const copyToClipboard = async (text, key) => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
@@ -422,7 +418,6 @@ export default function MyApiKeysPage() {
     }
   };
 
-  // 플레이스홀더 치환 함수 (빈 문자열이면 플레이스홀더 유지)
   const replacePlaceholders = (text, apiKey) => {
     const selectedKey = apiKey && apiKey.trim() ? apiKey : '{{KEY}}';
     return text
@@ -430,7 +425,6 @@ export default function MyApiKeysPage() {
       .replace(/\{\{TOKEN\}\}/g, selectedKey);
   };
 
-  // 기본 config 예시 (관리자 설정이 없을 경우)
   const getDefaultConfigExample = (token) => {
     const baseUrl = normalizeBaseWithV1(presetBaseUrl, apiBaseUrl);
     const tokenValue = token && token.trim() ? token : '{{KEY}}';
@@ -445,7 +439,6 @@ models:
     baseUrl: "${baseUrl}"`;
   };
 
-  // 기본 curl 예시 (관리자 설정이 없을 경우)
   const getDefaultCurlExample = (token) => {
     const tokenValue = token && token.trim() ? token : '{{KEY}}';
     return `curl -X POST ${resolvedApiBaseUrl}/chat/completions ^
@@ -458,10 +451,8 @@ models:
     const token = selectedApiToken.trim();
 
     if (apiConfigExample.trim()) {
-      // 관리자가 설정한 예시가 있으면 플레이스홀더 치환
       return replacePlaceholders(apiConfigExample, token);
     }
-    // 기본 예시 사용
     return getDefaultConfigExample(token);
   };
 
@@ -469,41 +460,39 @@ models:
     const token = selectedApiToken.trim();
 
     if (apiCurlExample.trim()) {
-      // 관리자가 설정한 예시가 있으면 플레이스홀더 치환
       return replacePlaceholders(apiCurlExample, token);
     }
-    // 기본 예시 사용
     return getDefaultCurlExample(token);
   };
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
+    <div className='min-h-screen bg-background transition-colors duration-200'>
       <div className='w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6'>
-        {/* 뒤로가기 버튼 */}
         <div className='mb-4'>
-          <button
+          <Button
+            variant='ghost'
+            size='sm'
             onClick={() => router.push('/')}
-            className='inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3 transition-colors'
+            className='mb-3'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />
             뒤로가기
-          </button>
+          </Button>
         </div>
 
-        {/* 통합 카드 */}
-        <div className='card'>
-          <div className='p-4 sm:p-5'>
-            {/* 헤더 */}
+        <Card className='py-0 gap-0'>
+          <CardContent className='p-4 sm:p-5'>
             <div className='mb-4'>
               <div className='flex items-center justify-between mb-2'>
-                <h1 className='text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2'>
+                <h1 className='text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2'>
                   <Key className='h-6 w-6 sm:h-8 sm:w-8' />내 API 키 관리
                 </h1>
-                <button
+                <Button
+                  variant='ghost'
+                  size='icon'
                   onClick={() =>
                     setIsTokenSectionExpanded(!isTokenSectionExpanded)
                   }
-                  className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors'
                   aria-label={isTokenSectionExpanded ? '접기' : '펼치기'}
                 >
                   {isTokenSectionExpanded ? (
@@ -511,46 +500,44 @@ models:
                   ) : (
                     <ChevronDown className='h-5 w-5' />
                   )}
-                </button>
+                </Button>
               </div>
-              <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
+              <p className='text-sm sm:text-base text-muted-foreground'>
                 OpenAI 호환 API를 사용하기 위한 개인 API 키를 관리합니다
               </p>
             </div>
 
-            {/* 접기/펼치기 가능한 내용 */}
             {isTokenSectionExpanded && (
               <>
-                {/* 안내 메시지 */}
-                <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 sm:p-4 mb-4'>
+                <div className='bg-primary/5 border border-primary/20 rounded-lg p-3 sm:p-4 mb-4'>
                   <div className='flex items-start gap-3'>
-                    <AlertCircle className='h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5' />
-                    <div className='flex-1 text-sm text-blue-800 dark:text-blue-200'>
+                    <AlertCircle className='h-5 w-5 text-primary flex-shrink-0 mt-0.5' />
+                    <div className='flex-1 text-sm text-primary'>
                       <p className='font-semibold mb-1.5'>API 키 사용 안내</p>
-                      <ul className='space-y-1 text-blue-700 dark:text-blue-300'>
+                      <ul className='space-y-1 text-primary/80'>
                         <li className='flex items-start gap-2'>
-                          <span className='text-blue-500 mt-1'>•</span>
+                          <span className='text-primary/70 mt-1'>•</span>
                           <span>
                             발급된 키는 OpenAI 호환 API 엔드포인트에서 사용할
                             수 있습니다
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
-                          <span className='text-blue-500 mt-1'>•</span>
+                          <span className='text-primary/70 mt-1'>•</span>
                           <span>
                             키가 유출된 경우 즉시 삭제하고 새 키를
                             발급하세요
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
-                          <span className='text-blue-500 mt-1'>•</span>
+                          <span className='text-primary/70 mt-1'>•</span>
                           <span>
                             사용량은 자동으로 추적되며, 외부 API 로깅 페이지에서
                             확인할 수 있습니다
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
-                          <span className='text-blue-500 mt-1'>•</span>
+                          <span className='text-primary/70 mt-1'>•</span>
                           <span>
                             <strong>1인당 1개의 키만</strong> 발급할 수 있습니다.
                             새 키가 필요하면 기존 키를 삭제하세요
@@ -561,93 +548,86 @@ models:
                   </div>
                 </div>
 
-                {/* 키 목록 */}
                 <div className='flex items-center justify-between mb-4'>
-                  <h2 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
+                  <h2 className='text-lg font-semibold text-foreground flex items-center gap-2'>
                     내 키 목록
-                    <span className='text-sm font-normal text-gray-500 dark:text-gray-400'>
+                    <span className='text-sm font-normal text-muted-foreground'>
                       ({totalCount.toLocaleString()})
                     </span>
                   </h2>
                   <div className='flex items-center gap-2'>
-                    <button
+                    <Button
+                      variant='outline'
+                      size='sm'
                       onClick={fetchTokens}
                       disabled={loading}
-                      className='btn-secondary flex items-center gap-2 text-sm'
                     >
                       <RefreshCw
                         className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
                       />
                       새로고침
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      size='sm'
                       onClick={() => setShowCreateModal(true)}
                       disabled={tokens.some((t) => t.isActive)}
-                      className='btn-primary flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed'
                       title={tokens.some((t) => t.isActive) ? '이미 활성 키가 있습니다. 기존 키를 삭제한 후 새 키를 발급하세요.' : '새 키 발급'}
                     >
                       <Plus className='h-4 w-4' />
                       키 발급
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 {loading ? (
                   <div className='flex items-center justify-center py-8'>
-                    <RefreshCw className='h-6 w-6 animate-spin text-gray-400' />
+                    <RefreshCw className='h-6 w-6 animate-spin text-muted-foreground' />
                   </div>
                 ) : tokens.length === 0 ? (
                   <div className='text-center py-8'>
-                    <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 mb-3'>
-                      <Key className='h-8 w-8 text-gray-400' />
+                    <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-3'>
+                      <Key className='h-8 w-8 text-muted-foreground' />
                     </div>
-                    <p className='text-gray-600 dark:text-gray-400 mb-1.5 font-medium'>
+                    <p className='text-muted-foreground mb-1.5 font-medium'>
                       발급된 키가 없습니다
                     </p>
-                    <p className='text-sm text-gray-500 dark:text-gray-500 mb-4'>
+                    <p className='text-sm text-muted-foreground mb-4'>
                       첫 번째 API 키를 발급하여 시작하세요
                     </p>
-                    <button
+                    <Button
                       onClick={() => setShowCreateModal(true)}
-                      className='btn-primary inline-flex items-center gap-2'
                     >
                       <Plus className='h-4 w-4' />첫 키 발급하기
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className='space-y-2'>
                     {tokens.map((token) => (
                       <div
                         key={token._id}
-                        className='border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm transition-all'
+                        className='border border-border rounded-lg p-3 sm:p-4 hover:border-foreground/20 hover:shadow-sm transition-all'
                       >
                         <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3'>
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-start gap-3 mb-2'>
                               <div className='flex-shrink-0 mt-0.5'>
-                                <Key className='h-5 w-5 text-gray-400' />
+                                <Key className='h-5 w-5 text-muted-foreground' />
                               </div>
                               <div className='flex-1 min-w-0'>
                                 <div className='flex flex-wrap items-center gap-2 mb-1.5'>
-                                  <span className='font-semibold text-gray-900 dark:text-white'>
+                                  <span className='font-semibold text-foreground'>
                                     {token.name || '이름 없음'}
                                   </span>
                                   {token.isActive ? (
-                                    <span className='px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-md text-xs font-medium'>
-                                      활성
-                                    </span>
+                                    <Badge>활성</Badge>
                                   ) : (
-                                    <span className='px-2 py-0.5 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded-md text-xs font-medium'>
-                                      비활성
-                                    </span>
+                                    <Badge variant='secondary'>비활성</Badge>
                                   )}
                                   {isExpired(token.expiresAt) && (
-                                    <span className='px-2 py-0.5 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-md text-xs font-medium'>
-                                      만료됨
-                                    </span>
+                                    <Badge variant='destructive'>만료됨</Badge>
                                   )}
                                 </div>
-                                <div className='space-y-1.5 text-sm text-gray-600 dark:text-gray-400'>
+                                <div className='space-y-1.5 text-sm text-muted-foreground'>
                                   <div className='flex flex-wrap items-center gap-x-4 gap-y-1'>
                                     <div className='flex items-center gap-1.5'>
                                       <Calendar className='h-3.5 w-3.5' />
@@ -688,7 +668,7 @@ models:
                                       </span>
                                     </div>
                                     {token.usage?.lastUsed && (
-                                      <span className='text-xs text-gray-500 dark:text-gray-500'>
+                                      <span className='text-xs text-muted-foreground'>
                                         마지막 사용:{' '}
                                         {formatDate(token.usage.lastUsed)}
                                       </span>
@@ -699,25 +679,28 @@ models:
                             </div>
                           </div>
                           <div className='flex items-center gap-2 sm:flex-shrink-0'>
-                            <button
+                            <Button
+                              variant='ghost'
+                              size='icon'
                               onClick={() => {
                                 setSelectedToken(token);
                                 setShowTokenInfoModal(true);
                               }}
-                              className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors'
                               title='키 정보 보기'
                             >
                               <Eye className='h-4 w-4' />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant='ghost'
+                              size='icon'
                               onClick={() =>
                                 toggleTokenStatus(token._id, token.isActive)
                               }
-                              className={`p-2 rounded-md transition-colors ${
+                              className={
                                 token.isActive
-                                  ? 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                              }`}
+                                  ? 'text-primary hover:text-primary hover:bg-primary/10'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                              }
                               title={token.isActive ? '비활성화' : '활성화'}
                             >
                               {token.isActive ? (
@@ -725,14 +708,16 @@ models:
                               ) : (
                                 <PowerOff className='h-4 w-4' />
                               )}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant='ghost'
+                              size='icon'
                               onClick={() => deleteToken(token._id)}
-                              className='p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors'
+                              className='text-destructive hover:text-destructive hover:bg-destructive/10'
                               title='삭제'
                             >
                               <Trash2 className='h-4 w-4' />
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -740,343 +725,275 @@ models:
                   </div>
                 )}
 
-                {/* 페이지네이션 */}
                 {totalPages > 1 && (
-                  <div className='flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
-                    <button
+                  <div className='flex items-center justify-between mt-4 pt-4 border-t border-border'>
+                    <Button
+                      variant='outline'
+                      size='sm'
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className='btn-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed'
                     >
                       이전
-                    </button>
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    </Button>
+                    <span className='text-sm font-medium text-foreground'>
                       {currentPage} / {totalPages}
                     </span>
-                    <button
+                    <Button
+                      variant='outline'
+                      size='sm'
                       onClick={() =>
                         setCurrentPage((p) => Math.min(totalPages, p + 1))
                       }
                       disabled={currentPage === totalPages}
-                      className='btn-secondary text-sm disabled:opacity-50 disabled:cursor-not-allowed'
                     >
                       다음
-                    </button>
+                    </Button>
                   </div>
                 )}
               </>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-                {/* 키 발급 모달 */}
-        {showCreateModal && (
-          <div className='fixed inset-0 z-[100] flex items-center justify-center p-4'>
-            {/* 배경 오버레이 */}
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
-              onClick={() => setShowCreateModal(false)}
-            />
-            {/* 모달 내용 */}
-            <div className='relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6'>
-              <div className='flex items-center justify-between mb-6'>
-                <h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                  새 API 키 발급
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setTokenName('');
-                  }}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors'
-                >
-                  <X className='h-5 w-5' />
-                </button>
+        {/* 키 발급 모달 */}
+        <Dialog open={showCreateModal} onOpenChange={(open) => {
+          if (!open) {
+            setShowCreateModal(false);
+            setTokenName('');
+          }
+        }}>
+          <DialogContent className='sm:max-w-md'>
+            <DialogHeader>
+              <DialogTitle>새 API 키 발급</DialogTitle>
+              <DialogDescription>새로운 API 키를 발급합니다.</DialogDescription>
+            </DialogHeader>
+
+            <div className='space-y-5'>
+              <div>
+                <Label className='mb-2 block'>
+                  키 이름{' '}
+                  <span className='text-muted-foreground text-xs'>(선택사항)</span>
+                </Label>
+                <Input
+                  type='text'
+                  value={tokenName}
+                  onChange={(e) => setTokenName(e.target.value)}
+                  placeholder='예: 프로덕션 API 키'
+                />
               </div>
 
-              <div className='space-y-5'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    키 이름{' '}
-                    <span className='text-gray-500 text-xs'>(선택사항)</span>
-                  </label>
-                  <input
-                    type='text'
-                    value={tokenName}
-                    onChange={(e) => setTokenName(e.target.value)}
-                    placeholder='예: 프로덕션 API 키'
-                    className='input-primary w-full'
-                  />
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    만료 기간 (일)
-                  </label>
-                  <input
-                    type='number'
-                    value={expiresInDays}
-                    onChange={(e) => setExpiresInDays(e.target.value)}
-                    min='1'
-                    max='365'
-                    className='input-primary w-full'
-                  />
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-                    1일부터 365일까지 설정 가능합니다
-                  </p>
-                </div>
-              </div>
-
-              <div className='flex items-center gap-3 mt-6'>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setTokenName('');
-                  }}
-                  className='btn-secondary flex-1'
-                >
-                  취소
-                </button>
-                <button onClick={createToken} className='btn-primary flex-1'>
-                  발급
-                </button>
+              <div>
+                <Label className='mb-2 block'>
+                  만료 기간 (일)
+                </Label>
+                <Input
+                  type='number'
+                  value={expiresInDays}
+                  onChange={(e) => setExpiresInDays(e.target.value)}
+                  min='1'
+                  max='365'
+                />
+                <p className='text-xs text-muted-foreground mt-2'>
+                  1일부터 365일까지 설정 가능합니다
+                </p>
               </div>
             </div>
-          </div>
-        )}
+
+            <DialogFooter className='gap-3 sm:gap-3'>
+              <Button
+                variant='outline'
+                className='flex-1'
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setTokenName('');
+                }}
+              >
+                취소
+              </Button>
+              <Button className='flex-1' onClick={createToken}>
+                발급
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* 발급된 키 표시 모달 */}
-        {showTokenModal && newToken && (
-          <div className='fixed inset-0 z-[100] flex items-center justify-center p-4'>
-            {/* 배경 오버레이 */}
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
-              onClick={() => {
-                setShowTokenModal(false);
-                setNewToken(null);
-              }}
-            />
-            {/* 모달 내용 */}
-            <div className='relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full p-6'>
-              <div className='flex items-center justify-between mb-6'>
-                <div className='flex items-center gap-2'>
-                  <CheckCircle className='h-6 w-6 text-green-500' />
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                    키가 발급되었습니다
-                  </h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowTokenModal(false);
-                    setNewToken(null);
-                  }}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors'
+        <Dialog open={showTokenModal && !!newToken} onOpenChange={(open) => {
+          if (!open) {
+            setShowTokenModal(false);
+            setNewToken(null);
+          }
+        }}>
+          <DialogContent className='sm:max-w-2xl'>
+            <DialogHeader>
+              <div className='flex items-center gap-2'>
+                <CheckCircle className='h-6 w-6 text-primary' />
+                <DialogTitle>키가 발급되었습니다</DialogTitle>
+              </div>
+              <DialogDescription>발급된 키를 안전한 곳에 보관하세요.</DialogDescription>
+            </DialogHeader>
+
+            <div className='mb-5'>
+              <Label className='mb-2 block'>API 키</Label>
+              <div className='flex items-center gap-2'>
+                <Input
+                  type='text'
+                  value={newToken || ''}
+                  readOnly
+                  className='flex-1 font-mono text-sm'
+                />
+                <Button
+                  onClick={() => copyToken(newToken, 'newToken')}
                 >
-                  <X className='h-5 w-5' />
-                </button>
+                  <Copy className='h-4 w-4' />
+                  복사
+                </Button>
               </div>
+            </div>
 
-              <div className='mb-5'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                  API 키
-                </label>
-                <div className='flex items-center gap-2'>
-                  <input
-                    type='text'
-                    value={newToken}
-                    readOnly
-                    className='flex-1 input-primary font-mono text-sm'
-                  />
-                  <button
-                    onClick={() => copyToken(newToken, 'newToken')}
-                    className='btn-primary flex items-center gap-2 whitespace-nowrap'
-                  >
-                    <Copy className='h-4 w-4' />
-                    복사
-                  </button>
-                </div>
-              </div>
-
-              <div className='mb-6'>
-                <div className='flex items-center justify-between mb-2'>
-                  <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    사용 예시:
-                  </p>
-                  <button
-                    onClick={() => {
-                      const curlExample = apiCurlExample.trim()
-                        ? replacePlaceholders(apiCurlExample, newToken)
-                        : getDefaultCurlExample(newToken);
-                      copyToClipboard(curlExample, 'newTokenCurl');
-                    }}
-                    className='btn-secondary flex items-center gap-2 text-xs'
-                  >
-                    {copiedStates.newTokenCurl ? (
-                      <Check className='h-3 w-3 text-green-600' />
-                    ) : (
-                      <Copy className='h-3 w-3' />
-                    )}
-                    예시 복사
-                  </button>
-                </div>
-                <div className='bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700'>
-                  <pre className='text-xs font-mono text-gray-900 dark:text-gray-100 overflow-x-auto whitespace-pre-wrap'>
-                    {apiCurlExample.trim()
+            <div className='mb-6'>
+              <div className='flex items-center justify-between mb-2'>
+                <p className='text-sm font-medium text-foreground'>
+                  사용 예시:
+                </p>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    const curlExample = apiCurlExample.trim()
                       ? replacePlaceholders(apiCurlExample, newToken)
-                      : getDefaultCurlExample(newToken)}
-                  </pre>
-                </div>
+                      : getDefaultCurlExample(newToken);
+                    copyToClipboard(curlExample, 'newTokenCurl');
+                  }}
+                >
+                  {copiedStates.newTokenCurl ? (
+                    <Check className='h-3 w-3 text-primary' />
+                  ) : (
+                    <Copy className='h-3 w-3' />
+                  )}
+                  예시 복사
+                </Button>
               </div>
+              <div className='bg-muted rounded-lg p-4 border border-border'>
+                <pre className='text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap'>
+                  {apiCurlExample.trim()
+                    ? replacePlaceholders(apiCurlExample, newToken)
+                    : getDefaultCurlExample(newToken)}
+                </pre>
+              </div>
+            </div>
 
-              <button
+            <DialogFooter>
+              <Button
+                className='w-full'
                 onClick={() => {
                   setShowTokenModal(false);
                   setNewToken(null);
                 }}
-                className='btn-primary w-full'
               >
                 확인
-              </button>
-            </div>
-          </div>
-        )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* 키 정보 보기 모달 */}
-        {showTokenInfoModal && selectedToken && (
-          <div className='fixed inset-0 z-[100] flex items-center justify-center p-4'>
-            {/* 배경 오버레이 */}
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
-              onClick={() => {
-                setShowTokenInfoModal(false);
-                setSelectedToken(null);
-              }}
-            />
-            {/* 모달 내용 */}
-            <div className='relative bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto'>
-              <div className='flex items-center justify-between mb-6'>
-                <div className='flex items-center gap-2'>
-                  <Key className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-white'>
-                    API 키 정보
-                  </h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowTokenInfoModal(false);
-                    setSelectedToken(null);
-                  }}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors'
-                >
-                  <X className='h-5 w-5' />
-                </button>
+        <Dialog open={showTokenInfoModal && !!selectedToken} onOpenChange={(open) => {
+          if (!open) {
+            setShowTokenInfoModal(false);
+            setSelectedToken(null);
+          }
+        }}>
+          <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
+            <DialogHeader>
+              <div className='flex items-center gap-2'>
+                <Key className='h-5 w-5 text-muted-foreground' />
+                <DialogTitle>API 키 정보</DialogTitle>
               </div>
+            </DialogHeader>
 
+            {selectedToken && (
               <div className='space-y-5'>
-                {/* 키 이름 */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    키 이름
-                  </label>
-                  <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white'>
+                  <Label className='mb-2 block'>키 이름</Label>
+                  <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground'>
                     {selectedToken.name || '이름 없음'}
                   </div>
                 </div>
 
-                {/* 키 */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    API 키
-                  </label>
+                  <Label className='mb-2 block'>API 키</Label>
                   {selectedToken.originalToken ? (
                     <>
                       <div className='flex items-center gap-2'>
-                        <input
+                        <Input
                           type='text'
                           value={selectedToken.originalToken}
                           readOnly
-                          className='flex-1 input-primary font-mono text-sm'
+                          className='flex-1 font-mono text-sm'
                         />
-                        <button
+                        <Button
                           onClick={() =>
                             copyToken(
                               selectedToken.originalToken,
                               'selectedToken'
                             )
                           }
-                          className='btn-primary flex items-center gap-2 whitespace-nowrap'
                         >
                           <Copy className='h-4 w-4' />
                           복사
-                        </button>
+                        </Button>
                       </div>
-                      <div className='bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3 mt-2'>
+                      <div className='bg-primary/5 border border-primary/20 rounded-lg p-3 mt-2'>
                         <div className='flex items-start gap-2'>
-                          <CheckCircle className='h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5' />
-                          <p className='text-xs text-green-800 dark:text-green-200'>
+                          <CheckCircle className='h-4 w-4 text-primary flex-shrink-0 mt-0.5' />
+                          <p className='text-xs text-primary'>
                             키가 표시됩니다. 유출되지 않게 조심해주세요.
                           </p>
                         </div>
                       </div>
                     </>
                   ) : (
-                    <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm'>
+                    <div className='px-3 py-2 border border-input rounded-md bg-muted text-muted-foreground text-sm'>
                       키를 사용할 수 없습니다. 키를 재발급해주세요.
                     </div>
                   )}
                 </div>
 
-                {/* 상태 */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    상태
-                  </label>
+                  <Label className='mb-2 block'>상태</Label>
                   <div className='flex flex-wrap items-center gap-2'>
                     {selectedToken.isActive ? (
-                      <span className='px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded-md text-sm font-medium'>
-                        활성
-                      </span>
+                      <Badge>활성</Badge>
                     ) : (
-                      <span className='px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded-md text-sm font-medium'>
-                        비활성
-                      </span>
+                      <Badge variant='secondary'>비활성</Badge>
                     )}
                     {isExpired(selectedToken.expiresAt) && (
-                      <span className='px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-md text-sm font-medium'>
-                        만료됨
-                      </span>
+                      <Badge variant='destructive'>만료됨</Badge>
                     )}
                   </div>
                 </div>
 
-                {/* 발급/만료 날짜 */}
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      발급일
-                    </label>
-                    <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm'>
+                    <Label className='mb-2 block'>발급일</Label>
+                    <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground text-sm'>
                       {formatDate(selectedToken.createdAt)}
                     </div>
                   </div>
                   {selectedToken.expiresAt && (
                     <div>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        만료일
-                      </label>
-                      <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm'>
+                      <Label className='mb-2 block'>만료일</Label>
+                      <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground text-sm'>
                         {formatDate(selectedToken.expiresAt)}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* 사용량 */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    사용량
-                  </label>
-                  <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm'>
+                  <Label className='mb-2 block'>사용량</Label>
+                  <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground text-sm'>
                     <div className='flex flex-wrap items-center gap-4'>
                       <span>
                         요청:{' '}
@@ -1096,20 +1013,19 @@ models:
                       </span>
                     </div>
                     {selectedToken.usage?.lastUsed && (
-                      <div className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+                      <div className='mt-2 text-xs text-muted-foreground'>
                         마지막 사용: {formatDate(selectedToken.usage.lastUsed)}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* 사용 예시 */}
                 <div>
                   <div className='flex items-center justify-between mb-2'>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      사용 예시
-                    </label>
-                    <button
+                    <Label>사용 예시</Label>
+                    <Button
+                      variant='outline'
+                      size='sm'
                       onClick={() => {
                         const tokenValue = selectedToken.originalToken || '{{KEY}}';
                         const curlExample = apiCurlExample.trim()
@@ -1117,7 +1033,6 @@ models:
                           : getDefaultCurlExample(tokenValue);
                         copyToClipboard(curlExample, 'tokenInfoCurl');
                       }}
-                      className='btn-secondary flex items-center gap-2 text-xs'
                       disabled={!selectedToken.originalToken}
                       title={
                         selectedToken.originalToken
@@ -1126,15 +1041,15 @@ models:
                       }
                     >
                       {copiedStates.tokenInfoCurl ? (
-                        <Check className='h-3 w-3 text-green-600' />
+                        <Check className='h-3 w-3 text-primary' />
                       ) : (
                         <Copy className='h-3 w-3' />
                       )}
                       예시 복사
-                    </button>
+                    </Button>
                   </div>
-                  <div className='bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700'>
-                    <pre className='text-xs font-mono text-gray-900 dark:text-gray-100 overflow-x-auto whitespace-pre-wrap'>
+                  <div className='bg-muted rounded-lg p-4 border border-border'>
+                    <pre className='text-xs font-mono text-foreground overflow-x-auto whitespace-pre-wrap'>
                       {apiCurlExample.trim()
                         ? replacePlaceholders(apiCurlExample, selectedToken.originalToken || '{{KEY}}')
                         : getDefaultCurlExample(selectedToken.originalToken || '{{KEY}}')}
@@ -1142,38 +1057,37 @@ models:
                   </div>
                 </div>
               </div>
+            )}
 
-              <div className='mt-6 flex justify-end'>
-                <button
-                  onClick={() => {
-                    setShowTokenInfoModal(false);
-                    setSelectedToken(null);
-                  }}
-                  className='btn-primary'
-                >
-                  확인
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            <DialogFooter>
+              <Button
+                onClick={() => {
+                  setShowTokenInfoModal(false);
+                  setSelectedToken(null);
+                }}
+              >
+                확인
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* OpenAI 호환 프록시 API 안내 섹션 */}
         <div className='mt-6 sm:mt-8'>
-          <div className='card'>
-            <div className='p-4 sm:p-5'>
-              {/* 헤더 */}
+          <Card className='py-0 gap-0'>
+            <CardContent className='p-4 sm:p-5'>
               <div className='mb-4'>
                 <div className='flex items-center justify-between mb-2'>
-                  <h2 className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2'>
-                    <Zap className='h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400' />
+                  <h2 className='text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2'>
+                    <Zap className='h-5 w-5 sm:h-6 sm:w-6 text-primary' />
                     OpenAI 호환 프록시 API
                   </h2>
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon'
                     onClick={() =>
                       setIsApiSectionExpanded(!isApiSectionExpanded)
                     }
-                    className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors'
                     aria-label={isApiSectionExpanded ? '접기' : '펼치기'}
                   >
                     {isApiSectionExpanded ? (
@@ -1181,46 +1095,44 @@ models:
                     ) : (
                       <ChevronDown className='h-5 w-5' />
                     )}
-                  </button>
+                  </Button>
                 </div>
-                <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
+                <p className='text-sm sm:text-base text-muted-foreground'>
                   VSCode Continue와 호환되는 OpenAI 호환 API 프록시
                 </p>
               </div>
 
-              {/* 접기/펼치기 가능한 내용 */}
               {isApiSectionExpanded && (
                 <div className='space-y-4'>
-                  {/* 단일 통합 API */}
-                  <div className='border-2 border-green-200 dark:border-green-800 rounded-lg p-4 sm:p-5'>
+                  <div className='border-2 border-primary/30 rounded-lg p-4 sm:p-5'>
                     <div className='flex items-start gap-3 mb-4'>
                       <div className='flex-shrink-0'>
-                        <Zap className='h-6 w-6 text-green-600 dark:text-green-400' />
+                        <Zap className='h-6 w-6 text-primary' />
                       </div>
                       <div className='flex-1'>
-                        <h3 className='text-lg font-semibold text-green-800 dark:text-green-200 mb-1'>
+                        <h3 className='text-lg font-semibold text-primary mb-1'>
                           단일 통합 API
                         </h3>
-                        <p className='text-sm text-gray-600 dark:text-gray-400'>
+                        <p className='text-sm text-muted-foreground'>
                           OpenAI API 호환 형식
                         </p>
                       </div>
                     </div>
 
-                    <div className='bg-green-50 dark:bg-green-900/20 p-3 rounded-lg mb-4'>
-                      <h4 className='font-semibold text-green-900 dark:text-green-100 mb-2 text-sm'>
+                    <div className='bg-primary/5 p-3 rounded-lg mb-4'>
+                      <h4 className='font-semibold text-primary mb-2 text-sm'>
                         주요 특징
                       </h4>
-                      <ul className='text-sm text-green-800 dark:text-green-200 space-y-1.5'>
+                      <ul className='text-sm text-primary/80 space-y-1.5'>
                         <li className='flex items-start gap-2'>
-                          <span className='text-green-600 mt-0.5'>🎯</span>
+                          <span className='text-primary mt-0.5'>🎯</span>
                           <span>
                             <strong>표준 호환:</strong> OpenAI API 표준 형식
                             지원
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
-                          <span className='text-green-600 mt-0.5'>🔗</span>
+                          <span className='text-primary mt-0.5'>🔗</span>
                           <span>
                             <strong>호환성:</strong> VSCode Continue 및 OpenAI
                             호환 클라이언트(IDE) 지원
@@ -1231,9 +1143,9 @@ models:
 
                     <div className='space-y-3'>
                       <div>
-                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    API 키 선택 <span className='text-red-500'>*</span>
-                        </label>
+                        <Label className='mb-2 block'>
+                    API 키 선택 <span className='text-destructive'>*</span>
+                        </Label>
                         <select
                           value={
                             tokens.find(
@@ -1248,7 +1160,7 @@ models:
                               selectedToken?.originalToken || ''
                             );
                           }}
-                          className='input-primary w-full text-sm mb-2'
+                          className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mb-2'
                         >
                       <option value=''>키 선택</option>
                           {tokens
@@ -1265,7 +1177,7 @@ models:
                               </option>
                             ))}
                         </select>
-                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        <p className='text-xs text-muted-foreground mt-1'>
                         발급된 키를 선택해서 사용하세요. 없으면 키를
                           재발급하세요.
                         </p>
@@ -1273,14 +1185,13 @@ models:
                     </div>
                   </div>
 
-                  {/* VSCode Continue 설정 */}
-                  <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-5'>
+                  <div className='border border-border rounded-lg p-4 sm:p-5'>
                     <div className='flex items-start gap-3 mb-4'>
                       <div className='flex-shrink-0'>
-                        <ExternalLink className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                        <ExternalLink className='h-5 w-5 text-primary' />
                       </div>
                       <div className='flex-1'>
-                        <h3 className='text-lg font-semibold text-gray-900 dark:text-white mb-1'>
+                        <h3 className='text-lg font-semibold text-foreground mb-1'>
                           VSCode Continue 설정
                         </h3>
                       </div>
@@ -1299,44 +1210,42 @@ models:
 
                     <div className='space-y-3'>
                       <div className='flex items-center justify-between'>
-                        <h4 className='font-semibold text-gray-900 dark:text-white text-sm'>
+                        <h4 className='font-semibold text-foreground text-sm'>
                           config 설정 예시
                         </h4>
-                        <button
+                        <Button
+                          variant='outline'
+                          size='sm'
                           onClick={() => {
                             const configText = buildConfigPresetText();
                             copyToClipboard(configText, 'config');
                           }}
-                          className='btn-secondary flex items-center gap-2 text-sm'
                         >
                           {copiedStates.config ? (
-                            <Check className='h-4 w-4 text-green-600' />
+                            <Check className='h-4 w-4 text-primary' />
                           ) : (
                             <Copy className='h-4 w-4' />
                           )}
                           예시 복사
-                        </button>
+                        </Button>
                       </div>
 
-                      <div className='bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto'>
-                        <pre className='text-xs font-mono text-gray-700 dark:text-gray-300 whitespace-pre-wrap'>
+                      <div className='bg-muted p-4 rounded-lg border border-border overflow-x-auto'>
+                        <pre className='text-xs font-mono text-foreground whitespace-pre-wrap'>
                           {buildConfigPresetText()}
                         </pre>
                       </div>
                     </div>
                   </div>
 
-                  {/* API 테스트 (curl) */}
-                  <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-5'>
+                  <div className='border border-border rounded-lg p-4 sm:p-5'>
                     <div className='flex items-center gap-2 mb-2'>
-                      <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                      <h3 className='text-lg font-semibold text-foreground'>
                         API 테스트 (curl)
                       </h3>
-                      <span className='px-2 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded text-xs font-medium'>
-                        Windows
-                      </span>
+                      <Badge variant='secondary'>Windows</Badge>
                     </div>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mb-3'>
+                    <p className='text-sm text-muted-foreground mb-3'>
                         API 키가 필수입니다. 위에서 키를 선택하세요.
                     </p>
 
@@ -1353,25 +1262,26 @@ models:
                     <div>
                       <div>
                         <div className='flex items-center justify-between mb-2'>
-                          <h5 className='font-medium text-gray-900 dark:text-white text-sm'>
+                          <h5 className='font-medium text-foreground text-sm'>
                             /v1/chat/completions 테스트
                           </h5>
-                          <button
+                          <Button
+                            variant='outline'
+                            size='sm'
                             onClick={() => {
                               const curlText = buildCurlExampleText();
                               copyToClipboard(curlText, 'curlTest');
                             }}
-                            className='btn-secondary flex items-center gap-2 text-xs'
                           >
                             {copiedStates.curlTest ? (
-                              <Check className='h-3 w-3 text-green-600' />
+                              <Check className='h-3 w-3 text-primary' />
                             ) : (
                               <Copy className='h-3 w-3' />
                             )}
                             복사
-                          </button>
+                          </Button>
                         </div>
-                        <div className='bg-gray-900 dark:bg-black text-green-400 p-3 rounded-lg border border-gray-700 text-xs font-mono overflow-x-auto'>
+                        <div className='bg-muted text-foreground p-3 rounded-lg border border-border text-xs font-mono overflow-x-auto'>
                           <pre className='whitespace-pre-wrap'>{buildCurlExampleText()}</pre>
                         </div>
                       </div>
@@ -1379,12 +1289,11 @@ models:
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* 에러 모달 */}
       <AlertModal
         isOpen={errorModal.isOpen}
         onClose={() => setErrorModal({ isOpen: false, title: '', message: '', type: 'error' })}
@@ -1393,7 +1302,6 @@ models:
         type={errorModal.type}
       />
 
-      {/* 성공 모달 */}
       <AlertModal
         isOpen={successModal.isOpen}
         onClose={() => setSuccessModal({ isOpen: false, title: '', message: '', type: 'success' })}
@@ -1402,7 +1310,6 @@ models:
         type={successModal.type}
       />
 
-      {/* 확인 모달 */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={() => setConfirmModal({ 

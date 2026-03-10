@@ -14,6 +14,11 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { AlertModal } from '@/components/ui/modal';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -197,55 +202,55 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+      <div className='min-h-screen bg-background flex items-center justify-center'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pb-8'>
+    <div className='min-h-screen bg-background transition-colors duration-200 pb-8'>
       <div className='w-full max-w-full md:max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 pt-8 pb-16'>
         {/* 헤더 */}
         <div className='mb-8'>
-          <button
+          <Button
+            variant='ghost'
             onClick={() => router.push('/')}
-            className='inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 mb-4'
+            className='mb-4'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />
             뒤로 가기
-          </button>
-          <h1 className='text-3xl font-bold text-gray-900 dark:text-white'>
+          </Button>
+          <h1 className='text-3xl font-bold text-foreground'>
             프로필 수정
           </h1>
-          <p className='text-gray-600 dark:text-gray-400 mt-1'>
+          <p className='text-muted-foreground mt-1'>
             개인 정보를 수정할 수 있습니다.
           </p>
         </div>
 
         {/* 프로필 폼 */}
-        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700'>
-          <div className='p-6'>
+        <Card className='py-0 gap-0'>
+          <CardContent className='p-6'>
             <form onSubmit={handleSubmit} className='space-y-6'>
               {/* 기본 정보 섹션 */}
               <div className='space-y-4'>
-                <h3 className='text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2'>
+                <h3 className='text-lg font-medium text-foreground pb-2'>
                   기본 정보
                 </h3>
+                <Separator className='-mt-2' />
 
                 {/* 이름 */}
                 <div className='space-y-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    이름
-                  </label>
+                  <Label>이름</Label>
                   <div className='relative'>
-                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                    <input
+                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
                       type='text'
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className='w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                      className='pl-10'
                       placeholder='이름을 입력하세요'
                     />
                   </div>
@@ -253,36 +258,32 @@ export default function ProfilePage() {
 
                 {/* 이메일 (읽기 전용) */}
                 <div className='space-y-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    이메일
-                  </label>
+                  <Label>이메일</Label>
                   <div className='relative'>
-                    <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                    <input
+                    <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
                       type='email'
                       value={email}
                       readOnly
-                      className='w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      className='pl-10 bg-muted text-muted-foreground cursor-not-allowed'
                       placeholder='이메일'
                     />
                   </div>
-                  <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='text-xs text-muted-foreground'>
                     이메일은 변경할 수 없습니다.
                   </p>
                 </div>
 
                 {/* 부서 */}
                 <div className='space-y-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    부서
-                  </label>
+                  <Label>부서</Label>
                   <div className='relative'>
-                    <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
+                    <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <select
                       required
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className='w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                      className='flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-4 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
                     >
                       <option value=''>부서를 선택하세요</option>
                       {departments.map((dept) => (
@@ -296,17 +297,15 @@ export default function ProfilePage() {
 
                 {/* Cell */}
                 <div className='space-y-2'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Cell (팀/파트)
-                  </label>
+                  <Label>Cell (팀/파트)</Label>
                   <div className='relative'>
-                    <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                    <input
+                    <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
                       type='text'
                       required
                       value={cell}
                       onChange={(e) => setCell(e.target.value)}
-                      className='w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                      className='pl-10'
                       placeholder='예: 디지털라이프셀, 디지털뱅킹셀'
                     />
                   </div>
@@ -315,33 +314,33 @@ export default function ProfilePage() {
 
               {/* 비밀번호 변경 섹션 */}
               <div className='space-y-4'>
-                <div className='flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-2'>
-                  <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+                <div className='flex items-center justify-between pb-2'>
+                  <h3 className='text-lg font-medium text-foreground'>
                     비밀번호 변경
                   </h3>
-                  <button
+                  <Button
                     type='button'
+                    variant='link'
+                    size='sm'
                     onClick={() => setChangePassword(!changePassword)}
-                    className='text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
                   >
                     {changePassword ? '취소' : '비밀번호 변경'}
-                  </button>
+                  </Button>
                 </div>
+                <Separator className='-mt-2' />
 
                 {changePassword && (
-                  <div className='space-y-4 bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg'>
+                  <div className='space-y-4 bg-muted p-4 rounded-lg'>
                     {/* 현재 비밀번호 */}
                     <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        현재 비밀번호
-                      </label>
+                      <Label>현재 비밀번호</Label>
                       <div className='relative'>
-                        <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                        <input
+                        <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                        <Input
                           type={showCurrentPassword ? 'text' : 'password'}
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
-                          className='w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                          className='pl-10 pr-10'
                           placeholder='현재 비밀번호를 입력하세요'
                         />
                         <button
@@ -349,7 +348,7 @@ export default function ProfilePage() {
                           onClick={() =>
                             setShowCurrentPassword(!showCurrentPassword)
                           }
-                          className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                          className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                         >
                           {showCurrentPassword ? (
                             <EyeOff className='h-4 w-4' />
@@ -362,22 +361,20 @@ export default function ProfilePage() {
 
                     {/* 새 비밀번호 */}
                     <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        새 비밀번호
-                      </label>
+                      <Label>새 비밀번호</Label>
                       <div className='relative'>
-                        <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                        <input
+                        <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                        <Input
                           type={showNewPassword ? 'text' : 'password'}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className='w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                          className='pl-10 pr-10'
                           placeholder='새 비밀번호를 입력하세요'
                         />
                         <button
                           type='button'
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                          className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                         >
                           {showNewPassword ? (
                             <EyeOff className='h-4 w-4' />
@@ -386,23 +383,21 @@ export default function ProfilePage() {
                           )}
                         </button>
                       </div>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
+                      <p className='text-xs text-muted-foreground'>
                         최소 6자 이상
                       </p>
                     </div>
 
                     {/* 새 비밀번호 확인 */}
                     <div className='space-y-2'>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        새 비밀번호 확인
-                      </label>
+                      <Label>새 비밀번호 확인</Label>
                       <div className='relative'>
-                        <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                        <input
+                        <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                        <Input
                           type={showConfirmPassword ? 'text' : 'password'}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className='w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                          className='pl-10 pr-10'
                           placeholder='새 비밀번호를 다시 입력하세요'
                         />
                         <button
@@ -410,7 +405,7 @@ export default function ProfilePage() {
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                          className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground'
                         >
                           {showConfirmPassword ? (
                             <EyeOff className='h-4 w-4' />
@@ -420,7 +415,7 @@ export default function ProfilePage() {
                         </button>
                       </div>
                       {confirmPassword && newPassword !== confirmPassword && (
-                        <p className='text-xs text-red-500'>
+                        <p className='text-xs text-destructive'>
                           비밀번호가 일치하지 않습니다.
                         </p>
                       )}
@@ -430,15 +425,15 @@ export default function ProfilePage() {
               </div>
 
               {/* 저장 버튼 */}
-              <div className='flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700'>
-                <button
+              <Separator />
+              <div className='flex justify-end'>
+                <Button
                   type='submit'
                   disabled={saving}
-                  className='inline-flex items-center px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium rounded-lg transition-colors'
                 >
                   {saving ? (
                     <>
-                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+                      <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2'></div>
                       저장 중...
                     </>
                   ) : (
@@ -447,11 +442,11 @@ export default function ProfilePage() {
                       저장하기
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 에러 모달 */}
