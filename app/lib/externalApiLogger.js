@@ -2,82 +2,82 @@ import { query } from './postgres';
 import { logger } from './logger';
 
 /**
- * 외부 API (/api/generate, /api/chat) 요청을 별도 테이블에 로깅합니다.
- * 기존 qaLogs와 구분하여 외부 도구(VSCode Continue 등)의 사용량을 추적합니다.
- * @param {object} logData - 기록할 데이터 객체
+ * Logs external API (/api/generate, /api/chat) requests to a separate table.
+ * Tracks usage of external tools (VSCode Continue, etc.) separately from existing qaLogs.
+ * @param {object} logData - Data object to record
  */
 export async function logExternalApiRequest(logData) {
-  // 로깅 실패가 메인 API에 절대 영향을 주지 않도록 모든 에러를 내부에서 처리
+  // Handle all errors internally so logging failures never affect the main API
   try {
-    // 요청자 식별 정보 수집 (강화된 버전)
+    // Collect requester identification info (enhanced version)
     const identificationData = {
-      // === 기본 네트워크 정보 ===
+      // === Basic network info ===
       clientIP: logData.clientIP || 'unknown',
       userAgent: logData.userAgent || 'unknown',
 
-      // === 프록시/로드밸런서 정보 ===
+      // === Proxy/load balancer info ===
       xForwardedFor: logData.xForwardedFor || null,
       xRealIP: logData.xRealIP || null,
       xForwardedProto: logData.xForwardedProto || null,
       xForwardedHost: logData.xForwardedHost || null,
 
-      // === 클라이언트 환경 정보 ===
+      // === Client environment info ===
       clientTool: parseClientTool(logData.userAgent || '', logData.xClientName),
       clientToolVersion: extractToolVersion(logData.userAgent || ''),
       operatingSystem: extractOperatingSystem(logData.userAgent || ''),
       architecture: extractArchitecture(logData.userAgent || ''),
 
-      // === 브라우저/IDE 상세 정보 ===
+      // === Browser/IDE detailed info ===
       acceptLanguage: logData.acceptLanguage || null,
       acceptEncoding: logData.acceptEncoding || null,
       acceptCharset: logData.acceptCharset || null,
       referer: logData.referer || null,
       origin: logData.origin || null,
 
-      // === 보안 헤더 ===
+      // === Security headers ===
       authorization: logData.authorization || null,
       contentType: logData.contentType || null,
 
-      // === 커스텀 헤더 (개발도구 식별용) ===
+      // === Custom headers (for dev tool identification) ===
       xRequestedWith: logData.xRequestedWith || null,
       xClientName: logData.xClientName || null,
       xClientVersion: logData.xClientVersion || null,
       xUserName: logData.xUserName || null,
       xWorkspace: logData.xWorkspace || null,
 
-      // === 사용자 정보 (API 토큰에서 추출) ===
-      // 정규화: userEmail, userName, userRole, userDepartment, userCell 제거 (users 테이블에서 JOIN으로 조회)
+      // === User info (extracted from API token) ===
+      // Normalization: removed userEmail, userName, userRole, userDepartment, userCell (queried via JOIN from users table)
       userId: logData.jwtUserId || logData.xUserId || null,
       tokenHash: logData.tokenHash || null,
       tokenName: logData.tokenName || null,
 
-      // === 타이밍 정보 ===
+      // === Timing info ===
       requestTime: new Date().toISOString(),
       timezone: logData.timezone || null,
 
-      // === 식별자들 ===
+      // === Identifiers ===
       sessionHash: generateSessionHash(logData.clientIP, logData.userAgent),
       fingerprintHash: generateFingerprintHash(logData),
       userIdentifier: generateUserIdentifier(logData),
     };
 
-    // conversationId 생성 (sessionHash, userIdentifier, tokenHash를 미리 계산)
-    // 정규화: userEmail 제거, userId 사용
+    // Generate conversationId (sessionHash, userIdentifier, tokenHash pre-computed)
+    // Normalization: removed userEmail, using userId
     identificationData.conversationId = generateConversationId(
       logData.roomId,
       logData.messages,
       identificationData.sessionHash,
       identificationData.userIdentifier,
       identificationData.tokenHash,
-      identificationData.userId // 웹앱 채팅에서 같은 사용자의 같은 세션을 그룹화하기 위해 userId 사용
+      identificationData.userId // Use userId to group same user sessions in webapp chat
     );
-    identificationData.roomId = logData.roomId || null; // roomId 저장
+    identificationData.roomId = logData.roomId || null; // Store roomId
 
-    // 프롬프트/메시지 전체 데이터를 별도 테이블에 저장
+    // Store full prompt/message data in a separate table
     let promptId = null;
     if (logData.prompt || logData.messages) {
       try {
-        // 프롬프트/메시지 전체 데이터 저장 (길이 제한 없음)
+        // Store full prompt/message data (no length limit)
         const promptResult = await query(
           `INSERT INTO external_api_prompts (prompt, messages)
            VALUES ($1, $2)
@@ -89,14 +89,14 @@ export async function logExternalApiRequest(logData) {
         );
         promptId = promptResult.rows[0]?.id || null;
       } catch (promptError) {
-        logger.error('[External API Logger] 프롬프트 저장 실패 (무시됨)', {
+        logger.error('[External API Logger] Prompt save failed (ignored)', {
           error: promptError.message,
         });
-        // 프롬프트 저장 실패해도 로그는 계속 진행
+        // Continue logging even if prompt save fails
       }
     }
 
-    // 요청 내용 정리 (미리보기용 축약 버전)
+    // Process request content (abbreviated version for preview)
     const resolvedSource =
       logData.sourceType === 'internal'
         ? 'internal'
@@ -107,14 +107,14 @@ export async function logExternalApiRequest(logData) {
         : 'internal';
 
     const processedData = {
-      // API 정보
+      // API info
       apiType: logData.apiType, // 'generate' | 'chat'
       endpoint: logData.endpoint,
-      model: logData.model, // 실제 모델명
+      model: logData.model, // Actual model name
       provider: logData.provider || null,
 
-      // 요청 내용 (미리보기용 축약 버전)
-      prompt: truncateText(logData.prompt, 2000), // 최대 2000자
+      // Request content (abbreviated for preview)
+      prompt: truncateText(logData.prompt, 2000), // Max 2000 chars
       messages: logData.messages
         ? logData.messages.map((msg) => ({
             role: msg.role,
@@ -123,17 +123,17 @@ export async function logExternalApiRequest(logData) {
                 ? msg.content
                 : JSON.stringify(msg.content),
               1000
-            ), // 메시지당 최대 1000자
+            ), // Max 1000 chars per message
           }))
         : null,
 
-      // 응답 정보 (토큰 길이만)
+      // Response info (token count only)
       responseTokenCount: logData.responseTokenCount || 0,
       promptTokenCount: logData.promptTokenCount || 0,
       totalTokenCount:
         (logData.promptTokenCount || 0) + (logData.responseTokenCount || 0),
 
-      // 성능 정보
+      // Performance info
       responseTime: logData.responseTime || logData.finalResponseTime || 0,
       firstResponseTime:
         logData.firstResponseTime ??
@@ -148,27 +148,27 @@ export async function logExternalApiRequest(logData) {
       statusCode: logData.statusCode || 0,
       isStream: logData.isStream || false,
 
-      // 오류 정보
+      // Error info
       error: logData.error || null,
 
-      // 재시도 정보
-      retryCount: logData.retryCount !== undefined ? logData.retryCount : 1, // 기본값: 첫 시도에서 성공
+      // Retry info
+      retryCount: logData.retryCount !== undefined ? logData.retryCount : 1, // Default: succeeded on first attempt
 
-      // HTTP 전체 정보
+      // Full HTTP info
       requestHeaders: logData.requestHeaders || null,
       requestBody: logData.requestBody || null,
       responseHeaders: logData.responseHeaders || null,
       responseBody: logData.responseBody || null,
 
-      // 식별 정보
+      // Identification info
       ...identificationData,
 
-      // 메타데이터
+      // Metadata
       timestamp: new Date(),
       source: resolvedSource,
     };
 
-    // conversation_id 및 room_id Check if columns exist
+    // Check if conversation_id and room_id columns exist
     let hasConversationIdColumn = false;
     let hasRoomIdColumn = false;
     let hasFirstResponseTimeColumn = false;
@@ -188,13 +188,13 @@ export async function logExternalApiRequest(logData) {
         (row) => row.column_name === 'final_response_time'
       );
     } catch (error) {
-      // 컬럼 확인 실패 시 conversation_id 없이 진행
-      logger.warn('[External API Logger] 컬럼 확인 실패', {
+      // Proceed without conversation_id if column check fails
+      logger.warn('[External API Logger] Column check failed', {
         error: error.message,
       });
     }
 
-    // PostgreSQL에 로그 기록
+    // Record log to PostgreSQL
     const columns = [
       'api_type',
       'endpoint',
@@ -331,15 +331,15 @@ export async function logExternalApiRequest(logData) {
       values
     );
 
-    // 성공 로그 (간단하게)
-    logger.info('[External API Logger] 로깅 완료', {
+    // Success log (brief)
+    logger.info('[External API Logger] Logging complete', {
       apiType: logData.apiType,
       model: logData.model,
       statusCode: logData.statusCode,
     });
   } catch (error) {
-    // 로깅 실패는 조용히 처리 - 메인 API에 절대 영향 없음
-    logger.error('[External API Logger] 로깅 실패 (무시됨)', {
+    // Handle logging failures silently - never affect the main API
+    logger.error('[External API Logger] Logging failed (ignored)', {
       error: error.message,
       stack: error.stack,
     });
@@ -347,20 +347,20 @@ export async function logExternalApiRequest(logData) {
 }
 
 /**
- * 툴 버전 추출
+ * Extract tool version
  */
 function extractToolVersion(userAgent) {
   const ua = userAgent.toLowerCase();
 
-  // Continue 버전
+  // Continue version
   const continueMatch = ua.match(/continue[\/\s](\d+\.\d+\.\d+)/);
   if (continueMatch) return `Continue ${continueMatch[1]}`;
 
-  // VSCode 버전
+  // VSCode version
   const vscodeMatch = ua.match(/vscode[\/\s](\d+\.\d+\.\d+)/);
   if (vscodeMatch) return `VSCode ${vscodeMatch[1]}`;
 
-  // Cursor 버전
+  // Cursor version
   const cursorMatch = ua.match(/cursor[\/\s](\d+\.\d+\.\d+)/);
   if (cursorMatch) return `Cursor ${cursorMatch[1]}`;
 
@@ -368,7 +368,7 @@ function extractToolVersion(userAgent) {
 }
 
 /**
- * 운영체제 추출
+ * Extract operating system
  */
 function extractOperatingSystem(userAgent) {
   const ua = userAgent.toLowerCase();
@@ -385,7 +385,7 @@ function extractOperatingSystem(userAgent) {
 }
 
 /**
- * 아키텍처 추출
+ * Extract architecture
  */
 function extractArchitecture(userAgent) {
   const ua = userAgent.toLowerCase();
@@ -401,7 +401,7 @@ function extractArchitecture(userAgent) {
 }
 
 /**
- * 고급 핑거프린트 해시 생성 (더 정교한 사용자 식별)
+ * Generate advanced fingerprint hash (more precise user identification)
  */
 function generateFingerprintHash(logData) {
   const crypto = require('crypto');
@@ -425,17 +425,17 @@ function generateFingerprintHash(logData) {
 }
 
 /**
- * 사용자 식별자 생성 (더 안정적인 추적)
+ * Generate user identifier (more stable tracking)
  */
 function generateUserIdentifier(logData) {
   const crypto = require('crypto');
 
-  // 가장 안정적인 식별 요소들 조합
+  // Combine the most stable identification factors
   const stableData = [
-    logData.clientIP?.split('.').slice(0, 3).join('.') || '', // IP 마지막 옥텟 제외
+    logData.clientIP?.split('.').slice(0, 3).join('.') || '', // Exclude last IP octet
     extractOperatingSystem(logData.userAgent || ''),
     extractToolVersion(logData.userAgent || ''),
-    logData.acceptLanguage?.split(',')[0] || '', // 주 언어만
+    logData.acceptLanguage?.split(',')[0] || '', // Primary language only
     logData.xUserName || '',
     logData.xWorkspace || '',
   ]
@@ -452,7 +452,7 @@ function generateUserIdentifier(logData) {
 }
 
 /**
- * User-Agent에서 클라이언트 도구 식별
+ * Identify client tool from User-Agent
  */
 function parseClientTool(userAgent, clientName) {
   const ua = (userAgent || '').toLowerCase();
@@ -510,7 +510,7 @@ function parseClientTool(userAgent, clientName) {
 }
 
 /**
- * 세션 식별을 위한 해시 생성
+ * Generate hash for session identification
  */
 function generateSessionHash(ip, userAgent) {
   const crypto = require('crypto');
@@ -519,16 +519,16 @@ function generateSessionHash(ip, userAgent) {
 }
 
 /**
- * 대화 세션 식별을 위한 conversationId 생성
- * roomId가 있으면 roomId를 기반으로 생성하여 같은 채팅방의 모든 요청이 같은 ID를 가지도록 함
- * roomId가 없으면 sessionHash, userIdentifier, tokenHash, userEmail을 조합하여 생성
- * 같은 사용자, 같은 세션, 같은 API 토큰에서 온 요청들은 같은 conversationId를 가짐
- * 웹앱 채팅의 경우 userEmail을 포함하여 더 안정적인 그룹화
+ * Generate conversationId for conversation session identification
+ * If roomId exists, generate based on roomId so all requests in the same chat room share the same ID
+ * If roomId is absent, combine sessionHash, userIdentifier, tokenHash, and userEmail
+ * Requests from the same user, same session, and same API token share the same conversationId
+ * For webapp chat, include userEmail for more stable grouping
  */
 function generateConversationId(roomId, messages, sessionHash, userIdentifier, tokenHash, userEmail) {
   const crypto = require('crypto');
 
-  // roomId가 있으면 roomId를 기반으로 conversationId 생성 (같은 채팅방의 모든 대화가 같은 ID를 가짐)
+  // If roomId exists, generate conversationId based on roomId (all conversations in the same chat room share the same ID)
   if (roomId) {
     return crypto
       .createHash('sha256')
@@ -537,22 +537,22 @@ function generateConversationId(roomId, messages, sessionHash, userIdentifier, t
       .substring(0, 16);
   }
 
-  // roomId가 없으면 userEmail + sessionHash + tokenHash를 조합하여 생성
-  // 같은 사용자, 같은 세션, 같은 API 토큰에서 온 요청들은 같은 conversationId를 가짐
-  // 첫 메시지 내용에 의존하지 않으므로 이어지는 대화도 같은 ID를 가짐
+  // If roomId is absent, combine userEmail + sessionHash + tokenHash
+  // Requests from the same user, same session, and same API token share the same conversationId
+  // Does not depend on first message content, so continued conversations also share the same ID
   const parts = [];
   
-  // userEmail 추가 (웹앱 채팅에서 같은 사용자의 대화를 그룹화, 가장 안정적)
+  // Add userEmail (groups conversations by the same user in webapp chat, most stable)
   if (userEmail) {
     parts.push(userEmail);
   }
   
-  // sessionHash 추가 (같은 세션 그룹화)
+  // Add sessionHash (group by same session)
   if (sessionHash) {
     parts.push(sessionHash);
   }
   
-  // tokenHash 추가 (같은 API 토큰 사용자 그룹화)
+  // Add tokenHash (group by same API token user)
   if (tokenHash) {
     parts.push(tokenHash);
   }
@@ -566,7 +566,7 @@ function generateConversationId(roomId, messages, sessionHash, userIdentifier, t
       .substring(0, 16);
   }
 
-  // userEmail, sessionHash, tokenHash가 모두 없으면 userIdentifier 사용 (fallback)
+  // If userEmail, sessionHash, and tokenHash are all absent, use userIdentifier (fallback)
   if (userIdentifier) {
     return crypto
       .createHash('sha256')
@@ -575,8 +575,8 @@ function generateConversationId(roomId, messages, sessionHash, userIdentifier, t
       .substring(0, 16);
   }
 
-  // 모두 없으면 첫 번째 user 메시지 기반 (최종 fallback)
-  // 이 경우는 거의 발생하지 않지만, 안전장치로 유지
+  // If all are absent, fall back to first user message (final fallback)
+  // This case rarely occurs, but kept as a safety net
   if (messages && Array.isArray(messages)) {
     for (let i = 0; i < messages.length; i++) {
       if (messages[i].role === 'user') {
@@ -599,7 +599,7 @@ function generateConversationId(roomId, messages, sessionHash, userIdentifier, t
 }
 
 /**
- * 텍스트 길이 제한
+ * Truncate text to length limit
  */
 function truncateText(text, maxLength) {
   if (!text) return null;
@@ -613,11 +613,11 @@ function truncateText(text, maxLength) {
 }
 
 /**
- * 외부 API 사용량 통계 조회
+ * Retrieve external API usage statistics
  */
 export async function getExternalApiStats(timeRange = '7d') {
   try {
-    // 시간 범위 계산
+    // Calculate time range
     const now = new Date();
     let startDate;
 
@@ -638,14 +638,14 @@ export async function getExternalApiStats(timeRange = '7d') {
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
 
-    // 기본 통계
+    // Basic statistics
     const totalRequestsResult = await query(
       `SELECT COUNT(*) as count FROM external_api_logs WHERE timestamp >= $1`,
       [startDate]
     );
     const totalRequests = parseInt(totalRequestsResult.rows[0].count);
 
-    // API 타입별 통계
+    // Statistics by API type
     const apiTypeStatsResult = await query(
       `SELECT api_type as _id, COUNT(*) as count, SUM(total_token_count) as total_tokens
        FROM external_api_logs
@@ -659,7 +659,7 @@ export async function getExternalApiStats(timeRange = '7d') {
       totalTokens: parseInt(row.total_tokens || 0),
     }));
 
-    // 클라이언트 도구별 통계
+    // Statistics by client tool
     const clientToolStatsResult = await query(
       `SELECT client_tool as _id, COUNT(*) as count, SUM(total_token_count) as total_tokens
        FROM external_api_logs
@@ -674,7 +674,7 @@ export async function getExternalApiStats(timeRange = '7d') {
       totalTokens: parseInt(row.total_tokens || 0),
     }));
 
-    // 모델별 통계
+    // Statistics by model
     const modelStatsResult = await query(
       `SELECT model as _id, COUNT(*) as count, SUM(total_token_count) as total_tokens
        FROM external_api_logs
@@ -699,7 +699,7 @@ export async function getExternalApiStats(timeRange = '7d') {
       endDate: now,
     };
   } catch (error) {
-    logger.error('[External API Stats] 통계 조회 실패', {
+    logger.error('[External API Stats] Failed to retrieve statistics', {
       error: error.message,
       stack: error.stack,
     });

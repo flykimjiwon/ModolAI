@@ -1,24 +1,24 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-// PostgreSQL 연결 풀 (싱글톤)
+// PostgreSQL connection pool (singleton)
 let pool = null;
 
 /**
- * 빌드 시점인지 확인하는 함수
+ * Check if currently in build phase
  */
 function isBuildTime() {
-  // 1. 명시적인 환경 변수 체크
+  // 1. Explicit environment variable check
   if (process.env.SKIP_DB_CONNECTION === 'true') {
     return true;
   }
 
-  // 2. Next.js 빌드 단계 체크
+  // 2. Next.js build phase check
   if (process.env.NEXT_PHASE === 'phase-production-build') {
     return true;
   }
 
-  // 3. Next.js 빌드 중인지 체크 (process.argv에 'build'가 포함되어 있는지)
+  // 3. Check if Next.js is building (whether process.argv contains 'build')
   if (
     typeof process !== 'undefined' &&
     process.argv &&
@@ -30,8 +30,8 @@ function isBuildTime() {
     return true;
   }
 
-  // 4. 빌드 디렉토리가 생성 중인지 체크 (.next 디렉토리 생성 중)
-  // 이 방법은 신뢰할 수 없으므로 주석 처리
+  // 4. Check if build directory is being created (.next directory creation in progress)
+  // This method is unreliable, so it is commented out
   // try {
   //   if (typeof require !== 'undefined') {
   //     const fs = require('fs');
@@ -40,27 +40,27 @@ function isBuildTime() {
   //     if (fs.existsSync(nextDir)) {
   //       const buildManifest = path.join(nextDir, 'build-manifest.json');
   //       if (!fs.existsSync(buildManifest)) {
-  //         return true; // 빌드 중
+  //         return true; // Building
   //       }
   //     }
   //   }
   // } catch (e) {
-  //   // 파일 시스템 접근 불가 시 무시
+  //   // Ignore if filesystem access is unavailable
   // }
 
   return false;
 }
 
 /**
- * PostgreSQL 연결 풀 가져오기
+ * Get PostgreSQL connection pool
  */
 export function getPostgresPool() {
-  // 빌드 시점에는 데이터베이스 연결을 시도하지 않음
+  // Do not attempt database connection during build phase
   if (isBuildTime()) {
     if (process.env.SKIP_DB_CONNECTION !== 'true') {
-      // SKIP_DB_CONNECTION이 명시적으로 설정되지 않은 경우에만 경고 출력
-      // (이미 설정된 경우 중복 경고 방지)
-      console.warn('⚠️ 빌드 시점이므로 PostgreSQL 연결을 생성하지 않습니다.');
+      // Only print warning if SKIP_DB_CONNECTION is not explicitly set
+      // (prevent duplicate warnings if already set)
+      console.warn('⚠️ Skipping PostgreSQL connection during build phase.');
     }
     return null;
   }
@@ -71,78 +71,78 @@ export function getPostgresPool() {
 
     if (!connectionString) {
       const errorMsg =
-        '❌ error POSTGRES_URI 또는 DATABASE_URL이 환경 변수에 정의되지 않았습니다.\n' +
-        '   .env.local 파일에 다음을 추가하세요:\n' +
-        '   POSTGRES_URI=postgresql://사용자명:비밀번호@호스트:포트/데이터베이스명\n' +
-        '   또는\n' +
-        '   DATABASE_URL=postgresql://사용자명:비밀번호@호스트:포트/데이터베이스명';
+        '❌ error POSTGRES_URI or DATABASE_URL is not defined in environment variables.\n' +
+        '   Add the following to your .env.local file:\n' +
+        '   POSTGRES_URI=postgresql://username:password@host:port/database\n' +
+        '   or\n' +
+        '   DATABASE_URL=postgresql://username:password@host:port/database';
       console.error(errorMsg);
       throw new Error(errorMsg);
     }
 
-    // 연결 문자열을 직접 사용 (create-postgres-schema.js와 동일한 방식)
-    // 비밀번호가 없는 경우 PostgreSQL이 trust 인증을 사용하도록 설정되어 있어야 합니다
-    // SCRAM 인증을 요구하는 경우 비밀번호가 필요합니다
+    // Use connection string directly (same approach as create-postgres-schema.js)
+    // If no password is provided, PostgreSQL must be configured to use trust authentication
+    // If SCRAM authentication is required, a password is needed
     pool = new Pool({
       connectionString,
-      max: 20, // 최대 연결 수
+      max: 20, // Maximum connections
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000, // 연결 타임아웃 증가 (2초 -> 10초)
+      connectionTimeoutMillis: 10000, // Increased connection timeout (2s -> 10s)
     });
 
-    // 연결 후 시간대 설정
+    // Set timezone after connection
     pool.on('connect', async (client) => {
       try {
         await client.query("SET timezone = 'Asia/Seoul'");
       } catch (error) {
-        console.warn('⚠️ PostgreSQL 시간대 설정 실패:', error.message);
+        console.warn('⚠️ PostgreSQL timezone setting failed:', error.message);
       }
     });
 
-    // 연결 오류 처리
+    // Handle connection errors
     pool.on('error', (err) => {
-      console.error('❌ error PostgreSQL 연결 풀 오류:', err.message);
-      console.error('   오류 코드:', err.code);
-      console.error('   오류 상세:', err);
+      console.error('❌ error PostgreSQL connection pool error:', err.message);
+      console.error('   Error code:', err.code);
+      console.error('   Error details:', err);
 
-      // SCRAM 인증 오류인 경우 더 명확한 메시지 제공
+      // Provide clearer message for SCRAM authentication errors
       if (err.message && err.message.includes('SCRAM-SERVER-FIRST-MESSAGE')) {
         console.error(
-          '💡 PostgreSQL이 SCRAM 인증을 요구하는 경우 비밀번호가 필요합니다.'
+          '💡 A password is required if PostgreSQL requires SCRAM authentication.'
         );
-        console.error('   해결 방법:');
+        console.error('   Solution:');
         console.error(
-          "   1. PostgreSQL 사용자에 비밀번호 설정: ALTER USER 사용자명 WITH PASSWORD '비밀번호';"
+          "   1. Set password for PostgreSQL user: ALTER USER username WITH PASSWORD 'password';"
         );
-        console.error('   2. .env.local 파일의 POSTGRES_URI에 비밀번호 추가:');
+        console.error('   2. Add password to POSTGRES_URI in .env.local file:');
         console.error(
-          '      POSTGRES_URI=postgresql://사용자명:비밀번호@호스트:포트/데이터베이스명'
+          '      POSTGRES_URI=postgresql://username:password@host:port/database'
         );
       }
 
-      // 연결 거부 오류
+      // Connection refused error
       if (err.code === 'ECONNREFUSED') {
-        console.error('💡 PostgreSQL 서버에 연결할 수 없습니다.');
-        console.error('   확인 사항:');
-        console.error('   1. PostgreSQL이 실행 중인지 확인');
-        console.error('   2. 연결 문자열의 호스트와 포트가 올바른지 확인');
-        console.error('   3. 방화벽 설정 확인');
+        console.error('💡 Cannot connect to PostgreSQL server.');
+        console.error('   Checklist:');
+        console.error('   1. Verify PostgreSQL is running');
+        console.error('   2. Verify the host and port in the connection string are correct');
+        console.error('   3. Check firewall settings');
       }
 
-      // 호스트를 찾을 수 없는 오류
+      // Host not found error
       if (err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN') {
-        console.error('💡 PostgreSQL 호스트를 Not found.');
-        console.error('   확인 사항:');
-        console.error('   1. 호스트 이름이 올바른지 확인');
+        console.error('💡 PostgreSQL host not found.');
+        console.error('   Checklist:');
+        console.error('   1. Verify the hostname is correct');
         console.error(
-          '   2. Docker를 사용하는 경우 컨테이너 이름이 올바른지 확인'
+          '   2. If using Docker, verify the container name is correct'
         );
       }
     });
 
-    console.log('✅ PostgreSQL 연결 풀 생성 완료');
+    console.log('✅ PostgreSQL connection pool created successfully');
     console.log(
-      `   연결 문자열: ${connectionString.replace(/:[^:@]+@/, ':****@')}`
+      `   Connection string: ${connectionString.replace(/:[^:@]+@/, ':****@')}`
     );
   }
 
@@ -150,10 +150,10 @@ export function getPostgresPool() {
 }
 
 /**
- * PostgreSQL 연결 (쿼리 실행용)
+ * PostgreSQL connection (for query execution)
  */
 export async function getPostgresClient() {
-  // 빌드 시점에는 클라이언트 연결하지 않음
+  // Do not connect client during build phase
   if (isBuildTime()) {
     return null;
   }
@@ -162,32 +162,32 @@ export async function getPostgresClient() {
 
   if (!pool) {
     console.warn(
-      '⚠️ PostgreSQL 연결 풀이 없습니다. 클라이언트를 생성할 수 없습니다.'
+      '⚠️ No PostgreSQL connection pool available. Cannot create client.'
     );
     return null;
   }
 
   try {
     const client = await pool.connect();
-    // 연결 후 시간대 설정 (pool.on('connect')가 모든 연결에 적용되지 않을 수 있으므로 명시적으로 설정)
+    // Set timezone after connection (explicitly set since pool.on('connect') may not apply to all connections)
     try {
       await client.query("SET timezone = 'Asia/Seoul'");
     } catch (error) {
-      console.warn('⚠️ PostgreSQL 시간대 설정 실패:', error.message);
+      console.warn('⚠️ PostgreSQL timezone setting failed:', error.message);
     }
     return client;
   } catch (error) {
-    console.error('❌ error PostgreSQL 클라이언트 연결 실패:', error.message);
-    console.error('   오류 코드:', error.code);
+    console.error('❌ error PostgreSQL client connection failed:', error.message);
+    console.error('   Error code:', error.code);
     throw error;
   }
 }
 
 /**
- * 쿼리 실행 헬퍼 함수
+ * Query execution helper function
  */
 export async function query(text, params) {
-  // 빌드 시점에는 쿼리 실행하지 않음
+  // Do not execute queries during build phase
   if (isBuildTime()) {
     return { rows: [], rowCount: 0 };
   }
@@ -196,7 +196,7 @@ export async function query(text, params) {
 
   if (!pool) {
     console.warn(
-      '⚠️ PostgreSQL 연결 풀이 없습니다. 쿼리를 실행할 수 없습니다.'
+      '⚠️ No PostgreSQL connection pool available. Cannot execute query.'
     );
     return { rows: [], rowCount: 0 };
   }
@@ -205,23 +205,23 @@ export async function query(text, params) {
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    // 쿼리 로그 비활성화 (필요시 주석 해제)
+    // Query logging disabled (uncomment if needed)
     // if (process.env.NODE_ENV === 'development') {
-    //   console.log('📊 실행된 쿼리:', { text, duration, rows: res.rowCount });
+    //   console.log('📊 Executed query:', { text, duration, rows: res.rowCount });
     // }
     return res;
   } catch (error) {
-    console.error('❌ error 쿼리 실행 오류:', {
+    console.error('❌ error Query execution error:', {
       text: text.substring(0, 100),
       error: error.message,
       code: error.code,
     });
 
-    // 연결 오류인 경우 추가 정보 제공
+    // Provide additional info for connection errors
     if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-      console.error('💡 PostgreSQL 연결 문제가 발생했습니다.');
+      console.error('💡 A PostgreSQL connection issue occurred.');
       console.error(
-        '   연결 문자열을 확인하세요:',
+        '   Please check the connection string:',
         (process.env.POSTGRES_URI || process.env.DATABASE_URL || '').replace(
           /:[^:@]+@/,
           ':****@'
@@ -234,10 +234,10 @@ export async function query(text, params) {
 }
 
 /**
- * 트랜잭션 실행 헬퍼 함수
+ * Transaction execution helper function
  */
 export async function transaction(callback) {
-  // 빌드 시점에는 트랜잭션 실행하지 않음
+  // Do not execute transactions during build phase
   if (isBuildTime()) {
     return null;
   }
@@ -246,7 +246,7 @@ export async function transaction(callback) {
 
   if (!client) {
     console.warn(
-      '⚠️ PostgreSQL 클라이언트가 없습니다. 트랜잭션을 실행할 수 없습니다.'
+      '⚠️ No PostgreSQL client available. Cannot execute transaction.'
     );
     return null;
   }
@@ -265,12 +265,12 @@ export async function transaction(callback) {
 }
 
 /**
- * 연결 종료
+ * Close connection
  */
 export async function closePool() {
   if (pool) {
     await pool.end();
     pool = null;
-    console.log('🔌 PostgreSQL 연결 풀 종료');
+    console.log('🔌 PostgreSQL connection pool closed');
   }
 }

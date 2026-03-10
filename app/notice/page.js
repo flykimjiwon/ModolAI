@@ -15,6 +15,9 @@ import {
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function NoticePage() {
   const [notices, setNotices] = useState([]);
@@ -130,24 +133,25 @@ export default function NoticePage() {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
+    <div className='min-h-screen bg-background transition-colors duration-200'>
       <div className='w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-6'>
         {/* 헤더 */}
         <div className='flex items-center justify-between mb-6'>
           <div className='flex items-center gap-4'>
-            <button
+            <Button
               onClick={() => router.push('/')}
-              className='p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+              variant='ghost'
+              size='icon'
               title='뒤로 가기'
             >
               <ArrowLeft className='h-5 w-5' />
-            </button>
+            </Button>
             <div>
-              <h1 className='text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2'>
+              <h1 className='text-2xl font-bold text-foreground flex items-center gap-2'>
                 <Bell className='h-6 w-6' />
                 공지사항
               </h1>
-              <p className='text-gray-600 dark:text-gray-400 mt-1'>
+              <p className='text-muted-foreground mt-1'>
                 시스템 공지사항을 확인하세요.
               </p>
             </div>
@@ -155,135 +159,142 @@ export default function NoticePage() {
 
           {/* 관리자만 글쓰기 버튼 */}
           {userRole === 'admin' && (
-            <button
+            <Button
               onClick={() => router.push('/notice/write')}
-              className='flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
             >
               <Plus className='h-4 w-4' />
               글쓰기
-            </button>
+            </Button>
           )}
         </div>
 
         {/* 공지사항 목록 */}
-        <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
-          {loading ? (
-            <div className='flex items-center justify-center h-32'>
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
-            </div>
-          ) : notices.length === 0 ? (
-            <div className='text-center py-12'>
-              <Bell className='mx-auto h-12 w-12 text-gray-400' />
-              <h3 className='mt-2 text-sm font-medium text-gray-900 dark:text-white'>
-                공지사항이 없습니다
-              </h3>
-              <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
-                아직 등록된 공지사항이 없습니다.
-              </p>
-            </div>
-          ) : (
-            <div className='divide-y divide-gray-200 dark:divide-gray-600'>
-              {notices.map((notice) => (
-                <div
-                  key={notice._id}
-                  className='p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors'
-                >
-                  <div className='flex items-start justify-between'>
-                    <div className='flex-1 min-w-0 mr-4'>
-                      {/* 제목과 뱃지 */}
-                      <div className='flex items-center gap-2 mb-2'>
-                        <h3
-                          className='text-lg font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors'
-                          onClick={() => router.push(`/notice/${notice._id}`)}
-                        >
-                          {notice.title}
-                        </h3>
-                        {notice.isPopup && (
-                          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'>
-                            팝업
-                          </span>
-                        )}
-                        {!notice.isActive && (
-                          <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'>
-                            비활성
-                          </span>
-                        )}
+        <Card className='overflow-hidden'>
+          <CardContent className='p-0'>
+            {loading ? (
+              <div className='flex items-center justify-center h-32'>
+                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+              </div>
+            ) : notices.length === 0 ? (
+              <div className='text-center py-12'>
+                <Bell className='mx-auto h-12 w-12 text-muted-foreground' />
+                <h3 className='mt-2 text-sm font-medium text-foreground'>
+                  공지사항이 없습니다
+                </h3>
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  아직 등록된 공지사항이 없습니다.
+                </p>
+              </div>
+            ) : (
+              <div className='divide-y divide-border'>
+                {notices.map((notice) => (
+                  <div
+                    key={notice._id}
+                    className='p-6 hover:bg-accent transition-colors'
+                  >
+                    <div className='flex items-start justify-between'>
+                      <div className='flex-1 min-w-0 mr-4'>
+                        {/* 제목과 뱃지 */}
+                        <div className='flex items-center gap-2 mb-2'>
+                          <h3
+                            className='text-lg font-semibold text-foreground cursor-pointer hover:text-primary transition-colors'
+                            onClick={() => router.push(`/notice/${notice._id}`)}
+                          >
+                            {notice.title}
+                          </h3>
+                          {notice.isPopup && (
+                            <Badge variant='destructive'>
+                              팝업
+                            </Badge>
+                          )}
+                          {!notice.isActive && (
+                            <Badge variant='secondary'>
+                              비활성
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* 내용 미리보기 */}
+                        <p className='text-muted-foreground text-sm mb-3 line-clamp-3'>
+                          {truncateContent(notice.content)}
+                        </p>
+
+                        {/* 메타 정보 */}
+                        <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+                          <div className='flex items-center gap-1'>
+                            <User className='h-3 w-3' />
+                            {notice.authorName}
+                          </div>
+                          <div className='flex items-center gap-1'>
+                            <Calendar className='h-3 w-3' />
+                            {formatDate(notice.createdAt)}
+                          </div>
+                          <div className='flex items-center gap-1'>
+                            <Eye className='h-3 w-3' />
+                            {notice.views}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* 내용 미리보기 */}
-                      <p className='text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-3'>
-                        {truncateContent(notice.content)}
-                      </p>
-
-                      {/* 메타 정보 */}
-                      <div className='flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400'>
+                      {/* 관리자 액션 버튼 */}
+                      {userRole === 'admin' && (
                         <div className='flex items-center gap-1'>
-                          <User className='h-3 w-3' />
-                          {notice.authorName}
+                          <Button
+                            onClick={() =>
+                              router.push(`/notice/edit/${notice._id}`)
+                            }
+                            variant='ghost'
+                            size='icon'
+                            className='text-primary hover:bg-primary/10'
+                            title='수정'
+                          >
+                            <Edit className='h-4 w-4' />
+                          </Button>
+                          <Button
+                            onClick={() => deleteNotice(notice._id, notice.title)}
+                            variant='ghost'
+                            size='icon'
+                            className='text-destructive hover:bg-destructive/10'
+                            title='삭제'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
                         </div>
-                        <div className='flex items-center gap-1'>
-                          <Calendar className='h-3 w-3' />
-                          {formatDate(notice.createdAt)}
-                        </div>
-                        <div className='flex items-center gap-1'>
-                          <Eye className='h-3 w-3' />
-                          {notice.views}
-                        </div>
-                      </div>
+                      )}
                     </div>
-
-                    {/* 관리자 액션 버튼 */}
-                    {userRole === 'admin' && (
-                      <div className='flex items-center gap-1'>
-                        <button
-                          onClick={() =>
-                            router.push(`/notice/edit/${notice._id}`)
-                          }
-                          className='p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors'
-                          title='수정'
-                        >
-                          <Edit className='h-4 w-4' />
-                        </button>
-                        <button
-                          onClick={() => deleteNotice(notice._id, notice.title)}
-                          className='p-2 text-red-600 hover:text-red-800 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors'
-                          title='삭제'
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* 페이지네이션 */}
         {totalPages > 1 && (
           <div className='flex items-center justify-center space-x-2 mt-6'>
-            <button
+            <Button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className='px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+              variant='outline'
+              size='sm'
             >
               이전
-            </button>
+            </Button>
 
-            <span className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <span className='px-4 py-2 text-sm font-medium text-muted-foreground'>
               {currentPage} / {totalPages}
             </span>
 
-            <button
+            <Button
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className='px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'
+              variant='outline'
+              size='sm'
             >
               다음
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -125,19 +125,19 @@ function extractJsonFromText(text) {
 function generatePlaceholderOutlines(topic, slideCount) {
   const slides = [];
   slides.push({
-    title: `${topic} 소개`,
-    description: '주제 배경과 발표 목적을 설명합니다.',
-    keyPoints: ['배경 및 현황', '발표 목적 및 범위', '핵심 메시지'],
+    title: `Introduction to ${topic}`,
+    description: 'Explains the topic background and presentation purpose.',
+    keyPoints: ['Background and current status', 'Presentation purpose and scope', 'Key message'],
   });
 
   const bodyCount = Math.max(0, slideCount - 2);
   const bodyTemplates = [
-    { title: '현황 분석', description: '현재 상황과 주요 과제를 분석합니다.', keyPoints: ['현황 데이터', '주요 이슈', '원인 분석'] },
-    { title: '핵심 전략', description: '목표 달성을 위한 핵심 전략을 제시합니다.', keyPoints: ['전략 방향', '실행 계획', '기대 효과'] },
-    { title: '세부 실행 계획', description: '단계별 실행 계획과 일정을 안내합니다.', keyPoints: ['단기 계획', '중기 계획', '장기 로드맵'] },
-    { title: '기대 성과', description: '목표 수치와 기대되는 성과를 설명합니다.', keyPoints: ['정량적 목표', '정성적 효과', '성과 측정 방법'] },
-    { title: '리스크 및 대응', description: '예상 리스크와 대응 방안을 다룹니다.', keyPoints: ['주요 리스크', '대응 전략', '모니터링 계획'] },
-    { title: '조직 및 역할', description: '실행 조직 구성과 역할 분담을 설명합니다.', keyPoints: ['담당 조직', '역할과 책임', '협업 체계'] },
+    { title: 'Current Status Analysis', description: 'Analyzes the current situation and key challenges.', keyPoints: ['Current data', 'Key issues', 'Root cause analysis'] },
+    { title: 'Core Strategy', description: 'Presents core strategies for achieving objectives.', keyPoints: ['Strategic direction', 'Execution plan', 'Expected outcomes'] },
+    { title: 'Detailed Execution Plan', description: 'Outlines step-by-step execution plans and schedules.', keyPoints: ['Short-term plan', 'Mid-term plan', 'Long-term roadmap'] },
+    { title: 'Expected Results', description: 'Explains target metrics and expected outcomes.', keyPoints: ['Quantitative goals', 'Qualitative effects', 'Performance measurement methods'] },
+    { title: 'Risks and Mitigation', description: 'Covers anticipated risks and mitigation strategies.', keyPoints: ['Key risks', 'Mitigation strategies', 'Monitoring plan'] },
+    { title: 'Organization and Roles', description: 'Explains the execution organization structure and role assignments.', keyPoints: ['Responsible teams', 'Roles and responsibilities', 'Collaboration framework'] },
   ];
 
   for (let i = 0; i < bodyCount; i++) {
@@ -146,9 +146,9 @@ function generatePlaceholderOutlines(topic, slideCount) {
   }
 
   slides.push({
-    title: '결론 및 다음 단계',
-    description: '핵심 내용을 요약하고 다음 단계를 제안합니다.',
-    keyPoints: ['주요 내용 요약', '다음 단계 제안', '문의 및 협력'],
+    title: 'Conclusion and Next Steps',
+    description: 'Summarizes key content and proposes next steps.',
+    keyPoints: ['Summary of key points', 'Proposed next steps', 'Inquiries and collaboration'],
   });
 
   return slides.slice(0, slideCount);
@@ -163,7 +163,7 @@ export async function POST(request) {
   try {
     const hasPermission = await checkAgentPermissionForUser(authResult.user, '7');
     if (!hasPermission) {
-      return NextResponse.json({ error: 'PPT 에이전트 Access denied.' }, { status: 403 });
+      return NextResponse.json({ error: 'PPT agent access denied.' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -175,7 +175,7 @@ export async function POST(request) {
     const requestedModel = String(body?.model || '').trim();
 
     if (!topic) {
-      return NextResponse.json({ error: '주제를 입력해 주세요.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please enter a topic.' }, { status: 400 });
     }
 
     const settings = await getAgent7Settings();
@@ -192,24 +192,24 @@ export async function POST(request) {
     }
 
     const resolvedModelName = await resolveModelId(model);
-    const toneText = tone === 'casual' ? '친근하고 이해하기 쉬운 톤' : '정중한 비즈니스 톤';
+    const toneText = tone === 'casual' ? 'friendly and easy-to-understand tone' : 'polite business tone';
 
     const systemPrompt = [
-      '당신은 프레젠테이션 개요 생성 전문가입니다.',
-      '반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트, 설명, 마크다운 없이 JSON만 출력하세요.',
-      `{"slides":[{"title":"슬라이드 제목","description":"한두 줄 설명","keyPoints":["포인트1","포인트2","포인트3"]},...]}`,
-      `정확히 ${slideCount}개의 슬라이드 개요를 만드세요.`,
-      `문체는 ${toneText}을 사용하세요.`,
-      '첫 슬라이드는 인트로, 마지막 슬라이드는 결론으로 구성하세요.',
-      '각 슬라이드에 2~4개의 핵심 포인트를 포함하세요.',
+      'You are a presentation outline generation expert.',
+      'You must respond only in the JSON format below. Output only JSON without any other text, explanations, or markdown.',
+      `{"slides":[{"title":"Slide Title","description":"One or two line description","keyPoints":["Point 1","Point 2","Point 3"]},...]}`,
+      `Create exactly ${slideCount} slide outlines.`,
+      `Use a ${toneText} for the writing style.`,
+      'The first slide should be an intro and the last slide should be a conclusion.',
+      'Include 2-4 key points in each slide.',
     ].join('\n');
 
     const userPrompt = [
-      `주제: ${topic}`,
-      `간단한 내용: ${brief || '없음'}`,
-      `슬라이드 수: ${slideCount}`,
-      `테마: ${theme}, 톤: ${tone}`,
-      `위 정보로 정확히 ${slideCount}장의 슬라이드 개요를 JSON 형식으로 만들어주세요.`,
+      `Topic: ${topic}`,
+      `Brief description: ${brief || 'None'}`,
+      `Number of slides: ${slideCount}`,
+      `Theme: ${theme}, Tone: ${tone}`,
+      `Based on the above information, create exactly ${slideCount} slide outlines in JSON format.`,
     ].join('\n');
 
     const origin = new URL(request.url).origin;
@@ -276,7 +276,7 @@ export async function POST(request) {
 
     // Normalize slides array
     const slides = parsed.slides.slice(0, slideCount).map((s, i) => ({
-      title: String(s?.title || `슬라이드 ${i + 1}`),
+      title: String(s?.title || `Slide ${i + 1}`),
       description: String(s?.description || ''),
       keyPoints: Array.isArray(s?.keyPoints)
         ? s.keyPoints.map((k) => String(k)).filter(Boolean)
@@ -286,7 +286,7 @@ export async function POST(request) {
     // Pad if fewer slides than requested
     while (slides.length < slideCount) {
       const placeholders = generatePlaceholderOutlines(topic, slideCount);
-      slides.push(placeholders[slides.length] || { title: `슬라이드 ${slides.length + 1}`, description: '', keyPoints: [] });
+      slides.push(placeholders[slides.length] || { title: `Slide ${slides.length + 1}`, description: '', keyPoints: [] });
     }
 
     return NextResponse.json({ slides });
@@ -295,12 +295,12 @@ export async function POST(request) {
     // Fallback
     try {
       const body = await request.json().catch(() => ({}));
-      const topic = String(body?.topic || '프레젠테이션');
+      const topic = String(body?.topic || 'Presentation');
       const slideCount = Number(body?.slideCount) || 8;
       const slides = generatePlaceholderOutlines(topic, Math.min(slideCount, 30));
       return NextResponse.json({ slides, fallback: true });
     } catch {
-      return NextResponse.json({ error: '개요 생성에 실패했습니다.' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to generate outline.' }, { status: 500 });
     }
   }
 }

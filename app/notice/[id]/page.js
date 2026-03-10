@@ -6,6 +6,9 @@ import { ArrowLeft, Calendar, User, Eye, Edit } from 'lucide-react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function NoticeDetailPage() {
   const [notice, setNotice] = useState(null);
@@ -16,7 +19,6 @@ export default function NoticeDetailPage() {
   const { id } = params;
   const { alert } = useAlert();
 
-  // 사용자 권한 확인
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -34,7 +36,6 @@ export default function NoticeDetailPage() {
     }
   }, [router]);
 
-  // 공지사항 상세 조회
   useEffect(() => {
     const fetchNotice = async () => {
       try {
@@ -80,125 +81,121 @@ export default function NoticeDetailPage() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+      <div className='min-h-screen bg-background flex items-center justify-center'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
       </div>
     );
   }
 
   if (!notice) {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
+      <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='text-center'>
-          <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+          <h3 className='text-lg font-medium text-foreground'>
             공지사항을 찾을 수 없습니다
           </h3>
-          <button
+          <Button
             onClick={() => router.push('/notice')}
-            className='mt-4 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200'
+            variant='link'
+            className='mt-4'
           >
             목록으로 돌아가기
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
+    <div className='min-h-screen bg-background transition-colors duration-200'>
       <div className='w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto p-6'>
-        {/* 헤더 */}
         <div className='flex items-center justify-between mb-6'>
           <div className='flex items-center gap-4'>
-            <button
+            <Button
               onClick={() => router.push('/notice')}
-              className='p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+              variant='ghost'
+              size='icon'
               title='목록으로'
             >
               <ArrowLeft className='h-5 w-5' />
-            </button>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+            </Button>
+            <h1 className='text-2xl font-bold text-foreground'>
               공지사항
             </h1>
           </div>
 
-          {/* 관리자만 수정 버튼 */}
           {userRole === 'admin' && (
-            <button
+            <Button
               onClick={() => router.push(`/notice/edit/${id}`)}
-              className='flex items-center gap-2 px-4 py-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors'
+              variant='ghost'
             >
               <Edit className='h-4 w-4' />
               수정
-            </button>
+            </Button>
           )}
         </div>
 
-        {/* 공지사항 내용 */}
-        <article className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
-          {/* 헤더 정보 */}
-          <div className='p-6 border-b border-gray-200 dark:border-gray-700'>
-            {/* 제목과 뱃지 */}
-            <div className='flex items-center gap-2 mb-4'>
-              <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
-                {notice.title}
-              </h1>
-              {notice.isPopup && (
-                <span className='inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'>
-                  팝업
-                </span>
-              )}
-              {!notice.isActive && (
-                <span className='inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'>
-                  비활성
-                </span>
-              )}
-            </div>
+        <Card className='overflow-hidden'>
+          <CardContent className='p-0'>
+            <div className='p-6 border-b border-border'>
+              <div className='flex items-center gap-2 mb-4'>
+                <h1 className='text-2xl font-bold text-foreground'>
+                  {notice.title}
+                </h1>
+                {notice.isPopup && (
+                  <Badge variant='destructive'>
+                    팝업
+                  </Badge>
+                )}
+                {!notice.isActive && (
+                  <Badge variant='secondary'>
+                    비활성
+                  </Badge>
+                )}
+              </div>
 
-            {/* 메타 정보 */}
-            <div className='flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400'>
-              <div className='flex items-center gap-2'>
-                <User className='h-4 w-4' />
-                <span>{notice.authorName}</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <Calendar className='h-4 w-4' />
-                <span>{formatDate(notice.createdAt)}</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <Eye className='h-4 w-4' />
-                <span>조회 {notice.views}</span>
-              </div>
-              {notice.updatedAt && notice.updatedAt !== notice.createdAt && (
-                <div className='text-xs'>
-                  수정: {formatDate(notice.updatedAt)}
+              <div className='flex items-center gap-6 text-sm text-muted-foreground'>
+                <div className='flex items-center gap-2'>
+                  <User className='h-4 w-4' />
+                  <span>{notice.authorName}</span>
                 </div>
-              )}
+                <div className='flex items-center gap-2'>
+                  <Calendar className='h-4 w-4' />
+                  <span>{formatDate(notice.createdAt)}</span>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Eye className='h-4 w-4' />
+                  <span>조회 {notice.views}</span>
+                </div>
+                {notice.updatedAt && notice.updatedAt !== notice.createdAt && (
+                  <div className='text-xs'>
+                    수정: {formatDate(notice.updatedAt)}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* 본문 */}
-          <div className='p-6'>
-            <div className='prose prose-gray dark:prose-invert max-w-none'>
-              <MarkdownPreview
-                source={notice.content}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: 'inherit',
-                }}
-              />
+            <div className='p-6'>
+              <div className='prose prose-neutral dark:prose-invert max-w-none'>
+                <MarkdownPreview
+                  source={notice.content}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'inherit',
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        </article>
+          </CardContent>
+        </Card>
 
-        {/* 하단 버튼 */}
         <div className='flex justify-center mt-6'>
-          <button
+          <Button
             onClick={() => router.push('/notice')}
-            className='px-6 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
+            variant='outline'
           >
             목록으로
-          </button>
+          </Button>
         </div>
       </div>
     </div>

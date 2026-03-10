@@ -8,12 +8,12 @@ import { logQARequest } from '@/lib/qaLogger';
 import { logExternalApiRequest } from '@/lib/externalApiLogger';
 import { fetchWithRetry } from '@/lib/retryUtils';
 
-// 간단한 로그 기록 함수
+// Simple log recording function
 async function logModelServerProxyRequest(data) {
   try {
     const { query } = await import('@/lib/postgres');
 
-    // metadata에 추가 정보 포함 (null/undefined 제외)
+    // Include additional info in metadata (excluding null/undefined)
     const metadata = {
       endpoint: data.endpoint || '',
       ...(data.responseTime && { responseTime: `${data.responseTime}ms` }),
@@ -36,7 +36,7 @@ async function logModelServerProxyRequest(data) {
       ...(data.userAgent && { userAgent: data.userAgent }),
     };
 
-    // null/undefined 값 제거
+    // Remove null/undefined values
     Object.keys(metadata).forEach((key) => {
       if (
         metadata[key] === null ||
@@ -75,12 +75,12 @@ async function logModelServerProxyRequest(data) {
       ]
     );
   } catch (error) {
-    console.error('로그 기록 실패:', error);
+    console.error('Log recording failed:', error);
   }
 }
 
-// VSCode Continue 전용 단순 모델 서버 프록시
-// 라운드로빈 로드밸런싱만 추가된 순수 모델 서버 API
+// Simple model server proxy for VSCode Continue
+// Pure model server API with only round-robin load balancing added
 
 export async function POST(request) {
   const startTime = Date.now();
@@ -90,15 +90,15 @@ export async function POST(request) {
     '127.0.0.1';
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
-  // 외부 API 로깅을 위한 추가 헤더 정보 수집
+  // Collect additional header info for external API logging
   const identificationHeaders = {
-    // === 기본 프록시 정보 ===
+    // === Basic proxy info ===
     xForwardedFor: request.headers.get('x-forwarded-for'),
     xRealIP: request.headers.get('x-real-ip'),
     xForwardedProto: request.headers.get('x-forwarded-proto'),
     xForwardedHost: request.headers.get('x-forwarded-host'),
 
-    // === 클라이언트 정보 ===
+    // === Client info ===
     acceptLanguage: request.headers.get('accept-language'),
     acceptEncoding: request.headers.get('accept-encoding'),
     acceptCharset: request.headers.get('accept-charset'),
@@ -106,10 +106,10 @@ export async function POST(request) {
     origin: request.headers.get('origin'),
     contentType: request.headers.get('content-type'),
 
-    // === 보안 및 인증 ===
+    // === Security and authentication ===
     authorization: request.headers.get('authorization') ? 'present' : 'absent',
 
-    // === 커스텀 식별 헤더 ===
+    // === Custom identification headers ===
     xRequestedWith: request.headers.get('x-requested-with'),
     xClientName: request.headers.get('x-client-name'),
     xClientVersion: request.headers.get('x-client-version'),
@@ -117,14 +117,14 @@ export async function POST(request) {
     xWorkspace: request.headers.get('x-workspace'),
     xSessionId: request.headers.get('x-session-id'),
 
-    // === 타임존 정보 ===
+    // === Timezone info ===
     timezone:
       request.headers.get('x-timezone') ||
       request.headers.get('timezone') ||
       Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 
-  // CORS 헤더 설정 (VSCode Continue에서 접근 가능)
+  // CORS header configuration (accessible from VSCode Continue)
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -132,72 +132,72 @@ export async function POST(request) {
   };
 
   try {
-    // 요청 본문 그대로 받기 - 빈 요청 처리
+    // Receive request body as-is - handle empty requests
     let body;
     try {
       body = await request.json();
     } catch (jsonError) {
-      console.error('[Model Server Proxy] JSON 파싱 오류:', jsonError);
+      console.error('[Model Server Proxy] JSON parsing error:', jsonError);
       return NextResponse.json(
         {
           error: 'Invalid JSON in request body',
-          message: '요청 본문이 올바른 JSON 형식이 아닙니다.',
+          message: 'The request body is not valid JSON.',
         },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // 필수 필드 검증
+    // Required field validation
     if (!body.model || !body.prompt) {
       return NextResponse.json(
         {
           error: 'Missing required fields',
-          message: 'model과 prompt 필드는 필수입니다.',
+          message: 'The model and prompt fields are required.',
         },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    console.log('[Model Server Proxy] 요청:', {
+    console.log('[Model Server Proxy] Request:', {
       model: body.model,
       prompt: body.prompt?.length || 0,
       stream: body.stream,
       ip: clientIP,
     });
 
-    // 모델 이름에서 서버 이름 파싱하여 해당 서버 그룹에서만 라운드로빈
+    // Parse server name from model name and round-robin only within that server group
     let modelServerEndpoint;
     let roundRobinIndex;
-    let provider = 'model-server'; // 기본값
+    let provider = 'model-server'; // Default
 
     let { serverName } = parseModelName(body.model);
 
-    // 모델 ID에서 서버 이름을 파싱하지 못한 경우, DB 설정에서 확인
+    // If server name could not be parsed from model ID, check DB settings
     if (!serverName) {
       const { getServerNameForModel } = await import('@/lib/modelServers');
       const dbServerName = await getServerNameForModel(body.model);
       if (dbServerName) {
         serverName = dbServerName;
         console.log(
-          `[Model Server Proxy] DB 설정에서 서버 그룹 찾음: "${body.model}" -> "${serverName}"`
+          `[Model Server Proxy] Found server group in DB settings: "${body.model}" -> "${serverName}"`
         );
       }
     }
 
     if (serverName) {
-      // 서버 이름이 있으면 해당 서버 그룹에서만 라운드로빈
+      // If server name exists, round-robin only within that server group
       const serverEndpoint = await getModelServerEndpointByName(serverName);
       if (serverEndpoint) {
         modelServerEndpoint = serverEndpoint.endpoint;
         roundRobinIndex = serverEndpoint.index;
         provider = serverEndpoint.provider || 'model-server';
         console.log(
-          `[Model Server Proxy] 모델 "${body.model}" -> 서버 그룹 "${serverName}" -> 엔드포인트: ${modelServerEndpoint} (RR: ${roundRobinIndex}, Provider: ${provider})`
+          `[Model Server Proxy] Model "${body.model}" -> Server group "${serverName}" -> Endpoint: ${modelServerEndpoint} (RR: ${roundRobinIndex}, Provider: ${provider})`
         );
       } else {
-        // 서버 이름으로 찾지 못하면 전체 라운드로빈 사용
+        // If not found by server name, use global round-robin
         console.warn(
-          `[Model Server Proxy] 서버 그룹 "${serverName}"을 찾을 수 없어 전체 라운드로빈 사용`
+          `[Model Server Proxy] Server group "${serverName}" not found, using global round-robin`
         );
         const next = await getNextModelServerEndpointWithIndex();
         modelServerEndpoint = next.endpoint;
@@ -205,7 +205,7 @@ export async function POST(request) {
         provider = next.provider || 'model-server';
       }
     } else {
-      // 서버 이름이 없으면 전체 라운드로빈 사용
+      // If no server name, use global round-robin
       const next = await getNextModelServerEndpointWithIndex();
       modelServerEndpoint = next.endpoint;
       roundRobinIndex = next.index;
@@ -215,43 +215,43 @@ export async function POST(request) {
     const modelServerUrl = `${modelServerEndpoint}/api/generate`;
 
     console.log(
-      `[Model Server Proxy] 인스턴스 ${roundRobinIndex}: ${modelServerUrl}`
+      `[Model Server Proxy] Instance ${roundRobinIndex}: ${modelServerUrl}`
     );
 
-    // 원본 요청의 헤더를 복사하되, 일부는 수정/제외합니다.
+    // Copy original request headers, but modify/exclude some.
     const headersToForward = {};
     request.headers.forEach((value, key) => {
-      // 'host' 헤더는 fetch가 자동으로 설정하므로 전달하지 않습니다.
-      // 'content-length'는 body 길이에 따라 fetch가 설정하므로 전달하지 않습니다.
+      // 'host' header is not forwarded as fetch sets it automatically.
+      // 'content-length' is not forwarded as fetch sets it based on body length.
       if (!['host', 'content-length'].includes(key.toLowerCase())) {
         headersToForward[key] = value;
       }
     });
-    // Content-Type은 항상 application/json으로 설정합니다.
+    // Content-Type is always set to application/json.
     headersToForward['Content-Type'] = 'application/json';
 
-    // --- 상세 디버그 로그 추가 ---
+    // --- Detailed debug log start ---
     console.log(
       '\n\n[MODEL SERVER PROXY DEBUG] ======================================='
     );
-    console.log('[MODEL SERVER PROXY DEBUG] 최종 요청 정보:');
-    console.log('[MODEL SERVER PROXY DEBUG]   - 목적지 URL:', modelServerUrl);
-    console.log('[MODEL SERVER PROXY DEBUG]   - 메소드:', 'POST');
+    console.log('[MODEL SERVER PROXY DEBUG] Final request info:');
+    console.log('[MODEL SERVER PROXY DEBUG]   - Destination URL:', modelServerUrl);
+    console.log('[MODEL SERVER PROXY DEBUG]   - Method:', 'POST');
     console.log(
-      '[MODEL SERVER PROXY DEBUG]   - 전달되는 헤더:',
+      '[MODEL SERVER PROXY DEBUG]   - Forwarded headers:',
       JSON.stringify(headersToForward, null, 2)
     );
     console.log(
-      '[MODEL SERVER PROXY DEBUG]   - 요청 Body의 키:',
+      '[MODEL SERVER PROXY DEBUG]   - Request body keys:',
       Object.keys(body)
     );
     console.log(
       '[MODEL SERVER PROXY DEBUG] =======================================\n\n'
     );
-    // --- 디버그 로그 끝 ---
+    // --- Debug log end ---
 
 
-    // 재시도 시 provider 업데이트를 위한 참조 객체
+    // Reference object for updating provider on retry
     const providerRef = { value: provider };
 
     let modelServerRes;
@@ -260,11 +260,11 @@ export async function POST(request) {
         modelServerUrl,
         {
           method: 'POST',
-          headers: headersToForward, // 수정된 헤더 사용
+          headers: headersToForward, // Use modified headers
           body: JSON.stringify(body),
         },
         {
-          maxRetries: 2, // 최대 2회 재시도 (총 3회 시도)
+          maxRetries: 2, // Max 2 retries (3 total attempts)
           isStreaming: body.stream !== false,
           getNextEndpoint: getNextModelServerEndpointWithIndex,
           providerRef: providerRef,
@@ -272,14 +272,14 @@ export async function POST(request) {
         }
       );
 
-      // 재시도 후 최종 provider 업데이트
+      // Update final provider after retries
       provider = providerRef.value;
     } catch (fetchError) {
-      // fetch 실패 처리
+      // Handle fetch failure
       const responseTime = Date.now() - startTime;
       const errorMessage = fetchError.message || 'Unknown error';
 
-      console.error('[Model Server Proxy] 모델 서버 연결 오류:', {
+      console.error('[Model Server Proxy] Model server connection error:', {
         url: modelServerUrl,
         error: errorMessage,
         type: fetchError.name || 'Unknown',
@@ -316,11 +316,11 @@ export async function POST(request) {
     if (!modelServerRes.ok) {
       const errorText = await modelServerRes.text();
       console.error(
-        `[Model Server Proxy] 오류: ${modelServerRes.status} ${modelServerRes.statusText}`,
+        `[Model Server Proxy] Error: ${modelServerRes.status} ${modelServerRes.statusText}`,
         errorText
       );
 
-      // 오류 로그 기록
+      // Record error log
       await logModelServerProxyRequest({
         provider: provider,
         level: 'error',
@@ -341,21 +341,21 @@ export async function POST(request) {
 
       return NextResponse.json(
         {
-          error: `모델 Server error: ${modelServerRes.status}`,
+          error: `Model server error: ${modelServerRes.status}`,
           details: errorText,
         },
         { status: modelServerRes.status, headers: corsHeaders }
       );
     }
 
-    // 응답 타입 확인
+    // Check response type
     const contentType = modelServerRes.headers.get('content-type') || '';
 
     if (body.stream !== false) {
-      // 스트리밍 응답 - 응답 텍스트 수집하면서 전달
+      // Streaming response - collect response text while forwarding
       const responseTime = Date.now() - startTime;
 
-      // 스트리밍 응답에서 텍스트 수집
+      // Collect text from streaming response
       let accumulatedResponse = '';
       const reader = modelServerRes.body.getReader();
       const decoder = new TextDecoder();
@@ -365,11 +365,11 @@ export async function POST(request) {
           function pump() {
             return reader.read().then(({ done, value }) => {
               if (done) {
-                // 스트리밍 완료 시 토큰 수 계산해서 로깅
+                // Calculate token count and log when streaming completes
                 const promptTokens = body.prompt?.length || 0;
                 const responseTokens = accumulatedResponse.length;
 
-                // 로깅 (지연 실행)
+                // Logging (deferred execution)
                 Promise.all([
                   logModelServerProxyRequest({
                     provider: provider,
@@ -414,13 +414,13 @@ export async function POST(request) {
                     userAgent,
                     ...identificationHeaders,
                   }),
-                ]).catch((err) => console.error('로깅 실패:', err));
+                ]).catch((err) => console.error('Logging failed:', err));
 
                 controller.close();
                 return;
               }
 
-              // 응답 텍스트 추출 및 누적
+              // Extract and accumulate response text
               const chunk = decoder.decode(value, { stream: true });
               try {
                 const lines = chunk.split('\n').filter((line) => line.trim());
@@ -433,7 +433,7 @@ export async function POST(request) {
                   } catch (e) {
                     if (process.env.NODE_ENV === 'development') {
                       console.debug(
-                        '[model-server-generate] JSON 파싱 실패:',
+                        '[model-server-generate] JSON parsing failed:',
                         e?.message || e
                       );
                     }
@@ -441,7 +441,7 @@ export async function POST(request) {
                 }
               } catch (e) {
                 console.warn(
-                  '[model-server-generate] 청크 처리 실패:',
+                  '[model-server-generate] Chunk processing failed:',
                   e?.message || e
                 );
               }
@@ -465,11 +465,11 @@ export async function POST(request) {
         },
       });
     } else {
-      // 일반 JSON 응답 - 응답 파싱 후 로그 기록
+      // Normal JSON response - parse response then record log
       const responseData = await modelServerRes.text();
       const responseTime = Date.now() - startTime;
 
-      // 토큰 수 추정 (정확하지 않지만 대략적 통계용)
+      // Estimate token count (not exact, for rough statistics)
       let promptTokens = 0;
       let completionTokens = 0;
       let responseText = '';
@@ -481,7 +481,7 @@ export async function POST(request) {
       } catch (e) {
         responseText = responseData;
         console.warn(
-          '[model-server-generate] JSON 파싱 실패, 원문 사용:',
+          '[model-server-generate] JSON parsing failed, using raw text:',
           e?.message || e
         );
       }
@@ -503,7 +503,7 @@ export async function POST(request) {
         totalTokens: promptTokens + completionTokens,
       });
 
-      // Q&A 로그 기록 (비스트리밍 - 답변 포함)
+      // Q&A log recording (non-streaming - includes response)
       await logQARequest({
         clientIP,
         model: body.model,
@@ -514,7 +514,7 @@ export async function POST(request) {
         statusCode: modelServerRes.status,
       });
 
-      // 외부 API 전용 로깅 (일반 응답)
+      // External API logging (normal response)
       await logExternalApiRequest({
         sourceType: 'internal',
         provider: provider,
@@ -532,7 +532,7 @@ export async function POST(request) {
         ...identificationHeaders,
       });
 
-      console.log(`[Model Server Proxy] 완료: ${responseTime}ms`);
+      console.log(`[Model Server Proxy] Complete: ${responseTime}ms`);
 
       return new Response(responseData, {
         status: modelServerRes.status,
@@ -545,7 +545,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[Model Server Proxy] Server error:', error);
 
-    // Server error 로그 기록
+    // Record server error log
     await logModelServerProxyRequest({
       provider: provider || 'model-server',
       level: 'error',
@@ -574,7 +574,7 @@ export async function POST(request) {
   }
 }
 
-// OPTIONS 요청 처리 (CORS preflight)
+// Handle OPTIONS request (CORS preflight)
 export async function OPTIONS(request) {
   return NextResponse.json(
     {},
