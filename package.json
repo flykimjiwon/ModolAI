@@ -1,7 +1,7 @@
 {
-  "name": "modol",
+  "name": "modolai",
   "version": "0.1.0",
-  "description": "Modol - AI-powered chat and agent platform",
+  "description": "ModolAI - Open-source self-hosted AI chat and agent platform",
   "private": true,
   "scripts": {
     "dev": "node scripts/dev-safe.js",

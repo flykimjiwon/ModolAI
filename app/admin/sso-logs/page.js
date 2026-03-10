@@ -137,7 +137,7 @@ export default function SSOLogsPage() {
         <button
           onClick={fetchLogs}
           disabled={loading}
-          className="btn-secondary flex items-center gap-2"
+          className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           새로고침
@@ -213,7 +213,7 @@ export default function SSOLogsPage() {
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, employeeNo: e.target.value }))
                 }
-                className="input-primary text-sm"
+                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm"
                 placeholder="사번 검색"
               />
             </div>
@@ -226,7 +226,7 @@ export default function SSOLogsPage() {
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, loginSuccess: e.target.value }))
                 }
-                className="input-primary text-sm"
+                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm"
               >
                 <option value="">전체</option>
                 <option value="true">성공</option>
@@ -243,7 +243,7 @@ export default function SSOLogsPage() {
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, startDate: e.target.value }))
                 }
-                className="input-primary text-sm"
+                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm"
               />
             </div>
             <div>
@@ -256,11 +256,11 @@ export default function SSOLogsPage() {
                 onChange={(e) =>
                   setFilters((prev) => ({ ...prev, endDate: e.target.value }))
                 }
-                className="input-primary text-sm"
+                className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm"
               />
             </div>
             <div className="flex items-end">
-              <button type="submit" className="btn-primary flex items-center gap-2">
+              <button type="submit" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
                 <Search className="h-4 w-4" />
                 검색
               </button>
@@ -285,7 +285,7 @@ export default function SSOLogsPage() {
                   이름
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
-                  부서
+                    그룹
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">
                   결과
@@ -486,14 +486,14 @@ export default function SSOLogsPage() {
               <button
                 onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
                 disabled={pagination.page <= 1}
-                className="btn-secondary text-sm disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm disabled:opacity-50"
               >
                 이전
               </button>
               <button
                 onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
                 disabled={pagination.page >= pagination.totalPages}
-                className="btn-secondary text-sm disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm disabled:opacity-50"
               >
                 다음
               </button>

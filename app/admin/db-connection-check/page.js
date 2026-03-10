@@ -110,7 +110,7 @@ export default function AdminDbConnectionCheckPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex flex-wrap items-start justify-between gap-4'>
           <div>
             <h1 className='text-xl font-semibold text-foreground'>
@@ -125,7 +125,7 @@ export default function AdminDbConnectionCheckPage() {
             type='button'
             onClick={loadStatus}
             disabled={loading}
-            className='btn-primary text-sm px-3 py-1.5 inline-flex items-center gap-2 disabled:opacity-60'
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-1.5 inline-flex items-center gap-2 disabled:opacity-60'
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             새로고침
@@ -133,7 +133,7 @@ export default function AdminDbConnectionCheckPage() {
         </div>
       </div>
 
-      <div className='card p-6 space-y-4'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6 space-y-4'>
         <div
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium ${statusBadge.tone}`}
         >

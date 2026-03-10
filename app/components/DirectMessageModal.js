@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Mail, MailOpen, Trash2, Clock, User, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChange }) {
   const [messages, setMessages] = useState([]);
@@ -9,7 +10,6 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
-  // 쪽지 목록 조회
   const fetchMessages = useCallback(async () => {
     try {
       setLoading(true);
@@ -38,7 +38,6 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
     }
   }, [isOpen, fetchMessages]);
 
-  // 쪽지 읽음 처리
   const markAsRead = async (messageId) => {
     try {
       const token = localStorage.getItem('token');
@@ -51,13 +50,11 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
       });
 
       if (response.ok) {
-        // 목록에서 읽음 상태 업데이트
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === messageId ? { ...msg, isRead: true, readAt: new Date().toISOString() } : msg
           )
         );
-        // 읽지 않은 개수 업데이트
         onUnreadCountChange?.();
       }
     } catch (error) {
@@ -65,7 +62,6 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
     }
   };
 
-  // 쪽지 삭제
   const deleteMessage = async (messageId) => {
     try {
       setDeleting(messageId);
@@ -79,13 +75,10 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
       });
 
       if (response.ok) {
-        // 목록에서 제거
         setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-        // 선택된 메시지가 삭제된 경우 선택 해제
         if (selectedMessage?.id === messageId) {
           setSelectedMessage(null);
         }
-        // 읽지 않은 개수 업데이트
         onUnreadCountChange?.();
       }
     } catch (error) {
@@ -95,7 +88,6 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
     }
   };
 
-  // 쪽지 선택 (읽음 처리 포함)
   const handleSelectMessage = (message) => {
     setSelectedMessage(message);
     if (!message.isRead) {
@@ -138,62 +130,59 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* 배경 오버레이 */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* 모달 */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+      <div className="relative bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-primary/10">
           <div className="flex items-center gap-2">
-            <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <Mail className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">
               받은 쪽지
             </h3>
             {unreadCount > 0 && (
-              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+              <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
                 {unreadCount}
               </span>
             )}
           </div>
-          <button
+          <Button
+            variant='ghost'
+            size='icon-sm'
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
-        {/* 본문 */}
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {loading ? (
             <div className="flex-1 flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+            <div className="flex-1 flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Mail className="h-12 w-12 mb-3 opacity-50" />
               <p>받은 쪽지가 없습니다.</p>
             </div>
           ) : selectedMessage ? (
-            // 쪽지 상세 보기
             <div className="flex-1 overflow-y-auto p-4">
               <button
                 onClick={() => setSelectedMessage(null)}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-4"
+                className="text-sm text-primary hover:underline mb-4"
               >
                 ← 목록으로 돌아가기
               </button>
 
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h4 className="text-lg font-semibold text-foreground">
                     {selectedMessage.title}
                   </h4>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     <User className="h-4 w-4" />
                     <span>{selectedMessage.sender?.name || '관리자'}</span>
                     <span>•</span>
@@ -202,17 +191,18 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                   </div>
                 </div>
 
-                <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">
                     {selectedMessage.content}
                   </p>
                 </div>
 
                 <div className="flex justify-end">
-                  <button
+                  <Button
+                    variant='destructive'
+                    size='sm'
                     onClick={() => deleteMessage(selectedMessage.id)}
                     disabled={deleting === selectedMessage.id}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {deleting === selectedMessage.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,28 +210,27 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                       <Trash2 className="h-4 w-4" />
                     )}
                     삭제
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
           ) : (
-            // 쪽지 목록
             <div className="flex-1 overflow-y-auto">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex items-start gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-700 cursor-pointer transition-colors ${
+                  className={`flex items-start gap-3 px-4 py-3 border-b border-border cursor-pointer transition-colors ${
                     message.isRead
-                      ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      : 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                      ? 'bg-card hover:bg-accent'
+                      : 'bg-primary/10 hover:bg-primary/15'
                   }`}
                   onClick={() => handleSelectMessage(message)}
                 >
                   <div className="flex-shrink-0 mt-1">
                     {message.isRead ? (
-                      <MailOpen className="h-5 w-5 text-gray-400" />
+                      <MailOpen className="h-5 w-5 text-muted-foreground" />
                     ) : (
-                      <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <Mail className="h-5 w-5 text-primary" />
                     )}
                   </div>
 
@@ -249,52 +238,54 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                     <div className="flex items-center justify-between gap-2">
                       <p className={`text-sm truncate ${
                         message.isRead
-                          ? 'font-medium text-gray-900 dark:text-white'
-                          : 'font-bold text-gray-900 dark:text-white'
+                          ? 'font-medium text-foreground'
+                          : 'font-bold text-foreground'
                       }`}>
                         {message.title}
                       </p>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
                         {formatDate(message.createdAt)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {message.sender?.name || '관리자'}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
+                    <p className="text-sm text-muted-foreground truncate mt-1">
                       {truncateText(message.content)}
                     </p>
                   </div>
 
-                  <button
+                  <Button
+                    variant='ghost'
+                    size='icon-xs'
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteMessage(message.id);
                     }}
                     disabled={deleting === message.id}
-                    className="flex-shrink-0 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                     title="삭제"
+                    className="flex-shrink-0 text-muted-foreground hover:text-destructive"
                   >
                     {deleting === message.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Trash2 className="h-4 w-4" />
                     )}
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* 푸터 */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex justify-end">
-          <button
+        <div className="p-4 border-t border-border bg-muted flex justify-end">
+          <Button
+            variant='outline'
+            size='sm'
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             닫기
-          </button>
+          </Button>
         </div>
       </div>
     </div>

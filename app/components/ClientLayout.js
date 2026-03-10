@@ -123,9 +123,8 @@ export default function ClientLayout({ children }) {
         const response = await fetch('/api/admin/settings');
         if (response.ok) {
           const data = await response.json();
-          const siteTitle = data.siteTitle || 'tech-model-hub';
-          const siteDescription =
-            data.siteDescription || 'modol AI';
+          const siteTitle = data.siteTitle || 'ModolAI';
+          const siteDescription = data.siteDescription || 'ModolAI';
 
           // 동적으로 title 업데이트
           document.title = siteTitle;
@@ -153,7 +152,7 @@ export default function ClientLayout({ children }) {
           }
         }
       } catch (error) {
-        console.error('사이트 설정 로드 실패:', error);
+          console.error('Failed to load site settings:', error);
       }
     };
 

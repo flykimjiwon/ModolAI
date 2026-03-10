@@ -1877,7 +1877,7 @@ export default function ModelsPage() {
       </div>
 
       {/* 프리셋 URL 전역 설정 */}
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h2 className='text-xl font-semibold text-foreground'>
@@ -1891,7 +1891,7 @@ export default function ModelsPage() {
             type='button'
             onClick={saveManualPresetSettings}
             disabled={savingPresetSettings}
-            className='btn-primary flex items-center gap-2 text-sm px-3 py-1.5'
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             {savingPresetSettings ? '저장 중...' : '저장'}
           </button>
@@ -1906,7 +1906,7 @@ export default function ModelsPage() {
               value={manualPresetBaseUrl}
               onChange={(e) => setManualPresetBaseUrl(e.target.value)}
               placeholder='https://api.openai.com'
-              className='input-primary w-full'
+              className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-full'
             />
           </div>
           <div>
@@ -1918,7 +1918,7 @@ export default function ModelsPage() {
               value={manualPresetApiBase}
               onChange={(e) => setManualPresetApiBase(e.target.value)}
               placeholder='https://api.openai.com'
-              className='input-primary w-full'
+              className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-full'
             />
           </div>
         </div>
@@ -1926,7 +1926,7 @@ export default function ModelsPage() {
 
       {/* LLM 모델 섹션 */}
       <div className='space-y-4'>
-        <div className='card p-6'>
+        <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
           <div className='flex items-center justify-between mb-4'>
             <div>
               <h2 className='text-xl font-semibold text-foreground'>
@@ -1962,7 +1962,7 @@ export default function ModelsPage() {
               ([categoryKey, category]) => (
                 <div
                   key={categoryKey}
-                  className='card p-6 border-2 border-border'
+                  className='bg-card border border-border rounded-xl shadow-sm p-6 border-2 border-border'
                 >
                   <div className='flex items-center justify-between mb-5'>
                     {editingCategory === categoryKey ? (
@@ -1976,7 +1976,7 @@ export default function ModelsPage() {
                         onKeyDown={(e) =>
                           e.key === 'Enter' && setEditingCategory(null)
                         }
-                        className='input-primary text-lg font-semibold'
+                        className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-lg font-semibold'
                         autoFocus
                       />
                     ) : (
@@ -2051,7 +2051,7 @@ export default function ModelsPage() {
                                       모델서버
                                     </label>
                                     <select
-                                      className='input-primary text-sm'
+                                      className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                       value={editForm.endpoint || ''}
                                       onChange={(e) => {
                                         const ep = e.target.value;
@@ -2289,7 +2289,7 @@ export default function ModelsPage() {
                                                       ? 'gemini-pro, gemini-1.5-flash 등'
                                                       : '모델명 입력'
                                                   }
-                                                  className='input-primary text-sm'
+                                                  className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                                 />
                                                 {/* 라운드로빈 상태 태그 */}
                                                 {editForm.id && (
@@ -2342,7 +2342,7 @@ export default function ModelsPage() {
                                                     label: autoLabel,
                                                   });
                                                 }}
-                                                className='input-primary text-sm'
+                                                className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                                 disabled={modelsLoading}
                                               >
                                                 <option value=''>
@@ -2445,7 +2445,7 @@ export default function ModelsPage() {
                                             }, 0);
                                           }
                                         }}
-                                        className={`input-primary text-sm ${
+                                        className={`w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm ${
                                           labelRoundRobinInfo
                                             ? 'border-border dark:border-border'
                                             : ''
@@ -2509,7 +2509,7 @@ export default function ModelsPage() {
                                           tooltip: e.target.value,
                                         })
                                       }
-                                      className='input-primary text-sm resize-none'
+                                      className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                                       rows='2'
                                       placeholder='모델에 대한 설명을 입력하세요'
                                     />
@@ -2594,7 +2594,7 @@ export default function ModelsPage() {
                                                   ).join('\n') || ''
                                                 }
                                                 disabled
-                                                className='input-primary text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
+                                                className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
                                                 rows='6'
                                                 placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
                                               />
@@ -2633,7 +2633,7 @@ export default function ModelsPage() {
                                                     ),
                                                 })
                                               }
-                                              className='input-primary text-sm resize-none'
+                                              className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                                               rows='6'
                                               placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
                                             />
@@ -3132,7 +3132,7 @@ export default function ModelsPage() {
                                 }, 0);
                               }
                             }}
-                            className='input-primary text-sm'
+                            className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                             placeholder={newModel.id || 'GPT-OSS 20B'}
                           />
                           {/* 기존 라벨 목록 표시 (자동완성) */}
@@ -3210,7 +3210,7 @@ export default function ModelsPage() {
                             모델서버
                           </label>
                           <select
-                            className='input-primary text-sm'
+                            className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                             value={newModel.endpoint || ''}
                             onChange={(e) => {
                               const ep = e.target.value;
@@ -3445,7 +3445,7 @@ export default function ModelsPage() {
                                             ? 'gemini-pro, gemini-1.5-flash 등'
                                             : '모델명 입력'
                                         }
-                                        className='input-primary text-sm'
+                                        className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                       />
                                       {/* 라운드로빈 상태 태그 */}
                                       {newModel.id && (
@@ -3492,7 +3492,7 @@ export default function ModelsPage() {
                                           label: autoLabel,
                                         });
                                       }}
-                                      className='input-primary text-sm'
+                                      className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                       disabled={modelsLoading}
                                     >
                                       <option value=''>
@@ -3607,7 +3607,7 @@ export default function ModelsPage() {
                                 tooltip: e.target.value,
                               })
                             }
-                            className='input-primary text-sm resize-none'
+                            className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                             rows='2'
                             placeholder='모델에 대한 설명을 입력하세요'
                           />
@@ -3722,7 +3722,7 @@ export default function ModelsPage() {
                                         ''
                                       }
                                       disabled
-                                      className='input-primary text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
+                                      className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
                                       rows='6'
                                       placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
                                     />
@@ -3759,7 +3759,7 @@ export default function ModelsPage() {
                                           ),
                                       })
                                     }
-                                    className='input-primary text-sm resize-none'
+                                    className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                                     rows='6'
                                     placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
                                   />
@@ -4021,7 +4021,7 @@ export default function ModelsPage() {
       </div>
 
       {/* 오류 로그 */}
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
           <div className='flex items-center gap-3'>
             <RefreshCw className='h-5 w-5 text-muted-foreground' />
@@ -4032,7 +4032,7 @@ export default function ModelsPage() {
           <button
             onClick={() => fetchErrorLogs()}
             disabled={errorLogsLoading}
-            className='btn-secondary flex items-center gap-2 text-sm px-3 py-1.5'
+            className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <RefreshCw
               className={`h-3.5 w-3.5 ${

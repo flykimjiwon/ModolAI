@@ -32,13 +32,13 @@ export default function SignUpPage() {
   const [checkingEmail, setCheckingEmail] = useState(false);
 
   const departments = [
-    { value: '', label: '부서를 선택하세요' },
+    { value: '', label: '그룹을 선택하세요' },
     { value: '디지털서비스개발부', label: '디지털서비스개발부' },
     { value: '글로벌서비스개발부', label: '글로벌서비스개발부' },
     { value: '금융서비스개발부', label: '금융서비스개발부' },
     { value: '정보서비스개발부', label: '정보서비스개발부' },
     { value: 'Tech혁신Unit', label: 'Tech혁신Unit' },
-    { value: '기타부서', label: '기타부서' },
+    { value: '기타부서', label: '기타그룹' },
   ];
 
   // 이메일 중복 검증 함수
@@ -205,7 +205,7 @@ export default function SignUpPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-department'>
-                    부서
+                    그룹
                   </Label>
                   <div className='relative'>
                     <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />

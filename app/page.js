@@ -388,7 +388,7 @@ export default function Home() {
                   id='chat-stop-button'
                   data-testid='chat-stop-button'
                   onClick={stopStreaming}
-                  className='btn-danger flex items-center gap-1 text-xs py-1 px-2'
+                  className='inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1 text-xs py-1 px-2'
                 >
                   <X className='h-3 w-3' />
                   중단

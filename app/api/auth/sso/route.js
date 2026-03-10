@@ -6,9 +6,10 @@ import crypto from 'crypto';
 const JWT_SECRET = process.env.JWT_SECRET;
 // TODO: Replace with your OAuth provider URL
 const OAUTH_URL = process.env.OAUTH_URL || 'https://oauth.example.com';
-const SWING_COMPANY_CODE = process.env.SWING_COMPANY_CODE || 'SH';
-const SWING_CLIENT_ID = process.env.SWING_CLIENT_ID;
-const SWING_CLIENT_SECRET = process.env.SWING_CLIENT_SECRET;
+const OAUTH_COMPANY_CODE = process.env.OAUTH_COMPANY_CODE || 'ORG';
+const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID;
+const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
+const OAUTH_AUTH_PATH = process.env.OAUTH_AUTH_PATH || '/cau/v1/idpw-authorize';
 
 // SHA256 hash function (hex)
 async function sha256Hex(text) {
@@ -104,15 +105,14 @@ async function logSSOAttempt(logData) {
   }
 }
 
-// Call Swing SSO API
-async function callSwingSSO(employeeNo, hashedPassword) {
-  const endpoint = `${OAUTH_URL}/cau/v1/idpw-authorize`;
+async function callOAuthProvider(employeeNo, hashedPassword) {
+  const endpoint = `${OAUTH_URL}${OAUTH_AUTH_PATH}`;
 
   const payload = {
     common: {
-      companyCode: SWING_COMPANY_CODE,
-      clientId: SWING_CLIENT_ID,
-      clientSecret: SWING_CLIENT_SECRET,
+      companyCode: OAUTH_COMPANY_CODE,
+      clientId: OAUTH_CLIENT_ID,
+      clientSecret: OAUTH_CLIENT_SECRET,
       employeeNo,
     },
     data: {
@@ -120,7 +120,7 @@ async function callSwingSSO(employeeNo, hashedPassword) {
     },
   };
 
-  console.log('[SSO] Calling Swing API:', endpoint);
+  console.log('[SSO] Calling OAuth provider endpoint:', endpoint);
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -129,7 +129,7 @@ async function callSwingSSO(employeeNo, hashedPassword) {
   });
 
   const json = await response.json();
-  console.log('[SSO] Swing API response:', {
+  console.log('[SSO] OAuth provider response:', {
     resultCode: json.common?.resultCode,
     authResult: json.data?.authResult,
   });
@@ -180,7 +180,7 @@ async function createSSOUser(ssoData, ssoCommon, hashedPassword) {
       ssoData.employeePositionName,            // employee_position_name
       ssoData.employeeClass,                   // employee_class
       ssoData.employeeSecurityLevel,           // employee_security_level
-      ssoData.lang || 'ko',                    // lang
+      ssoData.lang || 'en',                    // lang
       ssoData.loginDenyYn || 'N',              // login_deny_yn
       ssoData.authResult,                      // auth_result
       ssoData.authResultMessage || '',         // auth_result_message
@@ -284,7 +284,7 @@ async function updateSSOUser(userId, ssoData, ssoCommon, hashedPassword, existin
       ssoData.employeePositionName,
       ssoData.employeeClass,
       ssoData.employeeSecurityLevel,
-      ssoData.lang || 'ko',
+      ssoData.lang || 'en',
       ssoData.loginDenyYn || 'N',
       ssoData.authResult,
       ssoData.authResultMessage || '',
@@ -367,10 +367,9 @@ export async function POST(request) {
     // SHA256-hash password
     const hashedPassword = await sha256Hex(password);
 
-    // 1. Call Swing SSO API
     let ssoResponse;
     try {
-      ssoResponse = await callSwingSSO(employeeNo, hashedPassword);
+      ssoResponse = await callOAuthProvider(employeeNo, hashedPassword);
     } catch (ssoError) {
       logData.errorType = 'SSO_CONNECTION_ERROR';
       logData.errorMessage = 'Failed to connect to SSO server.';

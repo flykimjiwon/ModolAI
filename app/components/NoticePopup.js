@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Eye, Bell } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function NoticePopup({ target = 'main', initialNotice = null }) {
   const [notice, setNotice] = useState(null);
@@ -190,76 +191,80 @@ export default function NoticePopup({ target = 'main', initialNotice = null }) {
 
       {/* 모달 */}
       <div
-        className='relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full overflow-hidden transform transition-all duration-300 scale-100'
+        className='relative bg-card rounded-xl shadow-2xl w-full overflow-hidden transform transition-all duration-300 scale-100'
         style={modalStyle}
       >
         {/* 헤더 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-blue-900/20'>
+        <div className='flex items-center justify-between p-4 border-b border-border bg-primary/10'>
           <div className='flex items-center gap-2'>
-            <Bell className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+            <Bell className='h-5 w-5 text-primary' />
+            <h3 className='text-lg font-semibold text-foreground'>
               공지사항
             </h3>
           </div>
-          <button
+          <Button
+            variant='ghost'
+            size='icon-sm'
             onClick={closePopup}
-            className='p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors'
             title='닫기'
           >
             <X className='h-5 w-5' />
-          </button>
+          </Button>
         </div>
 
         {/* 내용 */}
         <div className='p-6 overflow-y-auto max-h-[50vh]'>
           {/* 제목 */}
-          <h4 className='text-xl font-bold text-gray-900 dark:text-white mb-2'>
+          <h4 className='text-xl font-bold text-foreground mb-2'>
             {notice.title}
           </h4>
 
           {/* 메타 정보 */}
-          <div className='text-sm text-gray-500 dark:text-gray-400 mb-4'>
+          <div className='text-sm text-muted-foreground mb-4'>
             {notice.authorName} • {formatDate(notice.createdAt)}
           </div>
 
           {/* 내용 미리보기 */}
-          <div className='text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line'>
+          <div className='text-foreground text-sm leading-relaxed whitespace-pre-line'>
             {truncateContent(notice.content)}
           </div>
         </div>
 
         {/* 하단 버튼 */}
-        <div className='p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50'>
+        <div className='p-6 border-t border-border bg-muted'>
           <div className='flex items-center justify-between flex-wrap gap-3'>
             <div className='flex gap-2'>
-              <button
+              <Button
+                variant='outline'
+                size='xs'
                 onClick={hideForOneDay}
-                className='px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
               >
                 하루 안보기
-              </button>
-              <button
+              </Button>
+              <Button
+                variant='outline'
+                size='xs'
                 onClick={hidePermanently}
-                className='px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
               >
                 계속 안보기
-              </button>
+              </Button>
             </div>
 
             <div className='flex gap-2'>
-              <button
+              <Button
+                variant='outline'
+                size='sm'
                 onClick={closePopup}
-                className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
               >
                 닫기
-              </button>
-              <button
+              </Button>
+              <Button
+                size='sm'
                 onClick={goToDetail}
-                className='flex items-center gap-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors'
               >
                 <Eye className='h-4 w-4' />
                 자세히 보기
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 
-const BRANDING_EVENT_NAME = 'modol-site-branding-updated';
-const DEFAULT_SITE_TITLE = 'Modol';
-const DEFAULT_SITE_DESCRIPTION = 'modol AI';
+const BRANDING_EVENT_NAME = 'modolai-site-branding-updated';
+const DEFAULT_SITE_TITLE = 'ModolAI';
+const DEFAULT_SITE_DESCRIPTION = 'ModolAI';
 
 function applySiteBranding(payload = {}) {
   const siteTitle =
@@ -54,7 +54,7 @@ export default function SiteSettings() {
           applySiteBranding(data);
         }
       } catch (error) {
-        console.error('사이트 설정 로드 실패:', error);
+        console.error('Failed to load site settings:', error);
       }
     };
 

@@ -316,7 +316,7 @@ const ChatInput = memo(function ChatInput({
           data-testid='chat-input'
           ref={inputRef}
           rows={3}
-          className={`input-primary w-full resize-none min-h-[48px] max-h-96 pr-48 ${
+          className={`w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-full resize-none min-h-[48px] max-h-96 pr-48 ${
             isDragging
               ? 'border-ring ring-2 ring-ring/30 bg-accent'
               : ''

@@ -58,7 +58,7 @@ export default function ProfilePage() {
     { value: '금융서비스개발부', label: '금융서비스개발부' },
     { value: '정보서비스개발부', label: '정보서비스개발부' },
     { value: 'Tech혁신Unit', label: 'Tech혁신Unit' },
-    { value: '기타부서', label: '기타부서' },
+    { value: '기타부서', label: '기타그룹' },
   ];
 
   // 현재 사용자 정보 조회
@@ -276,7 +276,7 @@ export default function ProfilePage() {
 
                 {/* 부서 */}
                 <div className='space-y-2'>
-                  <Label>부서</Label>
+                  <Label>그룹</Label>
                   <div className='relative'>
                     <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <select
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                       onChange={(e) => setDepartment(e.target.value)}
                       className='flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-4 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
                     >
-                      <option value=''>부서를 선택하세요</option>
+                      <option value=''>그룹을 선택하세요</option>
                       {departments.map((dept) => (
                         <option key={dept.value} value={dept.value}>
                           {dept.label}

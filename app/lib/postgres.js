@@ -3,6 +3,30 @@ const { Pool } = pg;
 
 // PostgreSQL connection pool (singleton)
 let pool = null;
+const DEFAULT_TIMEZONE = 'UTC';
+
+function getSessionTimezone() {
+  const configuredTimezone = (process.env.TZ || DEFAULT_TIMEZONE).trim();
+
+  if (!configuredTimezone) {
+    return DEFAULT_TIMEZONE;
+  }
+
+  // Allow only timezone-safe characters (e.g. UTC, Asia/Seoul, Etc/GMT+9)
+  if (!/^[A-Za-z0-9_+\-/]+$/.test(configuredTimezone)) {
+    console.warn(
+      `⚠️ Invalid TZ value "${configuredTimezone}". Falling back to ${DEFAULT_TIMEZONE}.`
+    );
+    return DEFAULT_TIMEZONE;
+  }
+
+  return configuredTimezone;
+}
+
+async function setClientTimezone(client) {
+  const timezone = getSessionTimezone();
+  await client.query("SELECT set_config('TimeZone', $1, false)", [timezone]);
+}
 
 /**
  * Check if currently in build phase
@@ -93,7 +117,7 @@ export function getPostgresPool() {
     // Set timezone after connection
     pool.on('connect', async (client) => {
       try {
-        await client.query("SET timezone = 'Asia/Seoul'");
+        await setClientTimezone(client);
       } catch (error) {
         console.warn('⚠️ PostgreSQL timezone setting failed:', error.message);
       }
@@ -171,7 +195,7 @@ export async function getPostgresClient() {
     const client = await pool.connect();
     // Set timezone after connection (explicitly set since pool.on('connect') may not apply to all connections)
     try {
-      await client.query("SET timezone = 'Asia/Seoul'");
+      await setClientTimezone(client);
     } catch (error) {
       console.warn('⚠️ PostgreSQL timezone setting failed:', error.message);
     }

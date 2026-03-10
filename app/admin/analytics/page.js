@@ -83,9 +83,11 @@ export default function Analytics() {
         const seen = new Map();
         rows.forEach(({ department, auth_type }) => {
           seen.set(
-            `${department}|${auth_type}`,
-            auth_type === 'sso' ? `${department}(SSO)` : `${department}(일반)`
-          );
+          `${department}|${auth_type}`,
+          auth_type === 'sso'
+            ? `${department.replaceAll('부서', '그룹')}(SSO)`
+            : `${department.replaceAll('부서', '그룹')}(일반)`
+        );
         });
         DEFAULT_DEPTS.forEach((dept) => {
           if (!seen.has(`${dept}|local`)) seen.set(`${dept}|local`, `${dept}(일반)`);
@@ -97,7 +99,12 @@ export default function Analytics() {
         );
       })
       .catch(() => {
-        setDepartments(DEFAULT_DEPTS.map((d) => ({ value: `${d}|local`, label: `${d}(일반)` })));
+      setDepartments(
+        DEFAULT_DEPTS.map((d) => ({
+          value: `${d}|local`,
+          label: `${d.replaceAll('부서', '그룹')}(일반)`,
+        }))
+      );
       });
   }, []);
 
@@ -185,7 +192,7 @@ export default function Analytics() {
           <div className='mt-4 flex gap-2 md:ml-4 md:mt-0'>
             <button
               onClick={handleExportData}
-              className='btn-secondary flex items-center gap-2'
+              className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
             >
               <Download className='h-4 w-4' />
               내보내기
@@ -207,7 +214,7 @@ export default function Analytics() {
             <select
               value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
-              className='input-primary w-auto min-w-[120px]'
+              className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[120px]'
             >
               {PERIODS.map((period) => (
                 <option key={period.value} value={period.value}>
@@ -219,9 +226,9 @@ export default function Analytics() {
             <select
               value={deptFilter}
               onChange={(e) => setDeptFilter(e.target.value)}
-              className='input-primary w-auto min-w-[160px]'
+              className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[160px]'
             >
-              <option value='all'>전체 부서</option>
+                    <option value='all'>전체 그룹</option>
               {departments.map((dept) => (
                 <option key={dept.value} value={dept.value}>
                   {dept.label}
@@ -240,7 +247,7 @@ export default function Analytics() {
                 value={customStartDate}
                 onChange={(e) => setCustomStartDate(e.target.value)}
                 onClick={(e) => e.currentTarget.showPicker?.()}
-                className='input-primary w-auto min-w-[140px]'
+                className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[140px]'
                 placeholder='시작 날짜'
               />
               <span className='text-sm text-muted-foreground'>~</span>
@@ -249,12 +256,12 @@ export default function Analytics() {
                 value={customEndDate}
                 onChange={(e) => setCustomEndDate(e.target.value)}
                 onClick={(e) => e.currentTarget.showPicker?.()}
-                className='input-primary w-auto min-w-[140px]'
+                className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[140px]'
                 placeholder='종료 날짜'
               />
               <button
                 onClick={fetchAnalyticsData}
-                className='btn-primary text-sm px-4 py-2'
+                className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-4 py-2'
               >
                 조회
               </button>
@@ -272,7 +279,7 @@ export default function Analytics() {
         <ModelStatsChart data={data.modelStats} title='모델별 사용량' />
         <DepartmentStatsChart
           data={data.departmentStats}
-          title='부서별 사용량'
+                  title='그룹별 사용량'
           tooltip='메시지 수는 실제 LLM 호출 횟수 기준입니다. 에이전트/플랜 모드의 다중 호출도 모두 집계합니다. (PII 감지 호출 제외)'
         />
         <DailyActivityChart
@@ -283,7 +290,7 @@ export default function Analytics() {
         <TokenUsageChart data={data.tokenUsage} title='개인별 토큰 사용량' />
         <DepartmentTokenUsageChart
           data={data.departmentTokenUsage}
-          title='부서별 토큰 사용량'
+                  title='그룹별 토큰 사용량'
         />
       </div>
     </div>

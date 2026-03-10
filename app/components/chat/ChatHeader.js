@@ -2,8 +2,8 @@
 
 import { useState, useEffect, memo } from 'react';
 
-const BRANDING_EVENT_NAME = 'modol-site-branding-updated';
-const DEFAULT_SITE_DESCRIPTION = 'modol AI';
+const BRANDING_EVENT_NAME = 'modolai-site-branding-updated';
+const DEFAULT_SITE_DESCRIPTION = 'ModolAI';
 
 const DynamicSiteTitle = memo(function DynamicSiteTitle() {
   const [siteDescription, setSiteDescription] = useState(DEFAULT_SITE_DESCRIPTION);
@@ -21,10 +21,10 @@ const DynamicSiteTitle = memo(function DynamicSiteTitle() {
           const data = await response.json();
           setSiteDescription(data.siteDescription || DEFAULT_SITE_DESCRIPTION);
         }
-      } catch (error) {
-        console.error('사이트 설정 로드 실패:', error);
-      }
-    };
+        } catch (error) {
+          console.error('Failed to load site settings:', error);
+        }
+      };
 
     const handleBrandingUpdated = (event) => {
       setSiteDescription(

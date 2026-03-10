@@ -19,12 +19,12 @@ export default function LoadingSpinner({ onStop }) {
       
       {/* 플로팅 중단 버튼 */}
       <div className="fixed bottom-6 right-6 z-50">
-        <div className="card p-3 flex items-center gap-3 shadow-lg">
-          <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-          <span className="text-gray-600 dark:text-gray-400 text-sm">응답 생성 중...</span>
+        <div className="bg-card border border-border rounded-xl shadow-sm p-3 flex items-center gap-3 shadow-lg">
+          <Loader2 className="h-5 w-5 text-primary animate-spin" />
+          <span className="text-muted-foreground text-sm">응답 생성 중...</span>
           <button
             onClick={onStop}
-            className="btn-danger flex items-center gap-1 text-xs py-1 px-2"
+            className="inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1 text-xs py-1 px-2"
           >
             <X className="h-3 w-3" />
             중단

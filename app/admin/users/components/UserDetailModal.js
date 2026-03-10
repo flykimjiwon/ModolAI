@@ -1,4 +1,13 @@
-import { X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export default function UserDetailModal({ user, onClose }) {
     if (!user) return null;
@@ -20,7 +29,7 @@ export default function UserDetailModal({ user, onClose }) {
 
     const InfoGroup = ({ title, children }) => (
         <div className='mb-6'>
-            <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 pb-2 border-b border-gray-200 dark:border-gray-700'>
+            <h4 className='text-sm font-semibold text-foreground mb-3 pb-2 border-b border-border'>
                 {title}
             </h4>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4'>
@@ -31,47 +40,27 @@ export default function UserDetailModal({ user, onClose }) {
 
     const InfoItem = ({ label, value, fullWidth = false, className = '' }) => (
         <div className={`${fullWidth ? 'col-span-1 md:col-span-2' : ''} ${className}`}>
-            <dt className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
+            <dt className='text-xs font-medium text-muted-foreground mb-1'>
                 {label}
             </dt>
-            <dd className='text-sm text-gray-900 dark:text-white break-all'>
+            <dd className='text-sm text-foreground break-all'>
                 {value || '-'}
             </dd>
         </div>
     );
 
     return (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
-            {/* 배경 오버레이 */}
-            <div
-                className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
-                onClick={onClose}
-            ></div>
-
-            {/* 모달 내용 */}
-            <div className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'>
+        <Dialog open={!!user} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className='max-w-2xl max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0'>
                 {/* 헤더 */}
-                <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-                    <div className='flex items-center gap-3'>
-                        <h3 className='text-lg font-bold text-gray-900 dark:text-white'>
-                            사용자 상세 정보
-                        </h3>
-                        <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${user.authType === 'sso'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                                }`}
-                        >
+                <DialogHeader className='p-4 border-b border-border'>
+                    <DialogTitle className='flex items-center gap-3'>
+                        사용자 상세 정보
+                        <Badge variant={user.authType === 'sso' ? 'default' : 'secondary'}>
                             {user.authType === 'sso' ? 'SSO 계정' : '일반 계정'}
-                        </span>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className='text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors'
-                    >
-                        <X className='h-5 w-5' />
-                    </button>
-                </div>
+                        </Badge>
+                    </DialogTitle>
+                </DialogHeader>
 
                 {/* 본문 (스크롤 가능) */}
                 <div className='flex-1 overflow-y-auto p-6'>
@@ -95,10 +84,10 @@ export default function UserDetailModal({ user, onClose }) {
                         <InfoItem label='회사명' value={user.companyName} />
                         <InfoItem label='회사 코드' value={user.companyCode} />
                         <InfoItem label='그룹사 ID' value={user.companyId} />
-                        <InfoItem label='부서명' value={user.department} />
-                        <InfoItem label='부서 ID' value={user.departmentId} />
-                        <InfoItem label='부서점 번호' value={user.departmentNo} />
-                        <InfoItem label='부서 경로' value={user.departmentLocation} fullWidth />
+              <InfoItem label='그룹명' value={user.department} />
+              <InfoItem label='그룹 ID' value={user.departmentId} />
+              <InfoItem label='그룹 점 번호' value={user.departmentNo} />
+              <InfoItem label='그룹 경로' value={user.departmentLocation} fullWidth />
                     </InfoGroup>
 
                     {/* 사원 정보 */}
@@ -135,15 +124,12 @@ export default function UserDetailModal({ user, onClose }) {
                 </div>
 
                 {/* 푸터 */}
-                <div className='p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-end'>
-                    <button
-                        onClick={onClose}
-                        className='px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors'
-                    >
+                <DialogFooter className='p-4 border-t border-border bg-muted/50'>
+                    <Button onClick={onClose}>
                         확인
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -120,13 +120,13 @@ if (typeof window !== 'undefined') {
 
 // Next.js 15 App Router에서 metadata API 사용
 export const metadata = {
-  title: 'tech-model-hub',
-  description: 'modol AI',
+  title: 'ModolAI',
+  description: 'ModolAI - Open-source self-hosted AI platform',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang='ko' className='h-full' suppressHydrationWarning>
+    <html lang='en' className='h-full' suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -159,7 +159,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className='h-full bg-gray-50 font-sans dark:bg-gray-900 dark:text-gray-100'>
+      <body className='h-full bg-background text-foreground font-sans'>
         <ClientErrorReporter />
         <SiteSettings />
         <AlertProvider>

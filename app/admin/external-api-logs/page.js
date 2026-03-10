@@ -393,7 +393,7 @@ export default function ExternalApiLogsPage() {
         <button
           onClick={() => fetchLogs()}
           disabled={loading}
-          className='btn-primary flex items-center gap-2'
+          className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           새로고침
@@ -403,7 +403,7 @@ export default function ExternalApiLogsPage() {
       {/* 통계 카드 */}
       {stats.overall && (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
-          <div className='card p-4'>
+          <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
@@ -417,7 +417,7 @@ export default function ExternalApiLogsPage() {
             </div>
           </div>
 
-          <div className='card p-4'>
+          <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
@@ -431,7 +431,7 @@ export default function ExternalApiLogsPage() {
             </div>
           </div>
 
-          <div className='card p-4'>
+          <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
@@ -448,7 +448,7 @@ export default function ExternalApiLogsPage() {
             </div>
           </div>
 
-          <div className='card p-4'>
+          <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
@@ -462,7 +462,7 @@ export default function ExternalApiLogsPage() {
             </div>
           </div>
 
-          <div className='card p-4'>
+          <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
@@ -506,7 +506,7 @@ export default function ExternalApiLogsPage() {
       {showDetailedStats &&
         Array.isArray(stats.byEndpoint) &&
         stats.byEndpoint.length > 0 && (
-          <div className='card p-4'>
+          <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between mb-3'>
               <h3 className='font-medium text-foreground'>
                 엔드포인트별 통계
@@ -548,7 +548,7 @@ export default function ExternalApiLogsPage() {
         )}
 
       {/* 필터 */}
-      <div className='card'>
+      <div className='bg-card border border-border rounded-xl shadow-sm'>
         <div className='flex items-center justify-between px-4 py-3 border-b border-border'>
           <div className='flex items-center gap-3'>
             <Filter className='h-5 w-5 text-primary' />
@@ -833,7 +833,7 @@ export default function ExternalApiLogsPage() {
       </div>
 
       {/* 로그 테이블 */}
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='font-medium text-foreground'>
             로그 기록 ({pagination.totalCount?.toLocaleString() || 0})
@@ -1032,7 +1032,7 @@ export default function ExternalApiLogsPage() {
                                             {log.userEmail || '이메일 없음'})
                                             {log.userDepartment && (
                                               <span className='ml-2 text-xs text-muted-foreground'>
-                                                [{log.userDepartment}]
+                            [{log.userDepartment.replaceAll('부서', '그룹')}]
                                               </span>
                                             )}
                                           </div>
@@ -1705,7 +1705,7 @@ export default function ExternalApiLogsPage() {
                                     {log.userName} ({log.userEmail})
                                     {log.userDepartment && (
                                       <span className='ml-1 text-xs text-muted-foreground'>
-                                        [{log.userDepartment}]
+                                  [{log.userDepartment.replaceAll('부서', '그룹')}]
                                       </span>
                                     )}
                                   </span>

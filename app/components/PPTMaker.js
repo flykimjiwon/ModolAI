@@ -598,8 +598,8 @@ function parseSlideSemantics(contentHtml = '') {
     title, subtitle, summary,
     bullets: bullets.slice(0, 8),
     paragraphs, metrics,
-    email: emailMatch ? emailMatch[0] : 'support@modol.local',
-    url: urlMatch ? urlMatch[0] : 'www.modol.local',
+      email: emailMatch ? emailMatch[0] : 'support@modolai.local',
+      url: urlMatch ? urlMatch[0] : 'www.modolai.local',
     plainText,
     lowerText: plainText.toLowerCase(),
     chartPoints,
@@ -1013,7 +1013,7 @@ function buildPresetSlideHtml(
     `<div class="ppt-shell" data-theme="${theme}" data-layout="${modeLabel}" data-template-preset-id="${preset.id}" data-chart-mode="${effectiveChartMode}" data-slide-uid="${resolvedSlideUid}" data-color-canvas-start="${tokens.canvasStart}" data-color-canvas-end="${tokens.canvasEnd}" data-color-accent-bg="${tokens.accentBg}">`,
     `  <p class="ppt-meta">${escapeHtml(preset.label)} | Slide ${index + 1} / ${totalSlides}</p>`,
     bodySection,
-    '  <p class="ppt-meta">Modol PPT Template Engine</p>',
+        '  <p class="ppt-meta">ModolAI PPT Template Engine</p>',
     `  <div class="ppt-source"><!-- PPT_SOURCE_START -->${contentHtml}<!-- PPT_SOURCE_END --></div>`,
     '</div>',
     '</section>',
@@ -1421,15 +1421,15 @@ function SortableSlideThumbnail({ id, index, slide, theme, tone, isActive, onSel
       style={style}
       className={`w-44 flex-shrink-0 rounded-lg border p-1.5 transition-colors ${
         isActive
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+          ? 'border-primary/40 bg-primary/10'
+          : 'border-border bg-card'
       }`}
     >
       <div className="relative">
         <button
           type="button"
           onClick={onSelect}
-          className="relative w-full pt-[56.25%] rounded-md overflow-hidden border border-gray-200/80 dark:border-gray-700/80 bg-white/80 dark:bg-slate-900/70"
+          className="relative w-full pt-[56.25%] rounded-md overflow-hidden border border-border/80 bg-card/80"
         >
           <iframe
             title={`thumb-slide-${index + 1}`}
@@ -1455,7 +1455,7 @@ function SortableSlideThumbnail({ id, index, slide, theme, tone, isActive, onSel
         type="button"
         onClick={onSelect}
         className={`mt-1.5 w-full truncate text-[11px] text-left px-1 ${
-          isActive ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-gray-600 dark:text-gray-300'
+          isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
         }`}
       >
         슬라이드 {index + 1}
@@ -1501,25 +1501,25 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl w-full max-w-lg p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">차트 데이터 편집 — 슬라이드 {slideIndex + 1}</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">레이블과 수치를 수정하면 차트가 자동으로 재계산됩니다.</p>
+      <div className="relative bg-card border border-border rounded-xl shadow-xl w-full max-w-lg p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">차트 데이터 편집 — 슬라이드 {slideIndex + 1}</h3>
+        <p className="text-xs text-muted-foreground">레이블과 수치를 수정하면 차트가 자동으로 재계산됩니다.</p>
         <div className="overflow-auto max-h-64">
           <table className="w-full text-xs border-collapse">
             <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700">
-                <th className="text-left p-2 font-semibold text-gray-700 dark:text-gray-200">레이블</th>
-                <th className="text-left p-2 font-semibold text-gray-700 dark:text-gray-200">수치</th>
-                <th className="text-left p-2 font-semibold text-gray-700 dark:text-gray-200">단위</th>
+              <tr className="bg-muted">
+                <th className="text-left p-2 font-semibold text-foreground">레이블</th>
+                <th className="text-left p-2 font-semibold text-foreground">수치</th>
+                <th className="text-left p-2 font-semibold text-foreground">단위</th>
                 <th className="p-2" />
               </tr>
             </thead>
             <tbody>
               {points.map((pt, i) => (
-                <tr key={i} className="border-t border-gray-200 dark:border-gray-600">
+                <tr key={i} className="border-t border-border">
                   <td className="p-1">
                     <input
-                      className="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full text-xs px-2 py-1 border border-border rounded bg-background text-foreground"
                       value={pt.label}
                       onChange={(e) => updatePoint(i, 'label', e.target.value)}
                     />
@@ -1527,14 +1527,14 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
                   <td className="p-1">
                     <input
                       type="number"
-                      className="w-full text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full text-xs px-2 py-1 border border-border rounded bg-background text-foreground"
                       value={pt.value}
                       onChange={(e) => updatePoint(i, 'value', e.target.value)}
                     />
                   </td>
                   <td className="p-1">
                     <select
-                      className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="text-xs px-2 py-1 border border-border rounded bg-background text-foreground"
                       value={pt.unit || 'number'}
                       onChange={(e) => updatePoint(i, 'unit', e.target.value)}
                     >
@@ -1559,7 +1559,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
         <button
           type="button"
           onClick={addRow}
-          className="text-xs flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-xs flex items-center gap-1 text-primary hover:underline"
         >
           <Plus className="h-3 w-3" /> 항목 추가
         </button>
@@ -1567,7 +1567,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-accent"
           >
             취소
           </button>
@@ -1575,7 +1575,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
             type="button"
             onClick={handleSave}
             disabled={saving || points.filter((p) => Number.isFinite(p.value)).length < 2}
-            className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
             {saving ? '저장 중…' : '저장'}
           </button>
@@ -1630,7 +1630,7 @@ function SortableDoneSlideCard({
         if (typeof setCardRef === 'function') setCardRef(node);
       }}
       style={style}
-      className={`border rounded-xl p-3 shadow-sm ${previewThemeClass} ${isActive ? 'ring-2 ring-blue-400/70' : ''}`}
+      className={`border rounded-xl p-3 shadow-sm ${previewThemeClass} ${isActive ? 'ring-2 ring-ring/70' : ''}`}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1">
@@ -1639,7 +1639,7 @@ function SortableDoneSlideCard({
             aria-label={`슬라이드 ${index + 1} 순서 변경`}
             {...attributes}
             {...listeners}
-            className="text-xs px-1.5 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 bg-white/90 dark:bg-slate-900/70 cursor-grab active:cursor-grabbing"
+            className="text-xs px-1.5 py-1 rounded border border-border text-muted-foreground bg-card/90 cursor-grab active:cursor-grabbing"
           >
             <GripVertical className="h-3 w-3" />
           </button>
@@ -1648,19 +1648,19 @@ function SortableDoneSlideCard({
         <div className="flex items-center gap-1 flex-wrap justify-end">
           <button
             onClick={onOpenSlideshow}
-            className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
+            className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:bg-accent flex items-center gap-1"
           >
             ⛶ 전체화면
           </button>
           <button
             onClick={onOpenWysiwyg}
-            className="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-1"
+            className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:bg-accent flex items-center gap-1"
           >
             <Pencil className="h-3 w-3" /> 편집
           </button>
           <button
             onClick={onDuplicate}
-            className="text-xs px-2 py-1 rounded border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 flex items-center gap-1"
+            className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1"
           >
             <Copy className="h-3 w-3" /> 복제
           </button>
@@ -1676,7 +1676,7 @@ function SortableDoneSlideCard({
               onChange={(event) => {
                 if (typeof onChartModeChange === 'function') onChartModeChange(event.target.value);
               }}
-              className="text-xs px-2 py-1 rounded border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 bg-white/90 dark:bg-slate-900/70"
+              className="text-xs px-2 py-1 rounded border border-primary/30 text-primary bg-card/90"
             >
               <option value="auto">차트 자동</option>
               <option value="bar">막대</option>
@@ -1688,7 +1688,7 @@ function SortableDoneSlideCard({
             <button
               type="button"
               onClick={() => { if (typeof onOpenChartEditor === 'function') onOpenChartEditor(); }}
-              className="text-xs px-2 py-1 rounded border border-violet-300 dark:border-violet-600 text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 flex items-center gap-1"
+              className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1"
             >
               <Pencil className="h-3 w-3" /> 데이터 편집
             </button>
@@ -1696,7 +1696,7 @@ function SortableDoneSlideCard({
           <button
             onClick={onOpenRegenerate}
             disabled={regenerating}
-            className="text-xs px-2 py-1 rounded border border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 flex items-center gap-1 disabled:opacity-60"
+            className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1 disabled:opacity-60"
           >
             <RefreshCw className={`h-3 w-3 ${regenerating ? 'animate-spin' : ''}`} /> 재생성
           </button>
@@ -1706,7 +1706,7 @@ function SortableDoneSlideCard({
       <button
         type="button"
         onClick={onSelect}
-        className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-blue-200/80 dark:border-blue-400/40 bg-white/80 dark:bg-slate-900/70 backdrop-blur-sm text-left"
+        className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-primary/40 bg-card/80 backdrop-blur-sm text-left"
       >
         <iframe
           title={`slide-${index + 1}`}
@@ -2574,8 +2574,8 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
         onClick={onClick}
         className={`text-left border rounded-xl p-3 transition-all hover:-translate-y-0.5 ${
           isActive
-            ? 'border-blue-500 ring-2 ring-blue-300/70 shadow-lg bg-blue-50/70 dark:bg-blue-900/20'
-            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500/60 bg-white dark:bg-gray-800'
+            ? 'border-primary/40 ring-2 ring-ring/70 shadow-lg bg-primary/10'
+            : 'border-border hover:border-foreground/30 bg-card'
         }`}
       >
         {/* Thumbnail using actual token colors */}
@@ -2603,10 +2603,10 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               <div style={{ color: tokens.titleColor, fontSize: '9px', fontWeight: 700, lineHeight: 1.3 }}>
                 {preset.tone === 'business' ? 'Executive Summary' : 'Creative Brief'}
               </div>
-              <div style={{ color: tokens.subColor, fontSize: '8px', marginTop: '2px' }}>
-                {preset.theme === 'dark' ? 'Dark Blue UI' : 'Light Blue UI'}
+                <div style={{ color: tokens.subColor, fontSize: '8px', marginTop: '2px' }}>
+                  {preset.theme === 'dark' ? 'Dark Monochrome UI' : 'Light Monochrome UI'}
+                </div>
               </div>
-            </div>
             <div style={{ display: 'flex', gap: '3px' }}>
               <div style={{ background: tokens.accentBg, height: '4px', flex: 1, borderRadius: '999px' }} />
               <div style={{ background: tokens.neutral, opacity: 0.4, height: '4px', width: '12px', borderRadius: '999px' }} />
@@ -2614,22 +2614,22 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           </div>
         </div>
 
-        <div className="mt-2.5 flex items-center gap-1.5 text-gray-700 dark:text-gray-200">
+        <div className="mt-2.5 flex items-center gap-1.5 text-foreground">
           <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold ${
-            preset.theme === 'light' ? 'bg-amber-100 text-amber-700' : 'bg-blue-200/30 text-blue-200'
+            preset.theme === 'light' ? 'bg-muted text-foreground' : 'bg-primary/20 text-primary'
           }`}>
             {preset.theme === 'light' ? 'L' : 'D'}
           </span>
           <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold ${
             preset.tone === 'business'
-              ? 'bg-blue-100 text-blue-700 dark:bg-blue-400/20 dark:text-blue-200'
-              : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-400/20 dark:text-cyan-200'
+              ? 'bg-primary/10 text-primary'
+              : 'bg-muted text-foreground'
           }`}>
             {preset.tone === 'business' ? 'B' : 'C'}
           </span>
           <span className="text-xs font-semibold">{preset.label}</span>
         </div>
-        <div className="text-[11px] mt-1 text-gray-500 dark:text-gray-400 leading-snug">
+        <div className="text-[11px] mt-1 text-muted-foreground leading-snug">
           {preset.description}
         </div>
       </button>
@@ -2643,20 +2643,20 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
   return (
     <div className="flex-1 overflow-auto p-6 space-y-5">
       {isHistoryMenu ? (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-          <h2 className="text-base font-bold text-gray-900 dark:text-white mb-3">생성 히스토리</h2>
+        <div className="bg-card border border-border rounded-xl p-4">
+          <h2 className="text-base font-bold text-foreground mb-3">생성 히스토리</h2>
           {generationHistory.length === 0 ? (
-            <div className="text-sm text-gray-500 dark:text-gray-400">저장된 히스토리가 없습니다.</div>
+            <div className="text-sm text-muted-foreground">저장된 히스토리가 없습니다.</div>
           ) : (
             <div className="space-y-2">
               {generationHistory.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => applyHistoryRun(item)}
-                  className="w-full text-left rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5 hover:border-blue-300 dark:hover:border-blue-500"
+                  className="w-full text-left rounded-lg border border-border px-3 py-2.5 hover:border-foreground/30"
                 >
-                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{item.topic || '제목 없음'}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <div className="text-sm font-semibold text-foreground truncate">{item.topic || '제목 없음'}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
                     {new Date(item.createdAt).toLocaleString('ko-KR')} · {item.slides?.length || 0}장 · {getTemplatePreset(item.theme || 'light', item.tone || 'business', item.templatePresetId || '').label}
                   </div>
                 </button>
@@ -2669,47 +2669,47 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
       {/* ── STEP: INPUT ──────────────────────────────────────────────────────── */}
       {step === 'input' && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+        <div className="bg-card border border-border rounded-xl p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">주제</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">주제</label>
               <textarea
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 rows={3}
                 placeholder="예: 2026 AI 전략"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                간단한 내용 <span className="text-gray-400 font-normal">(옵션)</span>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
+                간단한 내용 <span className="text-muted-foreground font-normal">(옵션)</span>
               </label>
               <textarea
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
                 rows={3}
                 placeholder="예: 고객 맞춤형 AI 상담, 내부 업무 자동화, 리스크 관리 고도화"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">슬라이드 수</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">슬라이드 수</label>
               <input
                 type="number"
                 min={1}
                 max={30}
                 value={slideCount}
                 onChange={(e) => setSlideCount(Number(e.target.value || 1))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">테마</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">테마</label>
               <select
                 value={theme}
                 onChange={(e) => {
@@ -2719,7 +2719,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                   setTemplatePresetId(nextPresetId);
                   applyPresetToCurrentSlides(nextTheme, tone, nextPresetId);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
                 <option value="light">라이트</option>
                 <option value="dark">다크</option>
@@ -2727,7 +2727,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">톤</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">톤</label>
               <select
                 value={tone}
                 onChange={(e) => {
@@ -2737,7 +2737,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                   setTemplatePresetId(nextPresetId);
                   applyPresetToCurrentSlides(theme, nextTone, nextPresetId);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
                 <option value="business">비즈니스</option>
                 <option value="casual">캐주얼</option>
@@ -2746,11 +2746,11 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
             {allowUserModelOverride && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">모델 선택 (관리자 허용 시)</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">모델 선택 (관리자 허용 시)</label>
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
                   <option value="">기본 모델 사용</option>
                   {modelOptions.map((model) => (
@@ -2763,10 +2763,10 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             {/* Template Preview */}
             <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block text-sm font-medium text-muted-foreground">
                   템플릿 미리보기 ({TEMPLATE_PRESETS.length}종)
                 </label>
-                <div className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                <div className="text-xs text-primary font-medium">
                   선택됨: {selectedTemplate.label}
                 </div>
               </div>
@@ -2786,20 +2786,20 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             <button
               onClick={handleGenerateOutline}
               disabled={!canGenerateOutline}
-              className="btn-primary flex items-center gap-2 disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 disabled:opacity-60"
             >
               {outlineLoading
                 ? <Loader2 className="h-4 w-4 animate-spin" />
                 : <Sparkles className="h-4 w-4" />}
               {outlineLoading ? '개요 생성 중...' : '생성'}
             </button>
-            <button onClick={loadSettings} className="btn-secondary flex items-center gap-2">
+            <button onClick={loadSettings} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> 기본값 불러오기
             </button>
           </div>
 
           {error && (
-            <div className="mt-3 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+            <div className="mt-3 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
               {error}
             </div>
           )}
@@ -2809,27 +2809,27 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       {/* ── STEP: OUTLINE ────────────────────────────────────────────────────── */}
       {step === 'outline' && (
         <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">슬라이드 개요 확인</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                <h2 className="text-lg font-bold text-foreground">슬라이드 개요 확인</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
                   내용을 확인하고 필요하면 수정한 뒤 PPT를 생성하세요.
                 </p>
-                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  주제: <strong className="text-gray-600 dark:text-gray-300">{topic}</strong> | {outlineSlides.length}장 | {selectedTemplate.label}
+                <div className="text-xs text-muted-foreground mt-1">
+                  주제: <strong className="text-muted-foreground">{topic}</strong> | {outlineSlides.length}장 | {selectedTemplate.label}
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() => { setStep('input'); setError(''); }}
-                  className="btn-secondary flex items-center gap-1"
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" /> 다시 설정
                 </button>
                 <button
                   onClick={handleGeneratePPT}
-                  className="btn-primary flex items-center gap-2"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
                 >
                   <Sparkles className="h-4 w-4" /> PPT 생성 진행
                 </button>
@@ -2837,7 +2837,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </div>
 
             {error && (
-              <div className="mt-3 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              <div className="mt-3 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
                 {error}
               </div>
             )}
@@ -2848,17 +2848,17 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             {outlineSlides.map((slide, idx) => (
               <div
                 key={idx}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4"
+                className="bg-card border border-border rounded-xl p-4"
               >
                 <div className="flex items-start gap-2.5 mb-2">
-                  <span className="flex-shrink-0 text-[11px] font-bold text-white bg-blue-600 rounded-full w-5 h-5 flex items-center justify-center mt-0.5">
+                  <span className="flex-shrink-0 text-[11px] font-bold text-primary-foreground bg-primary rounded-full w-5 h-5 flex items-center justify-center mt-0.5">
                     {idx + 1}
                   </span>
                   <input
                     type="text"
                     value={slide.title}
                     onChange={(e) => updateOutlineSlide(idx, (current) => ({ ...current, title: e.target.value }))}
-                    className="flex-1 text-sm font-semibold text-gray-900 dark:text-white bg-transparent border-b border-transparent hover:border-gray-300 dark:hover:border-gray-600 focus:border-blue-400 focus:outline-none px-0.5 py-0.5 min-w-0"
+                    className="flex-1 text-sm font-semibold text-foreground bg-transparent border-b border-transparent hover:border-border focus:border-ring focus:outline-none px-0.5 py-0.5 min-w-0"
                     placeholder="슬라이드 제목"
                   />
                 </div>
@@ -2867,7 +2867,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                     value={slide.description || ''}
                     onChange={(e) => updateOutlineSlide(idx, (current) => ({ ...current, description: e.target.value }))}
                     rows={2}
-                    className="w-full text-xs text-gray-700 dark:text-gray-300 bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-400"
+                    className="w-full text-xs text-muted-foreground bg-transparent border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:border-ring"
                     placeholder="슬라이드 본문 요약(대본용)"
                   />
 
@@ -2875,7 +2875,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                     value={slide.generationHint || ''}
                     onChange={(e) => updateOutlineSlide(idx, (current) => ({ ...current, generationHint: e.target.value }))}
                     rows={2}
-                    className="w-full text-xs text-indigo-700 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-400"
+                    className="w-full text-xs text-foreground bg-muted/70 border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:border-ring"
                     placeholder="이 슬라이드 추가 요구사항 (선택): 예) 숫자 지표를 표 형태로 강조"
                   />
 
@@ -2892,7 +2892,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                               return { ...current, keyPoints: nextPoints };
                             })
                           }
-                          className="flex-1 text-xs text-gray-700 dark:text-gray-300 bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 focus:outline-none focus:border-blue-400"
+                          className="flex-1 text-xs text-muted-foreground bg-transparent border border-border rounded-lg px-2 py-1 focus:outline-none focus:border-ring"
                           placeholder={`핵심 포인트 ${pi + 1}`}
                         />
                         <button
@@ -2915,7 +2915,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                           keyPoints: [...(Array.isArray(current.keyPoints) ? current.keyPoints : []), ''],
                         }))
                       }
-                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 flex items-center gap-1"
+                      className="text-[11px] text-primary hover:text-primary flex items-center gap-1"
                     >
                       <Plus className="h-3.5 w-3.5" /> 포인트 추가
                     </button>
@@ -2926,7 +2926,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           </div>
 
           <div className="flex justify-end">
-            <button onClick={handleGeneratePPT} className="btn-primary flex items-center gap-2">
+            <button onClick={handleGeneratePPT} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
               <Sparkles className="h-4 w-4" /> PPT 생성 진행
             </button>
           </div>
@@ -2938,15 +2938,15 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
         <div className="space-y-4">
           {slides.length > 0 && (
             <div className="space-y-3">
-              <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">완성된 페이지 미리보기</div>
+              <div className="text-sm text-muted-foreground font-medium">완성된 페이지 미리보기</div>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {slides.map((slide, idx) => {
                   const previewThemeClass = theme === 'dark'
-                    ? 'bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 border-blue-400/40'
-                    : 'bg-gradient-to-br from-blue-50 via-sky-100 to-blue-200 border-blue-300/70';
+                    ? 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 border-border'
+                    : 'bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 border-border';
                   return (
                     <div key={`gen-${idx}`} className={`border rounded-xl p-3 shadow-sm ${previewThemeClass}`}>
-                      <div className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-blue-200/80 dark:border-blue-400/40 bg-white/80 dark:bg-slate-900/70">
+                      <div className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-primary/40 bg-card/80">
                         <iframe
                           title={`gen-slide-${idx + 1}`}
                           srcDoc={buildSlideDoc(slide, theme, tone, true)}
@@ -2964,44 +2964,44 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </div>
           )}
 
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white mb-5">PPT 생성 중...</h2>
+          <div className="bg-card border border-border rounded-xl p-6">
+            <h2 className="text-base font-bold text-foreground mb-5">PPT 생성 중...</h2>
 
             {/* Progress steps */}
             <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <span className="text-sm text-green-600 dark:text-green-400 font-medium whitespace-nowrap">개요 확인 완료</span>
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+                <span className="text-sm text-primary font-medium whitespace-nowrap">개요 확인 완료</span>
               </div>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 min-w-4" />
+              <div className="flex-1 h-px bg-muted min-w-4" />
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
-                <span className="text-sm text-blue-600 dark:text-blue-400 font-medium whitespace-nowrap">슬라이드 생성 중</span>
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                <span className="text-sm text-primary font-medium whitespace-nowrap">슬라이드 생성 중</span>
               </div>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 min-w-4" />
+              <div className="flex-1 h-px bg-muted min-w-4" />
               <div className="flex items-center gap-1.5 flex-shrink-0 opacity-35">
-                <div className="h-5 w-5 rounded-full border-2 border-gray-300 dark:border-gray-600" />
-                <span className="text-sm text-gray-400 whitespace-nowrap">완료</span>
+                <div className="h-5 w-5 rounded-full border-2 border-border" />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">완료</span>
               </div>
             </div>
 
             {/* Count & progress bar */}
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-gray-500 dark:text-gray-400">
+              <span className="text-muted-foreground">
                 {displayedCount > 0
-                  ? <><span className="font-semibold text-blue-600 dark:text-blue-400">{displayedCount}</span> / {slideCount}장 생성됨</>
+                  ? <><span className="font-semibold text-primary">{displayedCount}</span> / {slideCount}장 생성됨</>
                   : '슬라이드를 생성하고 있습니다...'}
               </span>
-              <div className="flex items-center gap-2 text-xs text-gray-400">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <span>경과 {formatElapsedTime(elapsedMs)}</span>
                 {displayedCount > 0 && (
                   <span>{Math.round((displayedCount / slideCount) * 100)}%</span>
                 )}
               </div>
             </div>
-            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-out"
+                className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${displayedCount > 0 ? Math.min(100, (displayedCount / slideCount) * 100) : 15}%` }}
               />
             </div>
@@ -3013,29 +3013,29 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       {step === 'done' && slides.length > 0 && (
         <div ref={slidesRef} className="flex flex-col-reverse gap-4">
           {/* Control bar */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <div className="font-semibold text-gray-900 dark:text-white">
+                <div className="font-semibold text-foreground">
                   총 {slides.length}장 생성 완료
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                <div className="text-sm text-muted-foreground mt-0.5">
                   {topic} | {selectedTemplate.label}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={handleReset} className="btn-secondary flex items-center gap-2">
+                <button onClick={handleReset} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" /> 다시 만들기
                 </button>
-                <button onClick={() => setPrintModalOpen(true)} disabled={slides.length === 0} className="btn-secondary flex items-center gap-2 disabled:opacity-60">
+                <button onClick={() => setPrintModalOpen(true)} disabled={slides.length === 0} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 disabled:opacity-60">
                   <Download className="h-4 w-4" /> 인쇄 / PDF 저장
                 </button>
               </div>
             </div>
 
             {/* Compact template switcher */}
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">템플릿 변경</div>
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="text-xs text-muted-foreground mb-2">템플릿 변경</div>
               <div className="flex flex-wrap gap-2">
                 {TEMPLATE_PRESETS.map((preset) => {
                   const tokens = TEMPLATE_STYLE_TOKENS[preset.id];
@@ -3046,8 +3046,8 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                       onClick={() => handleTemplatePresetClick(preset)}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                         isActive
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                          : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-300'
+                          ? 'border-primary/40 bg-primary/10 text-primary'
+                          : 'border-border text-muted-foreground hover:border-foreground/30'
                       }`}
                     >
                       <div style={{ background: tokens.accentBg, width: '8px', height: '8px', borderRadius: '999px' }} />
@@ -3059,16 +3059,16 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </div>
 
             {error && (
-              <div className="mt-3 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              <div className="mt-3 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2">
                 {error}
               </div>
             )}
           </div>
 
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">슬라이드 썸네일 네비게이션</h3>
-              <div className="text-xs text-gray-500 dark:text-gray-400">썸네일 드래그로 순서 변경</div>
+              <h3 className="text-sm font-semibold text-foreground">슬라이드 썸네일 네비게이션</h3>
+              <div className="text-xs text-muted-foreground">썸네일 드래그로 순서 변경</div>
             </div>
             <DndContext sensors={slideDndSensors} collisionDetection={closestCenter} onDragEnd={handleSlideDragEnd}>
               <SortableContext items={slideStableIds.map((id) => `slide-thumb-${id}`)} strategy={horizontalListSortingStrategy}>
@@ -3090,24 +3090,24 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </DndContext>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">개요 / 발표 대본</h3>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-2">개요 / 발표 대본</h3>
             <div className="space-y-2">
               {normalizeOutlineSlides(outlineSlides, slides.length || slideCount).map((outline, idx) => (
-                <div key={`script-${idx}`} className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2">
-                  <div className="text-xs font-semibold text-blue-700 dark:text-blue-300">{idx + 1}. {outline.title || `슬라이드 ${idx + 1}`}</div>
+                <div key={`script-${idx}`} className="rounded-lg border border-border px-3 py-2">
+                  <div className="text-xs font-semibold text-primary">{idx + 1}. {outline.title || `슬라이드 ${idx + 1}`}</div>
                   {outline.description ? (
-                    <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 whitespace-pre-wrap">{outline.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{outline.description}</p>
                   ) : null}
                   {Array.isArray(outline.keyPoints) && outline.keyPoints.length > 0 ? (
                     <ul className="mt-1.5 space-y-0.5">
                       {outline.keyPoints.map((point, pi) => (
-                        <li key={pi} className="text-xs text-gray-500 dark:text-gray-400">- {point}</li>
+                        <li key={pi} className="text-xs text-muted-foreground">- {point}</li>
                       ))}
                     </ul>
                   ) : null}
                   {outline.imagePrompt ? (
-                    <div className="mt-1.5 flex items-start gap-1 text-xs text-gray-400 dark:text-gray-500">
+                    <div className="mt-1.5 flex items-start gap-1 text-xs text-muted-foreground">
                       <span className="flex-shrink-0">🖼️</span>
                       <span className="italic">{outline.imagePrompt}</span>
                     </div>
@@ -3123,8 +3123,8 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {slides.map((slide, idx) => {
                   const previewThemeClass = theme === 'dark'
-                    ? 'bg-gradient-to-br from-slate-900 via-blue-950 to-blue-900 border-blue-400/40'
-                    : 'bg-gradient-to-br from-blue-50 via-sky-100 to-blue-200 border-blue-300/70';
+                    ? 'bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 border-border'
+                    : 'bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200 border-border';
 
                   return (
                     <SortableDoneSlideCard
@@ -3192,17 +3192,17 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               setRewritePreset('none');
             }}
           />
-          <div className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl w-full max-w-lg p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">슬라이드 {regenerateIndex + 1} 재생성</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="relative bg-card border border-border rounded-xl shadow-xl w-full max-w-lg p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">슬라이드 {regenerateIndex + 1} 재생성</h3>
+            <p className="text-xs text-muted-foreground">
               이 슬라이드에만 추가 요구사항을 적용해 다시 생성합니다.
             </p>
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">AI 재작성 프리셋</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">AI 재작성 프리셋</label>
               <select
                 value={rewritePreset}
                 onChange={(e) => setRewritePreset(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
                 {REWRITE_PRESET_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -3213,7 +3213,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               rows={4}
               value={regeneratePrompt}
               onChange={(e) => setRegeneratePrompt(e.target.value)}
-              className="w-full text-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               placeholder="예: 핵심 숫자를 먼저 보여주고, 하단에는 간단한 액션 아이템 3개로 정리"
             />
             <div className="flex justify-end gap-2">
@@ -3224,14 +3224,14 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                   setRegeneratePrompt('');
                   setRewritePreset('none');
                 }}
-                className="btn-secondary"
+                className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
               >
                 취소
               </button>
               <button
                 onClick={handleRegenerateSlide}
                 disabled={regeneratingIndex >= 0}
-                className="btn-primary flex items-center gap-2 disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 disabled:opacity-60"
               >
                 {regeneratingIndex >= 0 ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                 재생성 실행
@@ -3245,27 +3245,27 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       {wysiwygIndex >= 0 && slides[wysiwygIndex] && (
         <div className="fixed inset-0 z-[55] bg-black flex flex-col">
           {/* Toolbar */}
-          <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-900 border-b border-gray-700 flex-shrink-0 flex-wrap">
+          <div className="flex items-center gap-1.5 px-3 py-2 bg-card border-b border-border flex-shrink-0 flex-wrap">
             <span className="text-white/50 text-xs font-medium mr-1 flex-shrink-0">슬라이드 {wysiwygIndex + 1} 편집</span>
-            <div className="w-px h-4 bg-gray-600 flex-shrink-0" />
+            <div className="w-px h-4 bg-border flex-shrink-0" />
             <button
               onMouseDown={(e) => { e.preventDefault(); applyWysiwygCommand('bold'); }}
-              className={`px-2 py-1 rounded text-sm font-bold flex-shrink-0 ${wysiwygToolbar.bold ? 'bg-blue-600 text-white' : 'text-white/70 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-sm font-bold flex-shrink-0 ${wysiwygToolbar.bold ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-accent'}`}
             >B</button>
             <button
               onMouseDown={(e) => { e.preventDefault(); applyWysiwygCommand('italic'); }}
-              className={`px-2 py-1 rounded text-sm italic flex-shrink-0 ${wysiwygToolbar.italic ? 'bg-blue-600 text-white' : 'text-white/70 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-sm italic flex-shrink-0 ${wysiwygToolbar.italic ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-accent'}`}
             >I</button>
             <button
               onMouseDown={(e) => { e.preventDefault(); applyWysiwygCommand('underline'); }}
-              className={`px-2 py-1 rounded text-sm underline flex-shrink-0 ${wysiwygToolbar.underline ? 'bg-blue-600 text-white' : 'text-white/70 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-sm underline flex-shrink-0 ${wysiwygToolbar.underline ? 'bg-primary text-primary-foreground' : 'text-foreground/70 hover:bg-accent'}`}
             >U</button>
-            <div className="w-px h-4 bg-gray-600 flex-shrink-0" />
+            <div className="w-px h-4 bg-border flex-shrink-0" />
             <select
               onMouseDown={(e) => e.stopPropagation()}
               onChange={(e) => applyWysiwygCommand('fontSize', e.target.value)}
               defaultValue="3"
-              className="text-xs bg-gray-800 text-white/80 border border-gray-600 rounded px-1.5 py-1 flex-shrink-0"
+              className="text-xs bg-background text-foreground/80 border border-border rounded px-1.5 py-1 flex-shrink-0"
             >
               <option value="1">아주 작게</option>
               <option value="2">작게</option>
@@ -3274,14 +3274,14 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               <option value="5">아주 크게</option>
               <option value="6">특대</option>
             </select>
-            <div className="w-px h-4 bg-gray-600 flex-shrink-0" />
+            <div className="w-px h-4 bg-border flex-shrink-0" />
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
               <span>글자색</span>
               <input
                 type="color"
                 defaultValue="#ffffff"
                 onInput={(e) => applyWysiwygCommand('foreColor', e.target.value)}
-                className="h-6 w-7 rounded border border-gray-600 bg-transparent cursor-pointer"
+                className="h-6 w-7 rounded border border-border bg-transparent cursor-pointer"
               />
             </label>
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
@@ -3290,45 +3290,45 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 type="color"
                 defaultValue="#ffff00"
                 onInput={(e) => applyWysiwygCommand('hiliteColor', e.target.value)}
-                className="h-6 w-7 rounded border border-gray-600 bg-transparent cursor-pointer"
-              />
-            </label>
-            <div className="w-px h-4 bg-gray-600 flex-shrink-0" />
+                className="h-6 w-7 rounded border border-border bg-transparent cursor-pointer"
+            />
+          </label>
+            <div className="w-px h-4 bg-border flex-shrink-0" />
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
               <span>배경 시작</span>
               <input
                 type="color"
-                value={normalizeHexColor(wysiwygColors.canvasStart, '#eff6ff')}
-                onChange={(e) => handleWysiwygColorChange('canvasStart', normalizeHexColor(e.target.value, '#eff6ff'))}
-                className="h-6 w-7 rounded border border-gray-600 bg-transparent cursor-pointer"
+                value={normalizeHexColor(wysiwygColors.canvasStart, '#f5f5f5')}
+                onChange={(e) => handleWysiwygColorChange('canvasStart', normalizeHexColor(e.target.value, '#f5f5f5'))}
+                className="h-6 w-7 rounded border border-border bg-transparent cursor-pointer"
               />
             </label>
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
               <span>배경 끝</span>
               <input
                 type="color"
-                value={normalizeHexColor(wysiwygColors.canvasEnd, '#bfdbfe')}
-                onChange={(e) => handleWysiwygColorChange('canvasEnd', normalizeHexColor(e.target.value, '#bfdbfe'))}
-                className="h-6 w-7 rounded border border-gray-600 bg-transparent cursor-pointer"
+                value={normalizeHexColor(wysiwygColors.canvasEnd, '#d4d4d4')}
+                onChange={(e) => handleWysiwygColorChange('canvasEnd', normalizeHexColor(e.target.value, '#d4d4d4'))}
+                className="h-6 w-7 rounded border border-border bg-transparent cursor-pointer"
               />
             </label>
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
               <span>강조색</span>
               <input
                 type="color"
-                value={normalizeHexColor(wysiwygColors.accentBg, '#2563eb')}
-                onChange={(e) => handleWysiwygColorChange('accentBg', normalizeHexColor(e.target.value, '#2563eb'))}
-                className="h-6 w-7 rounded border border-gray-600 bg-transparent cursor-pointer"
+                value={normalizeHexColor(wysiwygColors.accentBg, '#525252')}
+                onChange={(e) => handleWysiwygColorChange('accentBg', normalizeHexColor(e.target.value, '#525252'))}
+                className="h-6 w-7 rounded border border-border bg-transparent cursor-pointer"
               />
             </label>
             <div className="flex-1" />
             <button
               onClick={() => setWysiwygIndex(-1)}
-              className="px-3 py-1.5 rounded-lg border border-gray-600 text-white/70 hover:text-white hover:border-white/40 text-xs transition-colors flex-shrink-0"
+              className="px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 text-xs transition-colors flex-shrink-0"
             >취소</button>
             <button
               onClick={handleSaveWysiwyg}
-              className="btn-primary text-xs flex-shrink-0"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-xs flex-shrink-0"
             >저장</button>
           </div>
           {/* Editor iframe */}
@@ -3407,10 +3407,10 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               <button
                 key={di}
                 onClick={() => setSlideshowIndex(di)}
-                className={`rounded-full transition-all ${
-                  di === slideshowIndex
-                    ? 'bg-white w-3.5 h-3.5'
-                    : 'bg-white/30 hover:bg-white/60 w-2.5 h-2.5'
+                  className={`rounded-full transition-all ${
+                    di === slideshowIndex
+                    ? 'bg-primary w-3.5 h-3.5'
+                    : 'bg-muted-foreground/30 hover:bg-muted-foreground/60 w-2.5 h-2.5'
                 }`}
               />
             ))}
@@ -3422,18 +3422,18 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       {printModalOpen && slides.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setPrintModalOpen(false)} />
-          <div className="relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="relative bg-card border border-border rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             {/* Modal header */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
+            <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">인쇄 / PDF 저장</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <h3 className="font-semibold text-foreground">인쇄 / PDF 저장</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   전체 {slides.length}장의 슬라이드를 확인하고 인쇄하세요. PDF는 인쇄 대화상자에서 저장할 수 있습니다.
                 </p>
               </div>
               <button
                 onClick={() => setPrintModalOpen(false)}
-                className="btn-secondary text-sm flex-shrink-0"
+                className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm flex-shrink-0"
               >
                 닫기
               </button>
@@ -3444,8 +3444,8 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {slides.map((slide, idx) => (
                   <div key={idx} className="space-y-1">
-                    <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">슬라이드 {idx + 1}</div>
-                    <div className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+                    <div className="text-xs text-muted-foreground font-medium">슬라이드 {idx + 1}</div>
+                    <div className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-border shadow-sm">
                       <iframe
                         title={`print-preview-${idx + 1}`}
                         srcDoc={buildSlideDoc(slide, theme, tone, true)}
@@ -3459,11 +3459,11 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </div>
 
             {/* Modal footer */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2 flex-shrink-0">
-              <button onClick={() => setPrintModalOpen(false)} className="btn-secondary">취소</button>
+            <div className="p-4 border-t border-border flex justify-end gap-2 flex-shrink-0">
+              <button onClick={() => setPrintModalOpen(false)} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none">취소</button>
               <button
                 onClick={() => { setPrintModalOpen(false); handlePrintAll(); }}
-                className="btn-primary flex items-center gap-2"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
               >
                 <Download className="h-4 w-4" /> 인쇄하기 (PDF 저장)
               </button>

@@ -369,7 +369,7 @@ function Sidebar({
           <button
             id='sidebar-create-room-button-full'
             data-testid='sidebar-create-room-button-full'
-            className='btn-primary w-full flex items-center justify-center gap-2'
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none w-full flex items-center justify-center gap-2'
             onClick={handleCreateRoom}
             disabled={loading}
           >

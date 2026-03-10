@@ -175,7 +175,7 @@ export default function AdminPiiTestPage() {
         <button
           onClick={handleTest}
           disabled={loading}
-          className='btn-primary px-4 py-2 rounded-lg disabled:opacity-60 inline-flex items-center gap-2'
+          className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none px-4 py-2 rounded-lg disabled:opacity-60 inline-flex items-center gap-2'
         >
           {loading ? (
             <>

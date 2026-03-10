@@ -39,7 +39,6 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
         const data = await response.json();
         setUsers(data.users || []);
 
-        // 부서 목록 추출
         const deptSet = new Set();
         data.users.forEach((user) => {
           if (user.department) {
@@ -133,7 +132,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
       return;
     }
     if (recipientType === 'department' && !selectedDepartment) {
-      setError('부서를 선택해주세요.');
+      setError('그룹을 선택해주세요.');
       return;
     }
 
@@ -237,7 +236,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                   className="w-4 h-4 text-primary"
                 />
                 <span className="text-sm text-foreground">
-                  부서별
+                  그룹별
                 </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -262,17 +261,17 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
               <div className="flex flex-wrap gap-3">
                 <div className="flex-1 min-w-[200px]">
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    부서 필터
+                    그룹 필터
                   </label>
                   <select
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground"
                   >
-                    <option value="">전체 부서</option>
+                    <option value="">전체 그룹</option>
                     {departments.map((dept) => (
                       <option key={dept} value={dept}>
-                        {dept}
+                        {dept.replaceAll('부서', '그룹')}
                       </option>
                     ))}
                   </select>
@@ -336,7 +335,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
                             {user.email}
-                            {user.department && ` · ${user.department}`}
+                            {user.department && ` · ${user.department.replaceAll('부서', '그룹')}`}
                           </p>
                         </div>
                       </label>
@@ -351,22 +350,22 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
             </div>
           )}
 
-          {/* 부서별 선택 모드 */}
+
           {recipientType === 'department' && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 <Building className="inline h-4 w-4 mr-1" />
-                부서 선택
+                그룹 선택
               </label>
               <select
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground"
               >
-                <option value="">부서를 선택하세요</option>
+                <option value="">그룹을 선택하세요</option>
                 {departments.map((dept) => (
                   <option key={dept} value={dept}>
-                    {dept}
+                    {dept.replaceAll('부서', '그룹')}
                   </option>
                 ))}
               </select>

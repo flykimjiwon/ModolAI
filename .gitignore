@@ -85,9 +85,6 @@ check_gpt4_config.sql
 멀티턴정책.md
 그룹사SSO.md
 
-# Ignore all Markdown by default
-*.md
-
 # Environment variable files
 *.env
 .envrc

@@ -16,7 +16,6 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // redirect 쿼리 파라미터 검증 함수
   const getSafeRedirect = useCallback(() => {
     const redirect = searchParams.get('redirect');
     if (
@@ -71,15 +70,17 @@ function LoginPageContent() {
 
     if (!isSupported) {
       const message = isChromium
-        ? `${browserName} ${browserVersion || '알 수 없음'} 버전에서는 사용이 원활하지 않을 수 있습니다. ${browserName} 111 이상을 권장합니다.`
-        : '현재 브라우저에서는 일부 기능이 원활하지 않을 수 있습니다. Chrome/Edge 111 이상을 권장합니다.';
+        ? `${browserName} ${browserVersion || 'unknown'} may not be fully supported. ${browserName} 111 or newer is recommended.`
+        : 'Your browser may not fully support all features. Chrome/Edge 111 or newer is recommended.';
       setBrowserBlockedMessage(message);
       setBrowserAllowed(true);
       setBrowserInfoMessage('');
     } else {
       setBrowserBlockedMessage('');
       setBrowserAllowed(true);
-      setBrowserInfoMessage(`현재 ${browserName} ${browserVersion} 버전으로 접속 중입니다.`);
+      setBrowserInfoMessage(
+        `You are currently using ${browserName} ${browserVersion}.`
+      );
     }
   }, []);
 
@@ -132,13 +133,11 @@ function LoginPageContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '로그인에 실패했습니다.');
+        throw new Error(data.error || 'Login failed.');
       }
 
-      // JWT 를 브라우저 로컬스토리지에 저장
       localStorage.setItem('token', data.token);
 
-      // 로그인 성공 → 메인 페이지(예: `/`) 로 이동
       router.push(getSafeRedirect());
     } catch (err) {
       setError(err.message);
@@ -154,25 +153,23 @@ function LoginPageContent() {
           <DarkModeToggle />
         </div>
         <div className='w-full max-w-md'>
-          {/* Logo/Title */}
           <div className='text-center mb-8'>
             <h1
               id='login-title'
               data-testid='login-title'
               className='text-3xl font-bold text-foreground mb-2'
             >
-              modol AI
+              ModolAI
             </h1>
             <p
               id='login-subtitle'
               data-testid='login-subtitle'
               className='text-muted-foreground'
             >
-              계정에 로그인하세요
+              Sign in to your account
             </p>
           </div>
 
-          {/* Login Form */}
           <Card>
             <form
               id='login-form'
@@ -211,7 +208,7 @@ function LoginPageContent() {
                     id='login-email-label'
                     data-testid='login-email-label'
                   >
-                    이메일
+                    Email
                   </Label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -223,7 +220,7 @@ function LoginPageContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className='pl-10'
-                      placeholder='이메일을 입력하세요'
+                      placeholder='Enter your email'
                       aria-describedby='login-email-label'
                     />
                   </div>
@@ -235,7 +232,7 @@ function LoginPageContent() {
                     id='login-password-label'
                     data-testid='login-password-label'
                   >
-                    비밀번호
+                    Password
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -248,7 +245,7 @@ function LoginPageContent() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='비밀번호를 입력하세요'
+                      placeholder='Enter your password'
                       aria-describedby='login-password-label'
                     />
                   </div>
@@ -268,12 +265,12 @@ function LoginPageContent() {
                         data-testid='login-submit-loading'
                         className='h-5 w-5 animate-spin'
                       />
-                      처리 중...
+                      Processing...
                     </>
                   ) : (
                     <>
                       <LogIn className='h-5 w-5' />
-                      로그인
+                      Sign In
                     </>
                   )}
                 </Button>
@@ -281,14 +278,14 @@ function LoginPageContent() {
 
               <CardFooter className='justify-center border-t border-border'>
                 <p className='text-sm text-muted-foreground'>
-                  계정이 없으신가요?{' '}
+                  Don&apos;t have an account?{' '}
                   <a
                     id='login-signup-link'
                     data-testid='login-signup-link'
                     href='/signup'
                     className='text-primary hover:text-primary/80 font-medium'
                   >
-                    회원가입
+                    Sign Up
                   </a>
                 </p>
               </CardFooter>
@@ -299,15 +296,15 @@ function LoginPageContent() {
       {supportContactsEnabled && supportContacts.length > 0 && (
         <div className='fixed bottom-4 right-4 z-40'>
           <div className='bg-card/95 border border-border rounded-lg shadow-lg px-4 py-3 text-xs text-foreground min-w-[220px]'>
-            <div className='text-sm font-semibold mb-2'>담당자</div>
+            <div className='text-sm font-semibold mb-2'>Support Contacts</div>
             <div className='space-y-2'>
               {supportContacts.map((contact, index) => (
                 <div key={`support-${index}`}>
                   <div className='font-medium'>
-                    {contact.department || '부서 미입력'}
+                    {contact.department?.replaceAll('부서', '그룹') || 'No group provided'}
                   </div>
                   <div className='text-muted-foreground'>
-                    {(contact.name || '이름 미입력') +
+                    {(contact.name || 'No name provided') +
                       (contact.phone ? ` · ${contact.phone}` : '')}
                   </div>
                 </div>
@@ -325,7 +322,7 @@ function LoginPageFallback() {
   return (
     <div className='min-h-screen bg-background transition-colors duration-200 flex items-center justify-center'>
       <div className='text-sm text-muted-foreground'>
-        로그인 페이지를 불러오는 중입니다...
+        Loading login page...
       </div>
     </div>
   );

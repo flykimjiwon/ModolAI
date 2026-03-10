@@ -32,8 +32,8 @@ export async function GET() {
     return NextResponse.json(
       {
         loginType: settings.login_type || 'local',
-        siteTitle: settings.site_title || 'Modol',
-        siteDescription: settings.site_description || 'modol AI',
+        siteTitle: settings.site_title || 'ModolAI',
+        siteDescription: settings.site_description || 'ModolAI',
         faviconUrl: settings.favicon_url || null,
       },
       {
@@ -47,8 +47,8 @@ export async function GET() {
     return NextResponse.json(
       {
         loginType: 'local',
-        siteTitle: 'Modol',
-        siteDescription: 'modol AI',
+        siteTitle: 'ModolAI',
+        siteDescription: 'ModolAI',
         faviconUrl: null,
       },
       {

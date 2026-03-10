@@ -87,9 +87,11 @@ export default function MessagesPage() {
         const seen = new Map();
         rows.forEach(({ department, auth_type }) => {
           seen.set(
-            `${department}|${auth_type}`,
-            auth_type === 'sso' ? `${department}(SSO)` : `${department}(일반)`
-          );
+          `${department}|${auth_type}`,
+          auth_type === 'sso'
+            ? `${department.replaceAll('부서', '그룹')}(SSO)`
+            : `${department.replaceAll('부서', '그룹')}(일반)`
+        );
         });
         DEFAULT_DEPTS.forEach((dept) => {
           if (!seen.has(`${dept}|local`)) seen.set(`${dept}|local`, `${dept}(일반)`);
@@ -101,7 +103,12 @@ export default function MessagesPage() {
         );
       })
       .catch(() => {
-        setDepartments(DEFAULT_DEPTS.map((d) => ({ value: `${d}|local`, label: `${d}(일반)` })));
+      setDepartments(
+        DEFAULT_DEPTS.map((d) => ({
+          value: `${d}|local`,
+          label: `${d.replaceAll('부서', '그룹')}(일반)`,
+        }))
+      );
       });
   }, []);
 
@@ -786,14 +793,14 @@ export default function MessagesPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <Building className='inline h-4 w-4 mr-1' />
-                    부서
+                    그룹
                   </label>
                   <select
                     value={deptFilter}
                     onChange={(e) => { setDeptFilter(e.target.value); setCurrentPage(1); }}
                     className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
-                    <option value=''>모든 부서</option>
+                    <option value=''>모든 그룹</option>
                     {departments.map((dept) => (
                       <option key={dept.value} value={dept.value}>
                         {dept.label}
@@ -995,7 +1002,7 @@ export default function MessagesPage() {
                     )}
                     {deptFilter && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                        부서: {departments.find((d) => d.value === deptFilter)?.label || deptFilter.split('|')[0]}
+                        그룹: {departments.find((d) => d.value === deptFilter)?.label || deptFilter.split('|')[0].replaceAll('부서', '그룹')}
                         <button
                           onClick={() => setDeptFilter('')}
                           className='ml-1.5 hover:text-primary'
@@ -1146,7 +1153,9 @@ export default function MessagesPage() {
                     {message.department && (
                       <div className='flex items-center text-xs text-muted-foreground'>
                         <Building className='h-3 w-3 mr-1 flex-shrink-0' />
-                        <span className='truncate'>{message.department}</span>
+                            <span className='truncate'>
+                              {message.department.replaceAll('부서', '그룹')}
+                            </span>
                       </div>
                     )}
                     <div className='flex items-center justify-between text-xs'>
@@ -1273,7 +1282,7 @@ export default function MessagesPage() {
                           <div className='flex items-center mt-1.5 text-xs text-muted-foreground'>
                             <Building className='h-3 w-3 mr-1 flex-shrink-0' />
                             <span className='truncate'>
-                              {message.department}
+                            {message.department.replaceAll('부서', '그룹')}
                             </span>
                           </div>
                         )}
@@ -1625,7 +1634,7 @@ export default function MessagesPage() {
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        부서:
+                        그룹:
                       </span>
                       <span className='font-medium text-foreground'>
                         {selectedMessage.department || '미설정'}

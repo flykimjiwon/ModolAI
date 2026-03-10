@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// 브라우저 정보 파싱
 function getBrowserInfo() {
   const ua = navigator.userAgent || '';
 
@@ -73,7 +72,6 @@ function getBrowserInfo() {
   };
 }
 
-// localStorage 사용 가능 여부 체크
 function checkLocalStorageAvailable() {
   try {
     const testKey = '__test__';
@@ -90,14 +88,14 @@ function ErrorPopup({ error, onClose }) {
 
   const getErrorTitle = (errorCode) => {
     switch (errorCode) {
-      case 'VALIDATION_ERROR': return '입력 오류';
-      case 'AUTH_FAILED': return '인증 실패';
-      case 'LOGIN_DENIED': return '로그인 거부';
-      case 'SSO_SYSTEM_ERROR': return 'SSO 시스템 오류';
-      case 'SSO_SERVER_ERROR': return 'SSO 서버 오류';
-      case 'SSO_CONNECTION_ERROR': return 'SSO 연결 오류';
-      case 'CLIENT_STORAGE_ERROR': return '브라우저 저장소 오류';
-      default: return '로그인 오류';
+      case 'VALIDATION_ERROR': return 'Input Error';
+      case 'AUTH_FAILED': return 'Authentication Failed';
+      case 'LOGIN_DENIED': return 'Login Denied';
+      case 'SSO_SYSTEM_ERROR': return 'SSO System Error';
+      case 'SSO_SERVER_ERROR': return 'SSO Server Error';
+      case 'SSO_CONNECTION_ERROR': return 'SSO Connection Error';
+      case 'CLIENT_STORAGE_ERROR': return 'Browser Storage Error';
+      default: return 'Login Error';
     }
   };
 
@@ -117,19 +115,19 @@ function ErrorPopup({ error, onClose }) {
           <p className="text-foreground mb-3">{error.message}</p>
           {error.errorCode && (
             <p className="text-xs text-muted-foreground mb-2">
-              오류 코드: {error.errorCode}
+              Error code: {error.errorCode}
             </p>
           )}
           {error.detail && (
             <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
-              상세: {error.detail}
+              Details: {error.detail}
             </p>
           )}
           <Button
             onClick={onClose}
             className="mt-4 w-full"
           >
-            확인
+            Close
           </Button>
         </div>
       </div>
@@ -155,20 +153,20 @@ export default function SSOLoginPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    console.log('[SSO useEffect] 토큰 체크:', { exists: !!token, length: token?.length });
+    console.log('[SSO useEffect] Token check:', { exists: !!token, length: token?.length });
     if (token) {
       try {
         const payload = decodeJWTPayload(token);
-        console.log('[SSO useEffect] 토큰 파싱 성공:', { email: payload.email, exp: payload.exp });
+        console.log('[SSO useEffect] Token parse success:', { email: payload.email, exp: payload.exp });
         if (payload?.exp && Date.now() >= payload.exp * 1000) {
-          console.log('[SSO useEffect] 토큰 만료됨 → 삭제');
+          console.log('[SSO useEffect] Token expired -> removing');
           localStorage.removeItem('token');
           return;
         }
-        console.log('[SSO useEffect] 유효한 토큰 → 메인으로 이동');
+        console.log('[SSO useEffect] Valid token -> redirecting to home');
         router.replace('/');
       } catch (error) {
-        console.error('[SSO useEffect] 토큰 파싱 실패 → 삭제:', error, { tokenPreview: token?.substring(0, 100) });
+        console.error('[SSO useEffect] Token parse failed -> removing:', error, { tokenPreview: token?.substring(0, 100) });
         localStorage.removeItem('token');
       }
     }
@@ -186,8 +184,8 @@ export default function SSOLoginPage() {
 
     if (!isSupported) {
       const message = isChromium
-        ? `${info.browserName} ${hasValidVersion ? browserVersion : '알 수 없음'} 버전에서는 사용이 원활하지 않을 수 있습니다. ${info.browserName} 111 이상을 권장합니다.`
-        : '현재 브라우저에서는 일부 기능이 원활하지 않을 수 있습니다. Chrome/Edge 111 이상을 권장합니다.';
+        ? `${info.browserName} ${hasValidVersion ? browserVersion : 'unknown'} may not be fully supported. ${info.browserName} 111 or newer is recommended.`
+        : 'Your browser may not fully support all features. Chrome/Edge 111 or newer is recommended.';
       setBrowserBlockedMessage(message);
       setBrowserAllowed(true);
       setBrowserInfoMessage('');
@@ -195,12 +193,12 @@ export default function SSOLoginPage() {
       setBrowserBlockedMessage('');
       setBrowserAllowed(true);
       setBrowserInfoMessage(
-        `현재 ${info.browserName} ${info.browserVersion} 버전으로 접속 중입니다.`
+        `You are currently using ${info.browserName} ${info.browserVersion}.`
       );
     }
   }, []);
 
-  // 공지사항 조회
+
   useEffect(() => {
     let isMounted = true;
     fetch('/api/notice?showPopup=true&limit=1&popupTarget=login')
@@ -217,7 +215,7 @@ export default function SSOLoginPage() {
     };
   }, []);
 
-  // 담당자 정보 조회
+
   useEffect(() => {
     fetch('/api/admin/settings')
       .then((res) => (res.ok ? res.json() : null))
@@ -235,7 +233,7 @@ export default function SSOLoginPage() {
       .catch(() => {});
   }, []);
 
-  // 클라이언트 에러 로깅
+
   async function logClientError(employeeNo, errorType, errorMessage) {
     try {
       await fetch('/api/admin/sso-logs', {
@@ -250,7 +248,7 @@ export default function SSOLoginPage() {
         }),
       });
     } catch (e) {
-      console.error('[SSO] 클라이언트 에러 로깅 실패:', e);
+      console.error('[SSO] Failed to log client error:', e);
     }
   }
 
@@ -270,17 +268,17 @@ export default function SSOLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorPopup({
-          message: data.error || 'SSO 로그인에 실패했습니다.',
-          errorCode: data.errorCode,
-          detail: data.detail,
-        });
-        setError(data.error || 'SSO 로그인에 실패했습니다.');
+          setErrorPopup({
+            message: data.error || 'SSO login failed.',
+            errorCode: data.errorCode,
+            detail: data.detail,
+          });
+        setError(data.error || 'SSO login failed.');
         return;
       }
 
       if (!checkLocalStorageAvailable()) {
-        const errorMsg = '브라우저 저장소를 사용할 수 없습니다. 시크릿 모드를 해제하거나 브라우저 설정을 확인해주세요.';
+        const errorMsg = 'Browser storage is unavailable. Disable private mode or check browser storage settings.';
         await logClientError(employeeNo, 'LOCAL_STORAGE_UNAVAILABLE', errorMsg);
         setErrorPopup({
           message: errorMsg,
@@ -290,40 +288,40 @@ export default function SSOLoginPage() {
       }
 
       try {
-        console.log('[SSO] 토큰 저장 시작...', { tokenLength: data.token?.length });
+        console.log('[SSO] Storing token...', { tokenLength: data.token?.length });
         localStorage.setItem('token', data.token);
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
 
         const savedToken = localStorage.getItem('token');
-        console.log('[SSO] 토큰 저장 확인:', {
+        console.log('[SSO] Token storage verification:', {
           saved: !!savedToken,
           savedLength: savedToken?.length,
           match: savedToken === data.token
         });
 
         if (!savedToken || savedToken !== data.token) {
-          throw new Error('토큰 저장 후 검증 실패');
+          throw new Error('Token verification failed after storage.');
         }
       } catch (storageError) {
-        console.error('[SSO] localStorage 저장 실패:', storageError);
+        console.error('[SSO] localStorage write failed:', storageError);
         await logClientError(employeeNo, 'LOCAL_STORAGE_WRITE_ERROR', storageError.message);
         setErrorPopup({
-          message: '로그인 정보를 저장하는 데 실패했습니다. 브라우저 저장소 용량을 확인해주세요.',
+          message: 'Failed to save login data. Please check available browser storage.',
           errorCode: 'CLIENT_STORAGE_ERROR',
           detail: storageError.message,
         });
         return;
       }
 
-      console.log('[SSO] 메인 페이지로 이동 시작...');
+      console.log('[SSO] Redirecting to home...');
       await new Promise(resolve => setTimeout(resolve, 100));
       router.push('/');
     } catch (err) {
       await logClientError(employeeNo, 'NETWORK_ERROR', err.message);
       setErrorPopup({
-        message: '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.',
+        message: 'A network error occurred. Please check your internet connection.',
         errorCode: 'NETWORK_ERROR',
         detail: err.message,
       });
@@ -343,11 +341,11 @@ export default function SSOLoginPage() {
           {/* Logo/Title */}
           <div className='text-center mb-8'>
             <h1 className='text-3xl font-bold text-foreground mb-2'>
-              modol AI
+              ModolAI
             </h1>
             <div className='flex items-center justify-center gap-3 mt-4'>
               <span className='text-3xl font-bold text-foreground'>
-                SSO 로그인
+                SSO Login
               </span>
             </div>
           </div>
@@ -378,7 +376,7 @@ export default function SSOLoginPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='sso-employee-no'>
-                    사번
+                    Employee ID
                   </Label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -389,7 +387,7 @@ export default function SSOLoginPage() {
                       value={employeeNo}
                       onChange={(e) => setEmployeeNo(e.target.value)}
                       className='pl-10'
-                      placeholder='사번을 입력하세요'
+                      placeholder='Enter your employee ID'
                       autoComplete='username'
                     />
                   </div>
@@ -397,7 +395,7 @@ export default function SSOLoginPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='sso-password'>
-                    비밀번호
+                    Password
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -408,7 +406,7 @@ export default function SSOLoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='비밀번호를 입력하세요'
+                      placeholder='Enter your password'
                       autoComplete='current-password'
                     />
                   </div>
@@ -423,12 +421,12 @@ export default function SSOLoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className='h-5 w-5 animate-spin' />
-                      인증 중...
+                      Authenticating...
                     </>
                   ) : (
                     <>
                       <LogIn className='h-5 w-5' />
-                      SSO 로그인
+                      SSO Login
                     </>
                   )}
                 </Button>
@@ -436,7 +434,7 @@ export default function SSOLoginPage() {
 
               <CardFooter className='justify-center border-t border-border'>
                 <p className='text-sm text-muted-foreground'>
-                  SSO 전용 로그인입니다.
+                  This page is for SSO login only.
                 </p>
               </CardFooter>
             </form>
@@ -444,19 +442,19 @@ export default function SSOLoginPage() {
         </div>
       </div>
 
-      {/* 담당자 정보 */}
+
       {supportContactsEnabled && supportContacts.length > 0 && (
         <div className='fixed bottom-4 right-4 z-40'>
           <div className='bg-card/95 border border-border rounded-lg shadow-lg px-4 py-3 text-xs text-foreground min-w-[220px]'>
-            <div className='text-sm font-semibold mb-2'>담당자</div>
+            <div className='text-sm font-semibold mb-2'>Support Contacts</div>
             <div className='space-y-2'>
               {supportContacts.map((contact, index) => (
                 <div key={`support-${index}`}>
                   <div className='font-medium'>
-                    {contact.department || '부서 미입력'}
+                    {contact.department?.replaceAll('부서', '그룹') || 'No group provided'}
                   </div>
                   <div className='text-muted-foreground'>
-                    {(contact.name || '이름 미입력') +
+                    {(contact.name || 'No name provided') +
                       (contact.phone ? ` · ${contact.phone}` : '')}
                   </div>
                 </div>

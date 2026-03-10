@@ -794,7 +794,7 @@ export default function ModelServersPage() {
             disabled={Object.values(serverStatusLoading).some(
               (loading) => loading
             )}
-            className='btn-primary flex items-center gap-2'
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
           >
             <RefreshCw
               className={`h-4 w-4 ${
@@ -887,7 +887,7 @@ export default function ModelServersPage() {
       )}
 
       {/* Ollama 서버 관리 */}
-      <div className='card p-6 mb-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6 mb-6'>
         <div className='flex items-center justify-between mb-4'>
           <div className='flex items-center gap-2'>
             <Server className='h-5 w-5 text-primary' />
@@ -1426,14 +1426,14 @@ export default function ModelServersPage() {
                   <button
                     onClick={cancelEditEndpoint}
                     disabled={savingEndpoints}
-                    className='btn-secondary'
+                    className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
                     취소
                   </button>
                   <button
                     onClick={saveEditEndpoint}
                     disabled={savingEndpoints}
-                    className='btn-primary'
+                    className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
                     저장
                   </button>
@@ -1527,14 +1527,14 @@ export default function ModelServersPage() {
                   <button
                     onClick={() => setShowAddForm(false)}
                     disabled={savingEndpoints}
-                    className='btn-secondary'
+                    className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
                     취소
                   </button>
                   <button
                     onClick={addEndpoint}
                     disabled={savingEndpoints}
-                    className='btn-primary'
+                    className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
                     추가
                   </button>

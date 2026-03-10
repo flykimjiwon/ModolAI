@@ -3,6 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshCw, ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useAlert } from '@/contexts/AlertContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function formatMatchedFiles(files) {
   if (!Array.isArray(files) || files.length === 0) {
@@ -13,12 +24,14 @@ function formatMatchedFiles(files) {
 
 function EnvValueCard({ label, value }) {
   return (
-    <div className='rounded-lg bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 p-4'>
-      <div className='text-xs text-gray-500 dark:text-gray-400'>{label}</div>
-      <div className='mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100 break-all'>
-        {value || '-'}
-      </div>
-    </div>
+    <Card className='py-4'>
+      <CardContent>
+        <div className='text-xs text-muted-foreground'>{label}</div>
+        <div className='mt-2 text-sm font-semibold text-foreground break-all'>
+          {value || '-'}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -31,14 +44,14 @@ export default function AdminEnvPage() {
   const badge = useMemo(() => {
     if (!result?.success) {
       return {
-        tone: 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20',
+        variant: 'destructive',
         icon: <TriangleAlert className='w-4 h-4' />,
         text: '환경 점검 실패',
       };
     }
 
     return {
-      tone: 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20',
+      variant: 'default',
       icon: <ShieldCheck className='w-4 h-4' />,
       text: '환경 점검 성공',
     };
@@ -85,129 +98,130 @@ export default function AdminEnvPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='card p-6'>
-        <div className='flex flex-wrap items-start justify-between gap-4'>
-          <div>
-            <h1 className='text-xl font-semibold text-gray-900 dark:text-white'>
-              ENV 변수 확인
-            </h1>
-            <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
-              현재 런타임에서 사용 중인 <code>POSTGRES_URI</code>와{' '}
-              <code>NODE_ENV</code>, 그리고 값이 일치하는 <code>.env*</code>
-              파일 후보를 확인합니다.
-            </p>
+      <Card>
+        <CardContent className='pt-6'>
+          <div className='flex flex-wrap items-start justify-between gap-4'>
+            <div>
+              <h1 className='text-xl font-semibold text-foreground'>
+                ENV 변수 확인
+              </h1>
+              <p className='text-sm text-muted-foreground mt-2'>
+                현재 런타임에서 사용 중인 <code>POSTGRES_URI</code>와{' '}
+                <code>NODE_ENV</code>, 그리고 값이 일치하는 <code>.env*</code>
+                파일 후보를 확인합니다.
+              </p>
+            </div>
+
+            <Button
+              onClick={loadData}
+              disabled={loading}
+              size='sm'
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              새로고침
+            </Button>
           </div>
+        </CardContent>
+      </Card>
 
-          <button
-            type='button'
-            onClick={loadData}
-            disabled={loading}
-            className='btn-primary text-sm px-3 py-1.5 inline-flex items-center gap-2 disabled:opacity-60'
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            새로고침
-          </button>
-        </div>
-      </div>
+      <Card>
+        <CardContent className='pt-6 space-y-4'>
+          <Badge variant={badge.variant} className='gap-2 px-3 py-1.5'>
+            {badge.icon}
+            <span>{badge.text}</span>
+          </Badge>
 
-      <div className='card p-6 space-y-4'>
-        <div
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium ${badge.tone}`}
-        >
-          {badge.icon}
-          <span>{badge.text}</span>
-        </div>
-
-        {error && (
-          <div className='rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 px-3 py-2 text-sm text-red-700 dark:text-red-300'>
-            {error}
-          </div>
-        )}
-
-        {result?.success && (
-          <>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              <EnvValueCard
-                label='NODE_ENV (runtime)'
-                value={result.runtime?.nodeEnv}
-              />
-              <EnvValueCard
-                label='POSTGRES_URI (runtime)'
-                value={result.runtime?.postgresUri}
-              />
+          {error && (
+            <div className='rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive'>
+              {error}
             </div>
+          )}
 
-            <div className='rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
-              <div className='px-4 py-2 bg-gray-50 dark:bg-gray-800/60 text-sm font-semibold text-gray-800 dark:text-gray-200'>
-                일치 파일 후보
+          {result?.success && (
+            <>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                <EnvValueCard
+                  label='NODE_ENV (runtime)'
+                  value={result.runtime?.nodeEnv}
+                />
+                <EnvValueCard
+                  label='POSTGRES_URI (runtime)'
+                  value={result.runtime?.postgresUri}
+                />
               </div>
-              <div className='p-4 space-y-2 text-sm'>
-                <div>
-                  <span className='text-gray-500 dark:text-gray-400'>NODE_ENV 후보</span>
-                  <div className='text-gray-900 dark:text-gray-100 break-all'>
-                    {formatMatchedFiles(result.envFiles?.nodeEnvMatchedFiles)}
+
+              <div className='rounded-lg border border-border overflow-hidden'>
+                <div className='px-4 py-2 bg-muted text-sm font-semibold text-foreground'>
+                  일치 파일 후보
+                </div>
+                <div className='p-4 space-y-2 text-sm'>
+                  <div>
+                    <span className='text-muted-foreground'>NODE_ENV 후보</span>
+                    <div className='text-foreground break-all'>
+                      {formatMatchedFiles(result.envFiles?.nodeEnvMatchedFiles)}
+                    </div>
+                  </div>
+                  <div>
+                    <span className='text-muted-foreground'>POSTGRES_URI 후보</span>
+                    <div className='text-foreground break-all'>
+                      {formatMatchedFiles(result.envFiles?.postgresUriMatchedFiles)}
+                    </div>
+                  </div>
+                  <div className='text-xs text-muted-foreground pt-1'>
+                    {result.envFiles?.caveat}
                   </div>
                 </div>
-                <div>
-                  <span className='text-gray-500 dark:text-gray-400'>POSTGRES_URI 후보</span>
-                  <div className='text-gray-900 dark:text-gray-100 break-all'>
-                    {formatMatchedFiles(result.envFiles?.postgresUriMatchedFiles)}
+              </div>
+
+              <div className='rounded-lg border border-border overflow-hidden'>
+                <div className='px-4 py-2 bg-muted text-sm font-semibold text-foreground'>
+                  점검한 .env 파일
+                </div>
+
+                <div className='p-4 space-y-3 text-sm'>
+                  <div className='rounded-md border border-border px-3 py-2 bg-background'>
+                    <div className='text-xs text-muted-foreground'>프로젝트 루트</div>
+                    <div className='mt-1 font-medium text-foreground break-all'>
+                      {result.envFiles?.projectRoot || '-'}
+                    </div>
+                  </div>
+
+                  <div className='border border-border rounded-md overflow-hidden'>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className='px-3 py-2'>파일명</TableHead>
+                          <TableHead className='px-3 py-2'>존재</TableHead>
+                          <TableHead className='px-3 py-2'>NODE_ENV</TableHead>
+                          <TableHead className='px-3 py-2'>POSTGRES_URI</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(result.envFiles?.snapshots || []).map((item) => (
+                          <TableRow key={item.fileName}>
+                            <TableCell className='px-3 py-2 font-medium text-foreground whitespace-nowrap'>
+                              {item.fileName}
+                            </TableCell>
+                            <TableCell className='px-3 py-2 text-foreground whitespace-nowrap'>
+                              {item.exists ? 'YES' : 'NO'}
+                            </TableCell>
+                            <TableCell className='px-3 py-2 text-foreground break-all'>
+                              {item.hasNodeEnv ? item.nodeEnvValue : '-'}
+                            </TableCell>
+                            <TableCell className='px-3 py-2 text-foreground break-all'>
+                              {item.hasPostgresUri ? item.postgresUriValue : '-'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
-                <div className='text-xs text-gray-500 dark:text-gray-400 pt-1'>
-                  {result.envFiles?.caveat}
-                </div>
               </div>
-            </div>
-
-            <div className='rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
-              <div className='px-4 py-2 bg-gray-50 dark:bg-gray-800/60 text-sm font-semibold text-gray-800 dark:text-gray-200'>
-                점검한 .env 파일
-              </div>
-
-              <div className='p-4 space-y-3 text-sm'>
-                <div className='rounded-md border border-gray-200 dark:border-gray-700 px-3 py-2 bg-white dark:bg-gray-900/40'>
-                  <div className='text-xs text-gray-500 dark:text-gray-400'>프로젝트 루트</div>
-                  <div className='mt-1 font-medium text-gray-900 dark:text-gray-100 break-all'>
-                    {result.envFiles?.projectRoot || '-'}
-                  </div>
-                </div>
-
-                <div className='overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-md'>
-                  <table className='min-w-full text-xs'>
-                    <thead className='bg-gray-50 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300'>
-                      <tr>
-                        <th className='px-3 py-2 text-left'>파일명</th>
-                        <th className='px-3 py-2 text-left'>존재</th>
-                        <th className='px-3 py-2 text-left'>NODE_ENV</th>
-                        <th className='px-3 py-2 text-left'>POSTGRES_URI</th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y divide-gray-100 dark:divide-gray-800'>
-                      {(result.envFiles?.snapshots || []).map((item) => (
-                        <tr key={item.fileName}>
-                          <td className='px-3 py-2 font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap'>
-                            {item.fileName}
-                          </td>
-                          <td className='px-3 py-2 text-gray-700 dark:text-gray-300 whitespace-nowrap'>
-                            {item.exists ? 'YES' : 'NO'}
-                          </td>
-                          <td className='px-3 py-2 text-gray-700 dark:text-gray-300 break-all'>
-                            {item.hasNodeEnv ? item.nodeEnvValue : '-'}
-                          </td>
-                          <td className='px-3 py-2 text-gray-700 dark:text-gray-300 break-all'>
-                            {item.hasPostgresUri ? item.postgresUriValue : '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

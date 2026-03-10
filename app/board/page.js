@@ -284,7 +284,7 @@ export default function BoardPage() {
                         <div className='flex flex-wrap items-center gap-4 text-xs text-muted-foreground'>
                           <span>{post.author?.name || '익명'}</span>
                           {post.author?.department && (
-                            <span>{post.author.department}</span>
+                      <span>{post.author.department.replaceAll('부서', '그룹')}</span>
                           )}
                           <span>{formatDate(post.createdAt)}</span>
                           <span className='flex items-center gap-1'>

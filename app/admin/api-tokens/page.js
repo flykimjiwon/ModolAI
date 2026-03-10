@@ -459,14 +459,14 @@ export default function ApiKeysPage() {
           <button
             onClick={fetchTokens}
             disabled={loading}
-            className='btn-secondary flex items-center gap-2'
+            className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             새로고침
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className='btn-primary flex items-center gap-2'
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
           >
             <Plus className='h-4 w-4' />
             키 발급
@@ -475,7 +475,7 @@ export default function ApiKeysPage() {
       </div>
 
       {/* 필터 */}
-      <div className='card p-4'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
         <div className='flex items-center gap-4'>
           <div className='flex items-center gap-2'>
             <Filter className='h-5 w-5 text-muted-foreground' />
@@ -510,7 +510,7 @@ export default function ApiKeysPage() {
       </div>
 
       {/* 키 목록 */}
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='font-medium text-foreground'>
             키 목록 ({totalCount.toLocaleString()})

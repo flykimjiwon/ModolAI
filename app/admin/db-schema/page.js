@@ -119,7 +119,7 @@ export default function DbSchemaPage() {
 
   return (
     <div className='space-y-6'>
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <h1 className='text-xl font-semibold text-foreground'>
@@ -146,7 +146,7 @@ export default function DbSchemaPage() {
             </select>
             <a
               href='/admin/settings'
-              className='btn-primary text-sm px-3 py-1.5'
+              className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-1.5'
             >
               설정으로 돌아가기
             </a>
@@ -154,7 +154,7 @@ export default function DbSchemaPage() {
         </div>
       </div>
 
-      <div className='card p-6'>
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <h2 className='text-lg font-semibold text-foreground'>

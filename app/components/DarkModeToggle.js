@@ -2,6 +2,7 @@
 
 import { Moon, Sun } from 'lucide-react';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { Button } from '@/components/ui/button';
 
 export default function DarkModeToggle() {
   const { isDark, toggle, mounted } = useDarkMode();
@@ -9,24 +10,25 @@ export default function DarkModeToggle() {
   // 클라이언트 렌더링 전에는 아무것도 표시하지 않음 (hydration mismatch 방지)
   if (!mounted) {
     return (
-      <button className='p-2 rounded-lg text-gray-400'>
+      <Button variant='ghost' size='icon' className='text-muted-foreground' disabled>
         <div className='h-5 w-5' />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
+      variant='ghost'
+      size='icon'
       onClick={toggle}
-      className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
       title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
       aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
     >
       {isDark ? (
-        <Sun className='h-5 w-5 text-yellow-500' />
+        <Sun className='h-5 w-5 text-amber-500' />
       ) : (
-        <Moon className='h-5 w-5 text-gray-600' />
+        <Moon className='h-5 w-5 text-muted-foreground' />
       )}
-    </button>
+    </Button>
   );
 }

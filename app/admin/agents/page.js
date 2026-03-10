@@ -305,7 +305,7 @@ export default function AgentsManagePage() {
         </div>
         <button
           onClick={() => fetchData()}
-          className="btn-secondary flex items-center gap-2"
+          className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
@@ -375,7 +375,7 @@ export default function AgentsManagePage() {
                 </div>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="btn-primary flex items-center gap-2"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
                   Add Permission
@@ -452,7 +452,7 @@ export default function AgentsManagePage() {
                   <button
                     onClick={handleSaveSettings}
                     disabled={settingsSaving}
-                    className="btn-primary flex items-center gap-2 disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 disabled:opacity-60"
                   >
                     {settingsSaving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -741,13 +741,13 @@ export default function AgentsManagePage() {
                     setNewPermission({ permissionType: 'role', permissionValue: '', isAllowed: true });
                     setUserSearch('');
                   }}
-                  className="btn-secondary"
+                  className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddPermission}
-                  className="btn-primary"
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   Add
                 </button>

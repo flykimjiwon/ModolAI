@@ -306,7 +306,7 @@ function buildBlueThemeTemplate(theme, tone) {
     '    .ppt-footer { margin-top: auto; font-size: 0.82rem; opacity: 0.85; }',
     '  </style>',
     '  <div class="ppt-surface">',
-    '    <p class="ppt-kicker">Modol AI Template</p>',
+        '    <p class="ppt-kicker">ModolAI Template</p>',
     '    <h1 class="ppt-title">Main Slide Title</h1>',
     '    <p class="ppt-subtitle">Deliver the core message in one sentence</p>',
     '    <div class="ppt-grid">',
