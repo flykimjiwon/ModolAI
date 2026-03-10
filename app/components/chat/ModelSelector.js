@@ -1,6 +1,17 @@
 'use client';
-import { useState, memo, useEffect } from 'react';
+import { useState, memo, useEffect, Fragment } from 'react';
 import { Zap, ChevronDown, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from '@/components/ui/dropdown-menu';
 
 // 라운드로빈 여부 확인 (같은 label + 서로 다른 endpoint)
 function isRoundRobinGroup(models) {
@@ -91,7 +102,6 @@ const ModelSelector = memo(function ModelSelector({
   disabled,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(null);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [roundRobinInfo, setRoundRobinInfo] = useState(null);
   const [checkingRoundRobin, setCheckingRoundRobin] = useState(false);
@@ -165,70 +175,64 @@ const ModelSelector = memo(function ModelSelector({
     }
   };
 
-  const handleDropdownClick = () => {
-    if (!disabled) {
-      setIsOpen(!isOpen);
-      if (!hasInteracted) {
-        setHasInteracted(true);
-      }
-    }
-  };
-
   return (
-    <div className='relative'>
-      {/* 드롭다운 버튼 */}
-      <button
-        id='model-selector-button'
-        data-testid='model-selector-button'
-        onClick={handleDropdownClick}
-        disabled={disabled}
-        className={`flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-xs transition-all duration-200 ${
-          disabled
-            ? 'opacity-50 cursor-not-allowed'
-            : 'hover:bg-gray-300 dark:hover:bg-gray-600'
-        }`}
-      >
-        <Zap size={14} className='text-blue-500' />
-        <span className='hidden sm:inline text-gray-900 dark:text-gray-100'>
-          {selectedModelInfo?.label || '모델 선택'}
-        </span>
-        {/* 라운드로빈 상태 태그 */}
-        {roundRobinInfo?.isRoundRobin && (
-          <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium'>
-            RR {roundRobinInfo.serverCount}
+    <DropdownMenu
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!disabled) {
+          setIsOpen(open);
+          if (!hasInteracted && open) setHasInteracted(true);
+        }
+      }}
+    >
+      <DropdownMenuTrigger asChild>
+        <Button
+          id='model-selector-button'
+          data-testid='model-selector-button'
+          variant='secondary'
+          size='sm'
+          disabled={disabled}
+          className='gap-2 text-xs'
+        >
+          <Zap size={14} className='text-muted-foreground' />
+          <span className='hidden sm:inline'>
+            {selectedModelInfo?.label || '모델 선택'}
           </span>
-        )}
-        {checkingRoundRobin && (
-          <Loader2 size={12} className='animate-spin text-gray-400' />
-        )}
-        <ChevronDown
-          size={14}
-          className={`text-gray-500 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
+          {/* 라운드로빈 상태 태그 */}
+          {roundRobinInfo?.isRoundRobin && (
+            <Badge variant='secondary' className='text-[10px] px-1.5 py-0'>
+              RR {roundRobinInfo.serverCount}
+            </Badge>
+          )}
+          {checkingRoundRobin && (
+            <Loader2 size={12} className='animate-spin text-muted-foreground' />
+          )}
+          <ChevronDown
+            size={14}
+            className={`text-muted-foreground transition-transform ${
+              isOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </Button>
+      </DropdownMenuTrigger>
 
       {/* 드롭다운 메뉴 */}
-      {isOpen && !disabled && (
-        <div
-          id='model-selector-dropdown'
-          data-testid='model-selector-dropdown'
-          className='absolute bottom-full right-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg min-w-64 z-100'
-        >
+      <DropdownMenuContent
+        id='model-selector-dropdown'
+        data-testid='model-selector-dropdown'
+        side='top'
+        align='end'
+        className='min-w-64'
+      >
+        <DropdownMenuRadioGroup value={selectedModel} onValueChange={handleModelSelect}>
           {mergedModelConfig &&
-            Object.entries(mergedModelConfig).map(([categoryKey, category]) => (
-              <div
-                key={categoryKey}
-                data-testid={`model-selector-category-${categoryKey}`}
-                className='p-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0'
-              >
-                <div className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2'>
+            Object.entries(mergedModelConfig).map(([categoryKey, category], idx) => (
+              <Fragment key={categoryKey}>
+                {idx > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuLabel data-testid={`model-selector-category-${categoryKey}`}>
                   {category.label}
-                </div>
+                </DropdownMenuLabel>
                 {category.models.map((model, index) => {
-                  const isSelected = selectedModel === model.id;
-
                   // 같은 label을 가진 모든 모델 찾기
                   const sameLabelModels = allModels.filter(
                     (m) =>
@@ -243,62 +247,37 @@ const ModelSelector = memo(function ModelSelector({
                   );
 
                   return (
-                    <div
+                    <DropdownMenuRadioItem
                       key={`${categoryKey}-${model.id}-${index}`}
-                      className='relative'
-                      onMouseEnter={() =>
-                        setShowTooltip(`${categoryKey}-${model.id}`)
-                      }
-                      onMouseLeave={() => setShowTooltip(null)}
+                      id={`model-option-${model.id}`}
+                      data-testid={`model-option-${model.id}`}
+                      value={model.id}
+                      className='data-[state=checked]:bg-accent'
+                      title={model.tooltip || undefined}
                     >
-                      <button
-                        id={`model-option-${model.id}`}
-                        data-testid={`model-option-${model.id}`}
-                        onClick={() => handleModelSelect(model.id)}
-                        className={`w-full text-left px-2 py-2 rounded text-sm transition-colors ${
-                          isSelected
-                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100'
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
-                        }`}
-                      >
-                        <div className='flex items-center justify-between'>
-                          <span>{model.label || model.modelName || model.id}</span>
-                          <div className='flex items-center gap-1.5'>
-                            {isRoundRobin && (
-                              <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium'>
-                                RR
-                              </span>
-                            )}
-                            {hasDefaultModel && (
-                              <span className='px-1.5 py-0.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs rounded'>
-                                기본
-                              </span>
-                            )}
-                          </div>
+                      <div className='flex items-center justify-between flex-1'>
+                        <span>{model.label || model.modelName || model.id}</span>
+                        <div className='flex items-center gap-1.5'>
+                          {isRoundRobin && (
+                            <Badge variant='secondary' className='text-[10px] px-1.5 py-0'>
+                              RR
+                            </Badge>
+                          )}
+                          {hasDefaultModel && (
+                            <Badge variant='outline' className='text-[10px] px-1.5 py-0'>
+                              기본
+                            </Badge>
+                          )}
                         </div>
-                      </button>
-
-                      {/* 툴팁 */}
-                      {showTooltip === `${categoryKey}-${model.id}` &&
-                        model.tooltip && (
-                          <div className='absolute left-full top-0 ml-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded px-2 py-1 whitespace-nowrap z-60 max-w-xs'>
-                            {model.tooltip}
-                            <div className='absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-100'></div>
-                          </div>
-                        )}
-                    </div>
+                      </div>
+                    </DropdownMenuRadioItem>
                   );
                 })}
-              </div>
+              </Fragment>
             ))}
-        </div>
-      )}
-
-      {/* 배경 클릭 시 닫기 */}
-      {isOpen && (
-        <div className='fixed inset-0 z-90' onClick={() => setIsOpen(false)} />
-      )}
-    </div>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 });
 

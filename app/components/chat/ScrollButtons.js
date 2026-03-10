@@ -1,6 +1,7 @@
 'use client';
 
-import { ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 function ScrollButtons({ show, containerRef }) {
   const scrollToTop = () => {
@@ -31,20 +32,24 @@ function ScrollButtons({ show, containerRef }) {
 
   return (
     <div className="fixed bottom-28 right-5 z-50 flex flex-col space-y-2">
-      <button
+      <Button
+        variant="outline"
+        size="icon"
         onClick={scrollToTop}
-        className="p-3 bg-gray-200 text-gray-800 rounded-full shadow-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-all"
+        className="rounded-full shadow-lg size-12"
         aria-label="맨 위로 스크롤"
       >
-        <ArrowUpCircle className="h-6 w-6" />
-      </button>
-      <button
+        <ChevronUp className="size-6" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
         onClick={scrollToBottom}
-        className="p-3 bg-gray-200 text-gray-800 rounded-full shadow-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition-all"
+        className="rounded-full shadow-lg size-12"
         aria-label="맨 아래로 스크롤"
       >
-        <ArrowDownCircle className="h-6 w-6" />
-      </button>
+        <ChevronDown className="size-6" />
+      </Button>
     </div>
   );
 }

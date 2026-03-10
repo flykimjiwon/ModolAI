@@ -45,7 +45,7 @@ const DynamicSiteTitle = memo(function DynamicSiteTitle() {
     <h1
       id='chat-header-title'
       data-testid='chat-header-title'
-      className='text-xl font-bold text-gray-800 dark:text-gray-200'
+      className='text-xl font-bold text-foreground'
     >
       {siteDescription}
     </h1>
@@ -57,7 +57,7 @@ function ChatHeader() {
     <header
       id='chat-header'
       data-testid='chat-header'
-      className='w-full border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10'
+      className='w-full border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10'
     >
       <div className='w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-between gap-4 px-4 py-3'>
         <div className='w-10' />

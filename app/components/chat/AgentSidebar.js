@@ -17,6 +17,18 @@ import {
 } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/modal';
 import DirectMessageModal from '@/components/DirectMessageModal';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+  SheetClose,
+} from '@/components/ui/sheet';
+import { Card, CardContent } from '@/components/ui/card';
 
 const AGENT_SIDEBAR_MENUS = {
   '7': {
@@ -103,64 +115,58 @@ function AgentSidebar({
     return () => clearInterval(interval);
   }, [fetchUnreadDmCount]);
 
-  const handleHamburgerClick = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleCloseClick = () => {
-    setSidebarOpen(false);
-  };
-
   return (
     <>
       <div
         className={`
-          fixed left-0 top-0 h-full w-16 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-40
+          fixed left-0 top-0 h-full w-16 bg-background border-r border-border z-40
           flex flex-col items-center py-4
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
       >
-        <button
-          onClick={handleHamburgerClick}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-4'
+        <Button
+          variant='ghost'
+          size='icon'
+          onClick={() => setSidebarOpen(true)}
           title='Open sidebar'
+          className='mb-4'
         >
-          <Menu className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-        </button>
+          <Menu className='h-5 w-5' />
+        </Button>
 
         <div className='p-3 mb-4'>
           <Bot className={`h-5 w-5 ${agentColor}`} />
         </div>
 
         <div className='relative'>
-          <button
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={() => !loading && setShowDmModal(true)}
-            className={`relative p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
             title='Messages'
             disabled={loading}
+            className='relative'
           >
-            <Mail className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+            <Mail className='h-5 w-5' />
             {unreadDmCount > 0 && (
-              <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-red-500 text-white'>
+              <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-destructive text-white'>
                 {unreadDmCount > 99 ? '99+' : unreadDmCount}
               </span>
             )}
-          </button>
+          </Button>
 
           {showDmNotification && (
             <div className='absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 animate-bounce'>
-              <div className='relative bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
-                <div className='absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-blue-600'></div>
+              <div className='relative bg-foreground text-background text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
+                <div className='absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-foreground'></div>
                 {newDmCount} new message(s) received
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDmNotification(false);
                   }}
-                  className='ml-2 hover:text-blue-200'
+                  className='ml-2 hover:opacity-70'
                 >
                   <X className='h-3 w-3 inline' />
                 </button>
@@ -169,7 +175,9 @@ function AgentSidebar({
           )}
         </div>
 
-        <button
+        <Button
+          variant='ghost'
+          size='icon'
           onClick={() => {
             if (!loading) {
               setConfirmModal({
@@ -185,214 +193,209 @@ function AgentSidebar({
               });
             }
           }}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-auto'
           title='Log out'
           disabled={loading}
+          className='mt-auto'
         >
-          <LogOut className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-        </button>
+          <LogOut className='h-5 w-5' />
+        </Button>
       </div>
 
-      <div
-        className={`
-          fixed left-0 top-0 h-full w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-50
-          flex flex-col
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-          <div className='flex items-center gap-3'>
-            <Bot className={`h-6 w-6 ${agentColor}`} />
-            <div>
-              <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
-                {agentName}
-              </h2>
-              {agentDescription && (
-                <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  {agentDescription}
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={handleCloseClick}
-            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-            title='Close sidebar'
-          >
-            <X className='h-5 w-5 text-gray-600 dark:text-gray-400' />
-          </button>
-        </div>
-
-        <div className='flex-1 overflow-y-auto p-4'>
-          {AGENT_SIDEBAR_MENUS[agentId] && (
-            <div className='space-y-2'>
-              <h3 className='text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3'>
-                {AGENT_SIDEBAR_MENUS[agentId].title}
-              </h3>
-              {AGENT_SIDEBAR_MENUS[agentId].items.map((item) => {
-                const ItemIcon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (typeof onAgentMenuSelect === 'function') {
-                        onAgentMenuSelect(item.id);
-                        return;
-                      }
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium rounded-lg transition-colors ${
-                      activeAgentMenu === item.id
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <ItemIcon className={`h-4 w-4 ${agentColor}`} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <div className='mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
-              {agentDescription || 'Agent features are available.'}
-            </p>
-          </div>
-        </div>
-
-        <div className='p-4 space-y-2 border-t border-gray-200 dark:border-gray-700 flex-shrink-0'>
-          <button
-            onClick={() => !loading && router.push('/notice')}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
-              loading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            disabled={loading}
-          >
-            <Bell className='h-4 w-4' />
-            Notices
-          </button>
-
-          {boardEnabled && (
-            <button
-              onClick={() => !loading && router.push('/board')}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              disabled={loading}
-            >
-              <MessageSquare className='h-4 w-4' />
-              Board
-            </button>
-          )}
-
-          {profileEditEnabled && (
-            <button
-              onClick={() => !loading && router.push('/profile')}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              disabled={loading}
-            >
-              <User className='h-4 w-4' />
-              Edit Profile
-            </button>
-          )}
-
-          {userRole === 'admin' && (
-            <button
-              onClick={() => !loading && router.push('/admin')}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors ${
-                loading ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              disabled={loading}
-            >
-              <Shield className='h-4 w-4' />
-              Admin
-            </button>
-          )}
-        </div>
-
-        <div className='p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0'>
-          <div className='flex items-center justify-between'>
-            <div className='min-w-0 flex-1'>
-              <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                Signed in as
-              </p>
-              <p className='text-xs text-gray-600 dark:text-gray-400 truncate'>
-                {userEmail}
-              </p>
-              {userRole === 'admin' && (
-                <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mt-1'>
-                  Admin
-                </span>
-              )}
-            </div>
-            <div className='flex items-center gap-1'>
-              <div className='relative'>
-                <button
-                  onClick={() => !loading && setShowDmModal(true)}
-                  className={`relative p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
-                    loading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  title='Messages'
-                  disabled={loading}
-                >
-                  <Mail className='h-4 w-4 text-gray-600 dark:text-gray-400' />
-                  {unreadDmCount > 0 && (
-                    <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-red-500 text-white'>
-                      {unreadDmCount > 99 ? '99+' : unreadDmCount}
-                    </span>
-                  )}
-                </button>
-
-                {showDmNotification && (
-                  <div className='absolute bottom-full mb-2 right-0 z-50 animate-bounce'>
-                    <div className='relative bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
-                      {newDmCount} new message(s) received
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowDmNotification(false);
-                        }}
-                        className='ml-2 hover:text-blue-200'
-                      >
-                        <X className='h-3 w-3 inline' />
-                      </button>
-                      <div className='absolute -bottom-2 right-4 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-blue-600'></div>
-                    </div>
-                  </div>
-                )}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent side='left' showCloseButton={false} className='w-80 sm:max-w-80 p-0 gap-0'>
+          <div className='flex items-center justify-between p-4 border-b border-border'>
+            <div className='flex items-center gap-3'>
+              <Bot className={`h-6 w-6 ${agentColor}`} />
+              <div>
+                <SheetTitle className='text-lg'>
+                  {agentName}
+                </SheetTitle>
+                <SheetDescription className='text-xs'>
+                  {agentDescription || `${agentName} menu`}
+                </SheetDescription>
               </div>
-              <button
-                onClick={() => {
-                  if (!loading) {
-                    setConfirmModal({
-                      isOpen: true,
-                      title: 'Confirm Logout',
-                      message: 'Are you sure you want to log out?',
-                      type: 'warning',
-                      onConfirm: () => {
-                        handleLogout();
-                      },
-                      confirmText: 'Log out',
-                      cancelText: 'Cancel',
-                    });
-                  }
-                }}
-                className={`p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                title='Log out'
+            </div>
+            <SheetClose asChild>
+              <Button variant='ghost' size='icon-sm' title='Close sidebar'>
+                <X className='h-5 w-5' />
+              </Button>
+            </SheetClose>
+          </div>
+
+          <ScrollArea className='flex-1'>
+            <div className='p-4'>
+              {AGENT_SIDEBAR_MENUS[agentId] && (
+                <div className='space-y-1'>
+                  <h3 className='text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3'>
+                    {AGENT_SIDEBAR_MENUS[agentId].title}
+                  </h3>
+                  {AGENT_SIDEBAR_MENUS[agentId].items.map((item) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <Button
+                        key={item.id}
+                        variant={activeAgentMenu === item.id ? 'secondary' : 'ghost'}
+                        size='sm'
+                        onClick={() => {
+                          if (typeof onAgentMenuSelect === 'function') {
+                            onAgentMenuSelect(item.id);
+                            return;
+                          }
+                        }}
+                        className='w-full justify-start gap-3'
+                      >
+                        <ItemIcon className={`h-4 w-4 ${agentColor}`} />
+                        {item.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <Card className='mt-6 py-0'>
+                <CardContent className='p-4'>
+                  <p className='text-sm text-muted-foreground'>
+                    {agentDescription || 'Agent features are available.'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </ScrollArea>
+
+          <Separator />
+          <div className='p-4 space-y-1 flex-shrink-0'>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => !loading && router.push('/notice')}
+              className='w-full justify-start gap-3'
+              disabled={loading}
+            >
+              <Bell className='h-4 w-4' />
+              Notices
+            </Button>
+
+            {boardEnabled && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => !loading && router.push('/board')}
+                className='w-full justify-start gap-3'
                 disabled={loading}
               >
-                <LogOut className='h-4 w-4 text-gray-600 dark:text-gray-400' />
-              </button>
+                <MessageSquare className='h-4 w-4' />
+                Board
+              </Button>
+            )}
+
+            {profileEditEnabled && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => !loading && router.push('/profile')}
+                className='w-full justify-start gap-3'
+                disabled={loading}
+              >
+                <User className='h-4 w-4' />
+                Edit Profile
+              </Button>
+            )}
+
+            {userRole === 'admin' && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => !loading && router.push('/admin')}
+                className='w-full justify-start gap-3'
+                disabled={loading}
+              >
+                <Shield className='h-4 w-4' />
+                Admin
+              </Button>
+            )}
+          </div>
+
+          <Separator />
+          <div className='p-4 bg-muted flex-shrink-0'>
+            <div className='flex items-center justify-between'>
+              <div className='min-w-0 flex-1'>
+                <p className='text-sm font-medium text-foreground'>
+                  Signed in as
+                </p>
+                <p className='text-xs text-muted-foreground truncate'>
+                  {userEmail}
+                </p>
+                {userRole === 'admin' && (
+                  <Badge variant='destructive' className='mt-1'>
+                    Admin
+                  </Badge>
+                )}
+              </div>
+              <div className='flex items-center gap-1'>
+                <div className='relative'>
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
+                    onClick={() => !loading && setShowDmModal(true)}
+                    title='Messages'
+                    disabled={loading}
+                    className='relative'
+                  >
+                    <Mail className='h-4 w-4' />
+                    {unreadDmCount > 0 && (
+                      <span className='absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-destructive text-white'>
+                        {unreadDmCount > 99 ? '99+' : unreadDmCount}
+                      </span>
+                    )}
+                  </Button>
+
+                  {showDmNotification && (
+                    <div className='absolute bottom-full mb-2 right-0 z-50 animate-bounce'>
+                      <div className='relative bg-foreground text-background text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
+                        {newDmCount} new message(s) received
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDmNotification(false);
+                          }}
+                          className='ml-2 hover:opacity-70'
+                        >
+                          <X className='h-3 w-3 inline' />
+                        </button>
+                        <div className='absolute -bottom-2 right-4 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-foreground'></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  variant='ghost'
+                  size='icon-sm'
+                  onClick={() => {
+                    if (!loading) {
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Confirm Logout',
+                        message: 'Are you sure you want to log out?',
+                        type: 'warning',
+                        onConfirm: () => {
+                          handleLogout();
+                        },
+                        confirmText: 'Log out',
+                        cancelText: 'Cancel',
+                      });
+                    }
+                  }}
+                  title='Log out'
+                  disabled={loading}
+                >
+                  <LogOut className='h-4 w-4' />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </SheetContent>
+      </Sheet>
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}
