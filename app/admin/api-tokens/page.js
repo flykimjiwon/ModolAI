@@ -279,7 +279,7 @@ export default function ApiKeysPage() {
         className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
         onClick={onClose}
       />
-      <div className={`relative bg-white dark:bg-gray-800 rounded-lg w-full max-w-full ${maxWidth} p-6`}>
+      <div className={`relative bg-card rounded-lg w-full max-w-full ${maxWidth} p-6`}>
         {children}
       </div>
     </div>
@@ -289,15 +289,15 @@ export default function ApiKeysPage() {
     <div className='flex items-center justify-between mb-4'>
       {Icon ? (
         <div className='flex items-center gap-2'>
-          <Icon className={iconClassName || 'h-5 w-5 text-gray-600 dark:text-gray-400'} />
-          <h3 className='text-lg font-medium text-gray-900 dark:text-white'>{title}</h3>
+          <Icon className={iconClassName || 'h-5 w-5 text-muted-foreground'} />
+          <h3 className='text-lg font-medium text-foreground'>{title}</h3>
         </div>
       ) : (
-        <h3 className='text-lg font-medium text-gray-900 dark:text-white'>{title}</h3>
+        <h3 className='text-lg font-medium text-foreground'>{title}</h3>
       )}
       <button
         onClick={onClose}
-        className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+        className='text-muted-foreground hover:text-foreground'
       >
         <X className='h-5 w-5' />
       </button>
@@ -305,32 +305,32 @@ export default function ApiKeysPage() {
   );
 
   const TokenItem = ({ token, onView, onToggleStatus, onDelete }) => (
-    <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors'>
+    <div className='border border-border rounded-lg p-4 hover:bg-accent/50 transition-colors'>
       <div className='flex items-start justify-between'>
         <div className='flex-1'>
           <div className='flex items-center gap-3 mb-2'>
-            <Key className='h-5 w-5 text-gray-400' />
+            <Key className='h-5 w-5 text-muted-foreground' />
             <div>
               <div className='flex items-center gap-2'>
-                <span className='font-medium text-gray-900 dark:text-white'>
+                <span className='font-medium text-foreground'>
                   {token.name || '이름 없음'}
                 </span>
                 {token.isActive ? (
-                  <span className='px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-xs font-medium'>
+                  <span className='px-2 py-0.5 bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary rounded text-xs font-medium'>
                     활성
                   </span>
                 ) : (
-                  <span className='px-2 py-0.5 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded text-xs font-medium'>
+                  <span className='px-2 py-0.5 bg-muted text-foreground dark:bg-muted dark:text-muted-foreground rounded text-xs font-medium'>
                     비활성
                   </span>
                 )}
                 {isExpired(token.expiresAt) && (
-                  <span className='px-2 py-0.5 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded text-xs font-medium'>
+                  <span className='px-2 py-0.5 bg-destructive/10 text-destructive dark:bg-destructive/10 dark:text-destructive rounded text-xs font-medium'>
                     만료됨
                   </span>
                 )}
               </div>
-              <div className='text-sm text-gray-600 dark:text-gray-400 mt-2 space-y-1'>
+              <div className='text-sm text-muted-foreground mt-2 space-y-1'>
                 {token.user && (
                   <div className='flex items-center gap-1'>
                     <User className='h-4 w-4' />
@@ -359,12 +359,12 @@ export default function ApiKeysPage() {
                     </span>
                   </div>
                   {token.usage?.lastUsed && (
-                    <div className='text-xs text-gray-500 dark:text-gray-400'>
+                    <div className='text-xs text-muted-foreground'>
                       마지막 사용: {formatDate(token.usage.lastUsed)}
                     </div>
                   )}
                 </div>
-                <div className='text-xs text-gray-500 dark:text-gray-400 font-mono'>
+                <div className='text-xs text-muted-foreground font-mono'>
                   해시: {token.tokenHash}
                 </div>
               </div>
@@ -374,7 +374,7 @@ export default function ApiKeysPage() {
         <div className='flex items-center gap-2'>
           <button
             onClick={() => onView(token)}
-            className='p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors'
+            className='p-2 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent rounded transition-colors'
             title='키 정보 보기'
           >
             <Eye className='h-4 w-4' />
@@ -383,8 +383,8 @@ export default function ApiKeysPage() {
             onClick={() => onToggleStatus(token._id, token.isActive)}
             className={`p-2 rounded transition-colors ${
               token.isActive
-                ? 'text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-200 hover:bg-green-50 dark:hover:bg-green-900/20'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'text-primary hover:text-primary dark:text-primary dark:hover:text-primary hover:bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent'
             }`}
             title={token.isActive ? '비활성화' : '활성화'}
           >
@@ -396,7 +396,7 @@ export default function ApiKeysPage() {
           </button>
           <button
             onClick={() => onDelete(token._id)}
-            className='p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-200 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors'
+            className='p-2 text-destructive hover:text-destructive dark:hover:text-destructive hover:bg-destructive/10 rounded transition-colors'
             title='삭제'
           >
             <Trash2 className='h-4 w-4' />
@@ -414,17 +414,17 @@ export default function ApiKeysPage() {
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className='px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600'
+          className='px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
         >
           이전
         </button>
-        <span className='text-sm text-gray-600 dark:text-gray-400'>
+        <span className='text-sm text-muted-foreground'>
           {currentPage} / {totalPages}
         </span>
         <button
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className='px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-600'
+          className='px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
         >
           다음
         </button>
@@ -448,10 +448,10 @@ export default function ApiKeysPage() {
       {/* 헤더 */}
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+          <h1 className='text-2xl font-bold text-foreground'>
             API 키 관리
           </h1>
-          <p className='text-gray-600 dark:text-gray-400 mt-1'>
+          <p className='text-muted-foreground mt-1'>
             사용자별 API 키를 발급하고 관리합니다
           </p>
         </div>
@@ -478,8 +478,8 @@ export default function ApiKeysPage() {
       <div className='card p-4'>
         <div className='flex items-center gap-4'>
           <div className='flex items-center gap-2'>
-            <Filter className='h-5 w-5 text-gray-500' />
-            <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <Filter className='h-5 w-5 text-muted-foreground' />
+            <span className='text-sm font-medium text-foreground'>
               필터
             </span>
           </div>
@@ -489,14 +489,14 @@ export default function ApiKeysPage() {
               placeholder='키명, 사용자명, 이메일로 검색...'
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+              className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
             />
           </div>
           <div className='w-64'>
             <select
               value={selectedUserFilter}
               onChange={(e) => handleUserFilterChange(e.target.value)}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+              className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
             >
               <option value=''>전체 사용자</option>
               {users.map((user) => (
@@ -512,17 +512,17 @@ export default function ApiKeysPage() {
       {/* 키 목록 */}
       <div className='card p-6'>
         <div className='flex items-center justify-between mb-4'>
-          <h3 className='font-medium text-gray-900 dark:text-white'>
+          <h3 className='font-medium text-foreground'>
             키 목록 ({totalCount.toLocaleString()})
           </h3>
         </div>
 
         {loading ? (
           <div className='flex items-center justify-center py-8'>
-            <RefreshCw className='h-6 w-6 animate-spin text-gray-400' />
+            <RefreshCw className='h-6 w-6 animate-spin text-muted-foreground' />
           </div>
         ) : filteredTokens.length === 0 ? (
-          <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+          <div className='text-center py-8 text-muted-foreground'>
             키가 없습니다
           </div>
         ) : (
@@ -555,13 +555,13 @@ export default function ApiKeysPage() {
           <ModalHeader title='새 API 키 발급' onClose={resetCreateForm} />
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 사용자 선택 *
               </label>
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
               >
                 <option value=''>사용자를 선택하세요</option>
                 {users.map((user) => (
@@ -572,7 +572,7 @@ export default function ApiKeysPage() {
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 키 이름 (선택사항)
               </label>
               <input
@@ -580,11 +580,11 @@ export default function ApiKeysPage() {
                 value={tokenName}
                 onChange={(e) => setTokenName(e.target.value)}
                 placeholder='예: 프로덕션 API 키'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
               />
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 만료 기간 (일)
               </label>
               <input
@@ -593,20 +593,20 @@ export default function ApiKeysPage() {
                 onChange={(e) => setExpiresInDays(e.target.value)}
                 min={MIN_EXPIRES_IN_DAYS}
                 max={MAX_EXPIRES_IN_DAYS}
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
               />
             </div>
           </div>
           <div className='flex items-center gap-2 mt-6'>
             <button
               onClick={resetCreateForm}
-              className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+              className='flex-1 px-4 py-2 border border-border rounded-md bg-background text-foreground hover:bg-accent'
             >
               취소
             </button>
             <button
               onClick={createToken}
-              className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'
+              className='flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90'
             >
               발급
             </button>
@@ -626,19 +626,19 @@ export default function ApiKeysPage() {
           <ModalHeader
             title='키가 발급되었습니다'
             icon={AlertCircle}
-            iconClassName='h-5 w-5 text-yellow-500'
+            iconClassName='h-5 w-5 text-muted-foreground'
             onClose={() => {
               setShowTokenModal(false);
               setNewToken(null);
             }}
           />
-          <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4'>
-            <p className='text-sm text-yellow-800 dark:text-yellow-200'>
+          <div className='bg-muted border border-border rounded-lg p-4 mb-4'>
+            <p className='text-sm text-muted-foreground'>
               ⚠️ 이 키는 이번에만 표시됩니다. 안전한 곳에 저장해주세요.
             </p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-foreground mb-2'>
               API 키
             </label>
             <div className='flex items-center gap-2'>
@@ -646,11 +646,11 @@ export default function ApiKeysPage() {
                 type='text'
                 value={newToken}
                 readOnly
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm'
+                className='flex-1 px-3 py-2 border border-border rounded-md bg-muted text-foreground font-mono text-sm'
               />
               <button
                 onClick={() => copyToken(newToken)}
-                className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2'
+                className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center gap-2'
               >
                 <Copy className='h-4 w-4' />
                 복사
@@ -658,7 +658,7 @@ export default function ApiKeysPage() {
             </div>
           </div>
           <div className='mt-4'>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <p className='text-sm text-muted-foreground'>
               사용 예시는 관리자 화면에서 제공하지 않습니다.
             </p>
           </div>
@@ -668,7 +668,7 @@ export default function ApiKeysPage() {
                 setShowTokenModal(false);
                 setNewToken(null);
               }}
-              className='w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'
+              className='w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90'
             >
               확인
             </button>
@@ -695,25 +695,25 @@ export default function ApiKeysPage() {
           />
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 키 이름
               </label>
-              <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white'>
+              <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground'>
                 {selectedToken.name || '이름 없음'}
               </div>
             </div>
             {selectedToken.user && (
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label className='block text-sm font-medium text-foreground mb-1'>
                   사용자
                 </label>
-                <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white'>
+                <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground'>
                   {selectedToken.user.name} ({selectedToken.user.email})
                 </div>
               </div>
             )}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 원본 키
               </label>
               {selectedToken.originalToken ? (
@@ -722,24 +722,24 @@ export default function ApiKeysPage() {
                     type='text'
                     value={selectedToken.originalToken}
                     readOnly
-                    className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm'
+                    className='flex-1 px-3 py-2 border border-border rounded-md bg-muted text-foreground font-mono text-sm'
                   />
                   <button
                     onClick={() => copyToken(selectedToken.originalToken)}
-                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2'
+                    className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center gap-2'
                   >
                     <Copy className='h-4 w-4' />
                     복사
                   </button>
                 </div>
               ) : (
-                <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm'>
+                <div className='px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground text-sm'>
                   원본 키를 사용할 수 없습니다. 새로 발급된 키만 표시됩니다.
                 </div>
               )}
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 키 해시
               </label>
               <div className='flex items-center gap-2'>
@@ -747,11 +747,11 @@ export default function ApiKeysPage() {
                   type='text'
                   value={selectedToken.tokenHash}
                   readOnly
-                  className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm'
+                  className='flex-1 px-3 py-2 border border-border rounded-md bg-muted text-foreground font-mono text-sm'
                 />
                 <button
                   onClick={() => copyToken(selectedToken.tokenHash)}
-                  className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2'
+                  className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center gap-2'
                 >
                   <Copy className='h-4 w-4' />
                   복사
@@ -759,21 +759,21 @@ export default function ApiKeysPage() {
               </div>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 상태
               </label>
               <div className='flex items-center gap-2'>
                 {selectedToken.isActive ? (
-                  <span className='px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded text-sm font-medium'>
+                  <span className='px-2 py-1 bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary rounded text-sm font-medium'>
                     활성
                   </span>
                 ) : (
-                  <span className='px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded text-sm font-medium'>
+                  <span className='px-2 py-1 bg-muted text-foreground dark:bg-muted dark:text-muted-foreground rounded text-sm font-medium'>
                     비활성
                   </span>
                 )}
                 {isExpired(selectedToken.expiresAt) && (
-                  <span className='px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded text-sm font-medium'>
+                  <span className='px-2 py-1 bg-destructive/10 text-destructive dark:bg-destructive/10 dark:text-destructive rounded text-sm font-medium'>
                     만료됨
                   </span>
                 )}
@@ -781,45 +781,45 @@ export default function ApiKeysPage() {
             </div>
             <div className='grid grid-cols-2 gap-4'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label className='block text-sm font-medium text-foreground mb-1'>
                   발급일
                 </label>
-                <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm'>
+                <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground text-sm'>
                   {formatDate(selectedToken.createdAt)}
                 </div>
               </div>
               {selectedToken.expiresAt && (
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label className='block text-sm font-medium text-foreground mb-1'>
                     만료일
                   </label>
-                  <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm'>
+                  <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground text-sm'>
                     {formatDate(selectedToken.expiresAt)}
                   </div>
                 </div>
               )}
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 사용량
               </label>
-              <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm'>
+              <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground text-sm'>
                 <div className='flex items-center gap-4'>
                   <span>요청: {selectedToken.usage?.requestCount || 0}회</span>
                   <span>키: {formatTokenCount(selectedToken.usage?.totalTokens)}</span>
                 </div>
                 {selectedToken.usage?.lastUsed && (
-                  <div className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+                  <div className='mt-2 text-xs text-muted-foreground'>
                     마지막 사용: {formatDate(selectedToken.usage.lastUsed)}
                   </div>
                 )}
               </div>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-foreground mb-1'>
                 사용 예시
               </label>
-              <div className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm'>
+              <div className='px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground text-sm'>
                 사용 예시는 관리자 화면에서 제공하지 않습니다.
               </div>
             </div>
@@ -830,7 +830,7 @@ export default function ApiKeysPage() {
                 setShowTokenInfoModal(false);
                 setSelectedToken(null);
               }}
-              className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700'
+              className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90'
             >
               확인
             </button>

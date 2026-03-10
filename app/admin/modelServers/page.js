@@ -724,27 +724,27 @@ export default function ModelServersPage() {
       <div className='flex items-center justify-between'>
         <div>
           <div className='flex items-center gap-3'>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+            <h1 className='text-2xl font-bold text-foreground'>
               Ollama 서버 관리
             </h1>
             <button
               onClick={() => setShowHelpSection(!showHelpSection)}
-              className='p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+              className='p-1 text-muted-foreground hover:text-foreground transition-colors'
               title='도움말 보기'
             >
               <HelpCircle className='h-5 w-5' />
             </button>
           </div>
-          <p className='text-gray-600 dark:text-gray-400 mt-1'>
+          <p className='text-muted-foreground mt-1'>
             온프레미스 Ollama 서버 상태와 로그를 실시간으로 확인합니다.
           </p>
         </div>
         <div className='flex items-center gap-3'>
           {/* 폴링 상태 표시 */}
-          <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
+          <div className='flex items-center gap-2 text-sm text-muted-foreground'>
             <div
               className={`w-2 h-2 rounded-full ${
-                isPollingEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                isPollingEnabled ? 'bg-primary animate-pulse' : 'bg-muted-foreground'
               }`}
             ></div>
             <span>
@@ -765,8 +765,8 @@ export default function ModelServersPage() {
             onClick={() => setIsPollingEnabled(!isPollingEnabled)}
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               isPollingEnabled
-                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800'
-                : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800'
+                ? 'bg-muted text-muted-foreground hover:bg-accent dark:bg-muted dark:text-muted-foreground dark:hover:bg-accent'
+                : 'bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/10 dark:text-primary dark:hover:bg-primary/20'
             } flex items-center gap-1.5`}
           >
             {isPollingEnabled ? (
@@ -810,15 +810,15 @@ export default function ModelServersPage() {
 
       {/* 도움말 섹션 */}
       {showHelpSection && (
-        <div className='bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
+        <div className='bg-primary/10 rounded-lg p-6 border border-primary/20'>
           <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2'>
+            <h3 className='text-lg font-semibold text-foreground flex items-center gap-2'>
               <Info className='h-5 w-5' />
               Ollama 서버 관리 안내
             </h3>
             <button
               onClick={() => setShowHelpSection(false)}
-              className='text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
+              className='text-primary hover:text-primary'
             >
               <ChevronUp className='h-5 w-5' />
             </button>
@@ -826,11 +826,11 @@ export default function ModelServersPage() {
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6 text-sm'>
             <div>
-              <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2'>
+              <h4 className='font-semibold text-primary mb-2 flex items-center gap-2'>
                 <Server className='h-4 w-4' />
                 Ollama 서버 관리
               </h4>
-              <ul className='space-y-1.5 text-blue-700 dark:text-blue-300'>
+              <ul className='space-y-1.5 text-primary'>
                 <li>• 온프레미스 Ollama 서버만 등록/관리합니다</li>
                 <li>• 로컬 개발/테스트 서버에서 LLM 테스트용으로 사용됩니다</li>
                 <li>• 등록된 Ollama 서버의 실시간 상태를 확인합니다</li>
@@ -840,25 +840,25 @@ export default function ModelServersPage() {
             </div>
 
             <div>
-              <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2'>
+              <h4 className='font-semibold text-primary mb-2 flex items-center gap-2'>
                 <Activity className='h-4 w-4' />
                 실시간 모니터링
               </h4>
-              <ul className='space-y-1.5 text-blue-700 dark:text-blue-300'>
+              <ul className='space-y-1.5 text-primary'>
                 <li>
                   • <strong>자동 새로고침:</strong> 5분마다 상태 자동 업데이트
                 </li>
                 <li>
                   •{' '}
                   <span className='inline-flex items-center gap-1'>
-                    <Activity className='h-3 w-3 text-green-500' /> 녹색
+                    <Activity className='h-3 w-3 text-primary' /> 녹색
                   </span>{' '}
                   정상 작동 중
                 </li>
                 <li>
                   •{' '}
                   <span className='inline-flex items-center gap-1'>
-                    <Activity className='h-3 w-3 text-red-500' /> 빨간색
+                    <Activity className='h-3 w-3 text-destructive' /> 빨간색
                   </span>{' '}
                   오프라인 또는 오류
                 </li>
@@ -868,11 +868,11 @@ export default function ModelServersPage() {
             </div>
 
             <div>
-              <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2'>
+              <h4 className='font-semibold text-primary mb-2 flex items-center gap-2'>
                 <Zap className='h-4 w-4' />
                 로컬 테스트용 API
               </h4>
-              <ul className='space-y-1.5 text-blue-700 dark:text-blue-300'>
+              <ul className='space-y-1.5 text-primary'>
                 <li>
                   • <strong>통합 API:</strong> /api/model-servers/generate
                 </li>
@@ -890,8 +890,8 @@ export default function ModelServersPage() {
       <div className='card p-6 mb-6'>
         <div className='flex items-center justify-between mb-4'>
           <div className='flex items-center gap-2'>
-            <Server className='h-5 w-5 text-blue-600' />
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+            <Server className='h-5 w-5 text-primary' />
+            <h2 className='text-lg font-semibold text-foreground'>
               Ollama 서버 관리
             </h2>
           </div>
@@ -903,7 +903,7 @@ export default function ModelServersPage() {
               }
               setShowAddForm(!showAddForm);
             }}
-            className='px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-1'
+            className='px-2 py-1 text-sm text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground border border-border rounded-md hover:bg-accent transition-colors flex items-center gap-1'
           >
             <Edit className='h-3 w-3' />
             추가
@@ -914,7 +914,7 @@ export default function ModelServersPage() {
         {endpoints.length > 0 && (
           <div className='mb-4'>
             <div className='mb-3 flex items-center justify-between'>
-              <h3 className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
+              <h3 className='text-sm font-semibold text-foreground'>
                 등록된 Ollama 서버 ({endpoints.length}개)
               </h3>
             </div>
@@ -1029,30 +1029,30 @@ export default function ModelServersPage() {
                 // 상태 표시 결정: null이면 조회중, true면 정상, false면 오프라인
                 const statusColor =
                   isActive === null
-                    ? 'bg-gray-400'
+                    ? 'bg-muted-foreground'
                     : isActive
-                    ? 'bg-green-500'
-                    : 'bg-red-500';
+                    ? 'bg-primary'
+                    : 'bg-destructive';
                 const statusText =
                   isActive === null ? '조회중' : isActive ? '정상' : '오프라인';
                 const statusIconColor =
                   isActive === null
-                    ? 'text-gray-400'
+                    ? 'text-muted-foreground'
                     : isActive
-                    ? 'text-green-500'
-                    : 'text-red-500';
+                    ? 'text-primary'
+                    : 'text-destructive';
 
                 const isEditing = editingEndpoint?.originalUrl === ep.url;
                 const isInactive = ep.isActive === false;
                 return (
                   <div
                     key={ep.url}
-                    className={`group relative p-4 bg-white dark:bg-gray-800 rounded-lg border transition-all ${
+                    className={`group relative p-4 bg-card rounded-lg border transition-all ${
                       isEditing
-                        ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md'
+                        ? 'border-primary bg-primary/10 shadow-md'
                         : isInactive
-                        ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 opacity-70 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm'
-                        : 'border-gray-200 dark:border-gray-700 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
+                        ? 'border-border bg-muted opacity-70 cursor-pointer hover:border-border dark:hover:border-border hover:shadow-sm'
+                        : 'border-border cursor-pointer hover:border-primary/30 dark:hover:border-primary hover:shadow-md'
                     }`}
                   >
                     <div
@@ -1072,14 +1072,14 @@ export default function ModelServersPage() {
                               <div
                                 className={`text-sm font-semibold truncate ${
                                   isInactive
-                                    ? 'text-gray-500 dark:text-gray-400'
-                                    : 'text-gray-900 dark:text-white'
+                                    ? 'text-muted-foreground'
+                                    : 'text-foreground'
                                 }`}
                               >
                                 {ep.name || '(이름 없음)'}
                               </div>
                               {isInactive && (
-                                <span className='px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-[10px] font-medium rounded'>
+                                <span className='px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded'>
                                   비활성화
                                 </span>
                               )}
@@ -1087,15 +1087,15 @@ export default function ModelServersPage() {
                             <div
                               className={`text-xs font-mono break-all ${
                                 isInactive
-                                  ? 'text-gray-400 dark:text-gray-500'
-                                  : 'text-gray-600 dark:text-gray-400'
+                                  ? 'text-muted-foreground'
+                                  : 'text-muted-foreground'
                               }`}
                             >
                               {ep.url}
                             </div>
                           </div>
                         </div>
-                        <span className='ml-2 inline-flex items-center px-2 py-1 rounded text-[10px] font-medium border flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'>
+                        <span className='ml-2 inline-flex items-center px-2 py-1 rounded text-[10px] font-medium border flex-shrink-0 bg-primary/10 border-primary/20 text-primary'>
                           Ollama
                         </span>
                       </div>
@@ -1105,10 +1105,10 @@ export default function ModelServersPage() {
                         <span
                           className={`inline-flex items-center gap-1.5 px-2 py-1 rounded ${
                             isActive === null
-                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                              ? 'bg-muted text-muted-foreground'
                               : isActive
-                              ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                              : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-destructive/10 dark:bg-destructive/10/30 text-destructive'
                           }`}
                         >
                           <Activity
@@ -1125,7 +1125,7 @@ export default function ModelServersPage() {
                             fetchServerStatus(ep.url);
                           }}
                           disabled={isServerLoading}
-                          className='inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                          className='inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                           title='상태 새로고침'
                         >
                           <RefreshCw
@@ -1135,13 +1135,13 @@ export default function ModelServersPage() {
                           />
                         </button>
                         {modelCount > 0 && (
-                          <span className='inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded'>
+                          <span className='inline-flex items-center gap-1.5 px-2 py-1 bg-muted text-muted-foreground rounded'>
                             <Server className='h-3 w-3' />
                             {modelCount}개 모델
                           </span>
                         )}
                         {responseTime !== null && (
-                          <span className='px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded'>
+                          <span className='px-2 py-1 bg-muted text-muted-foreground rounded'>
                             {responseTime}ms
                           </span>
                         )}
@@ -1149,7 +1149,7 @@ export default function ModelServersPage() {
                     </div>
 
                     {/* 액션 버튼 */}
-                    <div className='pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between'>
+                    <div className='pt-3 border-t border-border flex items-center justify-between'>
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
@@ -1157,7 +1157,7 @@ export default function ModelServersPage() {
                           setShowErrorHistoryModal(true);
                           await fetchErrorHistory(ep.url);
                         }}
-                        className='text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium transition-colors flex items-center gap-1'
+                        className='text-xs text-muted-foreground hover:text-muted-foreground font-medium transition-colors flex items-center gap-1'
                       >
                         <AlertCircle className='h-3 w-3' />
                         오류 이력
@@ -1174,7 +1174,7 @@ export default function ModelServersPage() {
                           }
                         }}
                         disabled={savingEndpoints}
-                        className='text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors'
+                        className='text-xs text-destructive hover:text-destructive font-medium transition-colors'
                       >
                         삭제
                       </button>
@@ -1183,32 +1183,32 @@ export default function ModelServersPage() {
                 );
               })}
             </div>
-            <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
+            <div className='mt-4 pt-4 border-t border-border'>
               <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm'>
                 <div className='flex items-center gap-4'>
-                  <span className='text-gray-600 dark:text-gray-400'>
+                  <span className='text-muted-foreground'>
                     총{' '}
-                    <span className='font-semibold text-gray-900 dark:text-white'>
+                    <span className='font-semibold text-foreground'>
                       {endpoints.length}
                     </span>
                     개 Ollama 서버
                   </span>
-                  <span className='text-gray-500 dark:text-gray-500'>•</span>
-                  <span className='text-gray-600 dark:text-gray-400'>
+                  <span className='text-muted-foreground'>•</span>
+                  <span className='text-muted-foreground'>
                     활성화:{' '}
-                    <span className='font-semibold text-green-600 dark:text-green-400'>
+                    <span className='font-semibold text-primary'>
                       {endpoints.filter((e) => e.isActive !== false).length}
                     </span>
                     개
                   </span>
                   {endpoints.filter((e) => e.isActive === false).length > 0 && (
                     <>
-                      <span className='text-gray-500 dark:text-gray-500'>
+                      <span className='text-muted-foreground'>
                         •
                       </span>
-                      <span className='text-gray-600 dark:text-gray-400'>
+                      <span className='text-muted-foreground'>
                         비활성화:{' '}
-                        <span className='font-semibold text-gray-500 dark:text-gray-400'>
+                        <span className='font-semibold text-muted-foreground'>
                           {endpoints.filter((e) => e.isActive === false).length}
                         </span>
                         개
@@ -1216,7 +1216,7 @@ export default function ModelServersPage() {
                     </>
                   )}
                 </div>
-                <span className='text-gray-600 dark:text-gray-400'>
+                <span className='text-muted-foreground'>
                   {
                     endpoints.filter((ep) => {
                       try {
@@ -1324,31 +1324,31 @@ export default function ModelServersPage() {
             />
             {/* 모달 내용 */}
             <div
-              className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-full md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-4 p-6'
+              className='relative bg-card rounded-lg shadow-xl w-full max-w-full md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-4 p-6'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='flex items-center justify-between mb-4'>
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                <h3 className='text-lg font-semibold text-foreground'>
                   Ollama 서버 수정
                 </h3>
                 <button
                   onClick={cancelEditEndpoint}
                   disabled={savingEndpoints}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                  className='text-muted-foreground hover:text-foreground transition-colors'
                 >
                   <X className='h-5 w-5' />
                 </button>
               </div>
               <div className='space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2'>
+                  <label className='block text-sm font-medium text-foreground mb-1 flex items-center gap-2'>
                     <span>
-                      Ollama 서버 이름 <span className='text-red-500'>*</span>
+                      Ollama 서버 이름 <span className='text-destructive'>*</span>
                     </span>
                     <div className='group relative'>
-                      <HelpCircle className='h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help' />
+                      <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
                       <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10'>
-                        <div className='bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
+                        <div className='bg-foreground dark:bg-muted text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
                           <div className='font-semibold mb-1'>
                             이름은 수정할 수 없습니다
                           </div>
@@ -1363,14 +1363,14 @@ export default function ModelServersPage() {
                     type='text'
                     value={editingEndpoint.name}
                     placeholder='예: 개발1, 운영A'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    className='w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground cursor-not-allowed'
                     readOnly
                     maxLength={50}
                     required
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label className='block text-sm font-medium text-foreground mb-1'>
                     URL
                   </label>
                   <input
@@ -1383,23 +1383,23 @@ export default function ModelServersPage() {
                       })
                     }
                     placeholder='예: http://localhost:11434'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
                     disabled={savingEndpoints}
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label className='block text-sm font-medium text-foreground mb-1'>
                     Provider
                   </label>
                   <input
                     type='text'
                     value='ollama'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    className='w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground cursor-not-allowed'
                     readOnly
                   />
                 </div>
                 <div>
-                  <label className='flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='flex items-center gap-2 text-sm font-medium text-foreground'>
                     <input
                       type='checkbox'
                       checked={
@@ -1413,12 +1413,12 @@ export default function ModelServersPage() {
                           isActive: e.target.checked,
                         })
                       }
-                      className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
+                      className='w-4 h-4 text-primary bg-muted border-border rounded focus:ring-ring'
                       disabled={savingEndpoints}
                     />
                     <span>활성화</span>
                   </label>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6'>
+                  <p className='text-xs text-muted-foreground mt-1 ml-6'>
                     비활성화된 Ollama 서버는 라운드로빈에서 제외됩니다.
                   </p>
                 </div>
@@ -1453,31 +1453,31 @@ export default function ModelServersPage() {
             />
             {/* 모달 내용 */}
             <div
-              className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-full md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-4 p-6'
+              className='relative bg-card rounded-lg shadow-xl w-full max-w-full md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-4 p-6'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='flex items-center justify-between mb-4'>
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                <h3 className='text-lg font-semibold text-foreground'>
                   Ollama 서버 추가
                 </h3>
                 <button
                   onClick={() => setShowAddForm(false)}
                   disabled={savingEndpoints}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                  className='text-muted-foreground hover:text-foreground transition-colors'
                 >
                   <X className='h-5 w-5' />
                 </button>
               </div>
               <div className='space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2'>
+                  <label className='block text-sm font-medium text-foreground mb-1 flex items-center gap-2'>
                     <span>
-                      Ollama 서버 이름 <span className='text-red-500'>*</span>
+                      Ollama 서버 이름 <span className='text-destructive'>*</span>
                     </span>
                     <div className='group relative'>
-                      <HelpCircle className='h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help' />
+                      <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
                       <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10'>
-                        <div className='bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
+                        <div className='bg-foreground dark:bg-muted text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
                           <div className='font-semibold mb-1'>
                             라운드로빈 안내
                           </div>
@@ -1493,14 +1493,14 @@ export default function ModelServersPage() {
                     value={endpointNameInput}
                     onChange={(e) => setEndpointNameInput(e.target.value)}
                     placeholder='예: 개발1, 운영A'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
                     disabled={savingEndpoints}
                     maxLength={50}
                     required
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label className='block text-sm font-medium text-foreground mb-1'>
                     URL
                   </label>
                   <input
@@ -1508,18 +1508,18 @@ export default function ModelServersPage() {
                     value={endpointUrlInput}
                     onChange={(e) => setEndpointUrlInput(e.target.value)}
                     placeholder='예: http://localhost:11434'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
                     disabled={savingEndpoints}
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                  <label className='block text-sm font-medium text-foreground mb-1'>
                     Provider
                   </label>
                   <input
                     type='text'
                     value='ollama'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    className='w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground cursor-not-allowed'
                     readOnly
                   />
                 </div>
@@ -1557,9 +1557,9 @@ export default function ModelServersPage() {
             }}
           />
           {/* 모달 내용 */}
-          <div className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col'>
-            <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+          <div className='relative bg-card rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col'>
+            <div className='flex items-center justify-between p-4 border-b border-border'>
+              <h2 className='text-lg font-semibold text-foreground'>
                 오류 이력 - {selectedEndpointForHistory}
               </h2>
               <div className='flex items-center gap-2'>
@@ -1569,7 +1569,7 @@ export default function ModelServersPage() {
                       deleteAllErrorHistory(selectedEndpointForHistory)
                     }
                     disabled={errorHistoryLoading}
-                    className='px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='px-3 py-1.5 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed'
                   >
                     <Trash2 className='h-4 w-4' />
                     전체 삭제
@@ -1581,7 +1581,7 @@ export default function ModelServersPage() {
                     setErrorHistory([]);
                     setSelectedEndpointForHistory(null);
                   }}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  className='text-muted-foreground hover:text-foreground'
                 >
                   <X className='h-5 w-5' />
                 </button>
@@ -1590,10 +1590,10 @@ export default function ModelServersPage() {
             <div className='p-4 overflow-y-auto flex-1'>
               {errorHistoryLoading ? (
                 <div className='flex items-center justify-center py-8'>
-                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
                 </div>
               ) : errorHistory.length === 0 ? (
-                <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+                <div className='text-center py-8 text-muted-foreground'>
                   최근 7일간 오류 이력이 없습니다.
                 </div>
               ) : (
@@ -1606,39 +1606,39 @@ export default function ModelServersPage() {
                     return (
                       <div
                         key={error.id}
-                        className='p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg'
+                        className='p-3 bg-destructive/10 border border-destructive/20 rounded-lg'
                       >
                         <div className='flex items-start justify-between mb-2'>
                           <div className='flex-1'>
                             <div className='flex items-center gap-2 mb-1 flex-wrap'>
-                              <span className='text-xs font-medium text-red-700 dark:text-red-300'>
+                              <span className='text-xs font-medium text-destructive'>
                                 {error.errorType || 'Unknown'}
                               </span>
-                              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                              <span className='text-xs text-muted-foreground'>
                                 {new Date(error.checkedAt).toLocaleString(
                                   'ko-KR',
                                   { timeZone: 'Asia/Seoul' }
                                 )}
                               </span>
                               {error.responseTime !== null && (
-                                <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                <span className='text-xs text-muted-foreground'>
                                   ({error.responseTime}ms)
                                 </span>
                               )}
                               {metadata.name && (
-                                <span className='text-xs text-gray-600 dark:text-gray-400 font-medium'>
+                                <span className='text-xs text-muted-foreground font-medium'>
                                   {metadata.name}
                                 </span>
                               )}
                             </div>
-                            <p className='text-sm text-red-800 dark:text-red-200 break-words mb-2'>
+                            <p className='text-sm text-destructive break-words mb-2'>
                               {error.errorMessage}
                             </p>
 
                             {/* 스택 트레이스 표시 */}
                             {hasStack && (
                               <details className='mt-2'>
-                                <summary className='text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-800 dark:hover:text-gray-200 font-medium'>
+                                <summary className='text-xs text-muted-foreground cursor-pointer hover:text-foreground font-medium'>
                                   스택 트레이스 보기
                                 </summary>
                                 <div className='relative mt-2'>
@@ -1649,16 +1649,16 @@ export default function ModelServersPage() {
                                         `stack-${error.id}`
                                       )
                                     }
-                                    className='absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors'
+                                    className='absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent rounded transition-colors'
                                     title='클립보드에 복사'
                                   >
                                     {copiedTexts.has(`stack-${error.id}`) ? (
-                                      <Check className='w-4 h-4 text-green-600 dark:text-green-400' />
+                                      <Check className='w-4 h-4 text-primary' />
                                     ) : (
                                       <Copy className='w-4 h-4' />
                                     )}
                                   </button>
-                                  <pre className='text-xs text-gray-700 dark:text-gray-300 overflow-x-auto bg-gray-100 dark:bg-gray-700 p-3 pr-10 rounded border border-gray-200 dark:border-gray-600 whitespace-pre-wrap break-words'>
+                                  <pre className='text-xs text-foreground overflow-x-auto bg-muted p-3 pr-10 rounded border border-border whitespace-pre-wrap break-words'>
                                     {stack}
                                   </pre>
                                 </div>
@@ -1671,7 +1671,7 @@ export default function ModelServersPage() {
                                 (key) => key !== 'stack'
                               ).length > 0 && (
                                 <details className='mt-2'>
-                                  <summary className='text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-800 dark:hover:text-gray-200'>
+                                  <summary className='text-xs text-muted-foreground cursor-pointer hover:text-foreground'>
                                     상세 정보 보기
                                   </summary>
                                   <div className='relative mt-2'>
@@ -1694,18 +1694,18 @@ export default function ModelServersPage() {
                                                 `metadata-${error.id}`
                                               )
                                             }
-                                            className='absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors'
+                                            className='absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent rounded transition-colors'
                                             title='클립보드에 복사'
                                           >
                                             {copiedTexts.has(
                                               `metadata-${error.id}`
                                             ) ? (
-                                              <Check className='w-4 h-4 text-green-600 dark:text-green-400' />
+                                              <Check className='w-4 h-4 text-primary' />
                                             ) : (
                                               <Copy className='w-4 h-4' />
                                             )}
                                           </button>
-                                          <pre className='text-xs text-gray-600 dark:text-gray-400 overflow-x-auto bg-gray-100 dark:bg-gray-700 p-2 pr-10 rounded'>
+                                          <pre className='text-xs text-muted-foreground overflow-x-auto bg-muted p-2 pr-10 rounded'>
                                             {metadataText}
                                           </pre>
                                         </>

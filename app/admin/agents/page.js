@@ -287,7 +287,7 @@ export default function AgentsManagePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -296,10 +296,10 @@ export default function AgentsManagePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-foreground">
             Agent Management
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Configure access permissions per agent
           </p>
         </div>
@@ -313,9 +313,9 @@ export default function AgentsManagePage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="bg-card rounded-lg shadow">
+          <div className="p-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground">
               Agents
             </h2>
           </div>
@@ -326,32 +326,32 @@ export default function AgentsManagePage() {
                 onClick={() => setSelectedAgent(agent)}
                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                   selectedAgent?.id === agent.id
-                    ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800'
-                    : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'bg-accent border border-primary/20'
+                    : 'hover:bg-accent'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Bot className={`h-5 w-5 ${
                     selectedAgent?.id === agent.id
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-400'
+                      ? 'text-primary dark:text-primary'
+                      : 'text-muted-foreground'
                   }`} />
                   <div className="flex-1 min-w-0">
                     <p className={`font-medium truncate ${
                       selectedAgent?.id === agent.id
-                        ? 'text-blue-900 dark:text-blue-100'
-                        : 'text-gray-900 dark:text-white'
+                        ? 'text-foreground'
+                        : 'text-foreground'
                     }`}>
                       {agent.name}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {agent.description}
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     (agent.permissions?.length ?? 0) === 0
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-muted text-muted-foreground'
                   }`}>
                     {(agent.permissions?.length ?? 0) === 0 ? 'Open' : `${agent.permissions?.length ?? 0} rule(s)`}
                   </span>
@@ -361,15 +361,15 @@ export default function AgentsManagePage() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="lg:col-span-2 bg-card rounded-lg shadow">
           {selectedAgent ? (
             <>
-              <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {selectedAgent.name} Permissions
                   </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     {selectedAgent.description}
                   </p>
                 </div>
@@ -384,11 +384,11 @@ export default function AgentsManagePage() {
 
               <div className="p-4">
                 {(selectedAgent.permissions?.length ?? 0) === 0 ? (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p className="font-medium">No restrictions</p>
                     <p className="text-sm">All users can access this agent</p>
-                    <p className="text-xs mt-2 text-gray-400">
+                    <p className="text-xs mt-2 text-muted-foreground">
                       Adding a permission will restrict access to matching users only
                     </p>
                   </div>
@@ -397,18 +397,18 @@ export default function AgentsManagePage() {
                     {selectedAgent.permissions.map((permission) => (
                       <div
                         key={permission.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+                        className="flex items-center justify-between p-3 bg-muted rounded-lg"
                       >
                         <div className="flex items-center gap-3">
-                          {permission.permission_type === 'all' && <Users className="h-5 w-5 text-purple-500" />}
-                          {permission.permission_type === 'role' && <Shield className="h-5 w-5 text-blue-500" />}
-                          {permission.permission_type === 'department' && <Building2 className="h-5 w-5 text-green-500" />}
-                          {permission.permission_type === 'user' && <User className="h-5 w-5 text-orange-500" />}
+                          {permission.permission_type === 'all' && <Users className="h-5 w-5 text-muted-foreground" />}
+                          {permission.permission_type === 'role' && <Shield className="h-5 w-5 text-primary" />}
+                          {permission.permission_type === 'department' && <Building2 className="h-5 w-5 text-primary" />}
+                          {permission.permission_type === 'user' && <User className="h-5 w-5 text-muted-foreground" />}
                           <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="font-medium text-foreground">
                               {getPermissionValueLabel(permission)}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-muted-foreground">
                               {PERMISSION_TYPE_LABELS[permission.permission_type]}
                             </p>
                           </div>
@@ -416,8 +416,8 @@ export default function AgentsManagePage() {
                         <div className="flex items-center gap-3">
                           <span className={`flex items-center gap-1 text-sm px-2 py-1 rounded ${
                             permission.is_allowed
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-destructive/10 text-destructive'
                           }`}>
                             {permission.is_allowed ? (
                               <><Check className="h-4 w-4" /> Allow</>
@@ -427,7 +427,7 @@ export default function AgentsManagePage() {
                           </span>
                           <button
                             onClick={() => handleDeletePermission(permission.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                            className="p-2 text-muted-foreground hover:text-destructive transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -439,13 +439,13 @@ export default function AgentsManagePage() {
                 )}
               </div>
 
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-t border-border">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-base font-semibold text-foreground">
                       {selectedAgent.name} Settings
                     </h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Manage default behavior and model policies per agent
                     </p>
                   </div>
@@ -466,7 +466,7 @@ export default function AgentsManagePage() {
                 {selectedAgent.id === '7' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Default Model (from /admin/models)
                       </label>
                       <select
@@ -477,7 +477,7 @@ export default function AgentsManagePage() {
                             selectedModelId: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       >
                         <option value="">None (use default model)</option>
                         {settingsForm.selectedModelId &&
@@ -495,7 +495,7 @@ export default function AgentsManagePage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Default Slide Count
                       </label>
                       <input
@@ -509,12 +509,12 @@ export default function AgentsManagePage() {
                             defaultSlideCount: Number(e.target.value || 1),
                           }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Default Theme
                       </label>
                       <select
@@ -525,7 +525,7 @@ export default function AgentsManagePage() {
                             defaultTheme: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       >
                         <option value="light">Light</option>
                         <option value="dark">Dark</option>
@@ -533,7 +533,7 @@ export default function AgentsManagePage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Default Tone
                       </label>
                       <select
@@ -544,7 +544,7 @@ export default function AgentsManagePage() {
                             defaultTone: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       >
                         <option value="business">Business</option>
                         <option value="casual">Casual</option>
@@ -562,25 +562,25 @@ export default function AgentsManagePage() {
                             allowUserModelOverride: e.target.checked,
                           }))
                         }
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                        className="h-4 w-4 rounded border-border text-primary"
                       />
                       <label
                         htmlFor="allow-user-model-override"
-                        className="text-sm text-gray-700 dark:text-gray-300"
+                        className="text-sm text-foreground"
                       >
                         Allow user to select model
                       </label>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                  <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
                     No additional settings for this agent. (PPT Maker supports model/default configuration)
                   </div>
                 )}
               </div>
             </>
           ) : (
-            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="p-8 text-center text-muted-foreground">
               <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Select an agent</p>
             </div>
@@ -595,14 +595,14 @@ export default function AgentsManagePage() {
               className="fixed inset-0 bg-black/50"
               onClick={() => setShowAddModal(false)}
             />
-            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="relative bg-card rounded-lg shadow-xl max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
                 Add Permission for {selectedAgent.name}
               </h3>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Permission Type
                   </label>
                   <select
@@ -615,7 +615,7 @@ export default function AgentsManagePage() {
                       });
                       setUserSearch('');
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                   >
                     <option value="role">By Role</option>
                     <option value="department">By Group</option>
@@ -626,13 +626,13 @@ export default function AgentsManagePage() {
 
                 {newPermission.permissionType === 'role' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Select Role
                     </label>
                     <select
                       value={newPermission.permissionValue}
                       onChange={(e) => setNewPermission({ ...newPermission, permissionValue: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     >
                       <option value="">Select</option>
                       <option value="admin">Admin</option>
@@ -643,13 +643,13 @@ export default function AgentsManagePage() {
 
                 {newPermission.permissionType === 'department' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Select Group
                     </label>
                     <select
                       value={newPermission.permissionValue}
                       onChange={(e) => setNewPermission({ ...newPermission, permissionValue: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                     >
                       <option value="">Select</option>
                       {departments.map((dept) => (
@@ -661,43 +661,43 @@ export default function AgentsManagePage() {
 
                 {newPermission.permissionType === 'user' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-foreground mb-2">
                       Select User
                     </label>
                     <div className="relative mb-2">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input
                         type="text"
                         placeholder="Search by name, email, or group..."
                         value={userSearch}
                         onChange={(e) => setUserSearch(e.target.value)}
-                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background text-foreground"
                       />
                     </div>
-                    <div className="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <div className="max-h-48 overflow-y-auto border border-border rounded-lg">
                       {filteredUsers.slice(0, 50).map((user) => (
                         <button
                           key={user.id}
                           onClick={() => setNewPermission({ ...newPermission, permissionValue: user.id })}
-                          className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                          className={`w-full text-left px-3 py-2 hover:bg-accent ${
                             newPermission.permissionValue === user.id
-                              ? 'bg-blue-50 dark:bg-blue-900/30'
+                              ? 'bg-primary/10'
                               : ''
                           }`}
                         >
-                          <p className="font-medium text-gray-900 dark:text-white text-sm">
+                          <p className="font-medium text-foreground text-sm">
                             {user.name || '(No name)'}
                             {user.role === 'admin' && (
-                              <span className="ml-1 text-xs text-red-600">(Admin)</span>
+                              <span className="ml-1 text-xs text-destructive">(Admin)</span>
                             )}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             {user.email} {user.department && `| ${user.department}`}
                           </p>
                         </button>
                       ))}
                       {filteredUsers.length > 50 && (
-                        <p className="px-3 py-2 text-xs text-gray-500 text-center">
+                        <p className="px-3 py-2 text-xs text-muted-foreground text-center">
                           Type a search term to find more...
                         </p>
                       )}
@@ -706,7 +706,7 @@ export default function AgentsManagePage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Access
                   </label>
                   <div className="flex gap-4">
@@ -716,9 +716,9 @@ export default function AgentsManagePage() {
                         name="isAllowed"
                         checked={newPermission.isAllowed === true}
                         onChange={() => setNewPermission({ ...newPermission, isAllowed: true })}
-                        className="text-blue-600"
+                        className="text-primary"
                       />
-                      <span className="text-green-600 dark:text-green-400 font-medium">Allow</span>
+                      <span className="text-primary font-medium">Allow</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -726,9 +726,9 @@ export default function AgentsManagePage() {
                         name="isAllowed"
                         checked={newPermission.isAllowed === false}
                         onChange={() => setNewPermission({ ...newPermission, isAllowed: false })}
-                        className="text-blue-600"
+                        className="text-primary"
                       />
-                      <span className="text-red-600 dark:text-red-400 font-medium">Block</span>
+                      <span className="text-destructive font-medium">Block</span>
                     </label>
                   </div>
                 </div>

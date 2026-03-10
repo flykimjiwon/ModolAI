@@ -33,7 +33,7 @@ import { CSS } from '@dnd-kit/utilities';
 const Tooltip = ({ text, children }) => (
   <div className='relative group'>
     {children}
-    <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10'>
+    <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-card text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10'>
       {text}
       <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800'></div>
     </div>
@@ -63,7 +63,7 @@ function SortableModelItem({ id, children }) {
       <div
         {...attributes}
         {...listeners}
-        className='cursor-grab p-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 touch-none'
+        className='cursor-grab p-4 text-muted-foreground hover:text-foreground touch-none'
       >
         <GripVertical size={18} />
       </div>
@@ -1778,14 +1778,14 @@ export default function ModelsPage() {
   const getStatusClass = (status) => {
     switch (status) {
       case 'vectorized':
-        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+        return 'bg-primary/10 text-primary';
       case 'vectorizing':
       case 'processing':
-        return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200';
+        return 'bg-muted text-muted-foreground';
       case 'error':
-        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+        return 'bg-destructive/10 text-destructive';
       default:
-        return 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200';
+        return 'bg-muted dark:bg-foreground text-foreground';
     }
   };
 
@@ -1854,12 +1854,12 @@ export default function ModelsPage() {
   if (loading)
     return (
       <div className='flex items-center justify-center min-h-96'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
       </div>
     );
   if (!modelConfig)
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
+      <div className='text-center text-muted-foreground'>
         모델 설정을 불러올 수 없습니다.
       </div>
     );
@@ -1868,10 +1868,10 @@ export default function ModelsPage() {
     <div className='space-y-6'>
       {/* 페이지 헤더 */}
       <div>
-        <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+        <h1 className='text-2xl font-bold text-foreground'>
           모델 관리
         </h1>
-        <p className='text-gray-600 dark:text-gray-400 mt-1'>
+        <p className='text-muted-foreground mt-1'>
           AI 모델 설정을 관리합니다. 각 섹션별로 개별 저장할 수 있습니다.
         </p>
       </div>
@@ -1880,10 +1880,10 @@ export default function ModelsPage() {
       <div className='card p-6'>
         <div className='flex items-center justify-between mb-4'>
           <div>
-            <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
+            <h2 className='text-xl font-semibold text-foreground'>
               수동 프리셋 URL 설정
             </h2>
-            <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+            <p className='text-sm text-muted-foreground mt-1'>
               수동 추가 프리셋(OpenAI Compatible/Responses)에 적용됩니다.
             </p>
           </div>
@@ -1898,7 +1898,7 @@ export default function ModelsPage() {
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-foreground mb-2'>
               baseUrl (responses)
             </label>
             <input
@@ -1910,7 +1910,7 @@ export default function ModelsPage() {
             />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-foreground mb-2'>
               apiBase (compatible)
             </label>
             <input
@@ -1929,10 +1929,10 @@ export default function ModelsPage() {
         <div className='card p-6'>
           <div className='flex items-center justify-between mb-4'>
             <div>
-              <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
+              <h2 className='text-xl font-semibold text-foreground'>
                 LLM 모델 설정
               </h2>
-              <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+              <p className='text-sm text-muted-foreground mt-1'>
                 드래그하여 순서를 변경할 수 있습니다. 각 카테고리별로 순서 저장
                 버튼을 클릭하세요.
               </p>
@@ -1941,7 +1941,7 @@ export default function ModelsPage() {
               <button
                 onClick={fetchAvailableModels}
                 disabled={modelsLoading}
-                className='px-3 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5'
+                className='px-3 py-2 text-sm font-medium rounded-lg bg-card border border-border text-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5'
               >
                 <RefreshCw
                   className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`}
@@ -1962,7 +1962,7 @@ export default function ModelsPage() {
               ([categoryKey, category]) => (
                 <div
                   key={categoryKey}
-                  className='card p-6 border-2 border-gray-200 dark:border-gray-700'
+                  className='card p-6 border-2 border-border'
                 >
                   <div className='flex items-center justify-between mb-5'>
                     {editingCategory === categoryKey ? (
@@ -1980,11 +1980,11 @@ export default function ModelsPage() {
                         autoFocus
                       />
                     ) : (
-                      <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
+                      <h3 className='text-lg font-semibold text-foreground flex items-center gap-2'>
                         {category.label}
                         <button
                           onClick={() => setEditingCategory(categoryKey)}
-                          className='p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
+                          className='p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors'
                           title='카테고리명 수정'
                         >
                           <Edit size={14} />
@@ -1995,7 +1995,7 @@ export default function ModelsPage() {
                       <button
                         onClick={() => saveCategoryOrder(categoryKey)}
                         disabled={savingCategory === categoryKey}
-                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5'
+                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5'
                         title='모델 순서 저장'
                       >
                         <Save className='h-3.5 w-3.5' />
@@ -2007,7 +2007,7 @@ export default function ModelsPage() {
                         onClick={() =>
                           setShowAddForm({ category: categoryKey, show: true })
                         }
-                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-1.5'
+                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1.5'
                       >
                         <Plus className='h-3.5 w-3.5' />
                         모델 추가
@@ -2039,15 +2039,15 @@ export default function ModelsPage() {
                             <div
                               className={`p-4 rounded-lg border ${
                                 isLabelRoundRobin
-                                  ? 'bg-gray-50 dark:bg-gray-700 border-purple-300 dark:border-purple-600'
-                                  : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                                  ? 'bg-muted border-border dark:border-border'
+                                  : 'bg-muted border-border'
                               }`}
                             >
                               {editingModel?.category === categoryKey &&
                               editingModel?.index === modelIndex ? (
                                 <div className='space-y-3'>
                                   <div>
-                                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                                    <label className='block text-xs font-medium text-foreground mb-1'>
                                       모델서버
                                     </label>
                                     <select
@@ -2090,8 +2090,8 @@ export default function ModelsPage() {
                                   {editForm.endpoint &&
                                     editForm.endpoint !== 'manual' &&
                                     availableModels.length > 0 && (
-                                      <div className='flex items-start gap-2 p-2 rounded-md bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 mt-2'>
-                                        <span className='text-xs text-gray-700 dark:text-gray-300'>
+                                      <div className='flex items-start gap-2 p-2 rounded-md bg-muted border border-border mt-2'>
+                                        <span className='text-xs text-foreground'>
                                           {(() => {
                                             const ep = endpoints.find(
                                                 (e) =>
@@ -2109,9 +2109,9 @@ export default function ModelsPage() {
 
                                     {/* 수동 추가 시 API 설정 */}
                                       {editForm.endpoint === 'manual' && (
-                                        <div className='mt-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
+                                        <div className='mt-3 p-4 bg-muted rounded-lg border border-border'>
                                           <div className='mb-4'>
-                                            <p className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                                            <p className='text-xs font-medium text-foreground mb-2'>
                                               프리셋 적용
                                             </p>
                                             <div className='flex flex-wrap gap-2'>
@@ -2123,7 +2123,7 @@ export default function ModelsPage() {
                                                     apiConfig: buildManualPreset('openai-compatible'),
                                                   })
                                                 }
-                                                className='px-2 py-1 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                className='px-2 py-1 text-xs rounded bg-card border border-border hover:bg-accent'
                                               >
                                                 OpenAI Compatible
                                               </button>
@@ -2135,7 +2135,7 @@ export default function ModelsPage() {
                                                     apiConfig: buildManualPreset('responses'),
                                                   })
                                                 }
-                                                className='px-2 py-1 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                className='px-2 py-1 text-xs rounded bg-card border border-border hover:bg-accent'
                                               >
                                                 Responses
                                               </button>
@@ -2143,7 +2143,7 @@ export default function ModelsPage() {
                                           </div>
                                           {/* API 키 입력 */}
                                           <div className='mb-4'>
-                                            <label className='block text-sm font-medium text-gray-900 dark:text-white mb-2'>
+                                            <label className='block text-sm font-medium text-foreground mb-2'>
                                               🔑 API 키
                                           </label>
                                           <input
@@ -2156,17 +2156,17 @@ export default function ModelsPage() {
                                               });
                                             }}
                                             placeholder='API 키를 입력하세요'
-                                            className='w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent'
+                                            className='w-full px-3 py-2 text-sm bg-card border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent'
                                           />
-                                          <p className='text-xs text-gray-600 dark:text-gray-400 mt-1'>
+                                          <p className='text-xs text-muted-foreground mt-1'>
                                             API 호출 시 사용할 키입니다. 템플릿의 {'{{OPENAI_API_KEY}}'} 변수로 대체됩니다.
                                           </p>
                                         </div>
 
-                                        <label className='block text-sm font-medium text-gray-900 dark:text-white mb-2'>
+                                        <label className='block text-sm font-medium text-foreground mb-2'>
                                           🔧 API 요청 설정 (JSON)
                                         </label>
-                                        <p className='text-xs text-gray-600 dark:text-gray-400 mb-2'>
+                                        <p className='text-xs text-muted-foreground mb-2'>
                                           백엔드에서 실행할 API 요청을 JSON 형태로 작성하세요. 변수: {'{{OPENAI_API_KEY}}'}, {'{{messages}}'}, {'{{message}}'}
                                         </p>
                                         <textarea
@@ -2186,7 +2186,7 @@ export default function ModelsPage() {
                                               });
                                             }
                                           }}
-                                          className='w-full h-64 px-3 py-2 text-xs font-mono bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent'
+                                          className='w-full h-64 px-3 py-2 text-xs font-mono bg-card border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent'
                                           placeholder={`{
   "method": "POST",
   "url": "https://api.openai.com/v1/chat/completions",
@@ -2206,20 +2206,20 @@ export default function ModelsPage() {
 }`}
                                         />
                                         <div className='mt-2 text-xs space-y-2'>
-                                          <div className='p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded'>
-                                            <p className='font-semibold text-red-700 dark:text-red-400 mb-2'>⚠️ 수정이 필요한 필드:</p>
-                                            <ul className='list-disc ml-5 text-red-600 dark:text-red-400 space-y-1'>
-                                              <li><code className='bg-red-100 dark:bg-red-900/40 px-1 rounded'>&quot;url&quot;</code> - API 엔드포인트 주소</li>
-                                              <li><code className='bg-red-100 dark:bg-red-900/40 px-1 rounded'>&quot;model&quot;</code> - 모델명 (gpt-4, claude-3 등)</li>
-                                              <li><code className='bg-red-100 dark:bg-red-900/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - 응답 경로</li>
+                                          <div className='p-3 bg-destructive/10 border border-destructive/20 rounded'>
+                                            <p className='font-semibold text-destructive mb-2'>⚠️ 수정이 필요한 필드:</p>
+                                            <ul className='list-disc ml-5 text-destructive space-y-1'>
+                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;url&quot;</code> - API 엔드포인트 주소</li>
+                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;model&quot;</code> - 모델명 (gpt-4, claude-3 등)</li>
+                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - 응답 경로</li>
                                             </ul>
                                           </div>
-                                          <div className='text-gray-500 dark:text-gray-400'>
+                                          <div className='text-muted-foreground'>
                                             <p><strong>사용 가능한 변수:</strong></p>
                                             <ul className='list-disc ml-5 mt-1'>
-                                              <li><code className='bg-gray-100 dark:bg-gray-800 px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - 환경변수에서 API 키 가져오기</li>
-                                              <li><code className='bg-gray-100 dark:bg-gray-800 px-1 rounded'>{'{{messages}}'}</code> - 전체 대화 내역 (배열)</li>
-                                              <li><code className='bg-gray-100 dark:bg-gray-800 px-1 rounded'>{'{{message}}'}</code> - 사용자의 최신 메시지 (문자열)</li>
+                                              <li><code className='bg-muted px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - 환경변수에서 API 키 가져오기</li>
+                                              <li><code className='bg-muted px-1 rounded'>{'{{messages}}'}</code> - 전체 대화 내역 (배열)</li>
+                                              <li><code className='bg-muted px-1 rounded'>{'{{message}}'}</code> - 사용자의 최신 메시지 (문자열)</li>
                                             </ul>
                                           </div>
                                         </div>
@@ -2228,7 +2228,7 @@ export default function ModelsPage() {
                                   </div>
                                   <div className='grid grid-cols-2 gap-3'>
                                     <div>
-                                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                                      <label className='block text-xs font-medium text-foreground mb-1'>
                                         모델명
                                       </label>
                                       <div className='relative'>
@@ -2295,15 +2295,15 @@ export default function ModelsPage() {
                                                 {editForm.id && (
                                                   <div className='absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1'>
                                                     {checkingRoundRobin ? (
-                                                      <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600'></div>
+                                                      <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-primary'></div>
                                                     ) : roundRobinInfo?.isRoundRobin ? (
-                                                      <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium'>
+                                                      <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded font-medium'>
                                                         RR {roundRobinInfo.serverCount}
                                                       </span>
                                                     ) : null}
                                                   </div>
                                                 )}
-                                                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                                                <p className='text-xs text-muted-foreground mt-1'>
                                                   {isManual
                                                     ? '커스텀 API 모델의 식별자를 입력하세요'
                                                     : provider === 'openai-compatible'
@@ -2387,16 +2387,16 @@ export default function ModelsPage() {
                                               </select>
                                               {modelsLoading && (
                                                 <div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
-                                                  <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600'></div>
+                                                  <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-primary'></div>
                                                 </div>
                                               )}
                                               {/* 라운드로빈 상태 태그 */}
                                               {editForm.id && (
                                                 <div className='absolute right-10 top-1/2 transform -translate-y-1/2 flex items-center gap-1'>
                                                   {checkingRoundRobin ? (
-                                                    <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600'></div>
+                                                    <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-primary'></div>
                                                   ) : roundRobinInfo?.isRoundRobin ? (
-                                                    <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium'>
+                                                    <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded font-medium'>
                                                       RR {roundRobinInfo.serverCount}
                                                     </span>
                                                   ) : null}
@@ -2408,10 +2408,10 @@ export default function ModelsPage() {
                                       </div>
                                     </div>
                                     <div>
-                                      <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2'>
+                                      <label className='block text-xs font-medium text-foreground mb-1 flex items-center gap-2'>
                                         <span>라벨</span>
                                         {labelRoundRobinInfo && (
-                                          <span className='px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] rounded font-medium'>
+                                          <span className='px-1.5 py-0.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-[10px] rounded font-medium'>
                                             라운드로빈{' '}
                                             {labelRoundRobinInfo.count}개
                                           </span>
@@ -2447,7 +2447,7 @@ export default function ModelsPage() {
                                         }}
                                         className={`input-primary text-sm ${
                                           labelRoundRobinInfo
-                                            ? 'border-purple-300 dark:border-purple-600'
+                                            ? 'border-border dark:border-border'
                                             : ''
                                         }`}
                                         placeholder={
@@ -2455,8 +2455,8 @@ export default function ModelsPage() {
                                         }
                                       />
                                       {labelRoundRobinInfo && (
-                                        <div className='mt-2 p-2 rounded bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-700'>
-                                          <div className='text-xs text-gray-600 dark:text-gray-400'>
+                                        <div className='mt-2 p-2 rounded bg-muted border border-border dark:border-border'>
+                                          <div className='text-xs text-muted-foreground'>
                                             <span className='font-medium'>
                                               동일 라벨 모델:
                                             </span>{' '}
@@ -2484,7 +2484,7 @@ export default function ModelsPage() {
                                             )}
                                             {labelRoundRobinInfo.endpointCount >
                                               1 && (
-                                              <span className='ml-2 text-purple-600 dark:text-purple-400'>
+                                              <span className='ml-2 text-muted-foreground dark:text-muted-foreground'>
                                                 (
                                                 {
                                                   labelRoundRobinInfo.endpointCount
@@ -2498,7 +2498,7 @@ export default function ModelsPage() {
                                     </div>
                                   </div>
                                   <div>
-                                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                                    <label className='block text-xs font-medium text-foreground mb-1'>
                                       툴팁 설명
                                     </label>
                                     <textarea
@@ -2515,7 +2515,7 @@ export default function ModelsPage() {
                                     />
                                   </div>
                                   <div>
-                                    <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                                    <label className='block text-xs font-medium text-foreground mb-1'>
                                       멀티턴 제한
                                     </label>
                                     <div className='flex items-center gap-3'>
@@ -2529,10 +2529,10 @@ export default function ModelsPage() {
                                             multiturnLimit: e.target.value,
                                           })
                                         }
-                                        className='w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                                        className='w-24 px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground'
                                         disabled={editForm.multiturnUnlimited || loading}
                                       />
-                                      <label className='inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400'>
+                                      <label className='inline-flex items-center gap-2 text-xs text-muted-foreground'>
                                         <input
                                           type='checkbox'
                                           checked={!!editForm.multiturnUnlimited}
@@ -2552,7 +2552,7 @@ export default function ModelsPage() {
                                         제한 없음
                                       </label>
                                     </div>
-                                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                                    <p className='text-xs text-muted-foreground mt-1'>
                                       모델별 멀티턴 기억 개수입니다.
                                     </p>
                                   </div>
@@ -2574,13 +2574,13 @@ export default function ModelsPage() {
 
                                       return (
                                         <>
-                                          <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                                          <label className='block text-xs font-medium text-foreground mb-1'>
                                             시스템 프롬프트
-                                            <span className='text-xs text-gray-500'>
+                                            <span className='text-xs text-muted-foreground'>
                                               (줄바꿈으로 구분)
                                             </span>
                                             {isNotFirstInRoundRobin && (
-                                              <span className='ml-2 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 text-[10px] rounded font-medium'>
+                                              <span className='ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] rounded font-medium'>
                                                 공유됨
                                               </span>
                                             )}
@@ -2594,12 +2594,12 @@ export default function ModelsPage() {
                                                   ).join('\n') || ''
                                                 }
                                                 disabled
-                                                className='input-primary text-sm resize-none bg-gray-100 dark:bg-gray-800 opacity-75 cursor-not-allowed'
+                                                className='input-primary text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
                                                 rows='6'
                                                 placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
                                               />
-                                              <div className='p-2 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700'>
-                                                <p className='text-xs text-yellow-800 dark:text-yellow-200'>
+                                              <div className='p-2 rounded bg-muted border border-border'>
+                                                <p className='text-xs text-muted-foreground'>
                                                   <span className='font-medium'>
                                                     라운드로빈 모델:
                                                   </span>{' '}
@@ -2642,7 +2642,7 @@ export default function ModelsPage() {
                                       );
                                     })()}
                                   </div>
-                                  <div className='flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-gray-200 dark:border-gray-600'>
+                                  <div className='flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border'>
                                     <div className='flex items-center gap-4 flex-wrap'>
                                       <label className='flex items-center gap-2 cursor-pointer'>
                                         <input
@@ -2654,9 +2654,9 @@ export default function ModelsPage() {
                                               isDefault: e.target.checked,
                                             })
                                           }
-                                          className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
+                                          className='w-4 h-4 text-primary bg-muted border-border rounded focus:ring-ring'
                                         />
-                                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                        <span className='text-sm text-foreground'>
                                           기본 모델
                                         </span>
                                       </label>
@@ -2670,9 +2670,9 @@ export default function ModelsPage() {
                                               adminOnly: e.target.checked,
                                             })
                                           }
-                                          className='w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500'
+                                          className='w-4 h-4 text-destructive bg-muted border-border rounded focus:ring-ring'
                                         />
-                                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                        <span className='text-sm text-foreground'>
                                           관리자 전용
                                         </span>
                                       </label>
@@ -2686,9 +2686,9 @@ export default function ModelsPage() {
                                               visible: e.target.checked,
                                             })
                                           }
-                                          className='w-4 h-4 text-gray-600 bg-gray-100 border-gray-300 rounded focus:ring-gray-500'
+                                          className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                         />
-                                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                        <span className='text-sm text-foreground'>
                                           메인 화면 표시
                                         </span>
                                       </label>
@@ -2702,9 +2702,9 @@ export default function ModelsPage() {
                                               piiFilterRequest: e.target.checked,
                                             })
                                           }
-                                          className='w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500'
+                                          className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                         />
-                                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                        <span className='text-sm text-foreground'>
                                           요청 PII 필터
                                         </span>
                                       </label>
@@ -2719,9 +2719,9 @@ export default function ModelsPage() {
                                               piiFilterResponse: e.target.checked,
                                             })
                                           }
-                                          className='w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500'
+                                          className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                         />
-                                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                        <span className='text-sm text-foreground'>
                                           응답 PII 필터
                                         </span>
                                       </label>
@@ -2730,19 +2730,19 @@ export default function ModelsPage() {
                                     <div className='flex gap-2'>
                                       <button
                                         onClick={saveEdit}
-                                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-1'
+                                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1'
                                       >
                                         <Save className='h-3.5 w-3.5' /> 저장
                                       </button>
                                       <button
                                         onClick={() => setEditingModel(null)}
-                                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1'
+                                        className='px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-accent dark:bg-muted dark:hover:bg-accent text-foreground transition-colors flex items-center gap-1'
                                       >
                                         <X className='h-3.5 w-3.5' /> 취소
                                       </button>
                                     </div>
                                     {(editForm.piiFilterRequest /* || editForm.piiFilterResponse [출력 PII 임시 비활성화] */) && (
-                                      <div className='w-full text-xs text-gray-600 dark:text-gray-300 space-y-1'>
+                                      <div className='w-full text-xs text-muted-foreground space-y-1'>
                                         {editForm.piiFilterRequest && (
                                           <div className='flex items-center gap-2 flex-wrap'>
                                             <span className='font-medium'>요청 옵션</span>
@@ -2757,8 +2757,8 @@ export default function ModelsPage() {
                                               }
                                               className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                                 editForm.piiRequestMxtVrf
-                                                  ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200'
-                                                  : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
+                                                  : 'bg-muted border-border text-muted-foreground'
                                               }`}
                                             >
                                               mxt_vrf {editForm.piiRequestMxtVrf ? 'ON' : 'OFF'}
@@ -2774,8 +2774,8 @@ export default function ModelsPage() {
                                               }
                                               className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                                 editForm.piiRequestMaskOpt
-                                                  ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200'
-                                                  : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
+                                                  : 'bg-muted border-border text-muted-foreground'
                                               }`}
                                             >
                                               mask_opt {editForm.piiRequestMaskOpt ? 'ON' : 'OFF'}
@@ -2797,8 +2797,8 @@ export default function ModelsPage() {
                                               }
                                               className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                                 editForm.piiResponseMxtVrf
-                                                  ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200'
-                                                  : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
+                                                  : 'bg-muted border-border text-muted-foreground'
                                               }`}
                                             >
                                               mxt_vrf {editForm.piiResponseMxtVrf ? 'ON' : 'OFF'}
@@ -2814,8 +2814,8 @@ export default function ModelsPage() {
                                               }
                                               className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                                 editForm.piiResponseMaskOpt
-                                                  ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200'
-                                                  : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
+                                                  : 'bg-muted border-border text-muted-foreground'
                                               }`}
                                             >
                                               mask_opt {editForm.piiResponseMaskOpt ? 'ON' : 'OFF'}
@@ -2834,26 +2834,26 @@ export default function ModelsPage() {
                                     <div className='flex items-start justify-between gap-2'>
                                       <div className='flex items-center gap-2 flex-wrap'>
                                         {isLabelRoundRobin && (
-                                          <span className='px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] rounded font-medium'>
+                                          <span className='px-2 py-0.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-[10px] rounded font-medium'>
                                             라운드로빈 {labelInfoForModel.count}
                                             개
                                           </span>
                                         )}
-                                        <h3 className='font-semibold text-sm text-gray-900 dark:text-white'>
+                                        <h3 className='font-semibold text-sm text-foreground'>
                                           {model.label}
                                         </h3>
                                         {model.isDefault && (
-                                          <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-[10px] rounded font-medium'>
+                                          <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] rounded font-medium'>
                                             기본
                                           </span>
                                         )}
                                         {model.adminOnly === true && (
-                                          <span className='px-1.5 py-0.5 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-[10px] rounded font-medium'>
+                                          <span className='px-1.5 py-0.5 bg-destructive/10 text-destructive text-[10px] rounded font-medium'>
                                             관리자 전용
                                           </span>
                                         )}
                                         {model.visible === false && (
-                                          <span className='px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-[10px] rounded font-medium'>
+                                          <span className='px-1.5 py-0.5 bg-muted text-foreground text-[10px] rounded font-medium'>
                                             숨김
                                           </span>
                                         )}
@@ -2864,26 +2864,26 @@ export default function ModelsPage() {
                                     <div className='space-y-1'>
                                       <div className='flex items-center gap-2 flex-wrap'>
                                         {model.name && (
-                                          <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                          <span className='text-xs text-muted-foreground'>
                                             <span className='font-medium'>
                                               모델명:
                                             </span>{' '}
-                                            <span className='font-mono text-gray-700 dark:text-gray-300'>
+                                            <span className='font-mono text-foreground'>
                                               {model.name}
                                             </span>
                                           </span>
                                         )}
-                                        <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                        <span className='text-xs text-muted-foreground'>
                                           <span className='font-medium'>
                                             기본 ID:
                                           </span>{' '}
-                                          <span className='font-mono text-gray-700 dark:text-gray-300'>
+                                          <span className='font-mono text-foreground'>
                                             {model.id}
                                           </span>
                                         </span>
                                         {modelRoundRobinMap[model.id]
                                           ?.isRoundRobin && (
-                                          <span className='px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-[10px] rounded font-medium'>
+                                          <span className='px-1.5 py-0.5 bg-muted dark:bg-muted text-foreground dark:text-foreground text-[10px] rounded font-medium'>
                                             서버 RR{' '}
                                             {
                                               modelRoundRobinMap[model.id]
@@ -2893,11 +2893,11 @@ export default function ModelsPage() {
                                         )}
                                       </div>
                                       {model.endpoint && (
-                                        <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                        <div className='text-xs text-muted-foreground'>
                                           <span className='font-medium'>
                                             Endpoint:
                                           </span>{' '}
-                                          <span className='font-mono text-gray-600 dark:text-gray-400 break-all'>
+                                          <span className='font-mono text-muted-foreground break-all'>
                                             {model.endpoint}
                                           </span>
                                         </div>
@@ -2906,33 +2906,33 @@ export default function ModelsPage() {
 
                                     {/* 툴팁 설명 */}
                                     {model.tooltip && (
-                                      <p className='text-xs text-gray-600 dark:text-gray-300 leading-relaxed'>
+                                      <p className='text-xs text-muted-foreground leading-relaxed'>
                                         {model.tooltip}
                                       </p>
                                     )}
 
                                     {/* 라운드로빈 상세 정보 */}
                                     {labelInfoForModel && (
-                                      <div className='pt-2 border-t border-purple-200 dark:border-purple-700'>
+                                      <div className='pt-2 border-t border-border dark:border-border'>
                                         <div className='text-xs'>
                                           <div className='flex items-center gap-1.5 mb-1'>
-                                            <span className='font-medium text-purple-700 dark:text-purple-300'>
+                                            <span className='font-medium text-muted-foreground dark:text-muted-foreground'>
                                               동일 라벨 모델:
                                             </span>
-                                            <span className='text-purple-600 dark:text-purple-400'>
+                                            <span className='text-muted-foreground dark:text-muted-foreground'>
                                               {labelInfoForModel.endpointCount}
                                               개 서버
                                             </span>
                                           </div>
                                           <div className='flex flex-wrap items-center gap-1.5'>
-                                            <span className='px-1.5 py-0.5 bg-purple-50 dark:bg-purple-900/30 rounded font-mono text-[10px] text-purple-700 dark:text-purple-300'>
+                                            <span className='px-1.5 py-0.5 bg-muted dark:bg-muted rounded font-mono text-[10px] text-muted-foreground dark:text-muted-foreground'>
                                               {model.id}
                                             </span>
                                             {labelInfoForModel.models.map(
                                               (m, idx) => (
                                                 <span
                                                   key={idx}
-                                                  className='px-1.5 py-0.5 bg-purple-50 dark:bg-purple-900/30 rounded font-mono text-[10px] text-purple-700 dark:text-purple-300'
+                                                  className='px-1.5 py-0.5 bg-muted dark:bg-muted rounded font-mono text-[10px] text-muted-foreground dark:text-muted-foreground'
                                                 >
                                                   {m.id}
                                                 </span>
@@ -2947,8 +2947,8 @@ export default function ModelsPage() {
                                     {modelRoundRobinMap[model.id]
                                       ?.isRoundRobin &&
                                       !labelInfoForModel && (
-                                        <div className='pt-2 border-t border-gray-200 dark:border-gray-600'>
-                                          <div className='text-xs text-gray-600 dark:text-gray-400'>
+                                        <div className='pt-2 border-t border-border'>
+                                          <div className='text-xs text-muted-foreground'>
                                             <span className='font-medium'>
                                               서버 라운드로빈:
                                             </span>{' '}
@@ -2958,7 +2958,7 @@ export default function ModelsPage() {
                                                   .serverName
                                               }
                                             </span>
-                                            <span className='ml-1 text-gray-500 dark:text-gray-500'>
+                                            <span className='ml-1 text-muted-foreground'>
                                               (
                                               {
                                                 modelRoundRobinMap[model.id]
@@ -2973,16 +2973,16 @@ export default function ModelsPage() {
                                     {/* 시스템 프롬프트 미리보기 */}
                                     {model.systemPrompt &&
                                       model.systemPrompt.length > 0 && (
-                                        <div className='pt-2 border-t border-gray-200 dark:border-gray-600'>
+                                        <div className='pt-2 border-t border-border'>
                                           <div className='flex items-center gap-1.5 mb-1'>
-                                            <span className='px-1.5 py-0.5 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-[10px] rounded font-medium'>
+                                            <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] rounded font-medium'>
                                               시스템 프롬프트
                                             </span>
-                                            <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                            <span className='text-xs text-muted-foreground'>
                                               {model.systemPrompt.length}줄
                                             </span>
                                           </div>
-                                          <p className='text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed'>
+                                          <p className='text-xs text-muted-foreground line-clamp-2 leading-relaxed'>
                                             {model.systemPrompt
                                               .slice(0, 2)
                                               .join(' ')
@@ -3004,7 +3004,7 @@ export default function ModelsPage() {
                                             modelIndex
                                           )
                                         }
-                                        className='px-2 py-1 text-xs font-medium rounded-md text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors'
+                                        className='px-2 py-1 text-xs font-medium rounded-md text-primary hover:bg-primary/10 dark:hover:bg-primary/10 transition-colors'
                                         title='기본 모델로 설정'
                                       >
                                         기본설정
@@ -3014,7 +3014,7 @@ export default function ModelsPage() {
                                       onClick={() =>
                                         startEditing(categoryKey, modelIndex)
                                       }
-                                      className='p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors'
+                                      className='p-1.5 rounded-md text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-accent transition-colors'
                                       title='편집'
                                     >
                                       <Edit2 className='h-3.5 w-3.5' />
@@ -3023,7 +3023,7 @@ export default function ModelsPage() {
                                       onClick={() =>
                                         copyModel(categoryKey, modelIndex)
                                       }
-                                      className='p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors'
+                                      className='p-1.5 rounded-md text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-accent transition-colors'
                                       title='설정 복사'
                                     >
                                       <Copy className='h-3.5 w-3.5' />
@@ -3032,7 +3032,7 @@ export default function ModelsPage() {
                                       onClick={() =>
                                         deleteModel(categoryKey, modelIndex)
                                       }
-                                      className='p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors'
+                                      className='p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/10 transition-colors'
                                       title='삭제'
                                     >
                                       <Trash2 className='h-3.5 w-3.5' />
@@ -3045,7 +3045,7 @@ export default function ModelsPage() {
                         );
                       })}
                       {category.models.length === 0 && (
-                        <div className='text-center py-10 text-gray-500 dark:text-gray-400'>
+                        <div className='text-center py-10 text-muted-foreground'>
                           <div className='text-4xl mb-2'>📦</div>
                           <p className='text-sm font-medium'>
                             등록된 모델이 없습니다.
@@ -3060,20 +3060,20 @@ export default function ModelsPage() {
                   </SortableContext>
 
                   {showAddForm.show && showAddForm.category === categoryKey && (
-                    <div className='mt-4 p-5 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+                    <div className='mt-4 p-5 bg-primary/10 rounded-lg border border-primary/20'>
                       <div className='flex items-center gap-2 mb-4'>
-                        <Plus className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-                        <h4 className='font-semibold text-gray-900 dark:text-white text-sm'>
+                        <Plus className='h-4 w-4 text-primary' />
+                        <h4 className='font-semibold text-foreground text-sm'>
                           새 모델 추가
                         </h4>
                       </div>
                       <div className='space-y-3'>
                         {/* 라벨 먼저 입력 */}
                         <div>
-                          <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2'>
+                          <label className='block text-xs font-medium text-foreground mb-1 flex items-center gap-2'>
                             <span>라벨 *</span>
                             {newModelLabelRoundRobinInfo && (
-                              <span className='px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-[10px] rounded font-medium'>
+                              <span className='px-1.5 py-0.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-[10px] rounded font-medium'>
                                 라운드로빈 {newModelLabelRoundRobinInfo.count}개
                               </span>
                             )}
@@ -3195,7 +3195,7 @@ export default function ModelsPage() {
                                           );
                                         }
                                       }}
-                                      className='flex items-center gap-2 px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg text-xs transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                      className='flex items-center gap-2 px-3 py-2 bg-muted rounded-lg text-xs transition-all duration-200 hover:bg-accent'
                                     >
                                       {label}
                                     </button>
@@ -3206,7 +3206,7 @@ export default function ModelsPage() {
                         </div>
 
                         <div>
-                          <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                          <label className='block text-xs font-medium text-foreground mb-1'>
                             모델서버
                           </label>
                           <select
@@ -3249,8 +3249,8 @@ export default function ModelsPage() {
                           {newModel.endpoint &&
                             newModel.endpoint !== 'manual' &&
                             availableModels.length > 0 && (
-                            <div className='flex items-start gap-2 p-2 rounded-md bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 mt-2'>
-                              <span className='text-xs text-gray-700 dark:text-gray-300'>
+                            <div className='flex items-start gap-2 p-2 rounded-md bg-muted border border-border mt-2'>
+                              <span className='text-xs text-foreground'>
                                 {(() => {
                                   const ep = endpoints.find(
                                     (e) => e.url === newModel.endpoint
@@ -3266,9 +3266,9 @@ export default function ModelsPage() {
 
                           {/* 수동 추가 시 API 설정 */}
                           {newModel.endpoint === 'manual' && (
-                            <div className='mt-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
+                            <div className='mt-3 p-4 bg-muted rounded-lg border border-border'>
                               <div className='mb-4'>
-                                <p className='text-xs font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                                <p className='text-xs font-medium text-foreground mb-2'>
                                   프리셋 적용
                                 </p>
                                 <div className='flex flex-wrap gap-2'>
@@ -3280,7 +3280,7 @@ export default function ModelsPage() {
                                         apiConfig: buildManualPreset('openai-compatible'),
                                       })
                                     }
-                                    className='px-2 py-1 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    className='px-2 py-1 text-xs rounded bg-card border border-border hover:bg-accent'
                                   >
                                     OpenAI Compatible
                                   </button>
@@ -3292,7 +3292,7 @@ export default function ModelsPage() {
                                         apiConfig: buildManualPreset('responses'),
                                       })
                                     }
-                                    className='px-2 py-1 text-xs rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    className='px-2 py-1 text-xs rounded bg-card border border-border hover:bg-accent'
                                   >
                                     Responses
                                   </button>
@@ -3300,7 +3300,7 @@ export default function ModelsPage() {
                               </div>
                               {/* API 키 입력 */}
                               <div className='mb-4'>
-                                <label className='block text-sm font-medium text-gray-900 dark:text-white mb-2'>
+                                <label className='block text-sm font-medium text-foreground mb-2'>
                                   🔑 API 키
                                 </label>
                                 <input
@@ -3313,17 +3313,17 @@ export default function ModelsPage() {
                                     });
                                   }}
                                   placeholder='API 키를 입력하세요'
-                                  className='w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent'
+                                  className='w-full px-3 py-2 text-sm bg-card border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent'
                                 />
-                                <p className='text-xs text-gray-600 dark:text-gray-400 mt-1'>
+                                <p className='text-xs text-muted-foreground mt-1'>
                                   API 호출 시 사용할 키입니다. 템플릿의 {'{{OPENAI_API_KEY}}'} 변수로 대체됩니다.
                                 </p>
                               </div>
 
-                              <label className='block text-sm font-medium text-gray-900 dark:text-white mb-2'>
+                              <label className='block text-sm font-medium text-foreground mb-2'>
                                 🔧 API 요청 설정 (JSON)
                               </label>
-                              <p className='text-xs text-gray-600 dark:text-gray-400 mb-2'>
+                              <p className='text-xs text-muted-foreground mb-2'>
                                 백엔드에서 실행할 API 요청을 JSON 형태로 작성하세요. 변수: {'{{OPENAI_API_KEY}}'}, {'{{messages}}'}, {'{{message}}'}
                               </p>
                               <textarea
@@ -3343,7 +3343,7 @@ export default function ModelsPage() {
                                     });
                                   }
                                 }}
-                                className='w-full h-64 px-3 py-2 text-xs font-mono bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent'
+                                className='w-full h-64 px-3 py-2 text-xs font-mono bg-card border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent'
                                 placeholder={`{
   "method": "POST",
   "url": "https://api.openai.com/v1/chat/completions",
@@ -3363,20 +3363,20 @@ export default function ModelsPage() {
 }`}
                               />
                               <div className='mt-2 text-xs space-y-2'>
-                                <div className='p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded'>
-                                  <p className='font-semibold text-red-700 dark:text-red-400 mb-2'>⚠️ 수정이 필요한 필드:</p>
-                                  <ul className='list-disc ml-5 text-red-600 dark:text-red-400 space-y-1'>
-                                    <li><code className='bg-red-100 dark:bg-red-900/40 px-1 rounded'>&quot;url&quot;</code> - API 엔드포인트 주소</li>
-                                    <li><code className='bg-red-100 dark:bg-red-900/40 px-1 rounded'>&quot;model&quot;</code> - 모델명 (gpt-4, claude-3 등)</li>
-                                    <li><code className='bg-red-100 dark:bg-red-900/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - 응답 경로</li>
+                                <div className='p-3 bg-destructive/10 border border-destructive/20 rounded'>
+                                  <p className='font-semibold text-destructive mb-2'>⚠️ 수정이 필요한 필드:</p>
+                                  <ul className='list-disc ml-5 text-destructive space-y-1'>
+                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;url&quot;</code> - API 엔드포인트 주소</li>
+                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;model&quot;</code> - 모델명 (gpt-4, claude-3 등)</li>
+                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - 응답 경로</li>
                                   </ul>
                                 </div>
-                                <div className='text-gray-500 dark:text-gray-400'>
+                                <div className='text-muted-foreground'>
                                   <p><strong>사용 가능한 변수:</strong></p>
                                   <ul className='list-disc ml-5 mt-1'>
-                                    <li><code className='bg-gray-100 dark:bg-gray-800 px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - 환경변수에서 API 키 가져오기</li>
-                                    <li><code className='bg-gray-100 dark:bg-gray-800 px-1 rounded'>{'{{messages}}'}</code> - 전체 대화 내역 (배열)</li>
-                                    <li><code className='bg-gray-100 dark:bg-gray-800 px-1 rounded'>{'{{message}}'}</code> - 사용자의 최신 메시지 (문자열)</li>
+                                    <li><code className='bg-muted px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - 환경변수에서 API 키 가져오기</li>
+                                    <li><code className='bg-muted px-1 rounded'>{'{{messages}}'}</code> - 전체 대화 내역 (배열)</li>
+                                    <li><code className='bg-muted px-1 rounded'>{'{{message}}'}</code> - 사용자의 최신 메시지 (문자열)</li>
                                   </ul>
                                 </div>
                               </div>
@@ -3385,7 +3385,7 @@ export default function ModelsPage() {
                         </div>
                         <div className='grid grid-cols-2 gap-3'>
                           <div>
-                            <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                            <label className='block text-xs font-medium text-foreground mb-1'>
                               모델명 *
                             </label>
                             <div className='relative'>
@@ -3451,15 +3451,15 @@ export default function ModelsPage() {
                                       {newModel.id && (
                                         <div className='absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1'>
                                           {checkingNewModelRoundRobin ? (
-                                            <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600'></div>
+                                            <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-primary'></div>
                                           ) : newModelRoundRobinInfo?.isRoundRobin ? (
-                                            <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium'>
+                                            <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded font-medium'>
                                               RR {newModelRoundRobinInfo.serverCount}
                                             </span>
                                           ) : null}
                                         </div>
                                       )}
-                                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                                      <p className='text-xs text-muted-foreground mt-1'>
                                         {isManual
                                           ? '커스텀 API 모델의 식별자를 입력하세요'
                                           : provider === 'openai-compatible'
@@ -3533,23 +3533,23 @@ export default function ModelsPage() {
                                     </select>
                                     {modelsLoading && (
                                       <div className='absolute right-3 top-1/2 transform -translate-y-1/2'>
-                                        <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600'></div>
+                                        <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-primary'></div>
                                       </div>
                                     )}
                                     {/* 라운드로빈 상태 태그 */}
                                     {newModel.id && (
                                       <div className='absolute right-10 top-1/2 transform -translate-y-1/2 flex items-center gap-1'>
                                         {checkingNewModelRoundRobin ? (
-                                          <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600'></div>
+                                          <div className='animate-spin rounded-full h-3 w-3 border-b-2 border-primary'></div>
                                         ) : newModelRoundRobinInfo?.isRoundRobin ? (
-                                          <span className='px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded font-medium'>
+                                          <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded font-medium'>
                                             RR {newModelRoundRobinInfo.serverCount}
                                           </span>
                                         ) : null}
                                       </div>
                                     )}
                                     {availableModels.length > 0 && (
-                                      <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
+                                      <p className='text-xs text-primary mt-1'>
                                         {availableModels.length}개 LLM 모델 사용 가능
                                       </p>
                                     )}
@@ -3560,8 +3560,8 @@ export default function ModelsPage() {
                           </div>
                         </div>
                         {newModelLabelRoundRobinInfo && (
-                          <div className='mt-2 p-2 rounded bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-700'>
-                            <div className='text-xs text-gray-600 dark:text-gray-400'>
+                          <div className='mt-2 p-2 rounded bg-muted border border-border dark:border-border'>
+                            <div className='text-xs text-muted-foreground'>
                               <span className='font-medium'>
                                 동일 라벨 모델:
                               </span>{' '}
@@ -3587,7 +3587,7 @@ export default function ModelsPage() {
                               )}
                               {newModelLabelRoundRobinInfo.endpointCount >
                                 1 && (
-                                <span className='ml-2 text-purple-600 dark:text-purple-400'>
+                                <span className='ml-2 text-muted-foreground dark:text-muted-foreground'>
                                   ({newModelLabelRoundRobinInfo.endpointCount}개
                                   서버)
                                 </span>
@@ -3596,7 +3596,7 @@ export default function ModelsPage() {
                           </div>
                         )}
                         <div>
-                          <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                          <label className='block text-xs font-medium text-foreground mb-1'>
                             툴팁 설명
                           </label>
                           <textarea
@@ -3613,7 +3613,7 @@ export default function ModelsPage() {
                           />
                         </div>
                         <div>
-                          <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                          <label className='block text-xs font-medium text-foreground mb-1'>
                             멀티턴 제한
                           </label>
                           <div className='flex items-center gap-3'>
@@ -3627,10 +3627,10 @@ export default function ModelsPage() {
                                   multiturnLimit: e.target.value,
                                 })
                               }
-                              className='w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                              className='w-24 px-2 py-1 text-sm border border-border rounded-md bg-background text-foreground'
                               disabled={newModel.multiturnUnlimited || loading}
                             />
-                            <label className='inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400'>
+                            <label className='inline-flex items-center gap-2 text-xs text-muted-foreground'>
                               <input
                                 type='checkbox'
                                 checked={!!newModel.multiturnUnlimited}
@@ -3649,7 +3649,7 @@ export default function ModelsPage() {
                               제한 없음
                             </label>
                           </div>
-                          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                          <p className='text-xs text-muted-foreground mt-1'>
                             모델별 멀티턴 기억 개수입니다.
                           </p>
                         </div>
@@ -3703,13 +3703,13 @@ export default function ModelsPage() {
 
                             return (
                               <>
-                                <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                                <label className='block text-xs font-medium text-foreground mb-1'>
                                   시스템 프롬프트
-                                  <span className='text-xs text-gray-500'>
+                                  <span className='text-xs text-muted-foreground'>
                                     (줄바꿈으로 구분)
                                   </span>
                                   {isNotFirstInRoundRobin && (
-                                    <span className='ml-2 px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 text-[10px] rounded font-medium'>
+                                    <span className='ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] rounded font-medium'>
                                       공유됨
                                     </span>
                                   )}
@@ -3722,12 +3722,12 @@ export default function ModelsPage() {
                                         ''
                                       }
                                       disabled
-                                      className='input-primary text-sm resize-none bg-gray-100 dark:bg-gray-800 opacity-75 cursor-not-allowed'
+                                      className='input-primary text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
                                       rows='6'
                                       placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
                                     />
-                                    <div className='p-2 rounded bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700'>
-                                      <p className='text-xs text-yellow-800 dark:text-yellow-200'>
+                                    <div className='p-2 rounded bg-muted border border-border'>
+                                      <p className='text-xs text-muted-foreground'>
                                         <span className='font-medium'>
                                           라운드로빈 모델:
                                         </span>{' '}
@@ -3768,7 +3768,7 @@ export default function ModelsPage() {
                             );
                           })()}
                         </div>
-                        <div className='flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-blue-200 dark:border-blue-700'>
+                        <div className='flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-primary/20 dark:border-border'>
                           <div className='flex items-center gap-4 flex-wrap'>
                             <label className='flex items-center gap-2 cursor-pointer'>
                               <input
@@ -3780,9 +3780,9 @@ export default function ModelsPage() {
                                     isDefault: e.target.checked,
                                   })
                                 }
-                                className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
+                                className='w-4 h-4 text-primary bg-muted border-border rounded focus:ring-ring'
                               />
-                              <span className='text-sm text-gray-700 dark:text-gray-300'>
+                              <span className='text-sm text-foreground'>
                                 기본 모델
                               </span>
                             </label>
@@ -3796,9 +3796,9 @@ export default function ModelsPage() {
                                     adminOnly: e.target.checked,
                                   })
                                 }
-                                className='w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500'
+                                className='w-4 h-4 text-destructive bg-muted border-border rounded focus:ring-ring'
                               />
-                              <span className='text-sm text-gray-700 dark:text-gray-300'>
+                              <span className='text-sm text-foreground'>
                                 관리자 전용
                               </span>
                             </label>
@@ -3812,9 +3812,9 @@ export default function ModelsPage() {
                                     visible: e.target.checked,
                                   })
                                 }
-                                className='w-4 h-4 text-gray-600 bg-gray-100 border-gray-300 rounded focus:ring-gray-500'
+                                className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                               />
-                              <span className='text-sm text-gray-700 dark:text-gray-300'>
+                              <span className='text-sm text-foreground'>
                                 메인 화면 표시
                               </span>
                             </label>
@@ -3828,9 +3828,9 @@ export default function ModelsPage() {
                                     piiFilterRequest: e.target.checked,
                                   })
                                 }
-                                className='w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500'
+                                className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                               />
-                              <span className='text-sm text-gray-700 dark:text-gray-300'>
+                              <span className='text-sm text-foreground'>
                                 요청 PII 필터
                               </span>
                             </label>
@@ -3845,9 +3845,9 @@ export default function ModelsPage() {
                                      piiFilterResponse: e.target.checked,
                                    })
                                  }
-                                 className='w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500'
+                                 className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                />
-                               <span className='text-sm text-gray-700 dark:text-gray-300'>
+                               <span className='text-sm text-foreground'>
                                  응답 PII 필터
                                </span>
                              </label>
@@ -3856,7 +3856,7 @@ export default function ModelsPage() {
                           <div className='flex gap-2'>
                             <button
                               onClick={() => addModel(categoryKey)}
-                              className='px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center gap-1'
+                              className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1'
                             >
                               <Plus className='h-3.5 w-3.5' /> 추가
                             </button>
@@ -3880,13 +3880,13 @@ export default function ModelsPage() {
                                   piiResponseMaskOpt: true,
                                 });
                               }}
-                              className='px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-1'
+                              className='px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-accent dark:bg-muted dark:hover:bg-accent text-foreground transition-colors flex items-center gap-1'
                             >
                               <X className='h-3.5 w-3.5' /> 취소
                             </button>
                           </div>
                           {(newModel.piiFilterRequest /* || newModel.piiFilterResponse [출력 PII 임시 비활성화] */) && (
-                            <div className='w-full text-xs text-gray-600 dark:text-gray-300 space-y-1'>
+                            <div className='w-full text-xs text-muted-foreground space-y-1'>
                               {newModel.piiFilterRequest && (
                                 <div className='flex items-center gap-2 flex-wrap'>
                                   <span className='font-medium'>요청 옵션</span>
@@ -3900,8 +3900,8 @@ export default function ModelsPage() {
                                     }
                                     className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                       newModel.piiRequestMxtVrf
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-200'
-                                        : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
+                                        : 'bg-muted border-border text-muted-foreground'
                                     }`}
                                   >
                                     mxt_vrf {newModel.piiRequestMxtVrf ? 'ON' : 'OFF'}
@@ -3916,8 +3916,8 @@ export default function ModelsPage() {
                                     }
                                     className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                       newModel.piiRequestMaskOpt
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-200'
-                                        : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
+                                        : 'bg-muted border-border text-muted-foreground'
                                     }`}
                                   >
                                     mask_opt {newModel.piiRequestMaskOpt ? 'ON' : 'OFF'}
@@ -3939,8 +3939,8 @@ export default function ModelsPage() {
                                     }
                                     className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                       newModel.piiResponseMxtVrf
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-200'
-                                        : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
+                                        : 'bg-muted border-border text-muted-foreground'
                                     }`}
                                   >
                                     mxt_vrf {newModel.piiResponseMxtVrf ? 'ON' : 'OFF'}
@@ -3956,8 +3956,8 @@ export default function ModelsPage() {
                                     }
                                     className={`font-mono px-2 py-0.5 rounded border transition-colors ${
                                       newModel.piiResponseMaskOpt
-                                        ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-200'
-                                        : 'bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
+                                        : 'bg-muted border-border text-muted-foreground'
                                     }`}
                                   >
                                     mask_opt {newModel.piiResponseMaskOpt ? 'ON' : 'OFF'}
@@ -3979,16 +3979,16 @@ export default function ModelsPage() {
       </div>
 
       {/* 사용법 안내 */}
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-5'>
+      <div className='bg-primary/10 border border-primary/20 rounded-lg p-5'>
         <div className='flex items-start gap-3'>
           <div className='flex-shrink-0 text-2xl'>💡</div>
           <div className='flex-1'>
-            <h3 className='text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3'>
+            <h3 className='text-sm font-semibold text-foreground mb-3'>
               사용법 안내
             </h3>
-            <ul className='text-sm text-blue-800 dark:text-blue-200 space-y-2'>
+            <ul className='text-sm text-primary space-y-2'>
               <li className='flex items-start gap-2'>
-                <span className='text-blue-600 dark:text-blue-400 flex-shrink-0'>
+                <span className='text-primary flex-shrink-0'>
                   •
                 </span>
                 <span>
@@ -3997,7 +3997,7 @@ export default function ModelsPage() {
                 </span>
               </li>
               <li className='flex items-start gap-2'>
-                <span className='text-blue-600 dark:text-blue-400 flex-shrink-0'>
+                <span className='text-primary flex-shrink-0'>
                   •
                 </span>
                 <span>
@@ -4007,7 +4007,7 @@ export default function ModelsPage() {
                 </span>
               </li>
               <li className='flex items-start gap-2'>
-                <span className='text-blue-600 dark:text-blue-400 flex-shrink-0'>
+                <span className='text-primary flex-shrink-0'>
                   •
                 </span>
                 <span>
@@ -4024,8 +4024,8 @@ export default function ModelsPage() {
       <div className='card p-6'>
         <div className='flex items-center justify-between mb-4'>
           <div className='flex items-center gap-3'>
-            <RefreshCw className='h-5 w-5 text-gray-600' />
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+            <RefreshCw className='h-5 w-5 text-muted-foreground' />
+            <h2 className='text-lg font-semibold text-foreground'>
               오류 로그
             </h2>
           </div>
@@ -4044,15 +4044,15 @@ export default function ModelsPage() {
         </div>
 
         <div className='flex flex-wrap items-center gap-2 text-sm mb-3'>
-          <span className='text-gray-600 dark:text-gray-400'>소스</span>
+          <span className='text-muted-foreground'>소스</span>
           {['all', 'server', 'api', 'client'].map((source) => (
             <button
               key={source}
               onClick={() => setErrorLogsSource(source)}
               className={`px-3 py-1 rounded-md border text-xs font-medium ${
                 errorLogsSource === source
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-card text-foreground border-border'
               }`}
             >
               {source === 'all'
@@ -4064,35 +4064,35 @@ export default function ModelsPage() {
                 : '클라이언트'}
             </button>
           ))}
-          <span className='ml-2 text-gray-600 dark:text-gray-400'>레벨</span>
+          <span className='ml-2 text-muted-foreground'>레벨</span>
           {['all', 'error', 'warn'].map((level) => (
             <button
               key={level}
               onClick={() => setErrorLogsLevel(level)}
               className={`px-3 py-1 rounded-md border text-xs font-medium ${
                 errorLogsLevel === level
-                  ? 'bg-gray-900 text-white border-gray-900 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                  ? 'bg-foreground text-white border-foreground dark:bg-muted dark:text-foreground dark:border-border'
+                  : 'bg-card text-foreground border-border'
               }`}
             >
               {level === 'all' ? '전체' : level.toUpperCase()}
             </button>
           ))}
-          <span className='ml-auto text-xs text-gray-500 dark:text-gray-400'>
+          <span className='ml-auto text-xs text-muted-foreground'>
             총 {errorLogsTotal}건
           </span>
         </div>
 
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden'>
+        <div className='border border-border rounded-lg overflow-hidden'>
           {errorLogs.length === 0 ? (
-            <div className='p-4 text-sm text-gray-500 dark:text-gray-400'>
+            <div className='p-4 text-sm text-muted-foreground'>
               표시할 로그가 없습니다.
             </div>
           ) : (
-            <div className='divide-y divide-gray-200 dark:divide-gray-700'>
+            <div className='divide-y divide-border'>
               {errorLogs.map((log) => (
                 <div key={log.id} className='p-4 text-sm'>
-                  <div className='flex flex-wrap items-center gap-2 mb-1 text-xs text-gray-500 dark:text-gray-400'>
+                  <div className='flex flex-wrap items-center gap-2 mb-1 text-xs text-muted-foreground'>
                     <span>{formatLogTime(log.created_at)}</span>
                     <span>•</span>
                     <span>{log.source}</span>
@@ -4105,11 +4105,11 @@ export default function ModelsPage() {
                       </>
                     )}
                   </div>
-                  <div className='text-gray-900 dark:text-gray-100 break-words'>
+                  <div className='text-foreground break-words'>
                     {log.message}
                   </div>
                   {log.stack && (
-                    <pre className='mt-2 text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap'>
+                    <pre className='mt-2 text-xs text-muted-foreground whitespace-pre-wrap'>
                       {log.stack}
                     </pre>
                   )}
