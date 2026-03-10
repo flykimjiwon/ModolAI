@@ -1,0 +1,1730 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Server,
+  Activity,
+  AlertCircle,
+  Info,
+  RefreshCw,
+  Pause,
+  Play,
+  Zap,
+  HelpCircle,
+  ChevronUp,
+  Edit,
+  X,
+  Trash2,
+  Copy,
+  Check,
+} from 'lucide-react';
+import { useAlert } from '@/contexts/AlertContext';
+
+export default function ModelServersPage() {
+  const { alert, confirm } = useAlert();
+  const [modelServers, setmodelServers] = useState([]);
+  const [realTimeStatus, setRealTimeStatus] = useState([]); // 실시간 상태
+  const [serverStatusLoading, setServerStatusLoading] = useState({}); // 각 서버별 로딩 상태
+  const [loading, setLoading] = useState(true);
+  const [isPollingEnabled, setIsPollingEnabled] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [showHelpSection, setShowHelpSection] = useState(false);
+  const [endpointNameInput, setEndpointNameInput] = useState('');
+  const [endpointUrlInput, setEndpointUrlInput] = useState('');
+  const [endpoints, setEndpoints] = useState([]); // [{name, url, provider}]
+  const [savingEndpoints, setSavingEndpoints] = useState(false);
+  const [editingEndpoint, setEditingEndpoint] = useState(null); // {originalUrl, name, url, provider}
+  const [showAddForm, setShowAddForm] = useState(false); // 추가 폼 표시 여부
+  const [errorHistory, setErrorHistory] = useState([]); // 오류 이력
+  const [errorHistoryLoading, setErrorHistoryLoading] = useState(false);
+  const [selectedEndpointForHistory, setSelectedEndpointForHistory] =
+    useState(null); // 오류 이력 조회할 endpoint
+  const [showErrorHistoryModal, setShowErrorHistoryModal] = useState(false);
+  const [copiedTexts, setCopiedTexts] = useState(new Set()); // 복사된 텍스트 추적
+
+  // 클립보드 복사 함수
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedTexts((prev) => new Set(prev).add(id));
+      setTimeout(() => {
+        setCopiedTexts((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+      }, 2000);
+    } catch (err) {
+      console.error('클립보드 복사 실패:', err);
+      alert('클립보드 복사에 실패했습니다.', 'error', '오류');
+    }
+  };
+
+
+  // 개별 서버 상태 조회
+  const fetchServerStatus = useCallback(async (endpointUrl) => {
+    try {
+      setServerStatusLoading((prev) => ({ ...prev, [endpointUrl]: true }));
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        console.error('토큰이 없습니다. 로그인이 필요합니다.');
+        return null;
+      }
+
+      const response = await fetch(
+        `/api/admin/system-status/endpoint?url=${encodeURIComponent(
+          endpointUrl
+        )}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // API 응답 구조: { success: true, endpoint: { status, responseTime, modelsCount } }
+        const endpointData = data.endpoint || data;
+
+        // realTimeStatus 업데이트
+        setRealTimeStatus((prev) => {
+          const filtered = prev.filter((rt) => rt.url !== endpointUrl);
+          return [
+            ...filtered,
+            {
+              url: endpointUrl,
+              status:
+                endpointData.status === 'operational' ? 'healthy' : 'unhealthy',
+              responseTime: endpointData.responseTime,
+              modelCount: endpointData.modelsCount,
+            },
+          ];
+        });
+
+        return endpointData;
+      } else {
+        console.error(`서버 상태 조회 실패 (${endpointUrl}):`, response.status);
+
+        // 실패 시에도 상태 업데이트
+        setRealTimeStatus((prev) => {
+          const filtered = prev.filter((rt) => rt.url !== endpointUrl);
+          return [
+            ...filtered,
+            {
+              url: endpointUrl,
+              status: 'unhealthy',
+              responseTime: null,
+              modelCount: 0,
+            },
+          ];
+        });
+
+        return null;
+      }
+    } catch (error) {
+      // 네트워크 에러 감지 (fetch 실패, CORS, 연결 거부 등)
+      const isNetworkError =
+        error.name === 'TypeError' ||
+        error.name === 'NetworkError' ||
+        error.message?.includes('fetch') ||
+        error.message?.includes('NetworkError') ||
+        error.message?.includes('Failed to fetch');
+
+      if (isNetworkError) {
+        console.warn(
+          `네트워크 에러로 인한 서버 상태 조회 실패 (${endpointUrl}):`,
+          error.message
+        );
+        // 네트워크 에러는 일시적일 수 있으므로 기존 상태 유지
+        // 상태를 업데이트하지 않고 null 반환
+        return null;
+      }
+
+      // 네트워크 에러가 아닌 경우에만 상태를 'unhealthy'로 업데이트
+      console.error(`서버 상태 조회 중 에러 (${endpointUrl}):`, error.message);
+
+      setRealTimeStatus((prev) => {
+        const filtered = prev.filter((rt) => rt.url !== endpointUrl);
+        return [
+          ...filtered,
+          {
+            url: endpointUrl,
+            status: 'unhealthy',
+            responseTime: null,
+            modelCount: 0,
+          },
+        ];
+      });
+
+      return null;
+    } finally {
+      setServerStatusLoading((prev) => ({ ...prev, [endpointUrl]: false }));
+    }
+  }, []);
+
+  // Ollama 서버 목록 조회
+  const fetchmodelServers = async (silentRefresh = false) => {
+    try {
+      if (!silentRefresh) {
+        setLoading(true);
+      }
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        console.error('토큰이 없습니다. 로그인이 필요합니다.');
+        return;
+      }
+
+      const response = await fetch('/api/admin/instances', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        let data;
+        try {
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            console.warn('빈 응답을 받았습니다.');
+            data = {};
+          } else {
+            data = JSON.parse(responseText);
+          }
+        } catch (parseError) {
+          console.error('JSON 파싱 실패:', parseError);
+          throw new Error(`응답 파싱 실패: ${parseError.message}`);
+        }
+
+        setmodelServers(data.modelServers || []);
+        setRealTimeStatus(data.realTimeStatus || []);
+        setLastRefresh(new Date());
+      } else if (response.status === 401) {
+        console.error('토큰 인증 실패 (401). 토큰이 만료되었을 수 있습니다.');
+        if (!silentRefresh) {
+          // 자동 폴링이 아닌 경우만 사용자에게 알림
+        }
+      } else {
+        console.error('modelServers:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Ollama 서버 목록 조회 실패:', error);
+      if (!silentRefresh) {
+        console.error('Ollama 서버 데이터를 불러오는데 실패했습니다.');
+      }
+    } finally {
+      if (!silentRefresh) {
+        setLoading(false);
+      }
+    }
+  };
+
+  // 오류 이력 조회
+  const fetchErrorHistory = async (endpointUrl) => {
+    try {
+      setErrorHistoryLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const url = `/api/admin/model-server-error-history?endpoint=${encodeURIComponent(
+        endpointUrl
+      )}&hours=168&limit=100`;
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        let data;
+        try {
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            data = { errors: [] };
+          } else {
+            data = JSON.parse(responseText);
+          }
+        } catch (parseError) {
+          console.error('오류 이력 JSON 파싱 실패:', parseError);
+          data = { errors: [] };
+        }
+        setErrorHistory(data.errors || []);
+      }
+    } catch (error) {
+      console.error('오류 이력 조회 실패:', error);
+    } finally {
+      setErrorHistoryLoading(false);
+    }
+  };
+
+  // 오류 이력 전체 삭제
+  const deleteAllErrorHistory = async (endpointUrl) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert(
+          '인증 토큰이 없습니다. 다시 로그인해 주세요.',
+          'warning',
+          '인증 오류'
+        );
+        return;
+      }
+
+      const confirmed = await confirm(
+        `정말 이 endpoint의 모든 오류 이력을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
+        '오류 이력 전체 삭제 확인'
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const url = `/api/admin/model-server-error-history?endpoint=${encodeURIComponent(
+        endpointUrl
+      )}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(
+          `오류 이력 ${data.deletedCount || 0}개가 삭제되었습니다.`,
+          'success',
+          '삭제 완료'
+        );
+        // 목록 새로고침
+        await fetchErrorHistory(endpointUrl);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(
+          errorData.error || '오류 이력 삭제에 실패했습니다.',
+          'error',
+          '삭제 실패'
+        );
+      }
+    } catch (error) {
+      console.error('오류 이력 삭제 실패:', error);
+      alert('오류 이력 삭제 중 오류가 발생했습니다.', 'error', '오류');
+    }
+  };
+
+  // 설정에서 Ollama 서버 조회
+  const fetchEndpointsFromSettings = async () => {
+    try {
+      const response = await fetch('/api/admin/settings');
+      if (response.ok) {
+        let data;
+        try {
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            console.warn('설정 조회: 빈 응답을 받았습니다.');
+            data = {};
+          } else {
+            data = JSON.parse(responseText);
+          }
+        } catch (parseError) {
+          console.error('설정 JSON 파싱 실패:', parseError);
+          data = {};
+        }
+        const listRaw = Array.isArray(data.customEndpoints)
+          ? data.customEndpoints
+              .filter((e) => !e.provider || e.provider === 'ollama')
+              .map((e) => ({
+                name: e.name || '',
+                url: e.url,
+                provider: 'ollama',
+                isActive: e.isActive !== undefined ? e.isActive : true,
+              }))
+          : (data.ollamaEndpoints || '')
+              .split(',')
+              .map((e) => e.trim())
+              .filter(Boolean)
+              .map((entry) => {
+                const m = entry.match(/^(.*?)\s*[|=｜＝]\s*(https?:\/\/.+)$/i);
+                if (m) {
+                  return {
+                    name: m[1].trim(),
+                    url: m[2].trim(),
+                    provider: 'ollama',
+                  };
+                }
+                return {
+                  name: '',
+                  url: entry,
+                  provider: 'ollama',
+                  isActive: true,
+                };
+              });
+        // URL 정규화 함수 (trailing slash 제거, 소문자 변환)
+        const normalizeUrl = (url) => {
+          try {
+            const urlObj = new URL(url.trim());
+            return `${urlObj.protocol}//${urlObj.hostname.toLowerCase()}${
+              urlObj.port ? `:${urlObj.port}` : ''
+            }${urlObj.pathname.replace(/\/+$/, '')}`;
+          } catch (error) {
+            console.warn('[Catch] 에러 발생:', error.message);
+            return url.trim().toLowerCase().replace(/\/+$/, '');
+          }
+        };
+
+        // 중복 제거: 정규화된 URL 기준, 이름있는 항목 우선
+        const byNormalizedUrl = new Map();
+        const seenUrls = new Set();
+
+        for (const ep of listRaw) {
+          const normalizedUrl = normalizeUrl(ep.url);
+
+          // 이미 본 URL이면 스킵
+          if (seenUrls.has(normalizedUrl)) {
+            continue;
+          }
+
+          const exist = byNormalizedUrl.get(normalizedUrl);
+          if (!exist) {
+            // 새로운 항목 추가
+            byNormalizedUrl.set(normalizedUrl, ep);
+            seenUrls.add(normalizedUrl);
+          } else if (!exist.name && ep.name) {
+            // 기존 항목에 이름이 없고 새 항목에 이름이 있으면 교체
+            byNormalizedUrl.set(normalizedUrl, ep);
+          }
+        }
+
+        setEndpoints(Array.from(byNormalizedUrl.values()));
+      }
+    } catch (e) {
+      console.warn('Ollama 서버 설정 조회 실패(무시):', e.message);
+    }
+  };
+
+  const persistEndpoints = async (newList) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert(
+        '인증 토큰이 없습니다. 다시 로그인해 주세요.',
+        'warning',
+        '인증 오류'
+      );
+      return false;
+    }
+    setSavingEndpoints(true);
+    try {
+      // URL 정규화 함수 (trailing slash 제거, 소문자 변환)
+      const normalizeUrl = (url) => {
+        try {
+          const urlObj = new URL(url.trim());
+          return `${urlObj.protocol}//${urlObj.hostname.toLowerCase()}${
+            urlObj.port ? `:${urlObj.port}` : ''
+          }${urlObj.pathname.replace(/\/+$/, '')}`;
+        } catch (error) {
+          console.warn('[Catch] 에러 발생:', error.message);
+          return url.trim().toLowerCase().replace(/\/+$/, '');
+        }
+      };
+
+      // 중복 제거: 정규화된 URL 기준, 이름있는 항목 우선
+      const byNormalizedUrl = new Map();
+      const seenUrls = new Set();
+      const seenNames = new Set(); // 이름 중복 체크용
+
+      for (const ep of newList) {
+        const normalizedUrl = normalizeUrl(ep.url);
+
+        // 이름 중복 체크
+        if (ep.name) {
+          const normalizedName = ep.name.trim().toLowerCase();
+          if (seenNames.has(normalizedName)) {
+            alert(
+              `중복된 Ollama 서버 이름입니다: ${ep.name}`,
+              'warning',
+              '중복 오류'
+            );
+            setSavingEndpoints(false);
+            return false;
+          }
+          seenNames.add(normalizedName);
+        }
+
+        // 이미 본 URL이면 스킵
+        if (seenUrls.has(normalizedUrl)) {
+          continue;
+        }
+
+        const exist = byNormalizedUrl.get(normalizedUrl);
+        if (!exist) {
+          // 새로운 항목 추가
+          byNormalizedUrl.set(normalizedUrl, ep);
+          seenUrls.add(normalizedUrl);
+        } else if (!exist.name && ep.name) {
+          // 기존 항목에 이름이 없고 새 항목에 이름이 있으면 교체
+          byNormalizedUrl.set(normalizedUrl, ep);
+        }
+      }
+
+      const uniqueList = Array.from(byNormalizedUrl.values());
+
+      const body = {
+        // 신규 구조: customEndpoints를 저장, 하위호환 위해 ollamaEndpoints도 동기화됨
+        customEndpoints: uniqueList.map((e) => ({
+          name: e.name || '',
+          url: e.url,
+          provider: 'ollama',
+          isActive: e.isActive !== undefined ? e.isActive : true,
+        })),
+      };
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        let err = {};
+        try {
+          const errorText = await res.text();
+          if (errorText && errorText.trim() !== '') {
+            err = JSON.parse(errorText);
+          }
+        } catch (parseError) {
+          console.error('에러 응답 파싱 실패:', parseError);
+        }
+        throw new Error(err.error || 'Ollama 서버 저장 실패');
+      }
+      setEndpoints(uniqueList);
+      // 저장 후 모니터 즉시 갱신 요청
+      await fetch('/api/admin/instances?refresh=true', {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+      // 목록 재조회
+      await fetchmodelServers(true);
+      return true;
+    } catch (e) {
+      console.error(e);
+      alert(e.message, 'error', '저장 실패');
+      return false;
+    } finally {
+      setSavingEndpoints(false);
+    }
+  };
+
+  const addEndpoint = async () => {
+    const value = endpointUrlInput.trim();
+    const name = endpointNameInput.trim();
+    const provider = 'ollama';
+    if (!name) {
+      alert('Ollama 서버 이름을 입력해주세요.', 'warning', '입력 오류');
+      return;
+    }
+    if (!value) {
+      alert('URL을 입력해주세요.', 'warning', '입력 오류');
+      return;
+    }
+    let urlObj;
+    try {
+      urlObj = new URL(value);
+    } catch (error) {
+      console.warn('[Catch] 에러 발생:', error.message);
+      alert(
+        '유효한 URL 형식이 아닙니다. 예: http://localhost:11434',
+        'warning',
+        'URL 형식 오류'
+      );
+      return;
+    }
+    if (!/^https?:$/.test(urlObj.protocol)) {
+      alert(
+        'http 또는 https 프로토콜만 지원합니다.',
+        'warning',
+        '프로토콜 오류'
+      );
+      return;
+    }
+    // 포트 강제는 제거 (Ollama 기본 포트 예시는 안내로만 사용)
+    if (endpoints.some((e) => e.url === value)) {
+      alert('이미 존재하는 Ollama 서버 URL입니다.', 'warning', '중복 오류');
+      return;
+    }
+    // 이름 중복 체크
+    if (
+      endpoints.some(
+        (e) =>
+          e.name && e.name.trim().toLowerCase() === name.trim().toLowerCase()
+      )
+    ) {
+      alert('이미 존재하는 Ollama 서버 이름입니다.', 'warning', '중복 오류');
+      return;
+    }
+    const next = [
+      ...endpoints,
+      { name, url: value, provider, isActive: true },
+    ];
+    const ok = await persistEndpoints(next);
+    if (ok) {
+      setEndpointNameInput('');
+      setEndpointUrlInput('');
+      setShowAddForm(false);
+    }
+  };
+
+  const removeEndpoint = async (endpointUrl) => {
+    const next = endpoints.filter((e) => e.url !== endpointUrl);
+    await persistEndpoints(next);
+  };
+
+  const startEditEndpoint = (ep) => {
+    setEditingEndpoint({
+      originalUrl: ep.url,
+      name: ep.name || '',
+      url: ep.url,
+      provider: 'ollama',
+      isActive: ep.isActive !== undefined ? ep.isActive : true, // 기본값은 활성화
+    });
+    setShowAddForm(false); // 수정 모드 시작 시 추가 폼 닫기
+  };
+
+  const cancelEditEndpoint = () => {
+    setEditingEndpoint(null);
+  };
+
+  const saveEditEndpoint = async () => {
+    if (!editingEndpoint) return;
+    const name = (editingEndpoint.name || '').trim(); // 이름은 수정 불가이므로 그대로 사용
+    const urlText = (editingEndpoint.url || '').trim();
+    const provider = 'ollama';
+    if (!name) {
+      alert('Ollama 서버 이름이 없습니다.', 'warning', '입력 오류');
+      return;
+    }
+    if (!urlText) {
+      alert('URL을 입력해주세요.', 'warning', '입력 오류');
+      return;
+    }
+    let urlObj;
+    try {
+      urlObj = new URL(urlText);
+    } catch (error) {
+      console.warn('[Catch] 에러 발생:', error.message);
+      alert(
+        '유효한 URL 형식이 아닙니다. 예: http://localhost:11434',
+        'warning',
+        'URL 형식 오류'
+      );
+      return;
+    }
+    if (!/^https?:$/.test(urlObj.protocol)) {
+      alert(
+        'http 또는 https 프로토콜만 지원합니다.',
+        'warning',
+        '프로토콜 오류'
+      );
+      return;
+    }
+    // 포트 필수 제약은 제거
+    // 다른 항목과 중복 URL 방지 (현재 편집 중인 항목 제외)
+    if (
+      endpoints.some(
+        (e) => e.url === urlText && e.url !== editingEndpoint.originalUrl
+      )
+    ) {
+      alert('이미 존재하는 Ollama 서버 URL입니다.', 'warning', '중복 오류');
+      return;
+    }
+    // 이름은 수정 불가이므로 중복 체크 불필요
+    const isActive =
+      editingEndpoint.isActive !== undefined ? editingEndpoint.isActive : true;
+    const next = endpoints.map((e) =>
+      e.url === editingEndpoint.originalUrl
+        ? { name, url: urlText, provider, isActive }
+        : e
+    );
+    const ok = await persistEndpoints(next);
+    if (ok) {
+      setEditingEndpoint(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchmodelServers();
+    fetchEndpointsFromSettings();
+  }, []);
+
+  // 서버 목록이 로드되면 각 서버의 상태를 개별적으로 조회
+  useEffect(() => {
+    if (!endpoints || endpoints.length === 0) return;
+
+    // 모든 서버의 상태를 병렬로 조회
+    endpoints.forEach((ep) => {
+      if (ep.url && ep.isActive !== false) {
+        fetchServerStatus(ep.url);
+      }
+    });
+  }, [endpoints.length, fetchServerStatus, endpoints]); // endpoints.length가 변경될 때만 실행
+
+  // 폴링 설정 - 5분마다 자동 새로고침
+  useEffect(() => {
+    if (!isPollingEnabled) return;
+
+    const interval = setInterval(() => {
+      // 폴링 시에도 각 서버 상태를 개별적으로 조회
+      endpoints.forEach((ep) => {
+        if (ep.url && ep.isActive !== false) {
+          fetchServerStatus(ep.url);
+        }
+      });
+    }, 300000); // 5분
+
+    return () => clearInterval(interval);
+  }, [isPollingEnabled, endpoints, fetchServerStatus]);
+
+  // 컴포넌트 언마운트 시 폴링 정리
+  useEffect(() => {
+    return () => setIsPollingEnabled(false);
+  }, []);
+
+  // 페이지 visibility 변경 시 폴링 상태 관리
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // 페이지가 숨겨지면 폴링 일시 중지
+        setIsPollingEnabled(false);
+      } else {
+        // 페이지가 다시 보이면 폴링 재시작 및 즉시 새로고침
+        setIsPollingEnabled(true);
+        fetchmodelServers(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () =>
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  const formatUptime = (ms) => {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}일 ${hours % 24}시간`;
+    if (hours > 0) return `${hours}시간 ${minutes % 60}분`;
+    if (minutes > 0) return `${minutes}분`;
+    return `${seconds}초`;
+  };
+
+  const formatMemory = (bytes) => {
+    const mb = bytes / 1024 / 1024;
+    return `${mb.toFixed(1)}MB`;
+  };
+
+
+  return (
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <div className='flex items-center gap-3'>
+            <h1 className='text-2xl font-bold text-gray-900 dark:text-white'>
+              Ollama 서버 관리
+            </h1>
+            <button
+              onClick={() => setShowHelpSection(!showHelpSection)}
+              className='p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+              title='도움말 보기'
+            >
+              <HelpCircle className='h-5 w-5' />
+            </button>
+          </div>
+          <p className='text-gray-600 dark:text-gray-400 mt-1'>
+            온프레미스 Ollama 서버 상태와 로그를 실시간으로 확인합니다.
+          </p>
+        </div>
+        <div className='flex items-center gap-3'>
+          {/* 폴링 상태 표시 */}
+          <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
+            <div
+              className={`w-2 h-2 rounded-full ${
+                isPollingEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+              }`}
+            ></div>
+            <span>
+              {isPollingEnabled
+                ? '자동 새로고침 활성화'
+                : '자동 새로고침 비활성화'}
+            </span>
+            <span className='text-xs'>
+              마지막 업데이트:{' '}
+              {lastRefresh.toLocaleTimeString('ko-KR', {
+                timeZone: 'Asia/Seoul',
+              })}
+            </span>
+          </div>
+
+          {/* 폴링 제어 버튼 */}
+          <button
+            onClick={() => setIsPollingEnabled(!isPollingEnabled)}
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              isPollingEnabled
+                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-200 dark:hover:bg-yellow-800'
+                : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800'
+            } flex items-center gap-1.5`}
+          >
+            {isPollingEnabled ? (
+              <>
+                <Pause className='h-3 w-3' />
+                중지
+              </>
+            ) : (
+              <>
+                <Play className='h-3 w-3' />
+                시작
+              </>
+            )}
+          </button>
+
+          {/* 수동 새로고침 버튼 */}
+          <button
+            onClick={() => {
+              endpoints.forEach((ep) => {
+                if (ep.url && ep.isActive !== false) {
+                  fetchServerStatus(ep.url);
+                }
+              });
+            }}
+            disabled={Object.values(serverStatusLoading).some(
+              (loading) => loading
+            )}
+            className='btn-primary flex items-center gap-2'
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${
+                Object.values(serverStatusLoading).some((loading) => loading)
+                  ? 'animate-spin'
+                  : ''
+              }`}
+            />
+            모든 서버 새로고침
+          </button>
+        </div>
+      </div>
+
+      {/* 도움말 섹션 */}
+      {showHelpSection && (
+        <div className='bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
+          <div className='flex items-center justify-between mb-4'>
+            <h3 className='text-lg font-semibold text-blue-900 dark:text-blue-100 flex items-center gap-2'>
+              <Info className='h-5 w-5' />
+              Ollama 서버 관리 안내
+            </h3>
+            <button
+              onClick={() => setShowHelpSection(false)}
+              className='text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200'
+            >
+              <ChevronUp className='h-5 w-5' />
+            </button>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6 text-sm'>
+            <div>
+              <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2'>
+                <Server className='h-4 w-4' />
+                Ollama 서버 관리
+              </h4>
+              <ul className='space-y-1.5 text-blue-700 dark:text-blue-300'>
+                <li>• 온프레미스 Ollama 서버만 등록/관리합니다</li>
+                <li>• 로컬 개발/테스트 서버에서 LLM 테스트용으로 사용됩니다</li>
+                <li>• 등록된 Ollama 서버의 실시간 상태를 확인합니다</li>
+                <li>• 각 서버의 모델 개수, 응답 시간, 활성 상태 표시</li>
+                <li>• 서버 이름과 URL을 수정하거나 삭제할 수 있습니다</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2'>
+                <Activity className='h-4 w-4' />
+                실시간 모니터링
+              </h4>
+              <ul className='space-y-1.5 text-blue-700 dark:text-blue-300'>
+                <li>
+                  • <strong>자동 새로고침:</strong> 5분마다 상태 자동 업데이트
+                </li>
+                <li>
+                  •{' '}
+                  <span className='inline-flex items-center gap-1'>
+                    <Activity className='h-3 w-3 text-green-500' /> 녹색
+                  </span>{' '}
+                  정상 작동 중
+                </li>
+                <li>
+                  •{' '}
+                  <span className='inline-flex items-center gap-1'>
+                    <Activity className='h-3 w-3 text-red-500' /> 빨간색
+                  </span>{' '}
+                  오프라인 또는 오류
+                </li>
+                <li>• 24시간 로그 개수로 Ollama 사용량 파악</li>
+                <li>• 각 Ollama 서버의 응답 시간(ms) 실시간 표시</li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className='font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2'>
+                <Zap className='h-4 w-4' />
+                로컬 테스트용 API
+              </h4>
+              <ul className='space-y-1.5 text-blue-700 dark:text-blue-300'>
+                <li>
+                  • <strong>통합 API:</strong> /api/model-servers/generate
+                </li>
+                <li>• 등록된 Ollama 서버 간 라운드로빈 로드밸런싱</li>
+                <li>• 스트리밍 및 일반 응답 모두 지원</li>
+                <li>• 로컬 개발/테스트에서만 사용 권장</li>
+                <li>• 외부 제공 API 연동은 별도 경로로 이관 예정</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ollama 서버 관리 */}
+      <div className='card p-6 mb-6'>
+        <div className='flex items-center justify-between mb-4'>
+          <div className='flex items-center gap-2'>
+            <Server className='h-5 w-5 text-blue-600' />
+            <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+              Ollama 서버 관리
+            </h2>
+          </div>
+          <button
+            onClick={() => {
+              if (editingEndpoint) {
+                // 수정 모드가 활성화되어 있으면 먼저 취소
+                cancelEditEndpoint();
+              }
+              setShowAddForm(!showAddForm);
+            }}
+            className='px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-1'
+          >
+            <Edit className='h-3 w-3' />
+            추가
+          </button>
+        </div>
+
+      {/* 등록된 Ollama 서버 현황 */}
+        {endpoints.length > 0 && (
+          <div className='mb-4'>
+            <div className='mb-3 flex items-center justify-between'>
+              <h3 className='text-sm font-semibold text-gray-700 dark:text-gray-300'>
+                등록된 Ollama 서버 ({endpoints.length}개)
+              </h3>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
+              {endpoints.map((ep) => {
+                let instance = null;
+                let realTime = null;
+
+                try {
+                  const url = new URL(ep.url);
+                  const epHost = url.hostname;
+                  const epPort = url.port
+                    ? parseInt(url.port, 10)
+                    : url.protocol === 'https:'
+                    ? 443
+                    : 80;
+
+                  // 실시간 상태에서 먼저 찾기 (URL 또는 host:port 기반)
+                  realTime = realTimeStatus.find((rt) => {
+                    // URL이 있으면 URL로 비교
+                    if (rt.url) {
+                      try {
+                        const rtUrl = new URL(rt.url);
+                        return (
+                          rtUrl.hostname === epHost &&
+                          parseInt(rtUrl.port || '80', 10) === epPort
+                        );
+                      } catch (error) {
+                        console.warn('[Catch] 에러 발생:', error.message);
+                        // URL 파싱 실패 시 무시
+                      }
+                    }
+
+                    // host와 port로 비교
+                    if (rt.host && rt.port) {
+                      const rtHost = rt.host.toString().trim();
+                      const rtPort = parseInt(rt.port.toString(), 10);
+                      return rtHost === epHost && rtPort === epPort;
+                    }
+
+                    // ID 형식으로 비교 (fallback)
+                    if (rt.id) {
+                      try {
+                        // ID가 URL 형식인 경우
+                        if (rt.id.includes('://')) {
+                          const rtUrl = new URL(rt.id);
+                          return (
+                            rtUrl.hostname === epHost &&
+                            parseInt(rtUrl.port || '80', 10) === epPort
+                          );
+                        }
+
+                        // ID 형식: model-server-{hostname}-{port}
+                        const idParts = rt.id.split('-');
+                        if (idParts.length >= 4) {
+                          // model-server-hostname-port 형식 (hostname에 하이픈이 있을 수 있음)
+                          const rtHost = idParts.slice(2, -1).join('-');
+                          const rtPort = parseInt(
+                            idParts[idParts.length - 1],
+                            10
+                          );
+                          return rtHost === epHost && rtPort === epPort;
+                        } else if (idParts.length === 3) {
+                          // 간단한 형식: hostname-port
+                          const rtHost = idParts[1];
+                          const rtPort = parseInt(idParts[2], 10);
+                          return rtHost === epHost && rtPort === epPort;
+                        }
+                      } catch (error) {
+                        console.warn('[Catch] 에러 발생:', error.message);
+                        // ID 파싱 실패 시 무시
+                      }
+                    }
+
+                    return false;
+                  });
+
+                  // DB 인스턴스에서 찾기
+                  instance = modelServers.find((i) => {
+                    const iHost = (i.host || '').toString().trim();
+                    const iPort = i.port
+                      ? parseInt(i.port.toString(), 10)
+                      : ep.url.includes('https')
+                      ? 443
+                      : 80;
+                    return iHost === epHost && iPort === epPort;
+                  });
+                } catch (e) {
+                  console.warn(
+                    '[modelServers] URL 파싱 실패:',
+                    e?.message || e
+                  );
+                }
+
+                // 실시간 상태 우선 사용, 없으면 DB 인스턴스 사용
+                // 개별 서버 로딩 상태 확인
+                const isServerLoading = serverStatusLoading[ep.url] || false;
+
+                const isActive =
+                  isServerLoading || loading
+                    ? null
+                    : realTime
+                    ? realTime.status === 'healthy'
+                    : instance?.isActive !== undefined
+                    ? instance.isActive
+                    : null;
+                const modelCount =
+                  realTime?.modelCount ?? instance?.modelCount ?? 0;
+                const responseTime =
+                  realTime?.responseTime ?? instance?.responseTime ?? null;
+
+                // 상태 표시 결정: null이면 조회중, true면 정상, false면 오프라인
+                const statusColor =
+                  isActive === null
+                    ? 'bg-gray-400'
+                    : isActive
+                    ? 'bg-green-500'
+                    : 'bg-red-500';
+                const statusText =
+                  isActive === null ? '조회중' : isActive ? '정상' : '오프라인';
+                const statusIconColor =
+                  isActive === null
+                    ? 'text-gray-400'
+                    : isActive
+                    ? 'text-green-500'
+                    : 'text-red-500';
+
+                const isEditing = editingEndpoint?.originalUrl === ep.url;
+                const isInactive = ep.isActive === false;
+                return (
+                  <div
+                    key={ep.url}
+                    className={`group relative p-4 bg-white dark:bg-gray-800 rounded-lg border transition-all ${
+                      isEditing
+                        ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md'
+                        : isInactive
+                        ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 opacity-70 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-sm'
+                        : 'border-gray-200 dark:border-gray-700 cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
+                    }`}
+                  >
+                    <div
+                      onClick={() => startEditEndpoint(ep)}
+                      className='flex-1'
+                    >
+                      {/* 헤더: 이름과 상태 */}
+                      <div className='flex items-start justify-between mb-3'>
+                        <div className='flex items-start gap-2.5 min-w-0 flex-1'>
+                          <div
+                            className={`h-3 w-3 rounded-full flex-shrink-0 mt-0.5 ${statusColor} ${
+                              isInactive ? 'opacity-50' : ''
+                            }`}
+                          ></div>
+                          <div className='min-w-0 flex-1'>
+                            <div className='flex items-center gap-2 mb-1'>
+                              <div
+                                className={`text-sm font-semibold truncate ${
+                                  isInactive
+                                    ? 'text-gray-500 dark:text-gray-400'
+                                    : 'text-gray-900 dark:text-white'
+                                }`}
+                              >
+                                {ep.name || '(이름 없음)'}
+                              </div>
+                              {isInactive && (
+                                <span className='px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-[10px] font-medium rounded'>
+                                  비활성화
+                                </span>
+                              )}
+                            </div>
+                            <div
+                              className={`text-xs font-mono break-all ${
+                                isInactive
+                                  ? 'text-gray-400 dark:text-gray-500'
+                                  : 'text-gray-600 dark:text-gray-400'
+                              }`}
+                            >
+                              {ep.url}
+                            </div>
+                          </div>
+                        </div>
+                        <span className='ml-2 inline-flex items-center px-2 py-1 rounded text-[10px] font-medium border flex-shrink-0 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'>
+                          Ollama
+                        </span>
+                      </div>
+
+                      {/* 상태 정보 */}
+                      <div className='flex items-center flex-wrap gap-2.5 text-xs mb-3'>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-1 rounded ${
+                            isActive === null
+                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                              : isActive
+                              ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                              : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                          }`}
+                        >
+                          <Activity
+                            className={`h-3 w-3 ${statusIconColor} ${
+                              isServerLoading ? 'animate-pulse' : ''
+                            }`}
+                          />
+                          {statusText}
+                        </span>
+                        {/* 개별 서버 새로고침 버튼 */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchServerStatus(ep.url);
+                          }}
+                          disabled={isServerLoading}
+                          className='inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                          title='상태 새로고침'
+                        >
+                          <RefreshCw
+                            className={`h-3 w-3 ${
+                              isServerLoading ? 'animate-spin' : ''
+                            }`}
+                          />
+                        </button>
+                        {modelCount > 0 && (
+                          <span className='inline-flex items-center gap-1.5 px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded'>
+                            <Server className='h-3 w-3' />
+                            {modelCount}개 모델
+                          </span>
+                        )}
+                        {responseTime !== null && (
+                          <span className='px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded'>
+                            {responseTime}ms
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 액션 버튼 */}
+                    <div className='pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between'>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setSelectedEndpointForHistory(ep.url);
+                          setShowErrorHistoryModal(true);
+                          await fetchErrorHistory(ep.url);
+                        }}
+                        className='text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-medium transition-colors flex items-center gap-1'
+                      >
+                        <AlertCircle className='h-3 w-3' />
+                        오류 이력
+                      </button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const confirmed = await confirm(
+                            '정말 삭제하시겠습니까?',
+                            'Ollama 서버 삭제 확인'
+                          );
+                          if (confirmed) {
+                            removeEndpoint(ep.url);
+                          }
+                        }}
+                        disabled={savingEndpoints}
+                        className='text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors'
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700'>
+              <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm'>
+                <div className='flex items-center gap-4'>
+                  <span className='text-gray-600 dark:text-gray-400'>
+                    총{' '}
+                    <span className='font-semibold text-gray-900 dark:text-white'>
+                      {endpoints.length}
+                    </span>
+                    개 Ollama 서버
+                  </span>
+                  <span className='text-gray-500 dark:text-gray-500'>•</span>
+                  <span className='text-gray-600 dark:text-gray-400'>
+                    활성화:{' '}
+                    <span className='font-semibold text-green-600 dark:text-green-400'>
+                      {endpoints.filter((e) => e.isActive !== false).length}
+                    </span>
+                    개
+                  </span>
+                  {endpoints.filter((e) => e.isActive === false).length > 0 && (
+                    <>
+                      <span className='text-gray-500 dark:text-gray-500'>
+                        •
+                      </span>
+                      <span className='text-gray-600 dark:text-gray-400'>
+                        비활성화:{' '}
+                        <span className='font-semibold text-gray-500 dark:text-gray-400'>
+                          {endpoints.filter((e) => e.isActive === false).length}
+                        </span>
+                        개
+                      </span>
+                    </>
+                  )}
+                </div>
+                <span className='text-gray-600 dark:text-gray-400'>
+                  {
+                    endpoints.filter((ep) => {
+                      try {
+                        const url = new URL(ep.url);
+                        const epHost = url.hostname;
+                        const epPort = url.port
+                          ? parseInt(url.port, 10)
+                          : url.protocol === 'https:'
+                          ? 443
+                          : 80;
+
+                        // 실시간 상태 확인
+                        const realTime = realTimeStatus.find((rt) => {
+                          // URL이 있으면 URL로 비교
+                          if (rt.url) {
+                            try {
+                              const rtUrl = new URL(rt.url);
+                              return (
+                                rtUrl.hostname === epHost &&
+                                parseInt(rtUrl.port || '80', 10) === epPort
+                              );
+                            } catch (error) {
+                              console.warn('[Catch] 에러 발생:', error.message);
+                              // URL 파싱 실패 시 무시
+                            }
+                          }
+
+                          // host와 port로 비교
+                          if (rt.host && rt.port) {
+                            const rtHost = rt.host.toString().trim();
+                            const rtPort = parseInt(rt.port.toString(), 10);
+                            return rtHost === epHost && rtPort === epPort;
+                          }
+
+                          // ID 형식으로 비교 (fallback)
+                          if (rt.id) {
+                            try {
+                              // ID가 URL 형식인 경우
+                              if (rt.id.includes('://')) {
+                                const rtUrl = new URL(rt.id);
+                                return (
+                                  rtUrl.hostname === epHost &&
+                                  parseInt(rtUrl.port || '80', 10) === epPort
+                                );
+                              }
+
+                              // ID 형식: model-server-{hostname}-{port}
+                              const idParts = rt.id.split('-');
+                              if (idParts.length >= 4) {
+                                const rtHost = idParts.slice(2, -1).join('-');
+                                const rtPort = parseInt(
+                                  idParts[idParts.length - 1],
+                                  10
+                                );
+                                return rtHost === epHost && rtPort === epPort;
+                              } else if (idParts.length === 3) {
+                                const rtHost = idParts[1];
+                                const rtPort = parseInt(idParts[2], 10);
+                                return rtHost === epHost && rtPort === epPort;
+                              }
+                            } catch (error) {
+                              console.warn('[Catch] 에러 발생:', error.message);
+                              // ID 파싱 실패 시 무시
+                            }
+                          }
+
+                          return false;
+                        });
+
+                        if (realTime && realTime.status === 'healthy') {
+                          return true;
+                        }
+
+                        // DB 인스턴스 확인
+                        return modelServers.some((i) => {
+                          const iHost = (i.host || '').toString().trim();
+                          const iPort = i.port
+                            ? parseInt(i.port.toString(), 10)
+                            : ep.url.includes('https')
+                            ? 443
+                            : 80;
+                          return (
+                            iHost === epHost && iPort === epPort && i.isActive
+                          );
+                        });
+                      } catch (e) {
+                        return false;
+                      }
+                    }).length
+                  }
+                  /{endpoints.length}개 Ollama 서버 정상 작동
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 수정 모달 */}
+        {editingEndpoint && (
+          <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+            {/* 배경 오버레이 */}
+            <div
+              className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
+              onClick={() => setEditingEndpoint(null)}
+            />
+            {/* 모달 내용 */}
+            <div
+              className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-full md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-4 p-6'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className='flex items-center justify-between mb-4'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                  Ollama 서버 수정
+                </h3>
+                <button
+                  onClick={cancelEditEndpoint}
+                  disabled={savingEndpoints}
+                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                >
+                  <X className='h-5 w-5' />
+                </button>
+              </div>
+              <div className='space-y-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2'>
+                    <span>
+                      Ollama 서버 이름 <span className='text-red-500'>*</span>
+                    </span>
+                    <div className='group relative'>
+                      <HelpCircle className='h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help' />
+                      <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10'>
+                        <div className='bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
+                          <div className='font-semibold mb-1'>
+                            이름은 수정할 수 없습니다
+                          </div>
+                          <div>Ollama 서버 이름은 고유 식별자로</div>
+                          <div>수정할 수 없습니다.</div>
+                          <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-700'></div>
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                  <input
+                    type='text'
+                    value={editingEndpoint.name}
+                    placeholder='예: 개발1, 운영A'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    readOnly
+                    maxLength={50}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    URL
+                  </label>
+                  <input
+                    type='text'
+                    value={editingEndpoint.url}
+                    onChange={(e) =>
+                      setEditingEndpoint({
+                        ...editingEndpoint,
+                        url: e.target.value,
+                      })
+                    }
+                    placeholder='예: http://localhost:11434'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    disabled={savingEndpoints}
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    Provider
+                  </label>
+                  <input
+                    type='text'
+                    value='ollama'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className='flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <input
+                      type='checkbox'
+                      checked={
+                        editingEndpoint.isActive !== undefined
+                          ? editingEndpoint.isActive
+                          : true
+                      }
+                      onChange={(e) =>
+                        setEditingEndpoint({
+                          ...editingEndpoint,
+                          isActive: e.target.checked,
+                        })
+                      }
+                      className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
+                      disabled={savingEndpoints}
+                    />
+                    <span>활성화</span>
+                  </label>
+                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6'>
+                    비활성화된 Ollama 서버는 라운드로빈에서 제외됩니다.
+                  </p>
+                </div>
+                <div className='flex items-center justify-end gap-2 pt-2'>
+                  <button
+                    onClick={cancelEditEndpoint}
+                    disabled={savingEndpoints}
+                    className='btn-secondary'
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={saveEditEndpoint}
+                    disabled={savingEndpoints}
+                    className='btn-primary'
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 추가 모달 */}
+        {showAddForm && !editingEndpoint && (
+          <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+            {/* 배경 오버레이 */}
+            <div
+              className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
+              onClick={() => setEditingEndpoint(null)}
+            />
+            {/* 모달 내용 */}
+            <div
+              className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-full md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-4 p-6'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className='flex items-center justify-between mb-4'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                  Ollama 서버 추가
+                </h3>
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  disabled={savingEndpoints}
+                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                >
+                  <X className='h-5 w-5' />
+                </button>
+              </div>
+              <div className='space-y-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2'>
+                    <span>
+                      Ollama 서버 이름 <span className='text-red-500'>*</span>
+                    </span>
+                    <div className='group relative'>
+                      <HelpCircle className='h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-help' />
+                      <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10'>
+                        <div className='bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
+                          <div className='font-semibold mb-1'>
+                            라운드로빈 안내
+                          </div>
+                          <div>동일한 이름을 설정한 서버들은</div>
+                          <div>자동으로 라운드로빈됩니다.</div>
+                          <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-700'></div>
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+                  <input
+                    type='text'
+                    value={endpointNameInput}
+                    onChange={(e) => setEndpointNameInput(e.target.value)}
+                    placeholder='예: 개발1, 운영A'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    disabled={savingEndpoints}
+                    maxLength={50}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    URL
+                  </label>
+                  <input
+                    type='text'
+                    value={endpointUrlInput}
+                    onChange={(e) => setEndpointUrlInput(e.target.value)}
+                    placeholder='예: http://localhost:11434'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    disabled={savingEndpoints}
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                    Provider
+                  </label>
+                  <input
+                    type='text'
+                    value='ollama'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    readOnly
+                  />
+                </div>
+                <div className='flex items-center justify-end gap-2 pt-2'>
+                  <button
+                    onClick={() => setShowAddForm(false)}
+                    disabled={savingEndpoints}
+                    className='btn-secondary'
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={addEndpoint}
+                    disabled={savingEndpoints}
+                    className='btn-primary'
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 오류 이력 모달 */}
+      {showErrorHistoryModal && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+          {/* 배경 오버레이 */}
+          <div
+            className='absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity'
+            onClick={() => {
+              setShowErrorHistoryModal(false);
+              setErrorHistory([]);
+            }}
+          />
+          {/* 모달 내용 */}
+          <div className='relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col'>
+            <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                오류 이력 - {selectedEndpointForHistory}
+              </h2>
+              <div className='flex items-center gap-2'>
+                {errorHistory.length > 0 && (
+                  <button
+                    onClick={() =>
+                      deleteAllErrorHistory(selectedEndpointForHistory)
+                    }
+                    disabled={errorHistoryLoading}
+                    className='px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    <Trash2 className='h-4 w-4' />
+                    전체 삭제
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setShowErrorHistoryModal(false);
+                    setErrorHistory([]);
+                    setSelectedEndpointForHistory(null);
+                  }}
+                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                >
+                  <X className='h-5 w-5' />
+                </button>
+              </div>
+            </div>
+            <div className='p-4 overflow-y-auto flex-1'>
+              {errorHistoryLoading ? (
+                <div className='flex items-center justify-center py-8'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+                </div>
+              ) : errorHistory.length === 0 ? (
+                <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+                  최근 7일간 오류 이력이 없습니다.
+                </div>
+              ) : (
+                <div className='space-y-3'>
+                  {errorHistory.map((error) => {
+                    const metadata = error.metadata || {};
+                    const stack = metadata.stack || null;
+                    const hasStack = stack && stack.trim().length > 0;
+
+                    return (
+                      <div
+                        key={error.id}
+                        className='p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg'
+                      >
+                        <div className='flex items-start justify-between mb-2'>
+                          <div className='flex-1'>
+                            <div className='flex items-center gap-2 mb-1 flex-wrap'>
+                              <span className='text-xs font-medium text-red-700 dark:text-red-300'>
+                                {error.errorType || 'Unknown'}
+                              </span>
+                              <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                {new Date(error.checkedAt).toLocaleString(
+                                  'ko-KR',
+                                  { timeZone: 'Asia/Seoul' }
+                                )}
+                              </span>
+                              {error.responseTime !== null && (
+                                <span className='text-xs text-gray-500 dark:text-gray-400'>
+                                  ({error.responseTime}ms)
+                                </span>
+                              )}
+                              {metadata.name && (
+                                <span className='text-xs text-gray-600 dark:text-gray-400 font-medium'>
+                                  {metadata.name}
+                                </span>
+                              )}
+                            </div>
+                            <p className='text-sm text-red-800 dark:text-red-200 break-words mb-2'>
+                              {error.errorMessage}
+                            </p>
+
+                            {/* 스택 트레이스 표시 */}
+                            {hasStack && (
+                              <details className='mt-2'>
+                                <summary className='text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-800 dark:hover:text-gray-200 font-medium'>
+                                  스택 트레이스 보기
+                                </summary>
+                                <div className='relative mt-2'>
+                                  <button
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        stack,
+                                        `stack-${error.id}`
+                                      )
+                                    }
+                                    className='absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors'
+                                    title='클립보드에 복사'
+                                  >
+                                    {copiedTexts.has(`stack-${error.id}`) ? (
+                                      <Check className='w-4 h-4 text-green-600 dark:text-green-400' />
+                                    ) : (
+                                      <Copy className='w-4 h-4' />
+                                    )}
+                                  </button>
+                                  <pre className='text-xs text-gray-700 dark:text-gray-300 overflow-x-auto bg-gray-100 dark:bg-gray-700 p-3 pr-10 rounded border border-gray-200 dark:border-gray-600 whitespace-pre-wrap break-words'>
+                                    {stack}
+                                  </pre>
+                                </div>
+                              </details>
+                            )}
+
+                            {/* 기타 메타데이터 (스택 제외) */}
+                            {metadata &&
+                              Object.keys(metadata).filter(
+                                (key) => key !== 'stack'
+                              ).length > 0 && (
+                                <details className='mt-2'>
+                                  <summary className='text-xs text-gray-600 dark:text-gray-400 cursor-pointer hover:text-gray-800 dark:hover:text-gray-200'>
+                                    상세 정보 보기
+                                  </summary>
+                                  <div className='relative mt-2'>
+                                    {(() => {
+                                      const metadataText = JSON.stringify(
+                                        Object.fromEntries(
+                                          Object.entries(metadata).filter(
+                                            ([key]) => key !== 'stack'
+                                          )
+                                        ),
+                                        null,
+                                        2
+                                      );
+                                      return (
+                                        <>
+                                          <button
+                                            onClick={() =>
+                                              copyToClipboard(
+                                                metadataText,
+                                                `metadata-${error.id}`
+                                              )
+                                            }
+                                            className='absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors'
+                                            title='클립보드에 복사'
+                                          >
+                                            {copiedTexts.has(
+                                              `metadata-${error.id}`
+                                            ) ? (
+                                              <Check className='w-4 h-4 text-green-600 dark:text-green-400' />
+                                            ) : (
+                                              <Copy className='w-4 h-4' />
+                                            )}
+                                          </button>
+                                          <pre className='text-xs text-gray-600 dark:text-gray-400 overflow-x-auto bg-gray-100 dark:bg-gray-700 p-2 pr-10 rounded'>
+                                            {metadataText}
+                                          </pre>
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                </details>
+                              )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

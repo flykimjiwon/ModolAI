@@ -1,0 +1,44 @@
+import { NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { query } from '@/lib/postgres';
+
+/**
+ * POST /api/auth/logout
+ * refresh token revoke + cookie 삭제
+ */
+export async function POST(request) {
+  try {
+    const refreshToken = request.cookies.get('refresh_token')?.value;
+
+    if (refreshToken) {
+      const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+      await query(
+        `UPDATE refresh_tokens SET revoked = TRUE, revoked_at = NOW() WHERE token_hash = $1`,
+        [tokenHash]
+      );
+    }
+
+    const response = NextResponse.json({ success: true });
+    response.cookies.set('refresh_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/api/auth',
+    });
+    return response;
+
+  } catch (error) {
+    console.error('[Auth Logout] 오류:', error);
+    // 오류가 있어도 cookie는 삭제
+    const response = NextResponse.json({ success: true });
+    response.cookies.set('refresh_token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/api/auth',
+    });
+    return response;
+  }
+}

@@ -1,0 +1,98 @@
+# dependencies
+/node_modules
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Dependencies
+/node_modules
+
+# Next.js build output
+/.next/
+
+# Turbopack
+.turbo/
+
+# Production build
+build/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+.env.local
+.env*.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Winston logs directory
+logs/
+error.log
+combined.log
+
+# macOS specific
+.DS_Store
+
+.history
+.vscode
+
+# Volumes (외부 볼륨 데이터)
+volumes/
+
+# Uploaded files (사용자 업로드 파일)
+public/uploads/*
+# AGENTS.md
+# .cursor/commands/bugfix.md
+# .cursor/commands/feature.md
+# .cursor/commands/refactor.md
+# .cursor/commands/test.md
+# .cursor/commands/docs.md
+# .cursor/commands/chore.md
+# .cursor/commands/style.md
+# .cursor/commands/perf.md
+# .cursor/commands/build.md
+# .cursor/commands/ci.md
+# .cursor/commands/other.md
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# 개발 참고 문서 및 디버깅 스크립트
+ERROR_HANDLING_GUIDE.md
+SECURITY_CATCH_BLOCK_FIX.md
+debug_models.js
+fix_all_catches.js
+fix_catch_blocks.js
+fix_empty_catch.sh
+fix_remaining_catches.sh
+test_catch_patterns.js
+check_gpt4_config.sql
+
+# Local docs (do not commit)
+멀티턴정책.md
+그룹사SSO.md
+
+# Ignore all Markdown by default
+*.md
+
+# Environment variable files
+*.env
+.envrc
+.envrc.*
+
+# GitLab CI/CD 배포 설정 (운영 전용, 로컬 배포 안 함)
+.gitlab-ci.yml
+.gitlab/

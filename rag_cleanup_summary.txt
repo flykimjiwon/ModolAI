@@ -1,0 +1,13 @@
+=== RAG 기능 삭제 대상 ===
+
+삭제할 파일 (3개):
+1. app/models/RagDocument.js
+2. app/models/RagSetting.js
+3. app/lib/simpleRagProcessor.js
+
+수정할 파일 (RAG 관련 코드 제거):
+1. app/hooks/useChatSender.js
+2. app/components/chat/ModelSelector.js
+3. app/hooks/useModelManager.js
+4. app/hooks/useChat.js
+5. app/lib/api.js

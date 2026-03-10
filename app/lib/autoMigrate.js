@@ -1,0 +1,451 @@
+/**
+ * 자동 마이그레이션 유틸 (2026-02-27)
+ *
+ * admin@shinhan.com 로그인 시 자동으로 호출된다.
+ * init-schema(테이블 생성) + migrate-models(컬럼 추가) 로직을 통합.
+ * 모든 쿼리가 IF NOT EXISTS / nullable 처리라 멱등성 보장.
+ */
+
+import { query, getPostgresClient } from '@/lib/postgres';
+
+// ─────────────────────────────────────────────
+// 1. 초기 스키마 생성 (테이블)
+// ─────────────────────────────────────────────
+
+const CORE_TABLES = [
+  {
+    name: 'users',
+    sql: `CREATE TABLE IF NOT EXISTS users (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash VARCHAR(255),
+      name VARCHAR(255),
+      department VARCHAR(255),
+      cell VARCHAR(255),
+      role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+      last_login_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'chat_rooms',
+    sql: `CREATE TABLE IF NOT EXISTS chat_rooms (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      name VARCHAR(255),
+      message_count INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'chat_history',
+    sql: `CREATE TABLE IF NOT EXISTS chat_history (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
+      user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      role VARCHAR(50) NOT NULL CHECK (role IN ('user', 'assistant')),
+      text TEXT,
+      model VARCHAR(255),
+      file_references JSONB,
+      feedback VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'settings',
+    sql: `CREATE TABLE IF NOT EXISTS settings (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      config_type VARCHAR(50) DEFAULT 'general',
+      multiturn_count INTEGER DEFAULT 10,
+      tooltip_enabled BOOLEAN DEFAULT true,
+      tooltip_message TEXT,
+      site_title VARCHAR(255),
+      site_description TEXT,
+      favicon_url VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'models',
+    sql: `CREATE TABLE IF NOT EXISTS models (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      model_name VARCHAR(255) NOT NULL,
+      label VARCHAR(255) NOT NULL,
+      tooltip TEXT,
+      is_default BOOLEAN DEFAULT false,
+      admin_only BOOLEAN DEFAULT false,
+      system_prompt TEXT[],
+      endpoint VARCHAR(500),
+      display_order INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'external_api_prompts',
+    sql: `CREATE TABLE IF NOT EXISTS external_api_prompts (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      prompt TEXT,
+      messages JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'external_api_logs',
+    sql: `CREATE TABLE IF NOT EXISTS external_api_logs (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      api_type VARCHAR(50),
+      endpoint VARCHAR(255),
+      model VARCHAR(255),
+      provider VARCHAR(255),
+      prompt_id UUID REFERENCES external_api_prompts(id) ON DELETE SET NULL,
+      response_token_count INTEGER DEFAULT 0,
+      prompt_token_count INTEGER DEFAULT 0,
+      total_token_count INTEGER DEFAULT 0,
+      response_time INTEGER,
+      status_code INTEGER,
+      is_stream BOOLEAN DEFAULT false,
+      error TEXT,
+      client_ip VARCHAR(45),
+      user_agent TEXT,
+      user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      source VARCHAR(50) DEFAULT 'external_api'
+    )`,
+  },
+  {
+    name: 'api_tokens',
+    sql: `CREATE TABLE IF NOT EXISTS api_tokens (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      token_hash VARCHAR(255) NOT NULL,
+      encrypted_token TEXT,
+      name VARCHAR(255),
+      expires_at TIMESTAMP,
+      is_active BOOLEAN DEFAULT true,
+      last_used_at TIMESTAMP,
+      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'notices',
+    sql: `CREATE TABLE IF NOT EXISTS notices (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      title VARCHAR(255) NOT NULL,
+      content TEXT,
+      is_popup BOOLEAN DEFAULT false,
+      is_active BOOLEAN DEFAULT true,
+      author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      author_name VARCHAR(255),
+      views INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'app_error_logs',
+    sql: `CREATE TABLE IF NOT EXISTS app_error_logs (
+      id BIGSERIAL PRIMARY KEY,
+      source VARCHAR(20) NOT NULL,
+      level VARCHAR(10) NOT NULL,
+      message TEXT NOT NULL,
+      stack TEXT,
+      context JSONB,
+      user_id UUID,
+      user_email TEXT,
+      request_path TEXT,
+      method TEXT,
+      user_agent TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'board_posts',
+    sql: `CREATE TABLE IF NOT EXISTS board_posts (
+      id BIGSERIAL PRIMARY KEY,
+      user_id UUID NOT NULL,
+      title VARCHAR(200) NOT NULL,
+      content TEXT NOT NULL,
+      is_notice BOOLEAN DEFAULT false,
+      views INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'board_comments',
+    sql: `CREATE TABLE IF NOT EXISTS board_comments (
+      id BIGSERIAL PRIMARY KEY,
+      post_id BIGINT NOT NULL REFERENCES board_posts(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'direct_messages',
+    sql: `CREATE TABLE IF NOT EXISTS direct_messages (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      recipient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      is_read BOOLEAN DEFAULT false,
+      read_at TIMESTAMP,
+      deleted_by_recipient BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'user_change_logs',
+    sql: `CREATE TABLE IF NOT EXISTS user_change_logs (
+      id BIGSERIAL PRIMARY KEY,
+      user_id UUID NOT NULL,
+      employee_no VARCHAR(20),
+      field_name VARCHAR(50) NOT NULL,
+      old_value TEXT,
+      new_value TEXT,
+      change_type VARCHAR(20) DEFAULT 'update',
+      change_source VARCHAR(20) DEFAULT 'sso',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'agent_permissions',
+    sql: `CREATE TABLE IF NOT EXISTS agent_permissions (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      agent_id VARCHAR(50) NOT NULL,
+      permission_type VARCHAR(50) NOT NULL CHECK (permission_type IN ('all', 'role', 'department', 'user')),
+      permission_value VARCHAR(255),
+      is_allowed BOOLEAN DEFAULT true,
+      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(agent_id, permission_type, permission_value)
+    )`,
+  },
+  {
+    name: 'agent_settings',
+    sql: `CREATE TABLE IF NOT EXISTS agent_settings (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      agent_id VARCHAR(50) NOT NULL UNIQUE,
+      selected_model_id VARCHAR(255),
+      default_slide_count INTEGER DEFAULT 8,
+      default_theme VARCHAR(20) DEFAULT 'light',
+      default_tone VARCHAR(20) DEFAULT 'business',
+      allow_user_model_override BOOLEAN DEFAULT false,
+      updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'refresh_tokens',
+    sql: `CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id          BIGSERIAL PRIMARY KEY,
+      user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash  VARCHAR(64) NOT NULL UNIQUE,
+      expires_at  TIMESTAMP NOT NULL,
+      revoked     BOOLEAN DEFAULT FALSE,
+      revoked_at  TIMESTAMP,
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ip_address  VARCHAR(45),
+      user_agent  TEXT
+    )`,
+  },
+];
+
+const CORE_INDEXES = [
+  `CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`,
+  `CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`,
+  `CREATE INDEX IF NOT EXISTS idx_chat_rooms_user_id ON chat_rooms(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_chat_history_room_id ON chat_history(room_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_external_api_logs_timestamp ON external_api_logs(timestamp DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_external_api_logs_user_id ON external_api_logs(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_api_tokens_user_id ON api_tokens(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_api_tokens_token_hash ON api_tokens(token_hash)`,
+  `CREATE INDEX IF NOT EXISTS idx_notices_is_active ON notices(is_active)`,
+  `CREATE INDEX IF NOT EXISTS idx_board_posts_created_at ON board_posts(created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_board_comments_post_id ON board_comments(post_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_dm_recipient ON direct_messages(recipient_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_dm_unread ON direct_messages(recipient_id, is_read)`,
+  `CREATE INDEX IF NOT EXISTS idx_dm_created ON direct_messages(created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_agent_permissions_agent_id ON agent_permissions(agent_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_agent_settings_agent_id ON agent_settings(agent_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_change_logs_user_id ON user_change_logs(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_change_logs_created_at ON user_change_logs(created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_app_error_logs_created_at ON app_error_logs(created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash)`,
+  `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at)`,
+];
+
+// ─────────────────────────────────────────────
+// 2. 컬럼 마이그레이션 (기존 테이블에 추가)
+// ─────────────────────────────────────────────
+
+async function runColumnMigrations() {
+  // models 테이블
+  await query(`
+    ALTER TABLE models
+    ADD COLUMN IF NOT EXISTS api_config JSONB,
+    ADD COLUMN IF NOT EXISTS api_key TEXT,
+    ADD COLUMN IF NOT EXISTS visible BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS pii_filter_request BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS pii_filter_response BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS pii_request_mxt_vrf BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS pii_request_mask_opt BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS pii_response_mxt_vrf BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS pii_response_mask_opt BOOLEAN DEFAULT true
+  `);
+
+  // settings 테이블
+  await query(`
+    ALTER TABLE settings
+    ADD COLUMN IF NOT EXISTS max_images_per_message INTEGER DEFAULT 5,
+    ADD COLUMN IF NOT EXISTS max_user_question_length INTEGER DEFAULT 300000,
+    ADD COLUMN IF NOT EXISTS image_analysis_model VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS image_analysis_prompt VARCHAR(500),
+    ADD COLUMN IF NOT EXISTS chat_widget_enabled BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS profile_edit_enabled BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS board_enabled BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS support_contacts JSONB DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS support_contacts_enabled BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS manual_preset_base_url VARCHAR(500) DEFAULT 'https://api.openai.com',
+    ADD COLUMN IF NOT EXISTS manual_preset_api_base VARCHAR(500) DEFAULT 'https://api.openai.com',
+    ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local'
+  `);
+
+  // external_api_logs 테이블
+  await query(`
+    ALTER TABLE external_api_logs
+    ADD COLUMN IF NOT EXISTS first_response_time INTEGER,
+    ADD COLUMN IF NOT EXISTS final_response_time INTEGER,
+    ADD COLUMN IF NOT EXISTS client_tool VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS client_tool_version VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_forwarded_for VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_real_ip VARCHAR(45),
+    ADD COLUMN IF NOT EXISTS x_forwarded_proto VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS x_forwarded_host VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS operating_system VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS architecture VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS accept_language VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS accept_encoding VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS accept_charset VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS referer VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS origin VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS "authorization" TEXT,
+    ADD COLUMN IF NOT EXISTS content_type VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_requested_with VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_client_name VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_client_version VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_user_name VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS x_workspace VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS token_hash VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS token_name VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS request_time TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS timezone VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS session_hash VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS fingerprint_hash VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS user_identifier VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS room_id UUID,
+    ADD COLUMN IF NOT EXISTS request_headers JSONB,
+    ADD COLUMN IF NOT EXISTS request_body JSONB,
+    ADD COLUMN IF NOT EXISTS response_headers JSONB,
+    ADD COLUMN IF NOT EXISTS response_body JSONB,
+    ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS prompt_id UUID,
+    ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50)
+  `);
+
+  // users 테이블: SSO 필드 + 보안 개선 필드
+  await query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS employee_no VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS sso_user_id VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS company_code VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS company_name VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS company_id VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS department_id VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS department_no VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS department_location TEXT,
+    ADD COLUMN IF NOT EXISTS employee_position_name VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS employee_class VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS employee_security_level INTEGER,
+    ADD COLUMN IF NOT EXISTS lang VARCHAR(10) DEFAULT 'ko',
+    ADD COLUMN IF NOT EXISTS login_deny_yn VARCHAR(5) DEFAULT 'N',
+    ADD COLUMN IF NOT EXISTS auth_type VARCHAR(20) DEFAULT 'local',
+    ADD COLUMN IF NOT EXISTS auth_result VARCHAR(20),
+    ADD COLUMN IF NOT EXISTS auth_result_message TEXT,
+    ADD COLUMN IF NOT EXISTS auth_event_id VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS sso_result_code VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS sso_response_datetime TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS sso_transaction_id VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP
+  `);
+
+  // users.password_hash nullable
+  await query(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`).catch(() => {});
+
+  // notices/board_posts views 컬럼
+  await query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`).catch(() => {});
+  await query(`ALTER TABLE board_posts ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`).catch(() => {});
+
+  // 인덱스
+  await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no) WHERE employee_no IS NOT NULL`).catch(() => {});
+  await query(`CREATE INDEX IF NOT EXISTS idx_models_endpoint ON models(endpoint)`).catch(() => {});
+}
+
+// ─────────────────────────────────────────────
+// 메인 진입점
+// ─────────────────────────────────────────────
+
+export async function runAutoMigration() {
+  const client = await getPostgresClient();
+  if (!client) {
+    console.warn('[AutoMigrate] DB 연결 실패 — 건너뜀');
+    return;
+  }
+
+  try {
+    console.log('[AutoMigrate] 시작...');
+    await client.query('BEGIN');
+    await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+
+    // 테이블 생성
+    for (const table of CORE_TABLES) {
+      await client.query(table.sql);
+    }
+
+    // 인덱스 생성
+    for (const idx of CORE_INDEXES) {
+      await client.query(idx).catch(() => {});
+    }
+
+    await client.query('COMMIT');
+    console.log('[AutoMigrate] ✓ 테이블/인덱스 생성 완료');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.warn('[AutoMigrate] 테이블 생성 중 오류 (일부 무시):', err.message);
+  } finally {
+    client.release();
+  }
+
+  // 컬럼 마이그레이션은 트랜잭션 밖에서 개별 실행 (에러 격리)
+  try {
+    await runColumnMigrations();
+    console.log('[AutoMigrate] ✓ 컬럼 마이그레이션 완료');
+  } catch (err) {
+    console.warn('[AutoMigrate] 컬럼 마이그레이션 중 오류 (일부 무시):', err.message);
+  }
+
+  console.log('[AutoMigrate] 완료');
+}
