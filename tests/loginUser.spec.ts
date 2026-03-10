@@ -6,7 +6,7 @@ test.describe('로그인', () => {
     await page.goto('/login');
 
     // 잘못된 이메일로 로그인 시도
-    await page.getByTestId('login-email').fill('invalid@shinhan.com');
+    await page.getByTestId('login-email').fill('invalid@modol.ai');
     await page.getByTestId('login-password').fill('wrongpassword');
     await page.getByTestId('login-submit').click();
 
@@ -24,7 +24,7 @@ test.describe('로그인', () => {
     await page.goto('/login');
 
     // 잘못된 이메일로 로그인 시도
-    await page.getByTestId('login-email').fill('testadmin@shinhan.com');
+    await page.getByTestId('login-email').fill('testadmin@modol.ai');
     await page.getByTestId('login-password').fill('wrongpassword');
     await page.getByTestId('login-submit').click();
 
@@ -57,7 +57,7 @@ test.describe('로그인', () => {
     // 로그인 페이지가 제대로 로드되었는지 확인
     await expect(page.getByTestId('login-title')).toBeVisible();
     await expect(page.getByTestId('login-title')).toHaveText(
-      '신한은행 Tech그룹 AI'
+      'modol AI'
     );
     await expect(page.getByTestId('login-subtitle')).toBeVisible();
     await expect(page.getByTestId('login-subtitle')).toHaveText(
@@ -72,7 +72,7 @@ test.describe('로그인', () => {
 
     // 이메일 입력
     await page.getByTestId('login-email').click();
-    await page.getByTestId('login-email').fill('testadmin@shinhan.com');
+    await page.getByTestId('login-email').fill('testadmin@modol.ai');
 
     // 비밀번호 입력
     await page.getByTestId('login-password').click();

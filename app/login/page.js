@@ -156,7 +156,7 @@ function LoginPageContent() {
               data-testid='login-title'
               className='text-3xl font-bold text-gray-900 mb-2 dark:text-gray-100'
             >
-              신한은행 Tech그룹 AI
+              modol AI
             </h1>
             <p
               id='login-subtitle'

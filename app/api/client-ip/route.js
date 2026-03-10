@@ -63,7 +63,7 @@ async function getIPFromExternalService() {
       const response = await fetch(service.url, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'TechAI-Server/1.0',
+          'User-Agent': 'Modol-Server/1.0',
         },
       });
 

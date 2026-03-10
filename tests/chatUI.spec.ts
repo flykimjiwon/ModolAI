@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // 회원가입 후 로그인(이미 존재하는 계정이면 로그인으로 전환)
 async function ensureSignupAndLogin(
   page,
-  email = 'testadmin@shinhan.com',
+  email = 'testadmin@modol.ai',
   password = 'test1234'
 ) {
   await page.goto('/signup');

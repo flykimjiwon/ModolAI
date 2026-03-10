@@ -257,7 +257,7 @@ export async function GET(request) {
       ? 'missing-connection-env'
       : matchesConfiguredDatabase === false
         ? 'configured-db-and-active-db-mismatch'
-        : activeDatabase === 'techai' || activeDatabase === 'techai_dev'
+        : activeDatabase === 'modol' || activeDatabase === 'modol_dev'
           ? 'connected-to-expected-db-name'
           : 'unknown-db-name';
     const envVariables = collectEnvVariablesSnapshot();
@@ -288,8 +288,8 @@ export async function GET(request) {
         configuredUriMasked: maskConnectionString(rawConnectionString),
         activeDatabase,
         matchesConfiguredDatabase,
-        isTechai: activeDatabase === 'techai',
-        isTechaiDev: activeDatabase === 'techai_dev',
+      isModol: activeDatabase === 'modol',
+      isModolDev: activeDatabase === 'modol_dev',
       },
       server: {
         currentUser: row.current_user || null,

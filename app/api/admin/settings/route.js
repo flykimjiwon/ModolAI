@@ -10,8 +10,8 @@ import {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const DEFAULT_SITE_TITLE = 'TechAI';
-const DEFAULT_SITE_DESCRIPTION = '신한은행 Tech그룹 AI';
+const DEFAULT_SITE_TITLE = 'Modol';
+const DEFAULT_SITE_DESCRIPTION = 'modol AI';
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
   Pragma: 'no-cache',

@@ -32,8 +32,8 @@ export async function GET() {
     return NextResponse.json(
       {
         loginType: settings.login_type || 'local',
-        siteTitle: settings.site_title || 'TechAI',
-        siteDescription: settings.site_description || '신한은행 Tech그룹 AI',
+        siteTitle: settings.site_title || 'Modol',
+        siteDescription: settings.site_description || 'modol AI',
         faviconUrl: settings.favicon_url || null,
       },
       {
@@ -47,8 +47,8 @@ export async function GET() {
     return NextResponse.json(
       {
         loginType: 'local',
-        siteTitle: 'TechAI',
-        siteDescription: '신한은행 Tech그룹 AI',
+        siteTitle: 'Modol',
+        siteDescription: 'modol AI',
         faviconUrl: null,
       },
       {

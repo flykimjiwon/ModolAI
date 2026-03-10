@@ -598,8 +598,8 @@ function parseSlideSemantics(contentHtml = '') {
     title, subtitle, summary,
     bullets: bullets.slice(0, 8),
     paragraphs, metrics,
-    email: emailMatch ? emailMatch[0] : 'support@techai.local',
-    url: urlMatch ? urlMatch[0] : 'www.techai.local',
+    email: emailMatch ? emailMatch[0] : 'support@modol.local',
+    url: urlMatch ? urlMatch[0] : 'www.modol.local',
     plainText,
     lowerText: plainText.toLowerCase(),
     chartPoints,
@@ -1013,7 +1013,7 @@ function buildPresetSlideHtml(
     `<div class="ppt-shell" data-theme="${theme}" data-layout="${modeLabel}" data-template-preset-id="${preset.id}" data-chart-mode="${effectiveChartMode}" data-slide-uid="${resolvedSlideUid}" data-color-canvas-start="${tokens.canvasStart}" data-color-canvas-end="${tokens.canvasEnd}" data-color-accent-bg="${tokens.accentBg}">`,
     `  <p class="ppt-meta">${escapeHtml(preset.label)} | Slide ${index + 1} / ${totalSlides}</p>`,
     bodySection,
-    '  <p class="ppt-meta">Shinhan TechAI PPT Template Engine</p>',
+    '  <p class="ppt-meta">Modol PPT Template Engine</p>',
     `  <div class="ppt-source"><!-- PPT_SOURCE_START -->${contentHtml}<!-- PPT_SOURCE_END --></div>`,
     '</div>',
     '</section>',
@@ -2678,7 +2678,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 rows={3}
-                placeholder="예: 신한은행 2026 AI 전략"
+                placeholder="예: 2026 AI 전략"
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>

@@ -66,14 +66,14 @@ async function testConnection() {
       'SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname'
     );
     dbResult.rows.forEach((row) => {
-      const marker = row.datname === 'techai' ? ' ✅' : '';
+      const marker = row.datname === 'modol' ? ' ✅' : '';
       console.log(`   - ${row.datname}${marker}`);
     });
     console.log('');
 
-    // techai 데이터베이스에 연결 시도
-    if (POSTGRES_URI.includes('/techai')) {
-      console.log('📊 techai 데이터베이스 테이블 확인 중...');
+    // modol 데이터베이스에 연결 시도
+    if (POSTGRES_URI.includes('/modol')) {
+      console.log('📊 modol 데이터베이스 테이블 확인 중...');
       try {
         const tablesResult = await client.query(`
           SELECT table_name 
@@ -143,7 +143,7 @@ async function testConnection() {
       console.error('');
       console.error('   해결 방법:');
       console.error('   1. 데이터베이스 생성:');
-      console.error('      createdb techai');
+      console.error('      createdb modol');
       console.error('   2. 또는 스키마 생성 스크립트 실행:');
       console.error('      npm run setup-postgres');
     } else {

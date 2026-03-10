@@ -2,8 +2,8 @@
 
 import { useState, useEffect, memo } from 'react';
 
-const BRANDING_EVENT_NAME = 'techai-site-branding-updated';
-const DEFAULT_SITE_DESCRIPTION = '신한은행 Tech그룹 AI';
+const BRANDING_EVENT_NAME = 'modol-site-branding-updated';
+const DEFAULT_SITE_DESCRIPTION = 'modol AI';
 
 const DynamicSiteTitle = memo(function DynamicSiteTitle() {
   const [siteDescription, setSiteDescription] = useState(DEFAULT_SITE_DESCRIPTION);

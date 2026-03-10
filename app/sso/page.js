@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogIn, User, Lock, Loader2, AlertCircle, X } from 'lucide-react';
-import Image from 'next/image';
 import NoticePopup from '../components/NoticePopup';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
@@ -350,18 +349,11 @@ export default function SSOLoginPage() {
           {/* Logo/Title */}
           <div className='text-center mb-8'>
             <h1 className='text-3xl font-bold text-gray-900 mb-2 dark:text-gray-100'>
-              신한은행 Tech그룹 AI
+              modol AI
             </h1>
             <div className='flex items-center justify-center gap-3 mt-4'>
-              <Image
-                src='/swing-logo.jpg'
-                alt='Swing Logo'
-                width={48}
-                height={48}
-                className='rounded-lg'
-              />
               <span className='text-3xl font-bold text-gray-700 dark:text-gray-300'>
-                Swing 로그인
+                SSO 로그인
               </span>
             </div>
           </div>
@@ -457,7 +449,7 @@ export default function SSOLoginPage() {
 
             <div className='text-center pt-4 border-t border-gray-200 dark:border-gray-700'>
               <p className='text-sm text-gray-500 dark:text-gray-400'>
-                신한그룹 임직원 전용 로그인입니다.
+                SSO 전용 로그인입니다.
               </p>
             </div>
           </form>

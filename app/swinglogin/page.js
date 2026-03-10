@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { TokenManager } from '@/lib/tokenManager';
 
 const DEFAULTS = {
-  swingUrl: 'https://apigw.shinhan.com:8443',
+  swingUrl: 'https://oauth.example.com',
   clientId: '',
   clientSecret: '',
   companyCode: 'SH',
@@ -314,13 +314,13 @@ export default function SwingLoginPage() {
                   SWING_URL
                 </label>
                 <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
-                  API Gateway 기본 주소 (예: https://apigw.shinhan.com:8443)
+                  API Gateway 기본 주소 (예: https://oauth.example.com)
                 </p>
                 <input
                   value={swingUrl}
                   onChange={(e) => setSwingUrl(e.target.value)}
                   className='input-primary w-full'
-                  placeholder='https://apigw.shinhan.com:8443'
+                  placeholder='https://oauth.example.com'
                 />
               </div>
               <div>

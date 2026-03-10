@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 
-const BRANDING_EVENT_NAME = 'techai-site-branding-updated';
-const DEFAULT_SITE_TITLE = 'TechAI';
-const DEFAULT_SITE_DESCRIPTION = '신한은행 Tech그룹 AI';
+const BRANDING_EVENT_NAME = 'modol-site-branding-updated';
+const DEFAULT_SITE_TITLE = 'Modol';
+const DEFAULT_SITE_DESCRIPTION = 'modol AI';
 
 function applySiteBranding(payload = {}) {
   const siteTitle =

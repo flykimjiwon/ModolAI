@@ -4,7 +4,8 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const SWING_URL = process.env.SWING_URL || 'https://apigw.shinhan.com:8443';
+// TODO: Replace with your OAuth provider URL
+const OAUTH_URL = process.env.OAUTH_URL || 'https://oauth.example.com';
 const SWING_COMPANY_CODE = process.env.SWING_COMPANY_CODE || 'SH';
 const SWING_CLIENT_ID = process.env.SWING_CLIENT_ID;
 const SWING_CLIENT_SECRET = process.env.SWING_CLIENT_SECRET;
@@ -105,7 +106,7 @@ async function logSSOAttempt(logData) {
 
 // Swing SSO API 호출
 async function callSwingSSO(employeeNo, hashedPassword) {
-  const endpoint = `${SWING_URL}/cau/v1/idpw-authorize`;
+  const endpoint = `${OAUTH_URL}/cau/v1/idpw-authorize`;
 
   const payload = {
     common: {

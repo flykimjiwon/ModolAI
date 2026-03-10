@@ -136,7 +136,7 @@ export default function AdminPiiTestPage() {
           <input
             value={endpoint}
             onChange={(e) => setEndpoint(e.target.value)}
-            placeholder='http://techai-api-prod.shinhan.com/api/v1/validate/detectPII'
+            placeholder='http://your-pii-api-server/api/v1/validate/detectPII'
             className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100'
           />
         </div>

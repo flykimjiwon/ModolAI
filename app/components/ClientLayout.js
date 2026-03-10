@@ -125,7 +125,7 @@ export default function ClientLayout({ children }) {
           const data = await response.json();
           const siteTitle = data.siteTitle || 'tech-model-hub';
           const siteDescription =
-            data.siteDescription || '신한은행 Tech그룹 AI';
+            data.siteDescription || 'modol AI';
 
           // 동적으로 title 업데이트
           document.title = siteTitle;

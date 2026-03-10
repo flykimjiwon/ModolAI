@@ -17,7 +17,7 @@ import {
 import Image from 'next/image'; // Image 컴포넌트 임포트
 import { useAlert } from '@/contexts/AlertContext';
 
-const BRANDING_EVENT_NAME = 'techai-site-branding-updated';
+const BRANDING_EVENT_NAME = 'modol-site-branding-updated';
 
 export default function SettingsPage() {
   const { alert, confirm } = useAlert();
@@ -30,9 +30,9 @@ export default function SettingsPage() {
   const [boardEnabled, setBoardEnabled] = useState(true);
   const [supportContacts, setSupportContacts] = useState([]);
   const [supportContactsEnabled, setSupportContactsEnabled] = useState(true);
-  const [siteTitle, setSiteTitle] = useState('TechAI');
+  const [siteTitle, setSiteTitle] = useState('Modol');
   const [siteDescription, setSiteDescription] =
-    useState('신한은행 Tech그룹 AI');
+    useState('modol AI');
   const [faviconUrl, setFaviconUrl] = useState(null);
   const [faviconUploading, setFaviconUploading] = useState(false);
   const [roomNameGenerationModel, setRoomNameGenerationModel] = useState('gemma3:4b');
@@ -241,8 +241,8 @@ export default function SettingsPage() {
             ? data.supportContactsEnabled
             : true
         );
-        setSiteTitle(data.siteTitle || 'TechAI');
-        setSiteDescription(data.siteDescription || '신한은행 Tech그룹 AI');
+        setSiteTitle(data.siteTitle || 'Modol');
+        setSiteDescription(data.siteDescription || 'modol AI');
           setFaviconUrl(data.faviconUrl || null);
           setRoomNameGenerationModel(data.roomNameGenerationModel || 'gemma3:4b');
           setMaxImagesPerMessage(data.maxImagesPerMessage || 5);
@@ -270,8 +270,8 @@ export default function SettingsPage() {
         setBoardEnabled(true);
         setSupportContacts([]);
         setSupportContactsEnabled(true);
-        setSiteTitle('TechAI');
-        setSiteDescription('신한은행 Tech그룹 AI');
+        setSiteTitle('Modol');
+        setSiteDescription('modol AI');
         setFaviconUrl(null);
         setRoomNameGenerationModel('gemma3:4b');
         setMaxUserQuestionLength(300000);
@@ -293,11 +293,11 @@ export default function SettingsPage() {
       setBoardEnabled(true);
       setSupportContacts([]);
       setSupportContactsEnabled(true);
-      setSiteTitle('TechAI');
-      setSiteDescription('신한은행 Tech그룹 AI');
-      setFaviconUrl(null);
-      setEndpoints('http://localhost:11434');
-      setMaxUserQuestionLength(300000);
+        setSiteTitle('Modol');
+        setSiteDescription('modol AI');
+        setFaviconUrl(null);
+        setEndpoints('http://localhost:11434');
+        setMaxUserQuestionLength(300000);
       setEndpointType('ollama');
       setOpenaiCompatBase('');
       setOpenaiCompatApiKeyInput('');
@@ -1000,7 +1000,7 @@ export default function SettingsPage() {
               value={siteTitle}
               onChange={(e) => setSiteTitle(e.target.value)}
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              placeholder='TechAI'
+              placeholder='Modol'
               maxLength={50}
               disabled={loading}
             />
@@ -1017,7 +1017,7 @@ export default function SettingsPage() {
               value={siteDescription}
               onChange={(e) => setSiteDescription(e.target.value)}
               className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              placeholder='신한은행 Tech그룹 AI'
+              placeholder='modol AI'
               maxLength={200}
               rows={2}
               disabled={loading}
@@ -1880,7 +1880,7 @@ models:
           </button>
         </div>
         <p className='text-sm text-gray-500 dark:text-gray-400'>
-          새 DB(예: techai_dev)에 전체 테이블을 한 번에 생성합니다. 이미 존재하는 테이블은 건드리지 않으며, 없는 테이블만 생성합니다.
+          새 DB(예: modol_dev)에 전체 테이블을 한 번에 생성합니다. 이미 존재하는 테이블은 건드리지 않으며, 없는 테이블만 생성합니다.
         </p>
         {initSchemaResult && (
           <div className='mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-400'>

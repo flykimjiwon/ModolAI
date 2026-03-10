@@ -25,7 +25,7 @@ function describeRootCause(code) {
     case 'configured-db-and-active-db-mismatch':
       return '환경변수 DB명과 실제 연결 DB명이 다름';
     case 'connected-to-expected-db-name':
-      return 'DB명 기준으로는 techai 또는 techai_dev 연결';
+      return 'DB명 기준으로는 modol 또는 modol_dev 연결';
     case 'unknown-db-name':
       return '예상 외 DB명으로 연결';
     default:
@@ -48,20 +48,20 @@ export default function AdminDbConnectionCheckPage() {
       };
     }
 
-    if (result.connection?.isTechai) {
+    if (result.connection?.isModol) {
       return {
         tone: 'text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20',
         icon: <CheckCircle2 className='w-4 h-4' />,
-        text: 'techai DB 연결',
+        text: 'modol DB 연결',
       };
     }
 
-    if (result.connection?.isTechaiDev) {
+    if (result.connection?.isModolDev) {
       return {
         tone:
           'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20',
         icon: <TriangleAlert className='w-4 h-4' />,
-        text: 'techai_dev DB 연결',
+        text: 'modol_dev DB 연결',
       };
     }
 

@@ -7,8 +7,8 @@ services:
       # BuildKit은 환경변수로 활성화: DOCKER_BUILDKIT=1 docker-compose build
       # 또는 .env 파일에 DOCKER_BUILDKIT=1 추가
     # 이미지 버전은 package.json의 version을 자동으로 사용합니다 (docker:build 스크립트 참조)
-    image: shb-techai:${APP_VERSION:-0.1.0}
-    container_name: shb-techai
+    image: modol:${APP_VERSION:-0.1.0}
+    container_name: modol
     ports:
       - '${EXTERNAL_PORT:-3100}:3000'
     env_file:
@@ -57,7 +57,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: techai
+      POSTGRES_DB: modol
       TZ: Asia/Seoul
     volumes:
       # PostgreSQL 데이터를 호스트에 영속화 (컨테이너 삭제 후에도 데이터 유지)

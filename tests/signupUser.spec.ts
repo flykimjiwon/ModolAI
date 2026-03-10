@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 test.describe('회원가입', () => {
   test('비밀번호 확인 다르게 입력시 에러메세지 노출', async ({ page }) => {
-    const uniqueEmail = `testuser@shinhan.com`;
+    const uniqueEmail = `testuser@modol.ai`;
 
     await page.goto('/signup');
 
@@ -37,7 +37,7 @@ test.describe('회원가입', () => {
   });
 
   test('비밀번호 6자 미만 입력시 에러메세지 노출', async ({ page }) => {
-    const uniqueEmail = `testuser@shinhan.com`;
+    const uniqueEmail = `testuser@modol.ai`;
 
     await page.goto('/signup');
 
@@ -88,13 +88,13 @@ test.describe('회원가입', () => {
   });
 
   test('성공케이스', async ({ page }) => {
-    const uniqueEmail = `testuser@shinhan.com`;
+    const uniqueEmail = `testuser@modol.ai`;
 
     // 회원가입 페이지로 이동
     await page.goto('/signup');
 
     // 회원가입 페이지가 제대로 로드되었는지 확인
-    await expect(page.getByText('Tech그룹 AI')).toBeVisible();
+    await expect(page.getByText('modol AI')).toBeVisible();
     await expect(page.getByText('새 계정을 만드세요')).toBeVisible();
 
     // 회원가입 폼 요소들이 보이는지 확인
@@ -145,7 +145,7 @@ test.describe('회원가입', () => {
     await page.goto('/signup');
 
     await page.getByTestId('signup-name').fill('테스트유저');
-    await page.getByTestId('signup-email').fill('testuser@shinhan.com');
+    await page.getByTestId('signup-email').fill('testuser@modol.ai');
 
     // 이메일 중복 검증이 완료될 때까지 대기
     await page.waitForTimeout(600);
@@ -164,7 +164,7 @@ test.describe('회원가입', () => {
     await page.goto('/login');
 
     // 이메일 입력 (click() 없이 fill()만 사용 - Playwright가 자동으로 포커스 처리)
-    await page.getByTestId('login-email').fill('testadmin@shinhan.com');
+    await page.getByTestId('login-email').fill('testadmin@modol.ai');
 
     // 비밀번호 입력 (click() 없이 fill()만 사용)
     await page.getByTestId('login-password').fill('test1234');
@@ -187,12 +187,12 @@ test.describe('회원가입', () => {
     await page.getByTestId('admin-sidebar-menu-icon-users').click();
 
     // 사용자 목록이 로드될 때까지 대기
-    await page.waitForSelector('text=testuser@shinhan.com', { timeout: 10000 });
+    await page.waitForSelector('text=testuser@modol.ai', { timeout: 10000 });
 
-    // testuser@shinhan.com 사용자 행 찾기
+    // testuser@modol.ai 사용자 행 찾기
     const userRow = page
       .locator('div.px-6.py-4')
-      .filter({ hasText: 'testuser@shinhan.com' })
+      .filter({ hasText: 'testuser@modol.ai' })
       .first();
 
     // 해당 사용자 행에 삭제 버튼이 있는지 확인
@@ -225,8 +225,8 @@ test.describe('회원가입', () => {
     // 삭제 후 사용자 목록이 업데이트될 때까지 대기
     await page.waitForTimeout(1000);
 
-    // 사용자 목록에서 testuser@shinhan.com이 더 이상 보이지 않는지 확인
-    const userEmail = page.getByText('testuser@shinhan.com');
+    // 사용자 목록에서 testuser@modol.ai이 더 이상 보이지 않는지 확인
+    const userEmail = page.getByText('testuser@modol.ai');
     await expect(userEmail).not.toBeVisible({ timeout: 5000 });
   });
 });

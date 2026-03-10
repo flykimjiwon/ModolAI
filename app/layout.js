@@ -121,7 +121,7 @@ if (typeof window !== 'undefined') {
 // Next.js 15 App Router에서 metadata API 사용
 export const metadata = {
   title: 'tech-model-hub',
-  description: '신한은행 Tech그룹 AI',
+  description: 'modol AI',
 };
 
 export default function RootLayout({ children }) {

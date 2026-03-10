@@ -1222,11 +1222,11 @@ async function initializeDatabase() {
       console.error(
         '   3. PostgreSQL 시작: brew services start postgresql (macOS)'
       );
-      console.error('   4. 데이터베이스 생성: createdb techai');
+      console.error('   4. 데이터베이스 생성: createdb modol');
       console.error('');
       console.error('   또는 Docker를 사용하는 경우:');
       console.error(
-        '   docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=techai -p 5432:5432 postgres:15'
+        '   docker run -d --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=modol -p 5432:5432 postgres:15'
       );
     }
 

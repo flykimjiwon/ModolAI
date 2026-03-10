@@ -306,7 +306,7 @@ function buildBlueThemeTemplate(theme, tone) {
     '    .ppt-footer { margin-top: auto; font-size: 0.82rem; opacity: 0.85; }',
     '  </style>',
     '  <div class="ppt-surface">',
-    '    <p class="ppt-kicker">Shinhan Bank AI Template</p>',
+    '    <p class="ppt-kicker">Modol AI Template</p>',
     '    <h1 class="ppt-title">슬라이드 대제목</h1>',
     '    <p class="ppt-subtitle">핵심 메시지를 한 문장으로 전달</p>',
     '    <div class="ppt-grid">',
