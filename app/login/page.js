@@ -6,6 +6,11 @@ import { LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 import NoticePopup from '../components/NoticePopup';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 function LoginPageContent() {
   const router = useRouter();
@@ -143,7 +148,7 @@ function LoginPageContent() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 transition-colors duration-200 flex flex-col dark:bg-gray-900'>
+    <div className='min-h-screen bg-background transition-colors duration-200 flex flex-col'>
       <div className='flex-1 flex items-center justify-center px-4 relative'>
         <div className='absolute top-4 right-4'>
           <DarkModeToggle />
@@ -154,143 +159,146 @@ function LoginPageContent() {
             <h1
               id='login-title'
               data-testid='login-title'
-              className='text-3xl font-bold text-gray-900 mb-2 dark:text-gray-100'
+              className='text-3xl font-bold text-foreground mb-2'
             >
               modol AI
             </h1>
             <p
               id='login-subtitle'
               data-testid='login-subtitle'
-              className='text-gray-600 dark:text-gray-400'
+              className='text-muted-foreground'
             >
               계정에 로그인하세요
             </p>
           </div>
 
           {/* Login Form */}
-          <form
-            id='login-form'
-            data-testid='login-form'
-            onSubmit={handleSubmit}
-            className='card p-6 space-y-4 dark:bg-gray-800'
-          >
-            {browserBlockedMessage && (
-              <div
-                role='alert'
-                className='p-3 text-sm text-amber-700 bg-amber-50 rounded-lg dark:bg-amber-900/20 dark:text-amber-300'
-              >
-                {browserBlockedMessage}
-              </div>
-            )}
-            {!browserBlockedMessage && browserInfoMessage && (
-              <div className='p-3 text-sm text-blue-700 bg-blue-50 rounded-lg dark:bg-blue-900/20 dark:text-blue-300'>
-                {browserInfoMessage}
-              </div>
-            )}
-            {error && (
-              <div
-                id='login-error'
-                data-testid='login-error'
-                role='alert'
-                className='p-3 text-sm text-red-600 bg-red-50 rounded-lg dark:bg-red-900/20 dark:text-red-400'
-              >
-                {error}
-              </div>
-            )}
-
-            <div className='space-y-2'>
-              <label
-                htmlFor='login-email'
-                id='login-email-label'
-                data-testid='login-email-label'
-                className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-              >
-                이메일
-              </label>
-              <div className='relative'>
-                <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                <input
-                  id='login-email'
-                  data-testid='login-email'
-                  type='email'
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className='input-primary pl-10 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'
-                  placeholder='이메일을 입력하세요'
-                  aria-describedby='login-email-label'
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <label
-                htmlFor='login-password'
-                id='login-password-label'
-                data-testid='login-password-label'
-                className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-              >
-                비밀번호
-              </label>
-              <div className='relative'>
-                <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                <input
-                  id='login-password'
-                  data-testid='login-password'
-                  type='password'
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className='input-primary pl-10 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'
-                  placeholder='비밀번호를 입력하세요'
-                  aria-describedby='login-password-label'
-                />
-              </div>
-            </div>
-
-            <button
-              id='login-submit'
-              data-testid='login-submit'
-              type='submit'
-              disabled={loading}
-              className='btn-primary w-full flex items-center justify-center gap-2'
+          <Card>
+            <form
+              id='login-form'
+              data-testid='login-form'
+              onSubmit={handleSubmit}
             >
-              {loading ? (
-                <>
-                  <Loader2
-                    data-testid='login-submit-loading'
-                    className='h-5 w-5 animate-spin'
-                  />
-                  처리 중...
-                </>
-              ) : (
-                <>
-                  <LogIn className='h-5 w-5' />
-                  로그인
-                </>
-              )}
-            </button>
+              <CardContent className='space-y-4'>
+                {browserBlockedMessage && (
+                  <Alert>
+                    <AlertDescription className='text-sm text-amber-700 dark:text-amber-300'>
+                      {browserBlockedMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {!browserBlockedMessage && browserInfoMessage && (
+                  <Alert>
+                    <AlertDescription className='text-sm text-muted-foreground'>
+                      {browserInfoMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {error && (
+                  <Alert variant='destructive'>
+                    <AlertDescription
+                      id='login-error'
+                      data-testid='login-error'
+                    >
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-            <div className='text-center pt-4 border-t border-gray-200 dark:border-gray-700'>
-              <p className='text-sm text-gray-600 dark:text-gray-400'>
-                계정이 없으신가요?{' '}
-                <a
-                  id='login-signup-link'
-                  data-testid='login-signup-link'
-                  href='/signup'
-                  className='text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400 dark:hover:text-blue-500'
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='login-email'
+                    id='login-email-label'
+                    data-testid='login-email-label'
+                  >
+                    이메일
+                  </Label>
+                  <div className='relative'>
+                    <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
+                      id='login-email'
+                      data-testid='login-email'
+                      type='email'
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className='pl-10'
+                      placeholder='이메일을 입력하세요'
+                      aria-describedby='login-email-label'
+                    />
+                  </div>
+                </div>
+
+                <div className='space-y-2'>
+                  <Label
+                    htmlFor='login-password'
+                    id='login-password-label'
+                    data-testid='login-password-label'
+                  >
+                    비밀번호
+                  </Label>
+                  <div className='relative'>
+                    <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
+                      id='login-password'
+                      data-testid='login-password'
+                      type='password'
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className='pl-10'
+                      placeholder='비밀번호를 입력하세요'
+                      aria-describedby='login-password-label'
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  id='login-submit'
+                  data-testid='login-submit'
+                  type='submit'
+                  disabled={loading}
+                  className='w-full'
+                  size='lg'
                 >
-                  회원가입
-                </a>
-              </p>
-            </div>
-          </form>
+                  {loading ? (
+                    <>
+                      <Loader2
+                        data-testid='login-submit-loading'
+                        className='h-5 w-5 animate-spin'
+                      />
+                      처리 중...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className='h-5 w-5' />
+                      로그인
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+
+              <CardFooter className='justify-center border-t border-border'>
+                <p className='text-sm text-muted-foreground'>
+                  계정이 없으신가요?{' '}
+                  <a
+                    id='login-signup-link'
+                    data-testid='login-signup-link'
+                    href='/signup'
+                    className='text-primary hover:text-primary/80 font-medium'
+                  >
+                    회원가입
+                  </a>
+                </p>
+              </CardFooter>
+            </form>
+          </Card>
         </div>
       </div>
       {supportContactsEnabled && supportContacts.length > 0 && (
         <div className='fixed bottom-4 right-4 z-40'>
-          <div className='bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-4 py-3 text-xs text-gray-700 dark:text-gray-200 min-w-[220px]'>
+          <div className='bg-card/95 border border-border rounded-lg shadow-lg px-4 py-3 text-xs text-foreground min-w-[220px]'>
             <div className='text-sm font-semibold mb-2'>담당자</div>
             <div className='space-y-2'>
               {supportContacts.map((contact, index) => (
@@ -298,7 +306,7 @@ function LoginPageContent() {
                   <div className='font-medium'>
                     {contact.department || '부서 미입력'}
                   </div>
-                  <div className='text-gray-600 dark:text-gray-400'>
+                  <div className='text-muted-foreground'>
                     {(contact.name || '이름 미입력') +
                       (contact.phone ? ` · ${contact.phone}` : '')}
                   </div>
@@ -315,8 +323,8 @@ function LoginPageContent() {
 
 function LoginPageFallback() {
   return (
-    <div className='min-h-screen bg-gray-50 transition-colors duration-200 flex items-center justify-center dark:bg-gray-900'>
-      <div className='text-sm text-gray-600 dark:text-gray-300'>
+    <div className='min-h-screen bg-background transition-colors duration-200 flex items-center justify-center'>
+      <div className='text-sm text-muted-foreground'>
         로그인 페이지를 불러오는 중입니다...
       </div>
     </div>

@@ -6,12 +6,16 @@ import { LogIn, User, Lock, Loader2, AlertCircle, X } from 'lucide-react';
 import NoticePopup from '../components/NoticePopup';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 // 브라우저 정보 파싱
 function getBrowserInfo() {
   const ua = navigator.userAgent || '';
 
-  // 브라우저 감지
   let browserName = 'Unknown';
   let browserVersion = '';
 
@@ -33,7 +37,6 @@ function getBrowserInfo() {
     browserVersion = match ? match[1] : '';
   }
 
-  // OS 감지
   let osName = 'Unknown';
   let osVersion = '';
 
@@ -55,7 +58,6 @@ function getBrowserInfo() {
     osName = 'iOS';
   }
 
-  // 디바이스 타입
   let deviceType = 'Desktop';
   if (/Mobile|Android|iPhone|iPad/i.test(ua)) {
     deviceType = /iPad/i.test(ua) ? 'Tablet' : 'Mobile';
@@ -83,7 +85,6 @@ function checkLocalStorageAvailable() {
   }
 }
 
-// 에러 팝업 컴포넌트
 function ErrorPopup({ error, onClose }) {
   if (!error) return null;
 
@@ -102,34 +103,34 @@ function ErrorPopup({ error, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
-        <div className="bg-red-500 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white font-medium">
+      <div className="bg-card rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+        <div className="bg-destructive px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-destructive-foreground font-medium">
             <AlertCircle className="h-5 w-5" />
             {getErrorTitle(error.errorCode)}
           </div>
-          <button onClick={onClose} className="text-white/80 hover:text-white">
+          <button onClick={onClose} className="text-destructive-foreground/80 hover:text-destructive-foreground">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-4">
-          <p className="text-gray-700 dark:text-gray-300 mb-3">{error.message}</p>
+          <p className="text-foreground mb-3">{error.message}</p>
           {error.errorCode && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <p className="text-xs text-muted-foreground mb-2">
               오류 코드: {error.errorCode}
             </p>
           )}
           {error.detail && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-2 rounded">
+            <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
               상세: {error.detail}
             </p>
           )}
-          <button
+          <Button
             onClick={onClose}
-            className="mt-4 w-full btn-primary"
+            className="mt-4 w-full"
           >
             확인
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -152,7 +153,6 @@ export default function SSOLoginPage() {
   const [browserAllowed, setBrowserAllowed] = useState(true);
   const [browserInfo, setBrowserInfo] = useState(null);
 
-  // 이미 로그인된 경우 메인으로 이동
   useEffect(() => {
     const token = localStorage.getItem('token');
     console.log('[SSO useEffect] 토큰 체크:', { exists: !!token, length: token?.length });
@@ -174,7 +174,6 @@ export default function SSOLoginPage() {
     }
   }, [router]);
 
-  // 브라우저 정보 수집 및 버전 체크
   useEffect(() => {
     const info = getBrowserInfo();
     setBrowserInfo(info);
@@ -271,7 +270,6 @@ export default function SSOLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        // 에러 팝업 표시
         setErrorPopup({
           message: data.error || 'SSO 로그인에 실패했습니다.',
           errorCode: data.errorCode,
@@ -281,7 +279,6 @@ export default function SSOLoginPage() {
         return;
       }
 
-      // localStorage 사용 가능 여부 체크
       if (!checkLocalStorageAvailable()) {
         const errorMsg = '브라우저 저장소를 사용할 수 없습니다. 시크릿 모드를 해제하거나 브라우저 설정을 확인해주세요.';
         await logClientError(employeeNo, 'LOCAL_STORAGE_UNAVAILABLE', errorMsg);
@@ -292,7 +289,6 @@ export default function SSOLoginPage() {
         return;
       }
 
-      // JWT 토큰 저장
       try {
         console.log('[SSO] 토큰 저장 시작...', { tokenLength: data.token?.length });
         localStorage.setItem('token', data.token);
@@ -300,7 +296,6 @@ export default function SSOLoginPage() {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
 
-        // 저장 확인
         const savedToken = localStorage.getItem('token');
         console.log('[SSO] 토큰 저장 확인:', {
           saved: !!savedToken,
@@ -322,7 +317,6 @@ export default function SSOLoginPage() {
         return;
       }
 
-      // 메인 페이지로 이동 전 대기 (localStorage 동기화)
       console.log('[SSO] 메인 페이지로 이동 시작...');
       await new Promise(resolve => setTimeout(resolve, 100));
       router.push('/');
@@ -340,7 +334,7 @@ export default function SSOLoginPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 transition-colors duration-200 flex flex-col dark:bg-gray-900'>
+    <div className='min-h-screen bg-background transition-colors duration-200 flex flex-col'>
       <div className='flex-1 flex items-center justify-center px-4 relative'>
         <div className='absolute top-4 right-4'>
           <DarkModeToggle />
@@ -348,118 +342,112 @@ export default function SSOLoginPage() {
         <div className='w-full max-w-md'>
           {/* Logo/Title */}
           <div className='text-center mb-8'>
-            <h1 className='text-3xl font-bold text-gray-900 mb-2 dark:text-gray-100'>
+            <h1 className='text-3xl font-bold text-foreground mb-2'>
               modol AI
             </h1>
             <div className='flex items-center justify-center gap-3 mt-4'>
-              <span className='text-3xl font-bold text-gray-700 dark:text-gray-300'>
+              <span className='text-3xl font-bold text-foreground'>
                 SSO 로그인
               </span>
             </div>
           </div>
 
           {/* SSO Login Form */}
-          <form
-            onSubmit={handleSubmit}
-            className='card p-6 space-y-4 dark:bg-gray-800'
-          >
-            {browserBlockedMessage && (
-              <div
-                role='alert'
-                className='p-3 text-sm text-amber-700 bg-amber-50 rounded-lg dark:bg-amber-900/20 dark:text-amber-300'
-              >
-                {browserBlockedMessage}
-              </div>
-            )}
-            {!browserBlockedMessage && browserInfoMessage && (
-              <div className='p-3 text-sm text-blue-700 bg-blue-50 rounded-lg dark:bg-blue-900/20 dark:text-blue-300'>
-                {browserInfoMessage}
-              </div>
-            )}
-            {error && !errorPopup && (
-              <div
-                role='alert'
-                className='p-3 text-sm text-red-600 bg-red-50 rounded-lg dark:bg-red-900/20 dark:text-red-400'
-              >
-                {error}
-              </div>
-            )}
+          <Card>
+            <form onSubmit={handleSubmit}>
+              <CardContent className='space-y-4'>
+                {browserBlockedMessage && (
+                  <Alert>
+                    <AlertDescription className='text-sm text-amber-700 dark:text-amber-300'>
+                      {browserBlockedMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {!browserBlockedMessage && browserInfoMessage && (
+                  <Alert>
+                    <AlertDescription className='text-sm text-muted-foreground'>
+                      {browserInfoMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {error && !errorPopup && (
+                  <Alert variant='destructive'>
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-            <div className='space-y-2'>
-              <label
-                htmlFor='sso-employee-no'
-                className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-              >
-                사번
-              </label>
-              <div className='relative'>
-                <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                <input
-                  id='sso-employee-no'
-                  type='text'
-                  required
-                  value={employeeNo}
-                  onChange={(e) => setEmployeeNo(e.target.value)}
-                  className='input-primary pl-10 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'
-                  placeholder='사번을 입력하세요'
-                  autoComplete='username'
-                />
-              </div>
-            </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='sso-employee-no'>
+                    사번
+                  </Label>
+                  <div className='relative'>
+                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
+                      id='sso-employee-no'
+                      type='text'
+                      required
+                      value={employeeNo}
+                      onChange={(e) => setEmployeeNo(e.target.value)}
+                      className='pl-10'
+                      placeholder='사번을 입력하세요'
+                      autoComplete='username'
+                    />
+                  </div>
+                </div>
 
-            <div className='space-y-2'>
-              <label
-                htmlFor='sso-password'
-                className='block text-sm font-medium text-gray-700 dark:text-gray-300'
-              >
-                비밀번호
-              </label>
-              <div className='relative'>
-                <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400' />
-                <input
-                  id='sso-password'
-                  type='password'
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className='input-primary pl-10 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600'
-                  placeholder='비밀번호를 입력하세요'
-                  autoComplete='current-password'
-                />
-              </div>
-            </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='sso-password'>
+                    비밀번호
+                  </Label>
+                  <div className='relative'>
+                    <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
+                    <Input
+                      id='sso-password'
+                      type='password'
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className='pl-10'
+                      placeholder='비밀번호를 입력하세요'
+                      autoComplete='current-password'
+                    />
+                  </div>
+                </div>
 
-            <button
-              type='submit'
-              disabled={loading}
-              className='btn-primary w-full flex items-center justify-center gap-2'
-            >
-              {loading ? (
-                <>
-                  <Loader2 className='h-5 w-5 animate-spin' />
-                  인증 중...
-                </>
-              ) : (
-                <>
-                  <LogIn className='h-5 w-5' />
-                  SSO 로그인
-                </>
-              )}
-            </button>
+                <Button
+                  type='submit'
+                  disabled={loading}
+                  className='w-full'
+                  size='lg'
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className='h-5 w-5 animate-spin' />
+                      인증 중...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className='h-5 w-5' />
+                      SSO 로그인
+                    </>
+                  )}
+                </Button>
+              </CardContent>
 
-            <div className='text-center pt-4 border-t border-gray-200 dark:border-gray-700'>
-              <p className='text-sm text-gray-500 dark:text-gray-400'>
-                SSO 전용 로그인입니다.
-              </p>
-            </div>
-          </form>
+              <CardFooter className='justify-center border-t border-border'>
+                <p className='text-sm text-muted-foreground'>
+                  SSO 전용 로그인입니다.
+                </p>
+              </CardFooter>
+            </form>
+          </Card>
         </div>
       </div>
 
       {/* 담당자 정보 */}
       {supportContactsEnabled && supportContacts.length > 0 && (
         <div className='fixed bottom-4 right-4 z-40'>
-          <div className='bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-4 py-3 text-xs text-gray-700 dark:text-gray-200 min-w-[220px]'>
+          <div className='bg-card/95 border border-border rounded-lg shadow-lg px-4 py-3 text-xs text-foreground min-w-[220px]'>
             <div className='text-sm font-semibold mb-2'>담당자</div>
             <div className='space-y-2'>
               {supportContacts.map((contact, index) => (
@@ -467,7 +455,7 @@ export default function SSOLoginPage() {
                   <div className='font-medium'>
                     {contact.department || '부서 미입력'}
                   </div>
-                  <div className='text-gray-600 dark:text-gray-400'>
+                  <div className='text-muted-foreground'>
                     {(contact.name || '이름 미입력') +
                       (contact.phone ? ` · ${contact.phone}` : '')}
                   </div>
@@ -480,7 +468,6 @@ export default function SSOLoginPage() {
 
       <NoticePopup target='login' initialNotice={loginNotice} />
 
-      {/* 에러 팝업 */}
       <ErrorPopup error={errorPopup} onClose={() => setErrorPopup(null)} />
     </div>
   );
