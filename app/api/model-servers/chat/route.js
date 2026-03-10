@@ -4,17 +4,17 @@ import {
   parseModelName,
   getModelServerEndpointByName,
 } from '@/lib/modelServers';
-// getDB는 더 이상 사용하지 않음
+// getDB is no longer used
 import { logQARequest } from '@/lib/qaLogger';
 import { logExternalApiRequest } from '@/lib/externalApiLogger';
 import { fetchWithRetry } from '@/lib/retryUtils';
 
-// 간단한 로그 기록 함수 (generate와 동일한 로그 테이블 사용)
+// Simple logging function (uses same log table as generate)
 async function logModelServerProxyRequest(data) {
   try {
     const { query } = await import('@/lib/postgres');
 
-    // metadata에 추가 정보 포함 (null/undefined 제외)
+    // Include additional metadata (exclude null/undefined)
     const metadata = {
       endpoint: data.endpoint || '',
       ...(data.responseTime && { responseTime: `${data.responseTime}ms` }),
@@ -37,7 +37,7 @@ async function logModelServerProxyRequest(data) {
       ...(data.userAgent && { userAgent: data.userAgent }),
     };
 
-    // null/undefined 값 제거
+    // Remove null/undefined values
     Object.keys(metadata).forEach((key) => {
       if (
         metadata[key] === null ||
@@ -76,12 +76,12 @@ async function logModelServerProxyRequest(data) {
       ]
     );
   } catch (error) {
-    console.error('로그 기록 실패:', error);
+    console.error('Failed to write log:', error);
   }
 }
 
-// VSCode Continue 전용 모델 서버 Chat 프록시
-// 라운드로빈 로드밸런싱만 추가된 순수 모델 서버 API
+// VSCode Continue-only model server chat proxy
+// Pure model server API with only round-robin load balancing added
 
 export async function POST(request) {
   const startTime = Date.now();
@@ -91,7 +91,7 @@ export async function POST(request) {
     '127.0.0.1';
   const userAgent = request.headers.get('user-agent') || 'unknown';
 
-  // 외부 API 로깅을 위한 추가 헤더 정보 수집
+  // Collect additional header info for external API logging
   const identificationHeaders = {
     xForwardedFor: request.headers.get('x-forwarded-for'),
     xRealIP: request.headers.get('x-real-ip'),
@@ -112,67 +112,67 @@ export async function POST(request) {
     try {
       body = await request.json();
     } catch (jsonError) {
-      console.error('[Model Server Chat Proxy] JSON 파싱 오류:', jsonError);
+      console.error('[Model Server Chat Proxy] JSON parsing error:', jsonError);
       return NextResponse.json(
         {
           error: 'Invalid JSON in request body',
-          message: '요청 본문이 올바른 JSON 형식이 아닙니다.',
+          message: 'Request body is not valid JSON format.',
         },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // 필수 필드 검증: prompt -> messages
+    // Validate required fields: prompt -> messages
     if (!body.model || !body.messages) {
       return NextResponse.json(
         {
           error: 'Missing required fields',
-          message: 'model과 messages 필드는 필수입니다.',
+          message: 'model and messages fields are required.',
         },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    console.log('[Model Server Chat Proxy] 요청:', {
+    console.log('[Model Server Chat Proxy] Request:', {
       model: body.model,
       messages: body.messages?.length || 0,
       stream: body.stream,
       ip: clientIP,
     });
 
-    // 모델 이름에서 서버 이름 파싱하여 해당 서버 그룹에서만 라운드로빈
+    // Parse server name from model name and round-robin within that server group only
     let modelServerEndpoint;
     let roundRobinIndex;
-    let provider = 'model-server'; // 기본값
+    let provider = 'model-server'; // default
 
     let { serverName } = parseModelName(body.model);
 
-    // 모델 ID에서 서버 이름을 파싱하지 못한 경우, DB 설정에서 확인
+    // If server name is not parsed from model ID, check DB settings
     if (!serverName) {
       const { getServerNameForModel } = await import('@/lib/modelServers');
       const dbServerName = await getServerNameForModel(body.model);
       if (dbServerName) {
         serverName = dbServerName;
         console.log(
-          `[Model Server Chat Proxy] DB 설정에서 서버 그룹 찾음: "${body.model}" -> "${serverName}"`
+          `[Model Server Chat Proxy] Found server group in DB settings: "${body.model}" -> "${serverName}"`
         );
       }
     }
 
     if (serverName) {
-      // 서버 이름이 있으면 해당 서버 그룹에서만 라운드로빈
+      // If server name exists, use round-robin only within that server group
       const serverEndpoint = await getModelServerEndpointByName(serverName);
       if (serverEndpoint) {
         modelServerEndpoint = serverEndpoint.endpoint;
         roundRobinIndex = serverEndpoint.index;
         provider = serverEndpoint.provider || 'model-server';
         console.log(
-          `[Model Server Chat Proxy] 모델 "${body.model}" -> 서버 그룹 "${serverName}" -> 엔드포인트: ${modelServerEndpoint} (RR: ${roundRobinIndex}, Provider: ${provider})`
+          `[Model Server Chat Proxy] Model "${body.model}" -> server group "${serverName}" -> endpoint: ${modelServerEndpoint} (RR: ${roundRobinIndex}, Provider: ${provider})`
         );
       } else {
-        // 서버 이름으로 찾지 못하면 전체 라운드로빈 사용
+        // If not found by server name, use global round-robin
         console.warn(
-          `[Model Server Chat Proxy] 서버 그룹 "${serverName}"을 찾을 수 없어 전체 라운드로빈 사용`
+          `[Model Server Chat Proxy] Could not find server group "${serverName}", using global round-robin`
         );
         const next = await getNextModelServerEndpointWithIndex();
         modelServerEndpoint = next.endpoint;
@@ -180,58 +180,58 @@ export async function POST(request) {
         provider = next.provider || 'model-server';
       }
     } else {
-      // 서버 이름이 없으면 전체 라운드로빈 사용
+      // If there is no server name, use global round-robin
       const next = await getNextModelServerEndpointWithIndex();
       modelServerEndpoint = next.endpoint;
       roundRobinIndex = next.index;
       provider = next.provider || 'model-server';
     }
 
-    // API 경로를 /api/chat으로 변경
+    // Use /api/chat as API path
     const modelServerUrl = `${modelServerEndpoint}/api/chat`;
 
     console.log(
-      `[Model Server Chat Proxy] 인스턴스 ${roundRobinIndex}: ${modelServerUrl}`
+      `[Model Server Chat Proxy] Instance ${roundRobinIndex}: ${modelServerUrl}`
     );
 
-    // 원본 요청의 헤더를 복사하되, 일부는 수정/제외합니다.
+    // Copy headers from original request, with some modifications/exclusions
     const headersToForward = {};
     request.headers.forEach((value, key) => {
-      // 'host' 헤더는 fetch가 자동으로 설정하므로 전달하지 않습니다.
-      // 'content-length'는 body 길이에 따라 fetch가 설정하므로 전달하지 않습니다.
+      // Do not forward 'host' because fetch sets it automatically.
+      // Do not forward 'content-length' because fetch sets it based on body length.
       if (!['host', 'content-length'].includes(key.toLowerCase())) {
         headersToForward[key] = value;
       }
     });
-    // Content-Type은 항상 application/json으로 설정합니다.
+    // Always set Content-Type to application/json.
     headersToForward['Content-Type'] = 'application/json';
 
-    // --- 상세 디버그 로그 추가 ---
+    // --- Detailed debug logs ---
     console.log(
       '\n\n[MODEL SERVER CHAT PROXY DEBUG] ======================================='
     );
     console.log(
-      '[MODEL SERVER CHAT PROXY DEBUG] 최종 요청 정보 (to Model Server Instance):'
+      '[MODEL SERVER CHAT PROXY DEBUG] Final request info (to Model Server Instance):'
     );
     console.log(
-      '[MODEL SERVER CHAT PROXY DEBUG]   - 목적지 URL:',
+      '[MODEL SERVER CHAT PROXY DEBUG]   - Destination URL:',
       modelServerUrl
     );
     console.log(
-      '[MODEL SERVER CHAT PROXY DEBUG]   - 전달되는 헤더:',
+      '[MODEL SERVER CHAT PROXY DEBUG]   - Forwarded headers:',
       JSON.stringify(headersToForward, null, 2)
     );
     console.log(
-      '[MODEL SERVER CHAT PROXY DEBUG]   - 요청 Body의 키:',
+      '[MODEL SERVER CHAT PROXY DEBUG]   - Request body keys:',
       Object.keys(body)
     );
     console.log(
       '[MODEL SERVER CHAT PROXY DEBUG] =======================================\n\n'
     );
-    // --- 디버그 로그 끝 ---
+    // --- End debug logs ---
 
 
-    // 재시도 시 provider 업데이트를 위한 참조 객체
+    // Reference object for provider update on retries
     const providerRef = { value: provider };
 
     let modelServerRes;
@@ -240,11 +240,11 @@ export async function POST(request) {
         modelServerUrl,
         {
           method: 'POST',
-          headers: headersToForward, // 수정된 헤더 사용
+          headers: headersToForward, // use modified headers
           body: JSON.stringify(body),
         },
         {
-          maxRetries: 2, // 최대 2회 재시도 (총 3회 시도)
+          maxRetries: 2, // retry up to 2 times (3 attempts total)
           isStreaming: body.stream !== false,
           getNextEndpoint: getNextModelServerEndpointWithIndex,
           providerRef: providerRef,
@@ -252,14 +252,14 @@ export async function POST(request) {
         }
       );
 
-      // 재시도 후 최종 provider 업데이트
+      // Update final provider after retries
       provider = providerRef.value;
     } catch (fetchError) {
-      // fetch 실패 처리
+      // Handle fetch failure
       const responseTime = Date.now() - startTime;
       const errorMessage = fetchError.message || 'Unknown error';
 
-      console.error('[Model Server Chat Proxy] 모델 서버 연결 오류:', {
+      console.error('[Model Server Chat Proxy] Model server connection error:', {
         url: modelServerUrl,
         error: errorMessage,
         type: fetchError.name || 'Unknown',
@@ -296,7 +296,7 @@ export async function POST(request) {
     if (!modelServerRes.ok) {
       const errorText = await modelServerRes.text();
       console.error(
-        `[Model Server Chat Proxy] 오류: ${modelServerRes.status} ${modelServerRes.statusText}`,
+        `[Model Server Chat Proxy] Error: ${modelServerRes.status} ${modelServerRes.statusText}`,
         errorText
       );
 
@@ -320,7 +320,7 @@ export async function POST(request) {
 
       return NextResponse.json(
         {
-          error: `모델 Server error: ${modelServerRes.status}`,
+          error: `Model server error: ${modelServerRes.status}`,
           details: errorText,
         },
         { status: modelServerRes.status, headers: corsHeaders }
@@ -329,7 +329,7 @@ export async function POST(request) {
 
     const contentType = modelServerRes.headers.get('content-type') || '';
 
-    // 프롬프트 토큰 추정 (메시지 내용 길이 합산)
+    // Estimate prompt tokens (sum of message content lengths)
     const promptTokens = body.messages.reduce(
       (acc, msg) => acc + (msg.content?.length || 0),
       0
@@ -351,22 +351,22 @@ export async function POST(request) {
         statusCode: modelServerRes.status,
         isStream: true,
         promptTokens,
-        completionTokens: 0, // 스트리밍에서는 계산 어려움
+        completionTokens: 0, // difficult to calculate during streaming
         totalTokens: promptTokens,
       });
 
-      // Q&A 로그 기록 (스트리밍 - 답변 제외)
+      // Write Q&A log (streaming - response excluded)
       await logQARequest({
         clientIP,
         model: body.model,
-        prompt: body.messages, // chat API는 messages 배열을 기록
+        prompt: body.messages, // chat API logs the messages array
         response: null,
         isStream: true,
         responseTime,
         statusCode: modelServerRes.status,
       });
 
-      // 외부 API 전용 로깅 (스트리밍)
+      // External API dedicated logging (streaming)
       await logExternalApiRequest({
         sourceType: 'internal',
         provider: 'model-server',
@@ -374,7 +374,7 @@ export async function POST(request) {
         endpoint: modelServerUrl,
         model: body.model,
         messages: body.messages,
-        responseTokenCount: 0, // 스트리밍에서는 실시간 계산 어려움
+        responseTokenCount: 0, // difficult to calculate in real time during streaming
         promptTokenCount: promptTokens,
         responseTime,
         statusCode: modelServerRes.status,
@@ -402,13 +402,13 @@ export async function POST(request) {
       let responseText = '';
       try {
         const parsedResponse = JSON.parse(responseData);
-        // chat 응답에서는 message.content에 내용이 들어있음
+        // In chat responses, content is in message.content
         completionTokens = parsedResponse.message?.content?.length || 0;
         responseText = parsedResponse.message?.content || '';
       } catch (e) {
         responseText = responseData;
         console.warn(
-          '[model-server-chat] JSON 파싱 실패, 원문 사용:',
+          '[model-server-chat] JSON parsing failed, using raw text:',
           e?.message || e
         );
       }
@@ -430,18 +430,18 @@ export async function POST(request) {
         totalTokens: promptTokens + completionTokens,
       });
 
-      // Q&A 로그 기록 (비스트리밍 - 답변 포함)
+      // Write Q&A log (non-streaming - includes response)
       await logQARequest({
         clientIP,
         model: body.model,
-        prompt: body.messages, // chat API는 messages 배열을 기록
+        prompt: body.messages, // chat API logs the messages array
         response: responseText,
         isStream: false,
         responseTime,
         statusCode: modelServerRes.status,
       });
 
-      // 외부 API 전용 로깅 (일반 응답)
+      // External API dedicated logging (normal response)
       await logExternalApiRequest({
         sourceType: 'internal',
         provider: 'model-server',
@@ -459,7 +459,7 @@ export async function POST(request) {
         ...identificationHeaders,
       });
 
-      console.log(`[Model Server Chat Proxy] 완료: ${responseTime}ms`);
+      console.log(`[Model Server Chat Proxy] Completed: ${responseTime}ms`);
 
       return new Response(responseData, {
         status: modelServerRes.status,

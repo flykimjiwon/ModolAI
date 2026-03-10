@@ -1,27 +1,27 @@
 /**
- * 사용 가능한 직접 연결된 모델 서버 모델 목록을 가져옵니다.
- * @param {object} headers - API 요청에 사용할 헤더입니다.
- * @returns {Promise<object>} 모델 설정 데이터입니다.
+ * Fetches available directly connected model-server model list.
+ * @param {object} headers - Headers to use for API request.
+ * @returns {Promise<object>} Model configuration data.
  */
 export async function fetchDirectModels(headers) {
   try {
     const response = await fetch('/api/models', { headers });
     if (!response.ok) {
-      throw new Error(`Direct 모델 로드 실패: ${response.status}`);
+      throw new Error(`Failed to load direct models: ${response.status}`);
     }
     return await response.json();
   } catch (error) {
-    console.error('fetchDirectModels API 호출 실패:', error);
+    console.error('fetchDirectModels API call failed:', error);
     throw error;
   }
 }
 
 /**
- * 채팅 메시지를 보내고 스트리밍 응답을 받습니다.
+ * Sends a chat message and receives a streaming response.
  * @param {string} apiEndpoint - '/api/webapp-generate'
- * @param {object} payload - API에 전송할 데이터
- * @param {AbortSignal} signal - 요청 중단을 위한 AbortSignal
- * @returns {Promise<Response>} fetch 응답 객체
+ * @param {object} payload - Data to send to the API
+ * @param {AbortSignal} signal - AbortSignal for request cancellation
+ * @returns {Promise<Response>} fetch response object
  */
 export async function sendChatMessage(apiEndpoint, payload, signal) {
   try {
@@ -36,7 +36,7 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
     });
 
     if (!response.ok) {
-      // 응답 본문을 텍스트로 먼저 읽기 (JSON 파싱 실패 대비)
+      // Read response body as text first (for JSON parsing fallback)
       let responseText = '';
       let errorData = {};
       try {
@@ -45,16 +45,16 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
           try {
             errorData = JSON.parse(responseText);
           } catch (error) {
-            console.warn('[Catch] 에러 발생:', error.message);
-            // JSON이 아닌 경우 텍스트 그대로 사용
+            console.warn('[Catch] Error occurred:', error.message);
+            // If not JSON, use raw text as is
             errorData = { error: responseText };
           }
         }
       } catch (e) {
-        console.warn('응답 본문 읽기 실패:', e);
+        console.warn('Failed to read response body:', e);
       }
 
-      // 에러 로그에 response 정보 포함
+      // Include response info in error log
       const timestamp = new Date().toLocaleString('ko-KR', {
         timeZone: 'Asia/Seoul',
       });
@@ -81,12 +81,12 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
         }
       );
 
-      // 에러 메시지 구성
+      // Build error message
       let errorMessage =
         errorData.error ||
-        `모델 호출에 실패했습니다. (HTTP ${response.status})`;
+        `Model call failed. (HTTP ${response.status})`;
 
-      // 모델 이름 정규화 함수
+      // Model name normalization function
       const normalizeModelInMessage = (
         message,
         originalModel,
@@ -96,7 +96,7 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
 
         let normalized = message;
 
-        // 1. 원본 모델 이름 직접 대체
+        // 1. Directly replace original model name
         if (normalized.includes(originalModel)) {
           normalized = normalized.replace(
             new RegExp(
@@ -107,7 +107,7 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
           );
         }
 
-        // 2. "models/" 접두사가 포함된 경우도 대체
+        // 2. Also replace cases with "models/" prefix
         const modelWithPrefix = `models/${normalizedModel}`;
         if (normalized.includes(modelWithPrefix)) {
           normalized = normalized.replace(
@@ -119,7 +119,7 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
           );
         }
 
-        // 3. 따옴표로 감싸진 모델 이름 패턴 대체 (예: 'models/gemini-2.0-flash')
+        // 3. Replace quoted model-name patterns (e.g., 'models/gemini-2.0-flash')
         const quotedModelPattern = /(['"])(models\/[^'"]+)\1/gi;
         normalized = normalized.replace(
           quotedModelPattern,
@@ -131,7 +131,7 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
           }
         );
 
-        // 4. 따옴표 없이 사용된 모델 이름 패턴도 처리
+        // 4. Handle model-name patterns used without quotes
         const unquotedModelPattern = /models\/([a-zA-Z0-9_\-:.]+)/g;
         normalized = normalized.replace(
           unquotedModelPattern,
@@ -143,11 +143,11 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
         return normalized;
       };
 
-      // 에러 메시지 정규화 (원본 모델 이름 제거)
+      // Normalize error message (remove original model name)
       const originalModel = errorData.originalModel || payload?.model;
       let normalizedModel = errorData.normalizedModel;
 
-      // normalizedModel이 없으면 원본 모델에서 직접 정규화
+      // If normalizedModel is missing, normalize directly from original model
       if (!normalizedModel && originalModel) {
         normalizedModel = originalModel.trim();
         if (normalizedModel.startsWith('models/')) {
@@ -169,7 +169,7 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
         );
       }
 
-      // 상세 정보가 있으면 추가 (정규화 후)
+      // Add detailed info if present (after normalization)
       if (errorData.details && errorData.details !== errorMessage) {
         let normalizedDetails = errorData.details;
         if (originalModel && normalizedModel) {
@@ -179,39 +179,39 @@ export async function sendChatMessage(apiEndpoint, payload, signal) {
             normalizedModel
           );
         }
-        errorMessage += `\n\n상세 정보: ${normalizedDetails}`;
+        errorMessage += `\n\nDetails: ${normalizedDetails}`;
       }
 
-      // 모델 정보가 있으면 추가
+      // Add model information if present
       if (errorData.originalModel || errorData.normalizedModel) {
-        errorMessage += `\n\n모델 정보:`;
+        errorMessage += `\n\nModel Info:`;
         if (errorData.originalModel) {
-          errorMessage += `\n- 원본 모델: ${errorData.originalModel}`;
+          errorMessage += `\n- Original model: ${errorData.originalModel}`;
         }
         if (errorData.normalizedModel) {
-          errorMessage += `\n- 정규화된 모델: ${errorData.normalizedModel}`;
+          errorMessage += `\n- Normalized model: ${errorData.normalizedModel}`;
         }
       }
 
       throw new Error(errorMessage);
     }
-    return response; // 스트리밍 처리를 위해 응답 객체 자체를 반환
+    return response; // Return the response object itself for streaming handling
   } catch (error) {
     const message = error?.message || '';
     const isQuotaError =
       /insufficient_quota|exceeded your current quota/i.test(message);
     const isNotFoundError = /http 404|not found/i.test(message);
     const logFn = isQuotaError || isNotFoundError ? console.warn : console.error;
-    logFn('sendChatMessage API 호출 실패:', error);
+    logFn('sendChatMessage API call failed:', error);
     throw error;
   }
 }
 
 /**
- * 메시지를 대화 기록에 저장합니다.
- * @param {string} roomId - 채팅방 ID
- * @param {object} messagePayload - 저장할 메시지 데이터
- * @returns {Promise<object>} 저장 결과
+ * Saves a message to conversation history.
+ * @param {string} roomId - Chat room ID
+ * @param {object} messagePayload - Message data to save
+ * @returns {Promise<object>} Save result
  */
 export async function saveMessageToHistory(roomId, messagePayload) {
   const token = localStorage.getItem('token');
@@ -228,13 +228,13 @@ export async function saveMessageToHistory(roomId, messagePayload) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.error || `메시지 저장 실패 (HTTP ${response.status})`
+        errorData.error || `Failed to save message (HTTP ${response.status})`
       );
     }
 
     return await response.json();
   } catch (error) {
-    console.error('saveMessageToHistory API 호출 실패:', error);
+    console.error('saveMessageToHistory API call failed:', error);
     throw error;
   }
 }

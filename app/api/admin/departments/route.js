@@ -18,6 +18,6 @@ export async function GET(request) {
 
     return NextResponse.json({ departments: result.rows });
   } catch (error) {
-    return createServerError(error, '부서 목록 조회 실패');
+    return createServerError(error, 'Failed to retrieve department list');
   }
 }

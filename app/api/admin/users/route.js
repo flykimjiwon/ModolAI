@@ -4,23 +4,23 @@ import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
 export async function GET(request) {
-  // 관리자 권한 확인
+  // Check admin privileges
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
     return createAuthError(authResult.error);
   }
 
   try {
-    // URL 파라미터 추출
+    // Extract URL parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const search = searchParams.get('search') || '';
     const department = searchParams.get('department') || '';
     const authType = searchParams.get('authType') || '';
     const role = searchParams.get('role') || '';
-    const limit = Math.min(parseInt(searchParams.get('limit')) || 20, 100); // 페이지당 사용자 수 (최대 100)
+    const limit = Math.min(parseInt(searchParams.get('limit')) || 20, 100); // Users per page (max 100)
 
-    // 검색 조건 구성
+    // Build search conditions
     let whereConditions = [];
     let params = [];
     let paramIndex = 1;
@@ -53,7 +53,7 @@ export async function GET(request) {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
-    // 총 개수 조회
+    // Query total count
     const countResult = await query(
       `SELECT COUNT(*) as count FROM users ${whereClause}`,
       params
@@ -61,10 +61,10 @@ export async function GET(request) {
     const totalCount = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalCount / limit);
 
-    // last_active_at 컬럼 자동 보장 (마이그레이션 미실행 환경 대비)
+    // Ensure last_active_at column exists (for environments without migration)
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP`).catch(() => {});
 
-    // 사용자 목록 조회
+    // Query user list
     const offset = (page - 1) * limit;
     const usersResult = await query(
       `SELECT
@@ -80,7 +80,7 @@ export async function GET(request) {
       [...params, limit, offset]
     );
 
-    // PostgreSQL UUID를 문자열로 변환 및 상세 정보 매핑
+    // Convert PostgreSQL UUID to string and map detailed fields
     const formattedUsers = usersResult.rows.map((user) => ({
       _id: user.id,
       id: user.id,
@@ -94,7 +94,7 @@ export async function GET(request) {
       createdAt: user.created_at,
       updatedAt: user.updated_at,
 
-      // 추가 상세 정보
+      // Additional details
       authType: user.auth_type || 'local',
       employeeNo: user.employee_no,
       employeeId: user.employee_id,
@@ -125,7 +125,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('사용자 목록 조회 실패:', error);
-    return createServerError(error, '사용자 목록 조회 실패');
+    console.error('Failed to fetch user list:', error);
+    return createServerError(error, 'Failed to fetch user list');
   }
 }

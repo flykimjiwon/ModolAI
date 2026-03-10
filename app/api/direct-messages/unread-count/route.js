@@ -3,7 +3,7 @@ import { verifyTokenWithResult } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
-// 읽지 않은 쪽지 개수 조회 (배지용)
+// Get unread message count (for badge)
 export async function GET(request) {
   const authResult = verifyTokenWithResult(request);
   if (!authResult.valid) {
@@ -27,7 +27,7 @@ export async function GET(request) {
       count: unreadCount,
     });
   } catch (error) {
-    console.error('읽지 않은 쪽지 개수 조회 실패:', error);
-    return createServerError(error, '읽지 않은 쪽지 개수 조회 실패');
+    console.error('Failed to get unread message count:', error);
+    return createServerError(error, 'Failed to get unread message count');
   }
 }

@@ -96,19 +96,19 @@ async function ensureSettingsColumns() {
   }
 }
 
-// 설정 조회 (일반 사용자도 읽기 가능)
+// Fetch settings (readable by regular users too)
 export async function GET(request) {
   try {
-    // 설정 읽기는 모든 사용자에게 허용
+    // Reading settings is allowed for all users
 
-    // 설정 조회
+    // Fetch settings
     let settingsResult = await query(
       'SELECT * FROM settings WHERE config_type = $1 LIMIT 1',
       ['general']
     );
     let settings = settingsResult.rows[0] || null;
 
-    // snake_case를 camelCase로 변환
+    // Convert snake_case to camelCase
     if (settings) {
       settings = {
         configType: settings.config_type,
@@ -142,12 +142,12 @@ export async function GET(request) {
       };
     }
 
-    // 기본 설정이 없으면 생성
+    // Create default settings if missing
     if (!settings) {
       const defaultSettings = {
         configType: 'general',
         tooltipEnabled: true,
-        tooltipMessage: '더 고성능의 모델도 사용할 수 있어요',
+        tooltipMessage: 'You can also use higher-performance models',
         chatWidgetEnabled: false,
         profileEditEnabled: false,
         manualPresetBaseUrl: 'https://api.openai.com',
@@ -160,18 +160,18 @@ export async function GET(request) {
         faviconUrl: null,
         roomNameGenerationModel: 'gemma3:4b',
         maxUserQuestionLength: 300000,
-        // 모델 모델서버(콤마 구분 문자열)
+        // Model server endpoints (comma-separated string)
         ollamaEndpoints: 'http://localhost:11434',
-        // LLM 모델서버 타입: 'ollama' | 'openai-compatible'
+        // LLM model server type: 'ollama' | 'openai-compatible'
         endpointType: 'ollama',
-        // OpenAI 호환형 모델서버 설정 (apiKey는 저장하되 조회 응답에서는 제외)
+        // OpenAI-compatible model server settings (store apiKey, exclude from GET response)
         openaiCompatBase: process.env.OPENAI_COMPAT_BASE || '',
         openaiCompatApiKey: process.env.OPENAI_COMPAT_API_KEY || '',
-        // 커스텀 모델서버 설정 배열 [{name,url,provider}]
+        // Custom model server config array [{name,url,provider}]
         customEndpoints: [],
-        // 로그인 타입 ('local' | 'sso')
+        // Login type ('local' | 'sso')
         loginType: 'local',
-        // API 키 페이지 설정 예시
+        // API key page configuration examples
         apiConfigExample: `name: Local Agent
 version: 1.0.0
 schema: v1
@@ -227,7 +227,7 @@ models:
       settings = defaultSettings;
     }
 
-    // customEndpoints 응답 구성 (없으면 ollamaEndpoints로부터 유추)
+    // Build customEndpoints response (infer from ollamaEndpoints if missing)
     let customEndpoints =
       Array.isArray(settings.customEndpoints) &&
       settings.customEndpoints.length > 0
@@ -253,7 +253,7 @@ models:
         tooltipEnabled:
           settings.tooltipEnabled !== undefined ? settings.tooltipEnabled : true,
         tooltipMessage:
-          settings.tooltipMessage || '더 고성능의 모델도 사용할 수 있어요',
+          settings.tooltipMessage || 'You can also use higher-performance models',
         chatWidgetEnabled:
           settings.chatWidgetEnabled !== undefined
             ? settings.chatWidgetEnabled
@@ -284,10 +284,10 @@ models:
         maxUserQuestionLength: settings.maxUserQuestionLength || 300000,
         imageAnalysisModel: settings.imageAnalysisModel || null,
         imageAnalysisPrompt:
-          settings.imageAnalysisPrompt || '이 이미지를 설명해줘.',
-        // DB 저장값 우선, 없으면 기본값
+          settings.imageAnalysisPrompt || 'Describe this image.',
+        // Prefer DB value, otherwise use default
         ollamaEndpoints: settings.ollamaEndpoints || 'http://localhost:11434',
-        // 모델서버 타입 및 OpenAI 호환 설정(민감정보 제외)
+        // Model server type and OpenAI-compatible settings (sensitive data excluded)
         endpointType:
           settings.endpointType === 'openai-compatible'
             ? 'openai-compatible'
@@ -295,9 +295,9 @@ models:
         openaiCompatBase: settings.openaiCompatBase || '',
         openaiCompatApiKeySet: !!settings.openaiCompatApiKey,
         customEndpoints,
-        // 로그인 타입 설정
+        // Login type setting
         loginType: settings.loginType || 'local',
-        // API 키 페이지 예시 설정
+        // API key page example settings
         apiConfigExample: settings.apiConfigExample || '',
         apiCurlExample: settings.apiCurlExample || '',
       },
@@ -306,15 +306,15 @@ models:
       }
     );
   } catch (error) {
-    console.error('설정 조회 실패:', error);
-    return createServerError(error, '설정을 불러오는데 실패했습니다.');
+    console.error('Failed to fetch settings:', error);
+    return createServerError(error, 'Failed to load settings.');
   }
 }
 
-// 설정 업데이트
+// Update settings
 export async function PUT(request) {
   try {
-    // 관리자 권한 확인
+    // Verify admin privileges
     const adminCheck = verifyAdminWithResult(request);
     if (!adminCheck.valid) {
       return createAuthError(adminCheck.error);
@@ -350,13 +350,13 @@ export async function PUT(request) {
       apiCurlExample,
     } = await request.json();
 
-    // 입력값 검증
+    // Validate input values
     const updateData = {};
 
 
     if (tooltipEnabled !== undefined) {
       if (typeof tooltipEnabled !== 'boolean') {
-        return createValidationError('툴팁 활성화는 boolean 값이어야 합니다.');
+        return createValidationError('Tooltip enabled must be a boolean value.');
       }
       updateData.tooltipEnabled = tooltipEnabled;
     }
@@ -364,7 +364,7 @@ export async function PUT(request) {
     if (tooltipMessage !== undefined) {
       if (typeof tooltipMessage !== 'string' || tooltipMessage.length > 100) {
         return createValidationError(
-          '툴팁 메시지는 100자 이하의 문자열이어야 합니다.'
+          'Tooltip message must be a string of 100 characters or fewer.'
         );
       }
       updateData.tooltipMessage = tooltipMessage;
@@ -373,7 +373,7 @@ export async function PUT(request) {
     if (chatWidgetEnabled !== undefined) {
       if (typeof chatWidgetEnabled !== 'boolean') {
         return createValidationError(
-          '채팅 위젯 활성화는 boolean 값이어야 합니다.'
+          'Chat widget enabled must be a boolean value.'
         );
       }
       updateData.chatWidgetEnabled = chatWidgetEnabled;
@@ -382,7 +382,7 @@ export async function PUT(request) {
     if (profileEditEnabled !== undefined) {
       if (typeof profileEditEnabled !== 'boolean') {
         return createValidationError(
-          '프로필 수정 메뉴 활성화는 boolean 값이어야 합니다.'
+          'Profile edit menu enabled must be a boolean value.'
         );
       }
       updateData.profileEditEnabled = profileEditEnabled;
@@ -394,7 +394,7 @@ export async function PUT(request) {
         typeof manualPresetBaseUrl !== 'string'
       ) {
         return createValidationError(
-          '프리셋 baseUrl은 문자열 또는 null이어야 합니다.'
+          'Preset baseUrl must be a string or null.'
         );
       }
       updateData.manualPresetBaseUrl = manualPresetBaseUrl;
@@ -406,7 +406,7 @@ export async function PUT(request) {
         typeof manualPresetApiBase !== 'string'
       ) {
         return createValidationError(
-          '프리셋 apiBase는 문자열 또는 null이어야 합니다.'
+          'Preset apiBase must be a string or null.'
         );
       }
       updateData.manualPresetApiBase = manualPresetApiBase;
@@ -415,7 +415,7 @@ export async function PUT(request) {
     if (boardEnabled !== undefined) {
       if (typeof boardEnabled !== 'boolean') {
         return createValidationError(
-          '자유게시판 활성화는 boolean 값이어야 합니다.'
+          'Board enabled must be a boolean value.'
         );
       }
       updateData.boardEnabled = boardEnabled;
@@ -423,7 +423,7 @@ export async function PUT(request) {
 
     if (supportContacts !== undefined) {
       if (!Array.isArray(supportContacts)) {
-        return createValidationError('담당자 목록은 배열이어야 합니다.');
+        return createValidationError('Support contact list must be an array.');
       }
       const normalized = supportContacts
         .map((item) => {
@@ -450,7 +450,7 @@ export async function PUT(request) {
     if (supportContactsEnabled !== undefined) {
       if (typeof supportContactsEnabled !== 'boolean') {
         return createValidationError(
-          '담당자 표시 여부는 boolean 값이어야 합니다.'
+          'Support contacts enabled must be a boolean value.'
         );
       }
       updateData.supportContactsEnabled = supportContactsEnabled;
@@ -460,7 +460,7 @@ export async function PUT(request) {
     if (siteTitle !== undefined) {
       if (typeof siteTitle !== 'string' || siteTitle.length > 50) {
         return createValidationError(
-          '사이트 제목은 50자 이하의 문자열이어야 합니다.'
+          'Site title must be a string of 50 characters or fewer.'
         );
       }
       updateData.siteTitle = siteTitle;
@@ -469,7 +469,7 @@ export async function PUT(request) {
     if (siteDescription !== undefined) {
       if (typeof siteDescription !== 'string' || siteDescription.length > 200) {
         return createValidationError(
-          '사이트 설명은 200자 이하의 문자열이어야 합니다.'
+          'Site description must be a string of 200 characters or fewer.'
         );
       }
       updateData.siteDescription = siteDescription;
@@ -481,7 +481,7 @@ export async function PUT(request) {
         (typeof faviconUrl !== 'string' || faviconUrl.length > 500)
       ) {
         return createValidationError(
-          '파비콘 URL은 500자 이하의 문자열이어야 합니다.'
+          'Favicon URL must be a string of 500 characters or fewer.'
         );
       }
       updateData.faviconUrl = faviconUrl;
@@ -490,7 +490,7 @@ export async function PUT(request) {
     if (roomNameGenerationModel !== undefined) {
       if (typeof roomNameGenerationModel !== 'string') {
         return createValidationError(
-          '대화방명 생성 모델은 문자열이어야 합니다.'
+          'Room name generation model must be a string.'
         );
       }
       updateData.roomNameGenerationModel = roomNameGenerationModel;
@@ -503,7 +503,7 @@ export async function PUT(request) {
         maxImagesPerMessage > 20
       ) {
         return createValidationError(
-          '메시지당 최대 이미지 개수는 1~20 사이의 숫자여야 합니다.'
+          'Maximum images per message must be a number between 1 and 20.'
         );
       }
       updateData.maxImagesPerMessage = maxImagesPerMessage;
@@ -516,7 +516,7 @@ export async function PUT(request) {
         maxUserQuestionLength > 1000000
       ) {
         return createValidationError(
-          '질문 길이 제한은 1,000~1,000,000 사이의 숫자여야 합니다.'
+          'Question length limit must be a number between 1,000 and 1,000,000.'
         );
       }
       updateData.maxUserQuestionLength = maxUserQuestionLength;
@@ -528,7 +528,7 @@ export async function PUT(request) {
         typeof imageAnalysisModel !== 'string'
       ) {
         return createValidationError(
-          '이미지 분석 모델은 문자열 또는 null이어야 합니다.'
+          'Image analysis model must be a string or null.'
         );
       }
       updateData.imageAnalysisModel = imageAnalysisModel;
@@ -540,7 +540,7 @@ export async function PUT(request) {
         typeof imageAnalysisPrompt !== 'string'
       ) {
         return createValidationError(
-          '이미지 분석 프롬프트는 문자열 또는 null이어야 합니다.'
+          'Image analysis prompt must be a string or null.'
         );
       }
       updateData.imageAnalysisPrompt = imageAnalysisPrompt;
@@ -549,7 +549,7 @@ export async function PUT(request) {
     if (ollamaEndpoints !== undefined) {
       if (typeof ollamaEndpoints !== 'string' || ollamaEndpoints.length < 7) {
         return createValidationError(
-          '모델 모델서버는 문자열(콤마 구분)이어야 합니다.'
+          'Model server endpoints must be a string (comma-separated).'
         );
       }
       updateData.ollamaEndpoints = ollamaEndpoints
@@ -559,20 +559,20 @@ export async function PUT(request) {
         .join(',');
     }
 
-    // 모델서버 타입 검증 및 저장
+    // Validate and save model server type
     if (endpointType !== undefined) {
       if (!['ollama', 'openai-compatible'].includes(endpointType)) {
         return createValidationError(
-          "endpointType은 'ollama' 또는 'openai-compatible' 이어야 합니다."
+          "endpointType must be either 'ollama' or 'openai-compatible'."
         );
       }
       updateData.endpointType = endpointType;
     }
 
-    // OpenAI 호환 설정 검증 및 저장
+    // Validate and save OpenAI-compatible settings
     if (openaiCompatBase !== undefined) {
       if (typeof openaiCompatBase !== 'string') {
-        return createValidationError('openaiCompatBase는 문자열이어야 합니다.');
+        return createValidationError('openaiCompatBase must be a string.');
       }
       updateData.openaiCompatBase = openaiCompatBase.trim();
     }
@@ -583,22 +583,22 @@ export async function PUT(request) {
         typeof openaiCompatApiKey !== 'string'
       ) {
         return createValidationError(
-          'openaiCompatApiKey는 문자열 또는 null이어야 합니다.'
+          'openaiCompatApiKey must be a string or null.'
         );
       }
-      // null을 보내면 키를 삭제
+      // Sending null removes the key
       updateData.openaiCompatApiKey = openaiCompatApiKey
         ? openaiCompatApiKey.trim()
         : '';
     }
 
-    // 커스텀 모델서버 유효성 검증 및 동기화
+    // Validate and synchronize custom model servers
     if (customEndpoints !== undefined) {
       if (!Array.isArray(customEndpoints)) {
-        return createValidationError('customEndpoints는 배열이어야 합니다.');
+        return createValidationError('customEndpoints must be an array.');
       }
       const sanitized = [];
-      const seenNames = new Set(); // 이름 중복 체크용
+      const seenNames = new Set(); // For duplicate name checking
       for (const item of customEndpoints) {
         if (!item || typeof item !== 'object') continue;
         const name =
@@ -612,40 +612,40 @@ export async function PUT(request) {
             : 'ollama';
         const apiKey =
           typeof item.apiKey === 'string' ? item.apiKey.trim() : '';
-        // Gemini provider일 때는 API key 필수
+        // API key is required for Gemini provider
         if (provider === 'gemini' && !apiKey) {
           return createValidationError(
-            'Gemini provider는 API key가 필요합니다.'
+            'Gemini provider requires an API key.'
           );
         }
         if (!url) continue;
         if (!name) {
-          return createValidationError('모델서버 이름은 필수입니다.');
+          return createValidationError('Model server name is required.');
         }
-        // 이름 중복 체크 (대소문자 구분 없이)
+        // Check duplicate names (case-insensitive)
         const normalizedName = name.toLowerCase();
         if (seenNames.has(normalizedName)) {
-          return createValidationError(`중복된 모델서버 이름입니다: ${name}`);
+          return createValidationError(`Duplicate model server name: ${name}`);
         }
         seenNames.add(normalizedName);
         try {
           const u = new URL(url);
           if (!/^https?:$/.test(u.protocol)) {
-            return createValidationError(`잘못된 URL 프로토콜: ${url}`);
+            return createValidationError(`Invalid URL protocol: ${url}`);
           }
           if (!u.host) {
-            return createValidationError(`잘못된 URL 형식: ${url}`);
+            return createValidationError(`Invalid URL format: ${url}`);
           }
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
-          return createValidationError(`유효한 URL이 아닙니다: ${url}`);
+          console.warn('[Catch] Error occurred:', error.message);
+          return createValidationError(`Not a valid URL: ${url}`);
         }
         const isActive =
-          item.isActive !== undefined ? Boolean(item.isActive) : true; // 기본값은 활성화
+          item.isActive !== undefined ? Boolean(item.isActive) : true; // Default is active
         sanitized.push({ name, url, provider, apiKey, isActive });
       }
       updateData.customEndpoints = sanitized;
-      // 호환성 유지를 위해 ollama 전용 목록도 동기화
+      // Also sync ollama-only list for compatibility
       const ollamaOnly = sanitized
         .filter((e) => e.provider === 'ollama')
         .map((e) => (e.name ? `${e.name}|${e.url}` : e.url))
@@ -653,49 +653,49 @@ export async function PUT(request) {
       updateData.ollamaEndpoints = ollamaOnly;
     }
 
-    // 로그인 타입 검증 및 저장
+    // Validate and save login type
     if (loginType !== undefined) {
       if (!['local', 'sso'].includes(loginType)) {
         return createValidationError(
-          "loginType은 'local' 또는 'sso' 이어야 합니다."
+          "loginType must be either 'local' or 'sso'."
         );
       }
       updateData.loginType = loginType;
     }
 
-    // API 키 페이지 config 예시
+    // API key page config example
     if (apiConfigExample !== undefined) {
       if (apiConfigExample !== null && typeof apiConfigExample !== 'string') {
         return createValidationError(
-          'API config 예시는 문자열 또는 null이어야 합니다.'
+          'API config example must be a string or null.'
         );
       }
       updateData.apiConfigExample = apiConfigExample || '';
     }
 
-    // API 키 페이지 curl 예시
+    // API key page curl example
     if (apiCurlExample !== undefined) {
       if (apiCurlExample !== null && typeof apiCurlExample !== 'string') {
         return createValidationError(
-          'API curl 예시는 문자열 또는 null이어야 합니다.'
+          'API curl example must be a string or null.'
         );
       }
       updateData.apiCurlExample = apiCurlExample || '';
     }
 
-    // PostgreSQL 업데이트 쿼리 구성
+    // Build PostgreSQL update query
     const setClauses = [];
     const params = [];
     let paramIndex = 1;
 
-    // 각 필드를 snake_case로 변환하여 SET 절 구성
+    // Build SET clause by converting each field to snake_case
     for (const [key, value] of Object.entries(updateData)) {
-      if (key === 'updatedAt') continue; // updated_at은 별도 처리
+      if (key === 'updatedAt') continue; // updated_at handled separately
 
       const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
 
       if (key === 'customEndpoints' || key === 'supportContacts') {
-        // JSONB 필드는 JSON.stringify
+        // JSONB fields use JSON.stringify
         setClauses.push(`${snakeKey} = $${paramIndex}`);
         params.push(JSON.stringify(value));
       } else {
@@ -706,38 +706,38 @@ export async function PUT(request) {
     }
 
     if (setClauses.length === 0) {
-      // 업데이트할 필드가 없는 경우
+      // When there are no fields to update
       return NextResponse.json({
         success: true,
-        message: '설정이 업데이트되었습니다.',
+        message: 'Settings have been updated.',
       });
     }
 
-    // updated_at 추가
+    // Add updated_at
     setClauses.push('updated_at = CURRENT_TIMESTAMP');
 
-    // room_name_generation_model 컬럼이 없으면 추가 (기존 DB 호환)
+    // Add room_name_generation_model column if missing (legacy DB compatibility)
     try {
       await query(
         `ALTER TABLE settings 
          ADD COLUMN IF NOT EXISTS room_name_generation_model VARCHAR(255)`
       );
     } catch (alterError) {
-      // 컬럼이 이미 존재하거나 다른 이유로 실패한 경우 무시
+      // Ignore if column already exists or fails for another reason
       console.warn(
-        '[Settings] 컬럼 추가 시도 실패 (무시):',
+        '[Settings] Failed to add column (ignored):',
         alterError.message
       );
     }
 
-    // 기존 레코드 확인
+    // Check existing record
     const existingResult = await query(
       'SELECT id FROM settings WHERE config_type = $1',
       ['general']
     );
 
     if (existingResult.rows.length > 0) {
-      // UPDATE 쿼리
+      // UPDATE query
       await query(
         `UPDATE settings SET ${setClauses.join(', ')} WHERE config_type = $${
           params.length + 1
@@ -745,7 +745,7 @@ export async function PUT(request) {
         [...params, 'general']
       );
     } else {
-      // INSERT 쿼리
+      // INSERT query
       const insertColumns = [
         'config_type',
         ...Object.keys(updateData)
@@ -768,14 +768,14 @@ export async function PUT(request) {
 
     return NextResponse.json({
       success: true,
-      message: '설정이 업데이트되었습니다.',
+      message: 'Settings have been updated.',
       ...updateData,
     });
   } catch (error) {
-    console.error('설정 업데이트 실패:', error);
+    console.error('Failed to update settings:', error);
     return createServerError(
       error,
-      `설정 업데이트에 실패했습니다: ${error.message || '알 수 없는 오류'}`
+      `Failed to update settings: ${error.message || 'Unknown error'}`
     );
   }
 }

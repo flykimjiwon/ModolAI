@@ -613,7 +613,7 @@ export async function POST(request) {
   const client = await getPostgresClient();
   if (!client) {
     return NextResponse.json(
-      { success: false, error: 'DB 연결 실패' },
+      { success: false, error: 'DB connection failed' },
       { status: 500 }
     );
   }
@@ -649,16 +649,16 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: `완료: ${created.length}개 생성, ${skipped.length}개 이미 존재`,
+      message: `Complete: ${created.length} created, ${skipped.length} already exist`,
       created,
       skipped,
       failed,
       total: TABLES.length,
     });
   } catch (error) {
-    try { await client.query('ROLLBACK'); } catch (rollbackErr) { console.error('[init-schema] ROLLBACK 실패:', rollbackErr.message); }
-    console.error('[init-schema] 실패:', error.message);
-    return createServerError(error, '스키마 초기화 실패');
+    try { await client.query('ROLLBACK'); } catch (rollbackErr) { console.error('[init-schema] ROLLBACK failed:', rollbackErr.message); }
+    console.error('[init-schema] Failed:', error.message);
+    return createServerError(error, 'Schema initialization failed');
   } finally {
     client.release();
   }

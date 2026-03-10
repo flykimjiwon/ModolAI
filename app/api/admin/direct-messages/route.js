@@ -3,7 +3,7 @@ import { verifyAdminWithResult } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
-// 관리자가 보낸 쪽지 목록 조회
+// Retrieve direct messages sent by admin
 export async function GET(request) {
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
@@ -22,7 +22,7 @@ export async function GET(request) {
     let params = [];
     let paramIndex = 1;
 
-    // 관리자가 보낸 쪽지만 조회
+    // Query only messages sent by admin
     whereConditions.push(`dm.sender_id = $${paramIndex}`);
     params.push(authResult.user.sub);
     paramIndex++;
@@ -49,7 +49,7 @@ export async function GET(request) {
       ? `WHERE ${whereConditions.join(' AND ')}`
       : '';
 
-    // 총 개수 조회
+    // Query total count
     const countResult = await query(
       `SELECT COUNT(*) as count
        FROM direct_messages dm
@@ -60,7 +60,7 @@ export async function GET(request) {
     const totalCount = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalCount / limit);
 
-    // 쪽지 목록 조회
+    // Query message list
     const offset = (page - 1) * limit;
     const messagesResult = await query(
       `SELECT
@@ -105,12 +105,12 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('쪽지 목록 조회 실패:', error);
-    return createServerError(error, '쪽지 목록 조회 실패');
+    console.error('Failed to fetch direct message list:', error);
+    return createServerError(error, 'Failed to fetch direct message list');
   }
 }
 
-// 쪽지 보내기 (단일/다중/부서별/전체)
+// Send direct message (single/multiple/department/all)
 export async function POST(request) {
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
@@ -123,14 +123,14 @@ export async function POST(request) {
 
     if (!title || !content) {
       return NextResponse.json(
-        { success: false, error: '제목과 내용은 필수입니다.' },
+        { success: false, error: 'Title and content are required.' },
         { status: 400 }
       );
     }
 
     if (!recipientType || !['single', 'multiple', 'department', 'all'].includes(recipientType)) {
       return NextResponse.json(
-        { success: false, error: '유효한 발송 대상 유형이 필요합니다.' },
+        { success: false, error: 'A valid recipient type is required.' },
         { status: 400 }
       );
     }
@@ -140,7 +140,7 @@ export async function POST(request) {
     if (recipientType === 'single' || recipientType === 'multiple') {
       if (!recipientIds || !Array.isArray(recipientIds) || recipientIds.length === 0) {
         return NextResponse.json(
-          { success: false, error: '수신자를 선택해주세요.' },
+          { success: false, error: 'Please select recipient(s).' },
           { status: 400 }
         );
       }
@@ -148,7 +148,7 @@ export async function POST(request) {
     } else if (recipientType === 'department') {
       if (!department) {
         return NextResponse.json(
-          { success: false, error: '부서를 선택해주세요.' },
+          { success: false, error: 'Please select a department.' },
           { status: 400 }
         );
       }
@@ -164,12 +164,12 @@ export async function POST(request) {
 
     if (targetUserIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: '수신자가 없습니다.' },
+        { success: false, error: 'No recipients found.' },
         { status: 400 }
       );
     }
 
-    // 쪽지 일괄 생성
+    // Bulk create messages
     const senderId = authResult.user.sub;
     const values = targetUserIds.map((recipientId, index) => {
       const baseIndex = index * 4;
@@ -188,11 +188,11 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: `${targetUserIds.length}명에게 쪽지를 보냈습니다.`,
+      message: `Message sent to ${targetUserIds.length} recipient(s).`,
       count: targetUserIds.length,
     });
   } catch (error) {
-    console.error('쪽지 보내기 실패:', error);
-    return createServerError(error, '쪽지 보내기 실패');
+    console.error('Failed to send direct message:', error);
+    return createServerError(error, 'Failed to send direct message');
   }
 }

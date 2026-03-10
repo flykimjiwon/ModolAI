@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
 import { verifyAdmin } from '@/lib/adminAuth';
 
-// 모델 ID를 표시 이름으로 변환하는 헬퍼 함수
+// Helper function to convert model ID to display name
 async function getModelLabelMap() {
   const modelLabelMap = new Map();
 
@@ -38,7 +38,7 @@ async function getModelLabelMap() {
       }
     };
 
-    // 새 테이블 구조에서 모델 조회 (models 테이블 직접 조회)
+    // Query models from the new table structure (directly from models table)
     const modelsResult = await queryPostgres(
       'SELECT id, model_name, label FROM models ORDER BY display_order ASC'
     );
@@ -46,7 +46,7 @@ async function getModelLabelMap() {
     if (modelsResult.rows.length > 0) {
       modelsResult.rows.forEach((model) => addModelToMap(model));
 
-      console.log('[Analytics] models 테이블에서 로드한 모델:', modelsResult.rows.length, '개');
+      console.log('[Analytics] Models loaded from models table:', modelsResult.rows.length, 'items');
     }
 
     const modelConfigResult = await queryPostgres(
@@ -88,7 +88,7 @@ async function getModelLabelMap() {
 }
 
 export async function GET(request) {
-  // 관리자 권한 확인
+  // Check admin privileges
   const authResult = verifyAdmin(request);
   if (authResult.error) {
     return authResult;
@@ -115,12 +115,12 @@ export async function GET(request) {
     `
     );
     const hasModelLogsUserId = modelLogsColumnResult.rows.length > 0;
-    // 기간별 날짜 계산
+    // Calculate dates by period
     const now = new Date();
     let startDate;
     let endDate = now;
 
-    // custom 날짜 파싱 함수
+    // Custom date parsing function
     const parseCustomDate = (dateStr, isEnd) => {
       if (!dateStr) return null;
       const suffix = isEnd ? 'T23:59:59.999' : 'T00:00:00';
@@ -129,16 +129,16 @@ export async function GET(request) {
     };
 
     if (period === 'custom') {
-      // 기간 지정 모드
+      // Custom period mode
       startDate = parseCustomDate(customStartDateParam, false);
       endDate = parseCustomDate(customEndDateParam, true) || now;
 
-      // startDate가 없으면 기본값 7일
+      // If startDate is missing, default to 7 days
       if (!startDate) {
         startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       }
     } else {
-      // 기존 기간 옵션
+      // Existing period options
       switch (period) {
         case '7days':
           startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -157,10 +157,10 @@ export async function GET(request) {
       }
     }
 
-    // 부서 필터 조건
+    // Department filter conditions
     const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
 
-    // 병렬로 데이터 조회
+    // Fetch data in parallel
     const [
       userStatsResult,
       modelStatsResult,
@@ -169,7 +169,7 @@ export async function GET(request) {
       tokenUsageResult,
       modelLabelMap,
     ] = await Promise.all([
-      // 사용자별 사용량 (상위 20명)
+      // Usage by user (top 20)
       department !== 'all'
         ? query(
             `SELECT 
@@ -217,7 +217,7 @@ export async function GET(request) {
             [daysDiff, startDate]
           ),
 
-      // 모델별 사용량
+      // Usage by model
       department !== 'all'
         ? query(
             `SELECT COALESCE(models.model_name, m.model) as _id, COUNT(*)::INTEGER as count
@@ -248,7 +248,7 @@ export async function GET(request) {
             [startDate]
           ),
 
-      // 부서별 통계 (department가 'all'일 때만)
+      // Stats by department (only when department is 'all')
       department === 'all'
         ? query(
             `SELECT 
@@ -269,7 +269,7 @@ export async function GET(request) {
           )
         : Promise.resolve({ rows: [] }),
 
-      // 일별 활동량
+      // Daily activity
       department !== 'all'
         ? query(
             `SELECT 
@@ -305,7 +305,7 @@ export async function GET(request) {
             [startDate]
           ),
 
-      // 사용자별 토큰 사용량 (상위 20명) - 외부API + (가능한 경우) model_logs
+      // Token usage by user (top 20) - external API + model_logs (when available)
       department !== 'all'
         ? query(
             hasModelLogsUserId
@@ -402,7 +402,7 @@ export async function GET(request) {
             [startDate]
           ),
 
-      // 모델 설정 조회
+      // Load model settings
       getModelLabelMap(),
     ]);
 
@@ -417,15 +417,15 @@ export async function GET(request) {
         value
       );
 
-    // 모델 ID를 표시 이름으로 변환 (UUID는 삭제된 모델로 처리)
+    // Convert model ID to display name (treat UUID as deleted model)
     const modelStatsWithLabels = modelStats.map((model) => {
       const modelId = model?._id ? String(model._id).trim() : '';
       let label = modelLabelMap.get(modelId) || modelId;
 
       if (!label && isLikelyUuid(modelId)) {
-        label = '<삭제된 모델>';
+        label = '<Deleted Model>';
       } else if (isLikelyUuid(label) && !modelLabelMap.get(label)) {
-        label = '<삭제된 모델>';
+        label = '<Deleted Model>';
       }
 
       return {
@@ -434,7 +434,7 @@ export async function GET(request) {
       };
     });
 
-    // Cell별 통계 추가 (부서가 특정된 경우) - 정규화: user_id로 조인
+    // Add stats by cell (when a specific department is selected) - normalization: join by user_id
     let cellStats = [];
     if (department !== 'all') {
       const cellStatsResult = await query(
@@ -458,7 +458,7 @@ export async function GET(request) {
       cellStats = cellStatsResult.rows;
     }
 
-    // 부서별 토큰 사용량 - 웹채팅(model_logs) + 외부API(external_api_logs) 합산
+    // Token usage by department - web chat (model_logs) + external API (external_api_logs) combined
     let departmentTokenUsage = [];
     if (department === 'all') {
       const deptTokenResult = await query(
@@ -519,9 +519,9 @@ export async function GET(request) {
       generatedAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('분석 데이터 조회 실패:', error);
+    console.error('Failed to retrieve analytics data:', error);
     return NextResponse.json(
-      { error: '분석 데이터 조회에 실패했습니다.' },
+      { error: 'Failed to retrieve analytics data.' },
       { status: 500 }
     );
   }

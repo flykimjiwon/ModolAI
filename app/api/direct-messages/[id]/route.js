@@ -3,7 +3,7 @@ import { verifyTokenWithResult } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
-// 쪽지 읽음 처리
+// Mark direct message as read
 export async function PATCH(request, { params }) {
   const authResult = verifyTokenWithResult(request);
   if (!authResult.valid) {
@@ -15,12 +15,12 @@ export async function PATCH(request, { params }) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: '쪽지 ID가 필요합니다.' },
+        { success: false, error: 'Message ID is required.' },
         { status: 400 }
       );
     }
 
-    // 수신자인 경우에만 읽음 처리
+    // Mark as read only for recipient
     const result = await query(
       `UPDATE direct_messages
        SET is_read = true, read_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
@@ -30,7 +30,7 @@ export async function PATCH(request, { params }) {
     );
 
     if (result.rowCount === 0) {
-      // 이미 읽은 경우 또는 권한이 없는 경우
+      // Already read or no permission
       const existingResult = await query(
         'SELECT id, is_read FROM direct_messages WHERE id = $1 AND recipient_id = $2',
         [id, authResult.user.sub]
@@ -38,31 +38,31 @@ export async function PATCH(request, { params }) {
 
       if (existingResult.rowCount === 0) {
         return NextResponse.json(
-          { success: false, error: '쪽지를 찾을 수 없거나 Unauthorized.' },
+          { success: false, error: 'Message not found or unauthorized.' },
           { status: 404 }
         );
       }
 
-      // 이미 읽은 경우
+      // Already read
       return NextResponse.json({
         success: true,
-        message: '이미 읽은 쪽지입니다.',
+        message: 'This message has already been read.',
         alreadyRead: true,
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: '읽음 처리되었습니다.',
+      message: 'Marked as read.',
       readAt: result.rows[0].read_at,
     });
   } catch (error) {
-    console.error('쪽지 읽음 처리 실패:', error);
-    return createServerError(error, '쪽지 읽음 처리 실패');
+    console.error('Failed to mark message as read:', error);
+    return createServerError(error, 'Failed to mark message as read');
   }
 }
 
-// 사용자가 받은 쪽지 삭제 (soft delete)
+// Delete received message (soft delete)
 export async function DELETE(request, { params }) {
   const authResult = verifyTokenWithResult(request);
   if (!authResult.valid) {
@@ -74,12 +74,12 @@ export async function DELETE(request, { params }) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: '쪽지 ID가 필요합니다.' },
+        { success: false, error: 'Message ID is required.' },
         { status: 400 }
       );
     }
 
-    // 수신자인 경우에만 삭제 처리 (soft delete)
+    // Delete only for recipient (soft delete)
     const result = await query(
       `UPDATE direct_messages
        SET deleted_by_recipient = true, updated_at = CURRENT_TIMESTAMP
@@ -90,17 +90,17 @@ export async function DELETE(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { success: false, error: '쪽지를 찾을 수 없거나 삭제 Unauthorized.' },
+        { success: false, error: 'Message not found or unauthorized to delete.' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: '쪽지가 Deleted.',
+      message: 'Message deleted.',
     });
   } catch (error) {
-    console.error('쪽지 삭제 실패:', error);
-    return createServerError(error, '쪽지 삭제 실패');
+    console.error('Failed to delete message:', error);
+    return createServerError(error, 'Failed to delete message');
   }
 }

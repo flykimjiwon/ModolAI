@@ -3,7 +3,7 @@ import { query } from '@/lib/postgres';
 import { verifyAdminWithResult } from '@/lib/auth';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
-// 모델 ID를 표시 이름으로 변환하는 헬퍼 함수
+// Helper function to convert model IDs to display names
 async function getModelLabelMap() {
   const modelLabelMap = new Map();
   const allModels = [];
@@ -43,7 +43,7 @@ async function getModelLabelMap() {
       }
     };
 
-    // 새 테이블 구조에서 모델 조회 (models 테이블 직접 조회)
+    // Query models in new table structure (directly from models table)
     const modelsResult = await queryPostgres(
       'SELECT id, model_name, label FROM models ORDER BY display_order ASC'
     );
@@ -51,7 +51,7 @@ async function getModelLabelMap() {
     if (modelsResult.rows.length > 0) {
       modelsResult.rows.forEach((model) => addModelToMap(model));
 
-      console.log('[Dashboard] models 테이블에서 로드한 모델:', modelsResult.rows.length, '개');
+      console.log('[Dashboard] Models loaded from models table:', modelsResult.rows.length, 'items');
     }
 
     const modelConfigResult = await queryPostgres(
@@ -92,19 +92,19 @@ async function getModelLabelMap() {
   return { modelLabelMap, allModels };
 }
 
-// 모델 ID로 표시 이름 찾기 (강화된 매칭 로직)
+// Find display name by model ID (enhanced matching logic)
 function findModelLabel(modelId, modelLabelMap, allModels) {
   if (!modelId) return null;
   
-  // 문자열로 변환하고 공백 제거
+  // Convert to string and trim whitespace
   const normalizedModelId = String(modelId).trim();
   if (!normalizedModelId) return null;
   
-  // 1. 정확한 매칭
+  // 1. Exact match
   let label = modelLabelMap.get(normalizedModelId);
   if (label) return label;
   
-  // 2. 부분 매칭 시도 (모델 ID가 설정의 ID에 포함된 경우)
+  // 2. Try partial match (model ID is included in configured ID)
   const modelIdLower = normalizedModelId.toLowerCase();
   let foundModel = allModels.find((m) => {
     if (!m.id) return false;
@@ -113,7 +113,7 @@ function findModelLabel(modelId, modelLabelMap, allModels) {
   });
   if (foundModel) return foundModel.label;
   
-  // 3. 역방향 매칭 (설정의 ID가 모델 ID에 포함된 경우)
+  // 3. Reverse match (configured ID is included in model ID)
   foundModel = allModels.find((m) => {
     if (!m.id) return false;
     const mIdLower = String(m.id).toLowerCase();
@@ -121,7 +121,7 @@ function findModelLabel(modelId, modelLabelMap, allModels) {
   });
   if (foundModel) return foundModel.label;
   
-  // 4. 콜론(:)으로 구분된 기본 이름으로 매칭
+  // 4. Match by base name separated by colon (:)
   if (normalizedModelId.includes(':')) {
     const baseId = normalizedModelId.split(':')[0];
     foundModel = allModels.find((m) => {
@@ -132,7 +132,7 @@ function findModelLabel(modelId, modelLabelMap, allModels) {
     if (foundModel) return foundModel.label;
   }
   
-  // 5. 슬래시(/)로 구분된 부분 매칭
+  // 5. Partial match for slash (/) separated IDs
   if (normalizedModelId.includes('/')) {
     const shortId = normalizedModelId.split('/').pop();
     if (shortId) {
@@ -145,7 +145,7 @@ function findModelLabel(modelId, modelLabelMap, allModels) {
 }
 
 export async function GET(request) {
-  // 관리자 권한 확인
+  // Verify admin permission
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
     return createAuthError(authResult.error);
@@ -156,7 +156,7 @@ export async function GET(request) {
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
 
-    // 날짜 파싱 함수
+    // Date parsing function
     const parseDate = (dateStr, isEnd) => {
       if (!dateStr) return null;
       const suffix = isEnd ? 'T23:59:59.999' : 'T00:00:00';
@@ -164,12 +164,12 @@ export async function GET(request) {
       return isNaN(parsed.getTime()) ? null : parsed;
     };
 
-    // 기간 설정 (기본값: 최근 7일)
+    // Set period (default: last 7 days)
     const today = new Date();
     const endDate = parseDate(endDateParam, true) || today;
     const startDate = parseDate(startDateParam, false) || new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // 이전 기간 계산 (증감 비교용)
+    // Calculate previous period (for change comparison)
     const periodLength = endDate.getTime() - startDate.getTime();
     const prevEndDate = new Date(startDate.getTime() - 1);
     const prevStartDate = new Date(prevEndDate.getTime() - periodLength);
@@ -181,7 +181,7 @@ export async function GET(request) {
     );
     const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    // 병렬로 데이터 조회
+    // Fetch data in parallel
     const [
       totalUsersResult,
       prevUsersResult,
@@ -195,13 +195,13 @@ export async function GET(request) {
       recentActivityResult,
       modelConfigData,
     ] = await Promise.all([
-      // 현재 기간 사용자 수 (기간 내 가입)
+      // Current period user count (joined within period)
       query('SELECT COUNT(*) as count FROM users WHERE created_at >= $1 AND created_at <= $2', [startDate, endDate]),
 
-      // 이전 기간 사용자 수
+      // Previous period user count
       query('SELECT COUNT(*) as count FROM users WHERE created_at >= $1 AND created_at <= $2', [prevStartDate, prevEndDate]),
 
-      // 현재 기간 메시지 수
+      // Current period message count
       query(
         `SELECT COUNT(*) as count
          FROM external_api_logs
@@ -211,7 +211,7 @@ export async function GET(request) {
         [startDate, endDate]
       ),
 
-      // 이전 기간 메시지 수
+      // Previous period message count
       query(
         `SELECT COUNT(*) as count
          FROM external_api_logs
@@ -221,7 +221,7 @@ export async function GET(request) {
         [prevStartDate, prevEndDate]
       ),
 
-      // 오늘 메시지 수
+      // Today's message count
       query(
         `SELECT COUNT(*) as count
          FROM external_api_logs
@@ -230,7 +230,7 @@ export async function GET(request) {
         [startOfToday]
       ),
 
-      // 현재 기간 활성 사용자
+      // Current period active users
       query(
         `SELECT COUNT(DISTINCT user_id) as count
          FROM external_api_logs
@@ -241,7 +241,7 @@ export async function GET(request) {
         [startDate, endDate]
       ),
 
-      // 이전 기간 활성 사용자
+      // Previous period active users
       query(
         `SELECT COUNT(DISTINCT user_id) as count
          FROM external_api_logs
@@ -252,7 +252,7 @@ export async function GET(request) {
         [prevStartDate, prevEndDate]
       ),
 
-      // 인기 모델 TOP 10 - models 테이블과 JOIN하여 model_name 가져오기, model_server와 JOIN하여 서버명 가져오기
+      // Top 10 popular models - join models for model_name and model_server for server name
       query(
         `SELECT 
            COALESCE(models.model_name, t.model) as _id, 
@@ -273,7 +273,7 @@ export async function GET(request) {
          LIMIT 10`
       ),
 
-      // 총 토큰 사용량 (웹채팅 + 외부API)
+      // Total token usage (web chat + external API)
       query(
         `SELECT
           COALESCE(SUM(combined.prompt_tokens), 0)::BIGINT as prompt_tokens,
@@ -291,7 +291,7 @@ export async function GET(request) {
         [startDate, endDate]
       ),
 
-      // 최근 활동 (최근 20개) - 정규화: users 테이블과 JOIN, models 테이블과 JOIN하여 model_name 가져오기
+      // Recent activity (latest 20) - normalized with users/models joins
       query(
         `SELECT 
            activity.email,
@@ -317,7 +317,7 @@ export async function GET(request) {
          LIMIT 20`
       ),
 
-      // 모델 설정 조회
+      // Fetch model settings
       getModelLabelMap(),
     ]);
 
@@ -329,14 +329,14 @@ export async function GET(request) {
     const activeUsers = parseInt(activeUsersResult.rows[0]?.count || 0);
     const prevActiveUsers = parseInt(prevActiveUsersResult.rows[0]?.count || 0);
 
-    // 토큰 사용량
+    // Token usage
     const tokenUsage = {
       promptTokens: parseInt(tokenUsageResult.rows[0]?.prompt_tokens || 0),
       responseTokens: parseInt(tokenUsageResult.rows[0]?.response_tokens || 0),
       totalTokens: parseInt(tokenUsageResult.rows[0]?.total_tokens || 0),
     };
 
-    // 증감률 계산 함수
+    // Change-rate calculation helper
     const calculateChange = (current, previous) => {
       if (previous === 0) return current > 0 ? 100 : 0;
       return ((current - previous) / previous) * 100;
@@ -346,17 +346,17 @@ export async function GET(request) {
     const messagesChange = calculateChange(totalMessages, prevMessages);
     const activeUsersChange = calculateChange(activeUsers, prevActiveUsers);
     const topModels = topModelsResult.rows
-      .filter((row) => row._id) // null이 아닌 모델만 필터링
+      .filter((row) => row._id) // filter only non-null models
       .map((row) => ({
-        _id: String(row._id).trim(), // 문자열로 변환하고 공백 제거
+        _id: String(row._id).trim(), // convert to string and trim whitespace
         count: parseInt(row.count),
-        model_name: row.model_name ? String(row.model_name).trim() : null, // model_name 추가
-        server_name: row.server_name ? String(row.server_name).trim() : null, // server_name 추가
+        model_name: row.model_name ? String(row.model_name).trim() : null, // include model_name
+        server_name: row.server_name ? String(row.server_name).trim() : null, // include server_name
       }));
     const recentActivity = recentActivityResult.rows.map((row) => ({
       email: row.email,
-      model: row.model ? String(row.model).trim() : null, // 문자열로 변환하고 공백 제거
-      model_name: row.model_name ? String(row.model_name).trim() : null, // model_name 추가
+      model: row.model ? String(row.model).trim() : null, // convert to string and trim whitespace
+      model_name: row.model_name ? String(row.model_name).trim() : null, // include model_name
       createdAt: row.created_at,
       department: row.department,
       cell: row.cell,
@@ -364,40 +364,40 @@ export async function GET(request) {
 
     const { modelLabelMap, allModels } = modelConfigData;
 
-    // 디버깅: 모델 설정 정보 로그
-    console.log('[Dashboard] 모델 설정 개수:', allModels.length);
-    console.log('[Dashboard] 모델 라벨 맵 크기:', modelLabelMap.size);
+    // Debug: model settings info logs
+    console.log('[Dashboard] Model settings count:', allModels.length);
+    console.log('[Dashboard] Model label map size:', modelLabelMap.size);
     if (allModels.length > 0) {
-      console.log('[Dashboard] 샘플 모델 설정:', allModels.slice(0, 3).map(m => ({ id: m.id, label: m.label })));
+      console.log('[Dashboard] Sample model settings:', allModels.slice(0, 3).map(m => ({ id: m.id, label: m.label })));
     }
 
-    // 모델 ID를 표시 이름으로 변환 (model_name 우선 사용)
+    // Convert model ID to display name (prefer model_name)
     const topModelsWithLabels = topModels.map((model) => {
       const modelId = model._id || model.model || null;
       let label = null;
       
-      // model_name이 있으면 우선 사용
+      // Prefer model_name when available
       if (model.model_name) {
         label = model.model_name;
       } else if (modelId) {
-        // 디버깅: 실제 모델 ID 로그
-        console.log('[Dashboard] 매칭 시도 - Model ID:', modelId);
+        // Debug: actual model ID log
+        console.log('[Dashboard] Matching attempt - Model ID:', modelId);
         
         label = findModelLabel(modelId, modelLabelMap, allModels);
         
-        // 디버깅: 매칭 결과 로그
+        // Debug: matching result log
         if (!label) {
-          console.log('[Dashboard] 매칭 실패 - Model ID:', modelId, '사용 가능한 모델 ID들:', Array.from(modelLabelMap.keys()).slice(0, 5));
+          console.log('[Dashboard] Match failed - Model ID:', modelId, 'Available model IDs:', Array.from(modelLabelMap.keys()).slice(0, 5));
         } else {
-          console.log('[Dashboard] 매칭 성공 - Model ID:', modelId, '-> 라벨:', label);
+          console.log('[Dashboard] Match succeeded - Model ID:', modelId, '-> Label:', label);
         }
         
-        // 여전히 없으면 모델 ID 자체를 사용
+        // If still unavailable, use the model ID itself
         if (!label) {
           label = modelId;
         }
       } else {
-        label = '알 수 없음';
+        label = 'Unknown';
       }
       
       return {
@@ -408,9 +408,9 @@ export async function GET(request) {
 
     const recentActivityWithLabels = recentActivity.map((activity) => {
       const modelId = activity.model || null;
-      let modelLabel = '알 수 없음';
+      let modelLabel = 'Unknown';
       
-      // model_name이 있으면 우선 사용
+      // Prefer model_name when available
       if (activity.model_name) {
         modelLabel = activity.model_name;
       } else if (modelId) {
@@ -441,7 +441,7 @@ export async function GET(request) {
       lastUpdated: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('대시보드 데이터 조회 실패:', error);
-    return createServerError(error, '데이터 조회에 실패했습니다.');
+    console.error('Failed to fetch dashboard data:', error);
+    return createServerError(error, 'Failed to fetch data.');
   }
 }

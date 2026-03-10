@@ -12,7 +12,7 @@ import {
 
 export async function GET(request) {
   try {
-    // 토큰 검증
+    // Token validation
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
@@ -21,12 +21,12 @@ export async function GET(request) {
       );
     }
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(payload.sub)) {
-      return createValidationError('유효하지 않은 사용자 ID입니다.');
+      return createValidationError('Invalid user ID.');
     }
 
-    // 사용자 정보 조회 (비밀번호는 제외)
+    // Fetch user information (excluding password)
     const result = await query(
       'SELECT id, name, email, department, cell, role, created_at FROM users WHERE id = $1 LIMIT 1',
       [payload.sub]
@@ -51,14 +51,14 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('사용자 정보 조회 실패:', error);
-    return createServerError(error, '사용자 정보 조회 실패');
+    console.error('Failed to fetch user information:', error);
+    return createServerError(error, 'Failed to fetch user information');
   }
 }
 
 export async function PATCH(request) {
   try {
-    // 토큰 검증
+    // Token validation
     const payload = verifyToken(request);
     if (!payload) {
       return createAuthError('Authentication required.');
@@ -67,31 +67,31 @@ export async function PATCH(request) {
     const body = await request.json();
     const { name, department, cell, currentPassword, newPassword } = body;
 
-    // 입력값 검증
+    // Input validation
     if (!name || !department || !cell) {
-      return createValidationError('모든 필드를 입력해주세요.');
+      return createValidationError('Please fill in all fields.');
     }
 
-    // 유효한 부서 확인
+    // Check valid department
     const validDepartments = [
-      '디지털서비스개발부',
-      '글로벌서비스개발부',
-      '금융서비스개발부',
-      '정보서비스개발부',
-      'Tech혁신Unit',
-      '기타부서',
+      'Digital Service Development Department',
+      'Global Service Development Department',
+      'Financial Service Development Department',
+      'Information Service Development Department',
+      'Tech Innovation Unit',
+      'Other Department',
     ];
 
     if (!validDepartments.includes(department)) {
-      return createValidationError('유효하지 않은 부서입니다.');
+      return createValidationError('Invalid department.');
     }
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(payload.sub)) {
-      return createValidationError('유효하지 않은 사용자 ID입니다.');
+      return createValidationError('Invalid user ID.');
     }
 
-    // 현재 사용자 조회
+    // Fetch current user
     const userResult = await query(
       'SELECT id, password_hash FROM users WHERE id = $1 LIMIT 1',
       [payload.sub]
@@ -103,7 +103,7 @@ export async function PATCH(request) {
 
     const user = userResult.rows[0];
 
-    // 업데이트할 데이터 준비
+    // Prepare data to update
     const updateFields = [];
     const updateParams = [];
     let paramIndex = 1;
@@ -120,63 +120,63 @@ export async function PATCH(request) {
     updateFields.push(`updated_at = $${paramIndex++}`);
     updateParams.push(new Date());
 
-    // 비밀번호 변경 요청이 있는 경우
+    // If password change is requested
     if (currentPassword && newPassword) {
-      // passwordHash 필드 확인
+      // Check passwordHash field
       const passwordHash = user.password_hash;
 
       if (!passwordHash) {
         return createServerError(
           null,
-          '사용자 비밀번호 정보를 Not found.'
+          'User password information not found.'
         );
       }
 
-      // 현재 비밀번호 확인
+      // Verify current password
       const isCurrentPasswordValid = await bcryptjs.compare(
         currentPassword,
         passwordHash
       );
       if (!isCurrentPasswordValid) {
-        return createValidationError('현재 Password does not match.');
+        return createValidationError('Current password does not match.');
       }
 
-      // 새 비밀번호 검증
+      // Validate new password
       if (newPassword.length < 6) {
         return createValidationError(
-          '새 비밀번호는 최소 6자 이상이어야 합니다.'
+          'New password must be at least 6 characters long.'
         );
       }
 
-      // 새 비밀번호 해시화
+      // Hash new password
       const newPasswordHash = await bcryptjs.hash(newPassword, 12);
       updateFields.push(`password_hash = $${paramIndex++}`);
       updateParams.push(newPasswordHash);
     }
 
-    // 사용자 정보 업데이트
+    // Update user information
     updateParams.push(payload.sub);
     const updateResult = await query(
       `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`,
       updateParams
     );
 
-    // PostgreSQL에서는 값이 변경되지 않았을 때도 rowCount가 0일 수 있음
-    // 따라서 업데이트가 실행되었는지만 확인
+    // In PostgreSQL, rowCount can be 0 even when values are unchanged
+    // Therefore, only check whether the update query was executed
     if (updateResult.rowCount === 0) {
       return createNotFoundError('User not found.');
     }
 
-    // 정규화 후: messages 테이블에는 사용자 정보가 없으므로 업데이트 불필요
-    // 사용자 정보는 user_id로 JOIN하여 조회됨
+    // After normalization: messages table has no user info, so no update needed
+    // User info is fetched via JOIN using user_id
 
     return NextResponse.json({
       success: true,
-      message: '프로필이 성공적으로 업데이트되었습니다.',
+      message: 'Profile updated successfully.',
     });
   } catch (error) {
-    console.error('프로필 업데이트 실패:', error);
-    console.error('에러 스택:', error.stack);
-    return createServerError(error, '프로필 업데이트 실패');
+    console.error('Failed to update profile:', error);
+    console.error('Error stack:', error.stack);
+    return createServerError(error, 'Failed to update profile');
   }
 }

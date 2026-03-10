@@ -2,18 +2,18 @@ import { query, transaction } from './postgres';
 import { logger } from './logger';
 
 /**
- * 메시지를 개인 대화저장용(chatHistory)과 관리자 로깅용(messages) 양쪽에 저장
- * @param {Object} messageData - 저장할 메시지 데이터
- * @param {string} messageData.roomId - 채팅방 ID
- * @param {string} messageData.userId - 사용자 ID
- * @param {string} messageData.role - 'user' 또는 'assistant'
- * @param {string} messageData.text - 메시지 내용
- * @param {string} messageData.model - AI 모델명 (선택사항)
- * @param {string} messageData.userRole - 사용자 역할 (선택사항)
- * @param {string} messageData.clientIP - 클라이언트 IP (선택사항)
+ * Save messages to both personal conversation storage (chatHistory) and admin logging (messages)
+ * @param {Object} messageData - Message data to save
+ * @param {string} messageData.roomId - Chat room ID
+ * @param {string} messageData.userId - User ID
+ * @param {string} messageData.role - 'user' or 'assistant'
+ * @param {string} messageData.text - Message content
+ * @param {string} messageData.model - AI model name (optional)
+ * @param {string} messageData.userRole - User role (optional)
+ * @param {string} messageData.clientIP - Client IP (optional)
  * 
- * 참고: 정규화로 인해 email, name, department, cell은 더 이상 저장하지 않습니다.
- * 필요 시 users 테이블과 JOIN하여 조회합니다.
+ * Note: Due to normalization, email, name, department, and cell are no longer stored.
+ * Query them via JOIN with the users table when needed.
  */
 export async function saveMessageDual(messageData) {
   const currentTime = new Date();
@@ -28,14 +28,14 @@ export async function saveMessageDual(messageData) {
     clientIP = null,
   } = messageData;
 
-  // text가 객체나 배열인 경우 JSON 문자열로 변환
+  // Convert text to JSON string when it is an object or array
   let textToSave = text;
   if (text !== null && text !== undefined) {
     if (typeof text === 'object') {
       try {
         textToSave = JSON.stringify(text, null, 2);
       } catch (e) {
-        logger.warn('[messageLogger] text 객체 직렬화 실패, 문자열로 변환', {
+        logger.warn('[messageLogger] Failed to serialize text object, converting to string', {
           error: e.message,
         });
         textToSave = String(text);
@@ -49,7 +49,7 @@ export async function saveMessageDual(messageData) {
 
   try {
     return await transaction(async (client) => {
-      // 1. 개인 대화저장용 (chat_history)
+      // 1. Personal conversation storage (chat_history)
       const chatHistoryResult = await client.query(
         `INSERT INTO chat_history (room_id, user_id, role, text, model, created_at)
          VALUES ($1, $2, $3, $4, $5, $6)
@@ -57,8 +57,8 @@ export async function saveMessageDual(messageData) {
         [roomId, userId || null, role, textToSave, model, currentTime]
       );
 
-      // 2. 관리자 로깅용 (messages)
-      // 정규화: email, name, department, cell 제거 (users 테이블에서 JOIN으로 조회)
+      // 2. Admin logging (messages)
+      // Normalization: remove email, name, department, cell (query via JOIN from users table)
       const messagesResult = await client.query(
         `INSERT INTO messages (role, user_role, model, text, room_id, user_id, client_ip, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -82,7 +82,7 @@ export async function saveMessageDual(messageData) {
       };
     });
   } catch (error) {
-    logger.error('이중 메시지 저장 실패', {
+    logger.error('Failed to save dual message', {
       error: error.message,
       stack: error.stack,
     });
@@ -91,14 +91,14 @@ export async function saveMessageDual(messageData) {
 }
 
 /**
- * 간단한 메시지 로깅 (RAG 시스템용)
- * @param {string} role - 'user' 또는 'assistant'
- * @param {string} text - 메시지 내용
- * @param {string} userId - 사용자 ID
- * @param {string} clientIP - 클라이언트 IP
- * @param {string} roomId - 채팅방 ID
- * @param {string} model - AI 모델명
- * @param {Object} metadata - 추가 메타데이터
+ * Simple message logging (for RAG system)
+ * @param {string} role - 'user' or 'assistant'
+ * @param {string} text - Message content
+ * @param {string} userId - User ID
+ * @param {string} clientIP - Client IP
+ * @param {string} roomId - Chat room ID
+ * @param {string} model - AI model name
+ * @param {Object} metadata - Additional metadata
  */
 export async function logMessage(
   role,
@@ -109,17 +109,17 @@ export async function logMessage(
   model,
   metadata = {}
 ) {
-  // 사용자 정보는 기본값으로 설정 (실제로는 JWT에서 가져와야 함)
+  // Set default user info (should actually be retrieved from JWT)
   return await saveMessageDual({
     roomId,
     userId,
     role,
     text,
     model,
-    email: 'system@internal.com', // 기본값
-    name: 'System User', // 기본값
-    department: 'System', // 기본값
-    cell: 'N/A', // 기본값
+    email: 'system@internal.com', // Default value
+    name: 'System User', // Default value
+    department: 'System', // Default value
+    cell: 'N/A', // Default value
     userRole: 'user',
     clientIP,
     ...metadata,
@@ -127,8 +127,8 @@ export async function logMessage(
 }
 
 /**
- * 채팅방 메시지 카운트 업데이트
- * @param {string} roomId - 채팅방 ID
+ * Update chat room message count
+ * @param {string} roomId - Chat room ID
  */
 export async function updateRoomMessageCount(roomId) {
   try {
@@ -139,10 +139,10 @@ export async function updateRoomMessageCount(roomId) {
       [roomId]
     );
   } catch (error) {
-    logger.error('채팅방 메시지 카운트 업데이트 실패', {
+    logger.error('Failed to update chat room message count', {
       error: error.message,
       roomId,
     });
-    // 이 오류는 메시지 저장에 영향을 주지 않도록 throw 하지 않음
+    // Do not throw so this error does not affect message saving
   }
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
 import { verifyToken } from '@/lib/auth';
 
-// SSO 로그 테이블 생성 확인
+// Ensure SSO logs table exists
 async function ensureSSOLogsTable() {
   try {
     await query(`
@@ -10,7 +10,7 @@ async function ensureSSOLogsTable() {
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         employee_no VARCHAR(50),
 
-        -- 요청 정보
+        -- Request information
         request_timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         client_ip VARCHAR(50),
         user_agent TEXT,
@@ -20,7 +20,7 @@ async function ensureSSOLogsTable() {
         os_version VARCHAR(50),
         device_type VARCHAR(50),
 
-        -- SSO 응답 정보
+        -- SSO response information
         sso_result_code VARCHAR(10),
         sso_auth_result VARCHAR(50),
         sso_auth_result_message TEXT,
@@ -32,36 +32,36 @@ async function ensureSSOLogsTable() {
         sso_company_code VARCHAR(10),
         sso_company_name VARCHAR(100),
 
-        -- 처리 결과
+        -- Processing result
         login_success BOOLEAN DEFAULT FALSE,
         error_type VARCHAR(50),
         error_message TEXT,
         error_detail TEXT,
 
-        -- JWT 발급 정보
+        -- JWT issuance information
         jwt_issued BOOLEAN DEFAULT FALSE,
         jwt_expires_at TIMESTAMPTZ,
 
-        -- 클라이언트 에러
+        -- Client error
         client_error_type VARCHAR(50),
         client_error_message TEXT,
         local_storage_available BOOLEAN,
 
-        -- 메타 정보
+        -- Metadata
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // 인덱스 생성
+    // Create indexes
     await query(`CREATE INDEX IF NOT EXISTS idx_sso_logs_employee_no ON sso_login_logs(employee_no)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_sso_logs_created_at ON sso_login_logs(created_at DESC)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_sso_logs_login_success ON sso_login_logs(login_success)`);
   } catch (error) {
-    console.error('[SSO Logs] 테이블 생성 실패:', error.message);
+    console.error('[SSO Logs] Failed to create table:', error.message);
   }
 }
 
-// GET: SSO 로그 목록 조회 (관리자)
+// GET: Retrieve SSO log list (admin)
 export async function GET(request) {
   try {
     const tokenPayload = verifyToken(request);
@@ -108,19 +108,19 @@ export async function GET(request) {
       paramIndex++;
     }
 
-    // 로그 목록 조회
+    // Query log list
     const logsResult = await query(
       `SELECT * FROM sso_login_logs ${whereClause} ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
       [...params, limit, offset]
     );
 
-    // 전체 개수
+    // Total count
     const countResult = await query(
       `SELECT COUNT(*) as count FROM sso_login_logs ${whereClause}`,
       params
     );
 
-    // 통계
+    // Statistics
     const statsResult = await query(`
       SELECT
         COUNT(*) as total,
@@ -146,12 +146,12 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('[SSO Logs GET] 오류:', error);
+    console.error('[SSO Logs GET] Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-// POST: SSO 로그 기록 (내부 API)
+// POST: Record SSO logs (internal API)
 export async function POST(request) {
   try {
     await ensureSSOLogsTable();
@@ -218,7 +218,7 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, logId: result.rows[0].id });
   } catch (error) {
-    console.error('[SSO Logs POST] 오류:', error);
+    console.error('[SSO Logs POST] Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

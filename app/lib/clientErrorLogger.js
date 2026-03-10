@@ -1,14 +1,14 @@
 /**
- * 클라이언트 에러 로깅 유틸리티
+ * Client error logging utility
  *
- * 관리자 대시보드에서 확인 가능한 에러 로그를 전송합니다.
- * /admin/models 하단의 "오류 로그" 섹션에서 확인 가능
+ * Sends error logs visible in the admin dashboard.
+ * Available in the "Error Logs" section at the bottom of /admin/models
  */
 
 let isLoggerReady = false;
 const pendingLogs = [];
 
-// 로거 초기화 (토큰이 준비되면 대기 중인 로그 전송)
+// Initialize logger (send queued logs when token is ready)
 export function initializeLogger() {
   if (isLoggerReady) return;
 
@@ -16,7 +16,7 @@ export function initializeLogger() {
   if (token) {
     isLoggerReady = true;
 
-    // 대기 중인 로그 전송
+    // Send queued logs
     while (pendingLogs.length > 0) {
       const log = pendingLogs.shift();
       sendLogImmediately(log);
@@ -24,7 +24,7 @@ export function initializeLogger() {
   }
 }
 
-// 즉시 로그 전송 (내부 함수)
+// Send logs immediately (internal function)
 async function sendLogImmediately(payload) {
   try {
     const token = localStorage.getItem('token');
@@ -39,21 +39,21 @@ async function sendLogImmediately(payload) {
       body: JSON.stringify(payload),
     });
   } catch (error) {
-    // 로깅 실패 시 콘솔에만 기록 (무한 루프 방지)
+    // On logging failure, write to console only (prevent infinite loop)
     if (typeof console !== 'undefined' && console.warn) {
-      console.warn('[ClientErrorLogger] 로그 전송 실패:', error.message);
+      console.warn('[ClientErrorLogger] Failed to send log:', error.message);
     }
   }
 }
 
 /**
- * 관리자 로그 전송
+ * Send admin log
  * @param {Object} options
- * @param {string} options.level - 로그 레벨 (error, warn, info)
- * @param {string} options.message - 에러 메시지
- * @param {string} [options.stack] - 스택 트레이스
- * @param {Object} [options.context] - 추가 컨텍스트 정보
- * @param {boolean} [options.silent] - true면 콘솔 출력 안 함
+ * @param {string} options.level - Log level (error, warn, info)
+ * @param {string} options.message - Error message
+ * @param {string} [options.stack] - Stack trace
+ * @param {Object} [options.context] - Additional context information
+ * @param {boolean} [options.silent] - If true, do not print to console
  */
 export async function logToAdmin({
   level = 'error',
@@ -64,7 +64,7 @@ export async function logToAdmin({
 } = {}) {
   if (!message) return;
 
-  // 콘솔 출력 (silent가 false일 때만)
+  // Console output (only when silent is false)
   if (!silent && typeof console !== 'undefined') {
     const consoleMethod = console[level] || console.log;
     consoleMethod(`[AdminLog] ${message}`, context || '');
@@ -83,7 +83,7 @@ export async function logToAdmin({
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
   };
 
-  // 토큰이 준비되지 않았으면 큐에 저장
+  // If token is not ready, store in queue
   if (!isLoggerReady) {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -93,33 +93,33 @@ export async function logToAdmin({
     isLoggerReady = true;
   }
 
-  // 즉시 전송
+  // Send immediately
   await sendLogImmediately(payload);
 }
 
 /**
- * 에러 레벨 로그 전송 (단축 함수)
+ * Send error-level log (shortcut function)
  */
 export function logError(message, context = null, silent = false) {
   return logToAdmin({ level: 'error', message, context, silent });
 }
 
 /**
- * 경고 레벨 로그 전송 (단축 함수)
+ * Send warn-level log (shortcut function)
  */
 export function logWarn(message, context = null, silent = false) {
   return logToAdmin({ level: 'warn', message, context, silent });
 }
 
 /**
- * 정보 레벨 로그 전송 (단축 함수)
+ * Send info-level log (shortcut function)
  */
 export function logInfo(message, context = null, silent = true) {
   return logToAdmin({ level: 'info', message, context, silent });
 }
 
 /**
- * 에러 객체를 관리자 로그로 전송
+ * Send an error object to admin logs
  */
 export function logErrorObject(error, additionalContext = null) {
   if (!error) return;
@@ -140,16 +140,16 @@ export function logErrorObject(error, additionalContext = null) {
   });
 }
 
-// 브라우저 환경에서만 자동 초기화
+// Auto-initialize only in browser environment
 if (typeof window !== 'undefined') {
-  // 페이지 로드 후 자동 초기화
+  // Auto-initialize after page load
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeLogger);
   } else {
     initializeLogger();
   }
 
-  // storage 이벤트 감지 (다른 탭에서 로그인 시)
+  // Listen for storage events (when logged in from another tab)
   window.addEventListener('storage', (e) => {
     if (e.key === 'token' && e.newValue) {
       initializeLogger();

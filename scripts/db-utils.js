@@ -1,14 +1,14 @@
 /**
- * 데이터베이스 유틸리티 함수
- * 데이터베이스 연결 및 헬퍼 함수 제공
+ * Database utility functions
+ * Provides database connection and helper functions
  */
 
-// dotenv로 환경변수 로드 (Docker 환경에서는 선택적)
+// Load environment variables with dotenv (optional in Docker)
 try {
   require('dotenv').config({ path: '.env.development' });
 } catch (e) {
   console.info(
-    '[db-utils] .env.development 로드 실패, 환경 변수만 사용합니다:',
+    '[db-utils] Failed to load .env.development, using only environment variables:',
     e.message
   );
 }
@@ -16,30 +16,30 @@ try {
 const { Pool } = require('pg');
 
 /**
- * PostgreSQL 연결 풀 생성
+ * Create PostgreSQL connection pool
  */
 function createPool() {
   const connectionString = process.env.POSTGRES_URI || process.env.DATABASE_URL;
 
   if (!connectionString) {
     const errorMsg = [
-      '❌ POSTGRES_URI 또는 DATABASE_URL Environment variable not set.',
+      '❌ POSTGRES_URI or DATABASE_URL environment variable not set.',
       '',
-      '💡 해결 방법:',
-      '  1. Docker 환경: docker.env 파일에 POSTGRES_URI 설정',
-      '  2. 로컬 환경: .env.development 파일에 POSTGRES_URI 설정',
-      '  3. 환경 변수 직접 설정: export POSTGRES_URI="postgresql://..."',
+      '💡 How to fix:',
+      '  1. Docker environment: set POSTGRES_URI in docker.env',
+      '  2. Local environment: set POSTGRES_URI in .env.development',
+      '  3. Set environment variable directly: export POSTGRES_URI="postgresql://..."',
     ].join('\n');
     throw new Error(errorMsg);
   }
 
-  // 연결 문자열 형식 검증
+  // Validate connection string format
   if (
     !connectionString.startsWith('postgresql://') &&
     !connectionString.startsWith('postgres://')
   ) {
     throw new Error(
-      '❌ 잘못된 연결 문자열 형식입니다. postgresql:// 또는 postgres://로 시작해야 합니다.'
+      '❌ Invalid connection string format. It must start with postgresql:// or postgres://.'
     );
   }
 
@@ -47,20 +47,20 @@ function createPool() {
     connectionString,
     max: 20,
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 30000, // 스키마 생성 시 긴 쿼리를 위해 타임아웃 증가 (5초 -> 30초)
-    statement_timeout: 60000, // 쿼리 실행 타임아웃 60초
+    connectionTimeoutMillis: 30000, // increased timeout for long queries during schema creation (5s -> 30s)
+    statement_timeout: 60000, // query execution timeout 60s
   });
 }
 
 /**
- * PostgreSQL 연결 대기
- * @param {Pool} pool - PostgreSQL 연결 풀
- * @param {number} maxRetries - 최대 재시도 횟수
- * @param {number} retryDelay - 재시도 대기 시간 (ms)
+ * Wait for PostgreSQL connection
+ * @param {Pool} pool - PostgreSQL connection pool
+ * @param {number} maxRetries - Maximum retry attempts
+ * @param {number} retryDelay - Retry delay (ms)
  */
 async function waitForDatabase(pool, maxRetries = 30, retryDelay = 2000) {
-  console.log('⏳ PostgreSQL 연결 대기 중...');
-  console.log(`   최대 대기 시간: ${(maxRetries * retryDelay) / 1000}초`);
+  console.log('⏳ Waiting for PostgreSQL connection...');
+  console.log(`   Max wait time: ${(maxRetries * retryDelay) / 1000} seconds`);
 
   let lastError = null;
 
@@ -68,7 +68,7 @@ async function waitForDatabase(pool, maxRetries = 30, retryDelay = 2000) {
     try {
       const client = await pool.connect();
 
-      // 연결 테스트 쿼리 실행
+      // Run connection test query
       const result = await client.query(
         'SELECT NOW() as current_time, version() as version'
       );
@@ -76,9 +76,9 @@ async function waitForDatabase(pool, maxRetries = 30, retryDelay = 2000) {
 
       client.release();
 
-      console.log('✅ PostgreSQL 연결 성공');
-      console.log(`   PostgreSQL 버전: ${pgVersion}`);
-      console.log(`   연결 시도 횟수: ${i + 1}회`);
+      console.log('✅ PostgreSQL connection successful');
+      console.log(`   PostgreSQL version: ${pgVersion}`);
+      console.log(`   Connection attempts: ${i + 1}`);
       return true;
     } catch (error) {
       lastError = error;
@@ -86,18 +86,18 @@ async function waitForDatabase(pool, maxRetries = 30, retryDelay = 2000) {
 
       if (remaining > 0) {
         console.log(
-          `⏳ PostgreSQL 연결 대기 중... (${
+          `⏳ Waiting for PostgreSQL connection... (${
             i + 1
-          }/${maxRetries}) - ${remaining}회 남음`
+          }/${maxRetries}) - ${remaining} attempts left`
         );
 
-        // 오류 타입에 따른 메시지
+        // Message by error type
         if (error.code === 'ECONNREFUSED') {
-          console.log('   ℹ️  PostgreSQL 서버가 아직 시작되지 않았습니다.');
+          console.log('   ℹ️  PostgreSQL server has not started yet.');
         } else if (error.code === 'ENOTFOUND') {
-          console.log('   ℹ️  호스트를 Not found. DNS 확인 중...');
+          console.log('   ℹ️  Host not found. Checking DNS...');
         } else if (error.code === '3D000') {
-          console.log('   ℹ️  데이터베이스가 존재하지 않습니다.');
+          console.log('   ℹ️  Database does not exist.');
         }
 
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
@@ -105,27 +105,27 @@ async function waitForDatabase(pool, maxRetries = 30, retryDelay = 2000) {
     }
   }
 
-  // 최종 실패
+  // Final failure
   const errorMsg = [
-    '❌ PostgreSQL 연결 실패 (최대 재시도 횟수 초과)',
+    '❌ PostgreSQL connection failed (max retries exceeded)',
     '',
-    `마지막 오류: ${lastError.message}`,
-    `오류 코드: ${lastError.code || 'N/A'}`,
+    `Last error: ${lastError.message}`,
+    `Error code: ${lastError.code || 'N/A'}`,
     '',
-    '💡 확인 사항:',
-    '  1. PostgreSQL 서버가 실행 중인지 확인',
-    '  2. 연결 정보가 올바른지 확인 (호스트, 포트, 데이터베이스명)',
-    '  3. 방화벽 설정 확인',
-    '  4. PostgreSQL 로그 확인',
+    '💡 Checklist:',
+    '  1. Verify PostgreSQL server is running',
+    '  2. Verify connection info is correct (host, port, database name)',
+    '  3. Verify firewall settings',
+    '  4. Check PostgreSQL logs',
   ].join('\n');
 
   throw new Error(errorMsg);
 }
 
 /**
- * 테이블 존재 여부 확인
- * @param {PoolClient} client - PostgreSQL 클라이언트
- * @param {string} tableName - 테이블 이름
+ * Check whether a table exists
+ * @param {PoolClient} client - PostgreSQL client
+ * @param {string} tableName - Table name
  */
 async function tableExists(client, tableName) {
   const result = await client.query(
@@ -140,9 +140,9 @@ async function tableExists(client, tableName) {
 }
 
 /**
- * 사용자 존재 여부 확인
- * @param {PoolClient} client - PostgreSQL 클라이언트
- * @param {string} email - 사용자 이메일
+ * Check whether a user exists
+ * @param {PoolClient} client - PostgreSQL client
+ * @param {string} email - User email
  */
 async function userExists(client, email) {
   const result = await client.query(
@@ -153,9 +153,9 @@ async function userExists(client, email) {
 }
 
 /**
- * 설정 존재 여부 확인
- * @param {PoolClient} client - PostgreSQL 클라이언트
- * @param {string} configType - 설정 타입
+ * Check whether settings exist
+ * @param {PoolClient} client - PostgreSQL client
+ * @param {string} configType - Settings type
  */
 async function settingsExist(client, tableName, configType = 'general') {
   const result = await client.query(
@@ -166,8 +166,8 @@ async function settingsExist(client, tableName, configType = 'general') {
 }
 
 /**
- * 연결 문자열 마스킹 (비밀번호 숨김)
- * @param {string} connectionString - PostgreSQL 연결 문자열
+ * Mask connection string (hide password)
+ * @param {string} connectionString - PostgreSQL connection string
  */
 function maskConnectionString(connectionString) {
   return connectionString.replace(/:[^:@]+@/, ':****@');

@@ -1,8 +1,8 @@
 /**
- * 입력 검증 및 보안 관련 유틸리티 함수들
+ * Input validation and security utility functions
  */
 
-// HTML 특수문자 이스케이프
+// Escape HTML special characters
 export function escapeHtml(text) {
   if (typeof text !== 'string') return text;
 
@@ -17,28 +17,28 @@ export function escapeHtml(text) {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
-// SQL 인젝션 방지를 위한 기본 검증
+// Basic validation to prevent SQL injection
 export function sanitizeInput(input) {
   if (typeof input !== 'string') return input;
 
-  // 위험한 SQL 키워드 제거
+  // Remove dangerous SQL keywords
   const sqlKeywords =
     /\b(select|insert|update|delete|drop|create|alter|exec|execute|union|script|javascript|vbscript|onload|onerror)\b/gi;
   return input.replace(sqlKeywords, '');
 }
 
-// 문자열 길이 검증
+// Validate string length
 export function validateLength(text, minLength = 0, maxLength = 100000) {
   if (typeof text !== 'string')
     return { valid: false, error: 'Not a text value.' };
   if (text.length < minLength)
-    return { valid: false, error: `최소 ${minLength}자 이상이어야 합니다.` };
+    return { valid: false, error: `Must be at least ${minLength} characters.` };
   if (text.length > maxLength)
-    return { valid: false, error: `최대 ${maxLength}자까지 입력 가능합니다.` };
+    return { valid: false, error: `Up to ${maxLength} characters are allowed.` };
   return { valid: true };
 }
 
-// 이메일 형식 검증
+// Validate email format
 export function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
@@ -47,7 +47,7 @@ export function validateEmail(email) {
   return { valid: true };
 }
 
-// UUID 형식 검증 (PostgreSQL 사용)
+// Validate UUID format (used in PostgreSQL)
 export function validateUUID(id) {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -57,7 +57,7 @@ export function validateUUID(id) {
   return { valid: true };
 }
 
-// 허용된 역할 검증
+// Validate allowed role
 export function validateRole(role) {
   const allowedRoles = ['user', 'assistant', 'admin'];
   if (!allowedRoles.includes(role)) {
@@ -66,7 +66,7 @@ export function validateRole(role) {
   return { valid: true };
 }
 
-// 허용된 사용자 역할 검증
+// Validate allowed user role
 export function validateUserRole(userRole) {
   const allowedUserRoles = ['user', 'admin'];
   if (!allowedUserRoles.includes(userRole)) {
@@ -75,12 +75,12 @@ export function validateUserRole(userRole) {
   return { valid: true };
 }
 
-// AI 모델명 검증
+// Validate AI model name
 export function validateModel(model) {
-  if (!model) return { valid: true }; // 모델명은 선택사항
+  if (!model) return { valid: true }; // Model name is optional
 
-  // 허용된 문자만 포함하는지 검증 (영문, 숫자, 하이픈, 콜론, 점, 공백, 괄호)
-  // 확장: OpenAI/HuggingFace 모델명, label (예: "Gemma 3 4B (복사)")
+  // Validate that only allowed characters are included (letters, numbers, hyphen, colon, dot, space, parentheses)
+  // Extended: OpenAI/HuggingFace model names and labels (e.g., "Gemma 3 4B (copy)")
   const modelRegex = /^[a-zA-Z0-9_\-:./() ㄱ-ㅎ가-힣]+$/;
   if (!modelRegex.test(model)) {
     return { valid: false, error: 'Model name format not allowed.' };
@@ -93,23 +93,23 @@ export function validateModel(model) {
   return { valid: true };
 }
 
-// 종합 메시지 검증
+// Comprehensive message validation
 export function validateMessage(messageData) {
   const { role, text, model, roomId } = messageData;
 
-  // 역할 검증
+  // Validate role
   const roleValidation = validateRole(role);
   if (!roleValidation.valid) return roleValidation;
 
-  // 텍스트 검증
+  // Validate text
   const textValidation = validateLength(text, 1, 100000);
   if (!textValidation.valid) return textValidation;
 
-  // 모델명 검증
+  // Validate model name
   const modelValidation = validateModel(model);
   if (!modelValidation.valid) return modelValidation;
 
-  // 방 ID 검증
+  // Validate room ID
   if (roomId && roomId !== 'general') {
     const roomIdValidation = validateUUID(roomId);
     if (!roomIdValidation.valid) return roomIdValidation;
@@ -118,7 +118,7 @@ export function validateMessage(messageData) {
   return { valid: true };
 }
 
-// 페이지네이션 파라미터 검증
+// Validate pagination parameters
 export function validatePagination(page, limit) {
   const pageNum = parseInt(page) || 1;
   const limitNum = parseInt(limit) || 20;
@@ -128,13 +128,13 @@ export function validatePagination(page, limit) {
   if (limitNum < 1 || limitNum > 100)
     return {
       valid: false,
-      error: '한 페이지당 항목 수는 1-100 사이여야 합니다.',
+      error: 'Items per page must be between 1 and 100.',
     };
 
   return { valid: true, page: pageNum, limit: limitNum };
 }
 
-// 날짜 범위 검증
+// Validate date range
 export function validateDateRange(dateRange) {
   const allowedRanges = ['1d', '7d', '30d', '90d', '365d', 'all'];
   if (!allowedRanges.includes(dateRange)) {

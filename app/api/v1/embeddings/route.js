@@ -173,7 +173,7 @@ export async function POST(request) {
       });
     }
 
-    // Ollama embeddings (배열 입력은 순차 처리)
+    // Ollama embeddings (array input is processed sequentially)
     const inputs = Array.isArray(input) ? input : [input];
     if (inputs.length === 0) {
       return NextResponse.json(

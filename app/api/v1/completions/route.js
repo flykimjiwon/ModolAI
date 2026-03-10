@@ -11,10 +11,10 @@ import { logExternalApiRequest } from '@/lib/externalApiLogger';
 import { getClientIP } from '@/lib/ip';
 import { JWT_SECRET } from '@/lib/config';
 
-// OpenAI 호환 Legacy Completions API (FIM / Autocomplete 전용)
-// Continue 등 IDE 확장에서 useLegacyCompletionsEndpoint: true 설정 시 이 경로로 요청
-// 요청: { model, prompt, suffix?, max_tokens?, temperature?, stop?, stream? }
-// 응답: { id, object: "text_completion", choices: [{ text, index, finish_reason }], usage }
+// OpenAI-compatible legacy Completions API (FIM / Autocomplete only)
+// IDE extensions like Continue request this route when useLegacyCompletionsEndpoint: true is set
+// Request: { model, prompt, suffix?, max_tokens?, temperature?, stop?, stream? }
+// Response: { id, object: "text_completion", choices: [{ text, index, finish_reason }], usage }
 
 export const runtime = 'nodejs';
 
@@ -28,7 +28,7 @@ const corsHeaders = {
 const createCompletionId = () =>
   `cmpl-${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
 
-// ─── API 토큰 검증 (chat/completions와 동일 패턴) ────────────────────────────
+// ─── API token verification (same pattern as chat/completions) ───────────────
 async function verifyApiToken(token) {
   try {
     const tokenPayload = jwt.verify(token, JWT_SECRET);
@@ -69,7 +69,7 @@ async function verifyApiToken(token) {
       return { valid: false, error: 'API token has expired.' };
     }
 
-    // 마지막 사용 시각 업데이트
+    // Update last-used timestamp
     await query('UPDATE api_tokens SET last_used_at = $1 WHERE id = $2', [
       new Date(),
       apiToken.id,
@@ -98,12 +98,12 @@ async function verifyApiToken(token) {
     if (error.name === 'TokenExpiredError') {
       return { valid: false, error: 'API token has expired.' };
     }
-    console.error('[v1/completions] 토큰 검증 오류:', error);
+    console.error('[v1/completions] Token verification error:', error);
     return { valid: false, error: 'Token verification failed.' };
   }
 }
 
-// ─── 모델 서버 엔드포인트 결정 (embeddings와 동일 패턴) ──────────────────────
+// ─── Resolve model server endpoint (same pattern as embeddings) ──────────────
 async function resolveEndpoint(modelId) {
   if (modelId) {
     const { serverName, modelName } = parseModelName(modelId);
@@ -127,7 +127,7 @@ function buildOpenAiUrl(endpoint, path) {
   return `${trimmed}/v1${path}`;
 }
 
-// ─── Ollama /api/generate 스트리밍 → OpenAI SSE 변환 ────────────────────────
+// ─── Convert Ollama /api/generate stream to OpenAI SSE ───────────────────────
 function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
@@ -174,7 +174,7 @@ function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
                 controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               }
             } catch {
-              // 파싱 실패 라인 무시
+              // Ignore lines that fail parsing
             }
           }
         }
@@ -186,7 +186,7 @@ function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
   });
 }
 
-// ─── 핸들러 ──────────────────────────────────────────────────────────────────
+// ─── Handler ──────────────────────────────────────────────────────────────────
 export async function POST(request) {
   const startTime = Date.now();
   const clientIP = getClientIP(request);
@@ -195,7 +195,7 @@ export async function POST(request) {
     request.headers.get('x-client-name') ||
     'unknown';
 
-  // 인증
+  // Authentication
   const authHeader = request.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     return NextResponse.json(
@@ -262,7 +262,7 @@ export async function POST(request) {
       );
     }
 
-    // 엔드포인트 결정
+    // Resolve endpoint
     const endpointInfo = await resolveEndpoint(model);
     if (!endpointInfo) {
       return NextResponse.json(
@@ -280,7 +280,7 @@ export async function POST(request) {
     const resolvedModel = modelName || model;
     const completionId = createCompletionId();
 
-    // ── OpenAI-compatible: /v1/completions 그대로 전달 ──────────────────────
+    // ── OpenAI-compatible: forward /v1/completions as-is ─────────────────────
     if (provider === 'openai-compatible') {
       const targetUrl = buildOpenAiUrl(endpoint, '/completions');
       const headers = { 'Content-Type': 'application/json' };
@@ -312,9 +312,9 @@ export async function POST(request) {
       });
     }
 
-    // ── Ollama: /api/generate 로 매핑 ────────────────────────────────────────
-    // Continue는 FIM 토큰을 prompt 안에 직접 넣어서 보내므로
-    // suffix는 별도로 처리하지 않고 prompt를 그대로 전달
+    // ── Ollama: map to /api/generate ──────────────────────────────────────────
+    // Continue sends FIM tokens directly inside prompt
+    // so suffix is not handled separately and prompt is forwarded as-is
     const ollamaPrompt = Array.isArray(prompt)
       ? prompt.join('')
       : String(prompt);
@@ -333,14 +333,14 @@ export async function POST(request) {
       },
     };
 
-    // suffix가 있으면 Ollama suffix 필드에 전달 (일부 FIM 모델 지원)
+    // If suffix exists, pass it to Ollama suffix field (supported by some FIM models)
     if (suffix != null) {
       ollamaBody.suffix = String(suffix);
     }
 
     const targetUrl = `${endpoint.replace(/\/+$/, '')}/api/generate`;
 
-    // 스트리밍 응답
+    // Streaming response
     if (isStream) {
       const ollamaRes = await fetch(targetUrl, {
         method: 'POST',
@@ -378,7 +378,7 @@ export async function POST(request) {
       });
     }
 
-    // 비스트리밍 응답
+    // Non-streaming response
     const ollamaRes = await fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -402,7 +402,7 @@ export async function POST(request) {
       );
     }
 
-    // Ollama → OpenAI text_completion 형식 변환
+    // Convert Ollama response to OpenAI text_completion format
     const openAIResponse = {
       id: completionId,
       object: 'text_completion',
@@ -424,7 +424,7 @@ export async function POST(request) {
       },
     };
 
-    // 외부 API 로깅
+    // External API logging
     try {
       await logExternalApiRequest({
         userId: userInfo?.userId,
@@ -439,7 +439,7 @@ export async function POST(request) {
         userAgent,
       });
     } catch {
-      // 로깅 실패는 응답에 영향 없음
+      // Logging failure does not affect the response
     }
 
     return NextResponse.json(openAIResponse, {

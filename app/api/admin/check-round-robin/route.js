@@ -3,13 +3,13 @@ import { verifyAdmin } from '@/lib/adminAuth';
 import { parseModelName, getModelServerEndpointsByName } from '@/lib/modelServers';
 
 /**
- * 모델 이름에서 서버 정보를 파싱하고 라운드로빈 상태 확인
+ * Parse server info from model name and check round-robin status
  */
 export async function GET(request) {
-  // 관리자 권한 확인 (일반 사용자도 사용 가능하도록 변경 가능)
+  // Check admin privileges (can be changed to allow regular users)
   const authResult = verifyAdmin(request);
   if (!authResult.success) {
-    // 관리자가 아니어도 조회는 허용 (선택사항)
+    // Allow read access even for non-admins (optional)
     // return authResult;
   }
 
@@ -24,11 +24,11 @@ export async function GET(request) {
       );
     }
 
-    // 모델 이름에서 서버 정보 파싱
+    // Parse server info from model name
     const { serverName, modelName: actualModelName } = parseModelName(modelName);
 
     if (!serverName) {
-      // 서버 이름이 없으면 라운드로빈 없음
+      // No round-robin if server name is absent
       return NextResponse.json({
         hasServerName: false,
         isRoundRobin: false,
@@ -38,7 +38,7 @@ export async function GET(request) {
       });
     }
 
-    // 같은 이름의 서버 개수 확인
+    // Check number of servers with the same name
     const endpoints = await getModelServerEndpointsByName(serverName);
     const serverCount = endpoints.length;
     const isRoundRobin = serverCount > 1;
@@ -55,7 +55,7 @@ export async function GET(request) {
       })),
     });
   } catch (error) {
-    console.error('[Check Round Robin] 오류:', error);
+    console.error('[Check Round Robin] Error:', error);
     return NextResponse.json(
       { error: 'Failed to check round robin status', details: error.message },
       { status: 500 }

@@ -5,7 +5,7 @@ import path from 'path';
 
 export async function POST(request) {
   try {
-    // 관리자 권한 확인
+    // Check admin privileges
     const adminCheck = verifyAdmin(request);
     if (!adminCheck.success) {
       return adminCheck;
@@ -16,62 +16,62 @@ export async function POST(request) {
 
     if (!file) {
       return NextResponse.json(
-        { error: '파비콘 파일이 필요합니다.' },
+        { error: 'Favicon file is required.' },
         { status: 400 }
       );
     }
 
-    // 파일 검증
+    // Validate file
     const allowedTypes = ['image/x-icon', 'image/vnd.microsoft.icon', 'image/png', 'image/svg+xml'];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: '파비콘은 .ico, .png, .svg 파일만 지원됩니다.' },
+        { error: 'Favicon supports only .ico, .png, and .svg files.' },
         { status: 400 }
       );
     }
 
-    // 파일 크기 제한 (1MB)
+    // File size limit (1MB)
     if (file.size > 1024 * 1024) {
       return NextResponse.json(
-        { error: '파비콘 파일 크기는 1MB 이하여야 합니다.' },
+        { error: 'Favicon file size must be 1MB or less.' },
         { status: 400 }
       );
     }
 
-    // 업로드 디렉토리 확인/생성
+    // Check/create upload directory
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
     try {
       await mkdir(uploadDir, { recursive: true });
     } catch (error) {
       if (error?.code !== 'EEXIST') {
-        console.warn('[upload-favicon] 디렉토리 생성 실패:', error);
+        console.warn('[upload-favicon] Failed to create directory:', error);
       }
     }
 
-    // 파일 저장
+    // Save file
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // 파일 확장자 확인
+    // Check file extension
     const fileExtension = file.name.split('.').pop().toLowerCase();
     const fileName = `favicon.${fileExtension}`;
     const filePath = path.join(uploadDir, fileName);
     
     await writeFile(filePath, buffer);
 
-    // 웹 경로 반환
+    // Return web path
     const webPath = `/uploads/${fileName}`;
 
     return NextResponse.json({
       success: true,
-      message: '파비콘이 업로드되었습니다.',
+      message: 'Favicon uploaded.',
       faviconUrl: webPath
     });
 
   } catch (error) {
-    console.error('파비콘 업로드 실패:', error);
+    console.error('Favicon upload failed:', error);
     return NextResponse.json(
-      { error: '파비콘 업로드에 실패했습니다.' },
+      { error: 'Failed to upload favicon.' },
       { status: 500 }
     );
   }

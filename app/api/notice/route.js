@@ -31,19 +31,19 @@ async function ensureNoticeColumns() {
   }
 }
 
-// 공지사항 목록 조회
+// Fetch notice list
 export async function GET(request) {
   try {
     await ensureNoticeColumns();
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
-    const showPopup = searchParams.get('showPopup'); // 팝업용 공지사항만 조회
+    const showPopup = searchParams.get('showPopup'); // Fetch popup notices only
     const popupTarget = searchParams.get('popupTarget') || 'main';
 
     const skip = (page - 1) * limit;
 
-    // 쿼리 조건 구성
+    // Build query conditions
     let whereClause = '';
     const params = [];
     let paramIndex = 1;
@@ -64,9 +64,9 @@ export async function GET(request) {
         paramIndex = 3;
       }
     }
-    // 일반 목록 조회시에는 활성화 여부와 관계없이 모든 공지사항 표시 (관리자가 비활성화된 것도 관리할 수 있도록)
+    // For normal list queries, show all notices regardless of active status (so admins can manage disabled ones)
 
-    // 공지사항 조회 (최신순)
+    // Fetch notices (latest first)
     const noticesResult = await query(
       `SELECT id, title, content, is_popup, is_popup_login, is_active, author_id, author_name,
               created_at, updated_at, popup_width, popup_height, views
@@ -77,7 +77,7 @@ export async function GET(request) {
       [...params, limit, skip]
     );
 
-    // 전체 개수 조회
+    // Fetch total count
     const countResult = await query(
       `SELECT COUNT(*) as total FROM notices ${whereClause}`,
       params
@@ -85,7 +85,7 @@ export async function GET(request) {
 
     const total = parseInt(countResult.rows[0].total);
 
-    // 데이터 변환 (snake_case를 camelCase로)
+    // Transform data (snake_case to camelCase)
     const notices = noticesResult.rows.map(row => ({
       _id: row.id,
       id: row.id,
@@ -123,19 +123,19 @@ export async function GET(request) {
       currentPage: page,
     });
   } catch (error) {
-    console.error('공지사항 조회 실패:', error);
+    console.error('Failed to fetch notices:', error);
     return NextResponse.json(
-      { error: '공지사항을 불러오는데 실패했습니다.', details: error.message },
+      { error: 'Failed to load notices.', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// 공지사항 작성 (관리자만)
+// Create notice (admin only)
 export async function POST(request) {
   try {
     await ensureNoticeColumns();
-    // 토큰 검증
+    // Validate token
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
@@ -144,7 +144,7 @@ export async function POST(request) {
       );
     }
 
-    // 관리자 권한 확인
+    // Check admin privileges
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin privileges required.' },
@@ -164,12 +164,12 @@ export async function POST(request) {
 
     if (!title || !content) {
       return NextResponse.json(
-        { error: '제목과 내용을 입력해주세요.' },
+        { error: 'Please enter both title and content.' },
         { status: 400 }
       );
     }
 
-    // 사용자 정보 조회
+    // Fetch user info
     const userResult = await query(
       'SELECT id, email, name FROM users WHERE email = $1',
       [payload.email]
@@ -180,7 +180,7 @@ export async function POST(request) {
       ? (userResult.rows[0].name || userResult.rows[0].email)
       : (payload.name || payload.email);
 
-    // 공지사항 삽입
+    // Insert notice
     const result = await query(
       `INSERT INTO notices (title, content, is_popup, is_popup_login, is_active, author_id, author_name, popup_width, popup_height, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -196,9 +196,9 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('공지사항 작성 실패:', error);
+    console.error('Failed to create notice:', error);
     return NextResponse.json(
-      { error: '공지사항 작성에 실패했습니다.', details: error.message },
+      { error: 'Failed to create notice.', details: error.message },
       { status: 500 }
     );
   }

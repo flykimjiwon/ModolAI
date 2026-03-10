@@ -4,17 +4,17 @@ import { verifyAdmin } from '@/lib/adminAuth';
 
 export async function GET(request) {
   try {
-    // 관리자 권한 확인
+    // Check admin privileges
     const adminCheck = verifyAdmin(request);
     if (!adminCheck.success) {
       return adminCheck;
     }
 
-    // 특정 모델서버 지정 지원 (?endpoint=)
+    // Support selecting a specific model server (?endpoint=)
     const url = new URL(request.url);
     const endpointParam = url.searchParams.get('endpoint');
     let provider = url.searchParams.get('provider') || 'model-server';
-    // endpointParam이 있으면 항상 DB에서 provider 확인 (프론트엔드에서 잘못된 provider를 보낼 수 있음)
+    // If endpointParam exists, always resolve provider from DB (frontend may send an incorrect provider)
     if (endpointParam) {
       try {
         const { query } = await import('@/lib/postgres');
@@ -24,7 +24,7 @@ export async function GET(request) {
         );
         if (settingsResult.rows.length > 0) {
           const customEndpoints = settingsResult.rows[0].custom_endpoints || [];
-          // URL 정규화 함수 (trailing slash 제거)
+          // URL normalization helper (remove trailing slash)
           const normalizeUrl = (url) => {
             try {
               const urlObj = new URL(url.trim());
@@ -32,7 +32,7 @@ export async function GET(request) {
                 urlObj.port ? `:${urlObj.port}` : ''
               }${urlObj.pathname.replace(/\/+$/, '')}`;
             } catch (error) {
-              console.warn('[Catch] 에러 발생:', error.message);
+              console.warn('[Catch] Error occurred:', error.message);
               return url.trim().toLowerCase().replace(/\/+$/, '');
             }
           };
@@ -41,31 +41,31 @@ export async function GET(request) {
             (e) => e.url && normalizeUrl(e.url) === normalizedEndpointParam
           );
           if (endpointConfig) {
-            // URL 기반으로 provider 자동 감지 (우선순위: URL > DB 설정)
+            // Auto-detect provider from URL (priority: URL > DB setting)
             const url = endpointConfig.url.toLowerCase();
             if (url.includes('generativelanguage.googleapis.com')) {
               provider = 'gemini';
             } else if (url.includes('/v1/models') || url.includes('/v1/chat')) {
               provider = 'openai-compatible';
             } else if (endpointConfig.provider) {
-              // URL 기반 감지 실패 시 DB 설정 사용
+              // Use DB setting if URL-based detection fails
               provider = endpointConfig.provider;
             }
           }
         }
       } catch (e) {
         console.warn(
-          '[model-servers/models] settings 조회 실패:',
+          '[model-servers/models] Failed to fetch settings:',
           e?.message || e
         );
       }
     }
     let modelServerUrl = '';
     if (endpointParam) {
-      // 빈 문자열 체크
+      // Empty string check
       if (!endpointParam.trim()) {
         return NextResponse.json(
-          { error: 'endpoint 파라미터가 비어있습니다.' },
+          { error: 'The endpoint parameter is empty.' },
           { status: 400 }
         );
       }
@@ -75,13 +75,13 @@ export async function GET(request) {
         if (!/^https?:$/.test(parsed.protocol)) {
           return NextResponse.json(
             {
-              error: `유효하지 않은 프로토콜입니다. http:// 또는 https://로 시작해야 합니다. (현재: ${parsed.protocol})`,
+               error: `Invalid protocol. It must start with http:// or https:// (current: ${parsed.protocol}).`,
             },
             { status: 400 }
           );
         }
-        // openai-compatible과 gemini는 포트가 없어도 허용
-        // provider가 'model-server'이거나 'ollama'인 경우에만 포트 검증
+        // openai-compatible and gemini are allowed without an explicit port
+        // Validate port only when provider is 'model-server' or 'ollama'
         if (
           provider !== 'openai-compatible' &&
           provider !== 'gemini' &&
@@ -89,7 +89,7 @@ export async function GET(request) {
         ) {
           return NextResponse.json(
             {
-              error: `Ollama 모델서버는 포트 번호가 필요합니다. (예: http://localhost:11434)`,
+               error: `Ollama model servers require a port number. (Example: http://localhost:11434)`,
             },
             { status: 400 }
           );
@@ -98,20 +98,20 @@ export async function GET(request) {
       } catch (error) {
         return NextResponse.json(
           {
-            error: `유효하지 않은 endpoint 형식입니다: ${endpointParam}. 올바른 URL 형식인지 확인해주세요.`,
+            error: `Invalid endpoint format: ${endpointParam}. Please check that it is a valid URL.`,
           },
           { status: 400 }
         );
       }
     } else {
-      // 모델 서버 모델서버 가져오기 (기존 로드밸런싱 시스템 활용)
+      // Get model server endpoint (reuse existing load-balancing system)
       modelServerUrl = await getNextModelServerEndpoint();
       
-      // 모델 서버가 설정되지 않은 경우 에러 반환
+      // Return an error if no model server is configured
       if (!modelServerUrl || (typeof modelServerUrl === 'string' && modelServerUrl.trim() === '')) {
         return NextResponse.json(
           {
-            error: '모델 서버가 설정되지 않았습니다. 관리자 설정에서 모델 서버를 등록해주세요.',
+            error: 'No model server is configured. Please register one in admin settings.',
             errorType: 'configuration',
           },
           { status: 400 }
@@ -119,9 +119,9 @@ export async function GET(request) {
       }
     }
 
-    // Gemini 분기: /v1beta/models
+    // Gemini branch: /v1beta/models
     if (provider === 'gemini') {
-      // DB에서 API Key 조회
+      // Load API key from DB
       let apiKey = '';
       try {
         const { query } = await import('@/lib/postgres');
@@ -141,7 +141,7 @@ export async function GET(request) {
         }
       } catch (e) {
         console.warn(
-          '[Model Servers Models] Gemini API key 조회 실패:',
+          '[Model Servers Models] Failed to fetch Gemini API key:',
           e.message
         );
       }
@@ -162,7 +162,7 @@ export async function GET(request) {
       const target = `${base}/v1beta/models?key=${apiKey}`;
       const headers = { 'Content-Type': 'application/json' };
 
-      // 타임아웃 처리를 위한 AbortController 생성
+      // Create AbortController for timeout handling
       let abortController = null;
       let timeoutId = null;
       let signal;
@@ -186,7 +186,7 @@ export async function GET(request) {
           }, 30000);
         }
       } finally {
-        // 타임아웃 정리는 catch 블록에서 처리
+         // Timeout cleanup is handled in the catch/finally flow
       }
 
       let res;
@@ -197,14 +197,14 @@ export async function GET(request) {
           signal,
         });
       } finally {
-        // 타임아웃 정리 (성공/실패 모두)
+         // Clear timeout (both success and failure)
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
       }
 
       if (!res.ok) {
-        // 에러 응답 본문 읽기 시도
+        // Attempt to read error response body
         let errorMessage = `${res.status} ${res.statusText}`;
         try {
           const errorText = await res.text();
@@ -214,42 +214,42 @@ export async function GET(request) {
               errorMessage =
                 errorJson.error?.message || errorJson.error || errorMessage;
             } catch (error) {
-              console.warn('[Catch] 에러 발생:', error.message);
-              errorMessage = errorText.substring(0, 200); // 텍스트가 너무 길면 잘라내기
+              console.warn('[Catch] Error occurred:', error.message);
+              errorMessage = errorText.substring(0, 200); // Truncate if response text is too long
             }
           }
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
-          // 에러 본문 읽기 실패 시 기본 메시지 사용
+          console.warn('[Catch] Error occurred:', error.message);
+          // Use default message if reading error body fails
         }
 
         return NextResponse.json(
           {
-            error: `Gemini 모델 목록 조회 실패: ${errorMessage}`,
+            error: `Failed to fetch Gemini model list: ${errorMessage}`,
             errorType: 'connection',
           },
           { status: res.status }
         );
       }
 
-      // 응답 본문을 먼저 텍스트로 읽어서 확인
+      // Read response body as text first for validation
       const responseText = await res.text();
       if (!responseText || responseText.trim() === '') {
         return NextResponse.json(
           {
-            error: 'Gemini API에서 빈 응답을 받았습니다.',
+            error: 'Received an empty response from the Gemini API.',
             errorType: 'empty_response',
           },
           { status: 502 }
         );
       }
 
-      // JSON 파싱 시도
+      // Attempt JSON parsing
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('[Model Servers Models] Gemini JSON 파싱 실패:', {
+        console.error('[Model Servers Models] Failed to parse Gemini JSON:', {
           error: parseError.message,
           responsePreview: responseText.substring(0, 200),
           status: res.status,
@@ -257,7 +257,7 @@ export async function GET(request) {
         });
         return NextResponse.json(
           {
-            error: `Gemini API 응답 파싱 실패: ${parseError.message}`,
+             error: `Failed to parse Gemini API response: ${parseError.message}`,
             errorType: 'parse_error',
             details: responseText.substring(0, 200),
           },
@@ -271,13 +271,13 @@ export async function GET(request) {
         )
         .map((m) => {
           const fullName = m.name || '';
-          // Gemini 모델의 경우 "models/" 접두사 제거 (표시용)
+          // For Gemini models, remove the "models/" prefix (display only)
           const displayName = fullName.startsWith('models/')
             ? fullName.substring(7)
             : fullName;
           return {
-            id: fullName, // 원본 ID 유지
-            name: displayName, // 표시용 이름 (models/ 제거)
+            id: fullName, // Keep original ID
+            name: displayName, // Display name (without models/)
             size: null,
             modified_at: null,
             digest: null,
@@ -294,9 +294,9 @@ export async function GET(request) {
       });
     }
 
-    // OpenAI-compatible 분기: /v1/models
+    // OpenAI-compatible branch: /v1/models
     if (provider === 'openai-compatible') {
-      // DB에서 API Key 조회 또는 ENV 폴백
+      // Load API key from DB or fall back to ENV
       let apiKey = process.env.OPENAI_COMPAT_API_KEY || '';
       try {
         const { query } = await import('@/lib/postgres');
@@ -310,7 +310,7 @@ export async function GET(request) {
         }
       } catch (e) {
         console.warn(
-          '[model-servers/models] settings 조회 실패, ENV 사용:',
+          '[model-servers/models] Failed to fetch settings, using ENV:',
           e?.message || e
         );
       }
@@ -321,7 +321,7 @@ export async function GET(request) {
       const headers = { 'Content-Type': 'application/json' };
       if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
-      // 타임아웃 처리를 위한 AbortController 생성
+      // Create AbortController for timeout handling
       let abortController = null;
       let timeoutId = null;
       let signal;
@@ -345,7 +345,7 @@ export async function GET(request) {
           }, 30000);
         }
       } finally {
-        // 타임아웃 정리는 catch 블록에서 처리
+         // Timeout cleanup is handled in the catch/finally flow
       }
 
       let res;
@@ -356,14 +356,14 @@ export async function GET(request) {
           signal,
         });
       } finally {
-        // 타임아웃 정리 (성공/실패 모두)
+         // Clear timeout (both success and failure)
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
       }
 
       if (!res.ok) {
-        // 에러 응답 본문 읽기 시도
+        // Attempt to read error response body
         let errorMessage = `${res.status} ${res.statusText}`;
         try {
           const errorText = await res.text();
@@ -373,42 +373,42 @@ export async function GET(request) {
               errorMessage =
                 errorJson.error?.message || errorJson.error || errorMessage;
             } catch (error) {
-              console.warn('[Catch] 에러 발생:', error.message);
+              console.warn('[Catch] Error occurred:', error.message);
               errorMessage = errorText.substring(0, 200);
             }
           }
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
-          // 에러 본문 읽기 실패 시 기본 메시지 사용
+          console.warn('[Catch] Error occurred:', error.message);
+          // Use default message if reading error body fails
         }
 
         return NextResponse.json(
           {
-            error: `OpenAI 호환 모델 목록 조회 실패: ${errorMessage}`,
+             error: `Failed to fetch OpenAI-compatible model list: ${errorMessage}`,
             errorType: 'connection',
           },
           { status: res.status }
         );
       }
 
-      // 응답 본문을 먼저 텍스트로 읽어서 확인
+      // Read response body as text first for validation
       const responseText = await res.text();
       if (!responseText || responseText.trim() === '') {
         return NextResponse.json(
           {
-            error: 'OpenAI 호환 API에서 빈 응답을 받았습니다.',
+            error: 'Received an empty response from the OpenAI-compatible API.',
             errorType: 'empty_response',
           },
           { status: 502 }
         );
       }
 
-      // JSON 파싱 시도
+      // Attempt JSON parsing
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
-        console.error('[Model Servers Models] OpenAI 호환 JSON 파싱 실패:', {
+        console.error('[Model Servers Models] Failed to parse OpenAI-compatible JSON:', {
           error: parseError.message,
           responsePreview: responseText.substring(0, 200),
           status: res.status,
@@ -416,7 +416,7 @@ export async function GET(request) {
         });
         return NextResponse.json(
           {
-            error: `OpenAI 호환 API 응답 파싱 실패: ${parseError.message}`,
+             error: `Failed to parse OpenAI-compatible API response: ${parseError.message}`,
             errorType: 'parse_error',
             details: responseText.substring(0, 200),
           },
@@ -446,12 +446,12 @@ export async function GET(request) {
       });
     }
 
-    // 내부 헬퍼: 타임아웃 + 재시도 지원 (model-server)
+    // Internal helper: timeout + retry support (model-server)
     async function fetchModelServerTagsWithRetry(
       primaryUrl,
       { timeoutMs = 30000, retryIfNoEndpoint = true } = {}
     ) {
-      // 타임아웃 처리를 위한 헬퍼 함수
+      // Helper for timeout handling
       const createAbortSignal = () => {
         let abortController = null;
         let timeoutId = null;
@@ -478,7 +478,7 @@ export async function GET(request) {
         return { signal, timeoutId };
       };
 
-      // 1차 시도: 현재 선택된/라운드로빈 모델서버
+      // First attempt: current selected/round-robin model server
       let timeoutId1 = null;
       try {
         const { signal, timeoutId } = createAbortSignal();
@@ -492,19 +492,19 @@ export async function GET(request) {
           signal,
         });
 
-        // 타임아웃 정리
+        // Clear timeout
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
 
         return res;
       } catch (err) {
-        // 타임아웃 정리
+        // Clear timeout
         if (timeoutId1) {
           clearTimeout(timeoutId1);
         }
 
-        // 타임아웃 또는 네트워크 오류 시, 모델서버 미지정 상태라면 다른 인스턴스로 1회 재시도
+        // On timeout/network error, retry once with another instance when endpoint is not explicitly set
         const isTimeout =
           err?.name === 'TimeoutError' ||
           err?.name === 'AbortError' ||
@@ -518,7 +518,7 @@ export async function GET(request) {
           !endpointParam && retryIfNoEndpoint && (isTimeout || isNetworkish);
         if (!canRetry) throw err;
 
-        // 다음 라운드로빈 모델서버로 재시도
+        // Retry with the next round-robin model server
         let timeoutId2 = null;
         try {
           const fallback = await getNextModelServerEndpoint();
@@ -533,16 +533,16 @@ export async function GET(request) {
             signal,
           });
 
-          // 타임아웃 정리
+           // Clear timeout
           if (timeoutId) {
             clearTimeout(timeoutId);
           }
 
-          // 재시도 응답에 실패 코드가 오면 그대로 상위에서 처리
-          // 성공 시에는 그대로 반환
+           // If retry response is an error status, handle it upstream as-is
+           // Return directly on success
           return res;
         } catch (retryErr) {
-          // 타임아웃 정리
+          // Clear timeout
           if (timeoutId2) {
             clearTimeout(timeoutId2);
           }
@@ -551,7 +551,7 @@ export async function GET(request) {
       }
     }
 
-    // 모델 서버의 /api/tags 모델서버에 요청 (타임아웃 30초, 필요 시 1회 재시도)
+    // Request /api/tags on model server (30s timeout, one retry if needed)
     let response;
     try {
       response = await fetchModelServerTagsWithRetry(modelServerUrl, {
@@ -559,18 +559,18 @@ export async function GET(request) {
         retryIfNoEndpoint: true,
       });
     } catch (fetchError) {
-      // fetch 자체가 실패한 경우 (네트워크 오류, 타임아웃 등)
-      console.error('[Model Servers Models] 모델 서버 연결 실패:', {
+      // When fetch itself fails (network error, timeout, etc.)
+      console.error('[Model Servers Models] Model server connection failed:', {
         url: modelServerUrl,
         error: fetchError.message,
         name: fetchError.name,
         code: fetchError.code,
       });
-      throw fetchError; // 상위 catch 블록에서 처리
+      throw fetchError; // Handled in the upper catch block
     }
 
     if (!response.ok) {
-      // 에러 응답 본문 읽기 시도
+      // Attempt to read error response body
       let errorMessage = `${response.status} ${response.statusText}`;
       try {
         const errorText = await response.text();
@@ -580,53 +580,53 @@ export async function GET(request) {
             errorMessage =
               errorJson.error?.message || errorJson.error || errorMessage;
           } catch (error) {
-            console.warn('[Catch] 에러 발생:', error.message);
+            console.warn('[Catch] Error occurred:', error.message);
             errorMessage = errorText.substring(0, 200);
           }
         }
       } catch (error) {
-        console.warn('[Catch] 에러 발생:', error.message);
-        // 에러 본문 읽기 실패 시 기본 메시지 사용
+        console.warn('[Catch] Error occurred:', error.message);
+        // Use default message if reading error body fails
       }
       
-      console.error('[Model Servers Models] 모델 서버 응답 실패:', {
+      console.error('[Model Servers Models] Model server response failed:', {
         url: modelServerUrl,
         status: response.status,
         statusText: response.statusText,
         errorMessage,
       });
       
-      throw new Error(`모델 서버 응답 실패 (${response.status}): ${errorMessage}`);
+      throw new Error(`Model server response failed (${response.status}): ${errorMessage}`);
     }
 
-    // 응답 본문을 먼저 텍스트로 읽어서 확인
+    // Read response body as text first for validation
     const responseText = await response.text();
     if (!responseText || responseText.trim() === '') {
-      throw new Error('모델 서버에서 빈 응답을 받았습니다.');
+      throw new Error('Received an empty response from the model server.');
     }
 
-    // JSON 파싱 시도
+    // Attempt JSON parsing
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('[Model Servers Models] 모델 서버 JSON 파싱 실패:', {
+      console.error('[Model Servers Models] Failed to parse model server JSON:', {
         error: parseError.message,
         responsePreview: responseText.substring(0, 200),
         status: response.status,
         statusText: response.statusText,
       });
-      throw new Error(`모델 서버 응답 파싱 실패: ${parseError.message}`);
+      throw new Error(`Failed to parse model server response: ${parseError.message}`);
     }
 
-    // 모델 목록을 가공하여 UI에 적합한 형태로 변환
+    // Transform model list into a UI-friendly shape
     const models = (data.models || []).map((model) => ({
       id: model.name,
       name: model.name,
       size: model.size,
       modified_at: model.modified_at,
       digest: model.digest,
-      // 크기를 읽기 쉬운 형태로 변환
+      // Convert size to a human-readable format
       sizeFormatted: formatBytes(model.size),
     }));
 
@@ -637,7 +637,7 @@ export async function GET(request) {
       modelServerUrl: modelServerUrl,
     });
   } catch (error) {
-    console.error('[Model Servers Models] 모델 목록 조회 실패:', error);
+    console.error('[Model Servers Models] Failed to fetch model list:', error);
     console.error('[Model Servers Models] Error details:', {
       name: error.name,
       message: error.message,
@@ -647,7 +647,7 @@ export async function GET(request) {
       stack: error.stack,
     });
 
-    // 네트워크 에러와 타임아웃을 구분하여 처리
+    // Distinguish and handle network errors vs timeouts
     const isTimeout =
       error.name === 'TimeoutError' ||
       error.name === 'AbortError' ||
@@ -667,14 +667,14 @@ export async function GET(request) {
       error.message?.includes('getaddrinfo') ||
       error.message?.includes('ECONNRESET');
 
-    // HTTP 응답 실패 (모델 서버가 응답했지만 에러 상태 코드)
-    const isHttpError = error.message?.includes('모델 서버 응답 실패');
+    // HTTP response failure (model server responded with an error status)
+    const isHttpError = error.message?.includes('Model server response failed');
 
     if (isTimeout) {
       return NextResponse.json(
         {
           error:
-            '모델 서버 연결 타임아웃입니다. 모델 서버가 실행 중인지 확인하세요.',
+            'Model server connection timed out. Please check that the model server is running.',
           errorType: 'timeout',
           details: process.env.NODE_ENV === 'development' ? error.message : undefined,
         },
@@ -683,11 +683,11 @@ export async function GET(request) {
     }
 
     if (isConnectionError) {
-      const endpointDisplay = endpointParam || modelServerUrl || '알 수 없음';
+      const endpointDisplay = endpointParam || modelServerUrl || 'Unknown';
       return NextResponse.json(
         {
           error:
-            `모델 서버에 연결할 수 없습니다. (${endpointDisplay}) 모델 서버 주소와 포트를 확인하세요.`,
+             `Unable to connect to the model server. (${endpointDisplay}) Please check the server address and port.`,
           errorType: 'connection',
           details: process.env.NODE_ENV === 'development' ? error.message : undefined,
         },
@@ -696,10 +696,10 @@ export async function GET(request) {
     }
 
     if (isHttpError) {
-      // HTTP 응답 실패는 원본 에러 메시지 사용
+      // Use original error message for HTTP response failures
       return NextResponse.json(
         {
-          error: error.message || '모델 서버에서 모델 목록을 가져오는 데 실패했습니다.',
+           error: error.message || 'Failed to fetch model list from the model server.',
           errorType: 'http_error',
           details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
         },
@@ -710,7 +710,7 @@ export async function GET(request) {
     return NextResponse.json(
       {
         error:
-          '모델 서버에서 모델 목록을 가져오는 데 실패했습니다. 모델 서버 상태를 확인하세요.',
+          'Failed to fetch model list from the model server. Please check model server status.',
         errorType: 'unknown',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
@@ -719,7 +719,7 @@ export async function GET(request) {
   }
 }
 
-// 바이트를 읽기 쉬운 형태로 변환하는 헬퍼 함수
+// Helper function to convert bytes into a human-readable format
 function formatBytes(bytes) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;

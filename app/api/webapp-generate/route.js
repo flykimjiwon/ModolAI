@@ -1126,58 +1126,56 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' },
       });
     } else if (endpointType === 'gemini') {
-      // Gemini API 호출
+      // Call Gemini API
       const base =
         (openaiCompatBase || '').replace(/\/+$/, '') ||
         'https://generativelanguage.googleapis.com';
       if (!openaiCompatApiKey) {
         return NextResponse.json(
-          { error: 'Gemini API key가 설정되지 않았습니다.' },
+          { error: 'Gemini API key is not configured.' },
           { status: 400 }
         );
       }
 
-      // Gemini 모델 이름 정규화
-      // 1. "models/" 접두사 제거 (Gemini API에서 반환하는 형식)
-      // 2. 버전 태그(:latest 등) 제거
-      // 3. 공백 제거
-      // 예: "models/gemini-pro:latest" -> "gemini-pro"
-      // 예: "gemini-pro:latest" -> "gemini-pro"
+      // Normalize Gemini model name
+      // 1. Remove "models/" prefix (format returned by Gemini API)
+      // 2. Remove version tags (:latest, etc.)
+      // 3. Trim whitespace
+      // Example: "models/gemini-pro:latest" -> "gemini-pro"
+      // Example: "gemini-pro:latest" -> "gemini-pro"
       let normalizedModel = actualModelName.trim();
 
-      // "models/" 접두사 제거 (여러 번 반복될 수 있으므로 모두 제거)
       while (normalizedModel.startsWith('models/')) {
         normalizedModel = normalizedModel.substring(7);
       }
 
-      // 버전 태그 제거 (콜론 이후 부분)
       normalizedModel = normalizedModel.split(':')[0].trim();
 
-      // 슬래시가 남아있으면 마지막 부분만 사용 (안전장치)
+      // If a slash remains, use only the last segment (safety guard)
       if (normalizedModel.includes('/')) {
         normalizedModel = normalizedModel.split('/').pop().trim();
       }
 
       if (!normalizedModel) {
         return NextResponse.json(
-          { error: `유효하지 않은 모델 이름입니다: "${actualModelName}"` },
+          { error: `Invalid model name: "${actualModelName}"` },
           { status: 400 }
         );
       }
 
-      // URL 구성 시 models/ 중복 방지를 위해 한번 더 체크
+      // Check once more to prevent models/ duplication in URL
       const cleanModelName = normalizedModel.replace(/^models\//, '');
       const geminiUrl = `${base}/v1beta/models/${cleanModelName}:streamGenerateContent?key=${openaiCompatApiKey}`;
       const headers = { 'Content-Type': 'application/json' };
 
       console.log(
-        `[generate] Gemini API 호출: 모델=${cleanModelName} (정규화=${normalizedModel}, 원본=${actualModelName}), URL=${geminiUrl.replace(
+        `[generate] Gemini API call: model=${cleanModelName} (normalized=${normalizedModel}, original=${actualModelName}), URL=${geminiUrl.replace(
           /key=[^&]+/,
           'key=***'
         )}`
       );
 
-      // Gemini API 형식으로 변환
+      // Convert to Gemini API format
       const convertToGeminiFormat = (messages) => {
         const contents = [];
         for (const msg of messages) {
@@ -1224,8 +1222,8 @@ export async function POST(request) {
         return { contents };
       };
 
-      // Gemini API를 위한 메시지 배열 구성
-      // systemPrompt와 파일 내용은 첫 user 메시지에 포함
+      // Build message array for Gemini API
+      // Include systemPrompt and file content in the first user message
       const openaiMessages = [
         ...filteredMultiturnHistory.map((msg) => ({
           role: msg.role,
@@ -1256,21 +1254,21 @@ export async function POST(request) {
         const u = new URL(base);
         instanceId = `gemini-${u.hostname}-${u.port || ''}`;
       } catch (error) {
-        console.warn('[Gemini] URL 파싱 실패, 기본 인스턴스 ID 사용:', error.message);
+        console.warn('[Gemini] URL parsing failed, using default instance ID:', error.message);
       }
 
-      // HTTP 상태 코드 체크
+      // Check HTTP status code
       if (!openaiRes.ok) {
         let errorMessage = `HTTP ${openaiRes.status} ${openaiRes.statusText}`;
         let errorDetails = null;
 
         try {
-          // 에러 응답 본문 읽기 시도
+          // Try reading error response body
           const errorText = await openaiRes.text();
           if (errorText) {
             try {
               const errorJson = JSON.parse(errorText);
-              // 에러 메시지 추출 (여러 형식 지원)
+              // Extract error message (supports multiple formats)
               let rawErrorMessage = null;
               if (errorJson.error) {
                 if (typeof errorJson.error === 'string') {
@@ -1284,10 +1282,9 @@ export async function POST(request) {
               errorMessage = rawErrorMessage || errorMessage;
               errorDetails = errorJson;
 
-              // 에러 메시지에서 원본 모델 이름을 정규화된 모델 이름으로 대체
-              // 여러 패턴으로 시도: 원본 모델 이름, "models/" 접두사 포함 등
+              // Try multiple patterns: original model name, with "models/" prefix, etc.
               if (errorMessage && actualModelName && cleanModelName) {
-                // 1. 원본 모델 이름 직접 대체
+                // 1. Directly replace original model name
                 if (errorMessage.includes(actualModelName)) {
                   errorMessage = errorMessage.replace(
                     new RegExp(
@@ -1297,7 +1294,7 @@ export async function POST(request) {
                     cleanModelName
                   );
                 }
-                // 2. "models/" 접두사가 포함된 경우도 대체
+                // 2. Replace cases with "models/" prefix
                 const modelWithPrefix = `models/${cleanModelName}`;
                 if (errorMessage.includes(modelWithPrefix)) {
                   errorMessage = errorMessage.replace(
@@ -1308,7 +1305,7 @@ export async function POST(request) {
                     cleanModelName
                   );
                 }
-                // 3. 따옴표로 감싸진 모델 이름 패턴 대체 (예: 'models/gemini-2.0-flash')
+                // 3. Replace quoted model name patterns (e.g., 'models/gemini-2.0-flash')
                 const quotedModelPattern = new RegExp(
                   `(['"])([^'"]*${model.replace(
                     /[.*+?^${}()|[\]\\]/g,
@@ -1319,7 +1316,6 @@ export async function POST(request) {
                 errorMessage = errorMessage.replace(
                   quotedModelPattern,
                   (match, quote, content) => {
-                    // content에서 모델 이름을 정규화된 이름으로 대체
                     const normalizedContent = content.replace(
                       new RegExp(
                         model.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
@@ -1332,13 +1328,13 @@ export async function POST(request) {
                 );
               }
             } catch (error) {
-              console.warn('[Catch] 에러 발생:', error.message);
+              console.warn('[Catch] Error occurred:', error.message);
               errorMessage = errorText.substring(0, 500);
               errorDetails = { raw: errorText.substring(0, 200) };
 
-              // 텍스트 에러 메시지에서도 원본 모델 이름을 정규화된 모델 이름으로 대체
+              // Also replace original model name with normalized name in text error messages
               if (errorMessage && actualModelName && cleanModelName) {
-                // 1. 원본 모델 이름 직접 대체
+                // 1. Directly replace original model name
                 if (errorMessage.includes(actualModelName)) {
                   errorMessage = errorMessage.replace(
                     new RegExp(
@@ -1348,7 +1344,7 @@ export async function POST(request) {
                     cleanModelName
                   );
                 }
-                // 2. "models/" 접두사가 포함된 경우도 대체
+                // 2. Replace cases with "models/" prefix
                 const modelWithPrefix = `models/${cleanModelName}`;
                 if (errorMessage.includes(modelWithPrefix)) {
                   errorMessage = errorMessage.replace(
@@ -1359,7 +1355,7 @@ export async function POST(request) {
                     cleanModelName
                   );
                 }
-                // 3. 따옴표로 감싸진 모델 이름 패턴 대체
+                // 3. Replace quoted model name patterns
                 const quotedModelPattern = new RegExp(
                   `(['"])([^'"]*${model.replace(
                     /[.*+?^${}()|[\]\\]/g,
@@ -1384,10 +1380,10 @@ export async function POST(request) {
             }
           }
         } catch (e) {
-          console.warn('[generate] Gemini 에러 응답 읽기 실패:', e);
+          console.warn('[generate] Failed to read Gemini error response:', e);
         }
 
-        // 상세 로깅 (404 에러의 경우 모델 이름과 URL 확인)
+        // Detailed logging (for 404 errors, verify model name and URL)
         const timestamp = new Date().toLocaleString('ko-KR', {
           timeZone: 'Asia/Seoul',
         });
@@ -1427,28 +1423,28 @@ export async function POST(request) {
             clientIP,
             responseTime: Date.now() - startAt,
             responseStatus: openaiRes.status,
-            errorMessage: `${errorMessage} (정규화된 모델: ${cleanModelName}, 원본: ${actualModelName})`,
+            errorMessage: `${errorMessage} (normalized model: ${cleanModelName}, original: ${actualModelName})`,
             isStream: true,
             roomId,
             userId: payload?.email || 'unknown',
             level: 'error',
             hasFiles,
             fileCount: 0,
-            provider: 'gemini', // Gemini API임을 명시
+            provider: 'gemini', // Explicitly mark as Gemini API
           });
         } catch (logErr) {
-          console.error('[generate] 로그 기록 실패:', logErr);
+          console.error('[generate] Failed to write log:', logErr);
         }
 
-        // 실패한 호출도 외부 API 로깅에 기록
+        // Also record failed calls in external API logs
         try {
           await logExternalApiRequest({
             sourceType: 'internal',
             provider: 'gemini',
             apiType: apiTypeForLog,
             endpoint: geminiUrl,
-            model: cleanModelName, // 정규화된 모델명
-            messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+            model: cleanModelName, // Normalized model name
+            messages: fullMessagesForLogging, // Include full message history
             promptTokenCount: finalPrompt.length,
             responseTokenCount: 0,
             responseTime: Date.now() - startAt,
@@ -1470,55 +1466,55 @@ export async function POST(request) {
           });
         } catch (logErr) {
           console.warn(
-            '[generate] 외부 API 로깅 실패(무시):',
+            '[generate] External API logging failed (ignored):',
             logErr?.message || logErr
           );
         }
 
-        // 404 에러의 경우 더 자세한 메시지 제공
+        // Provide more detailed message for 404 errors
         if (openaiRes.status === 404) {
-          // 에러 메시지에서 모델 이름 관련 정보 추출 (이미 정규화된 에러 메시지 사용)
+          // Extract model-name-related info from error message (already normalized)
           const modelNotFoundPattern = /model\s+['"]([^'"]+)['"]/i;
           const match = errorMessage.match(modelNotFoundPattern);
           const mentionedModel = match ? match[1] : null;
 
-          // 에러 메시지가 이미 정규화되었는지 확인
+          // Check whether error message is already normalized
           const isAlreadyNormalized =
             mentionedModel === normalizedModel ||
             (mentionedModel && !mentionedModel.includes('models/'));
 
-          let finalErrorMessage = `Gemini 모델을 Not found.`;
+          let finalErrorMessage = `Gemini model not found.`;
 
           if (isAlreadyNormalized) {
-            // 이미 정규화된 경우
-            finalErrorMessage += `\n모델 이름: "${normalizedModel}"`;
+            // Already normalized
+            finalErrorMessage += `\nModel name: "${normalizedModel}"`;
             if (actualModelName !== normalizedModel) {
-              finalErrorMessage += ` (원본: "${actualModelName}")`;
+              finalErrorMessage += ` (original: "${actualModelName}")`;
             }
           } else if (mentionedModel && mentionedModel !== normalizedModel) {
-            // 에러 메시지에 다른 모델 이름이 언급된 경우
-            finalErrorMessage += `\n요청한 모델: "${actualModelName}"`;
-            finalErrorMessage += `\n정규화된 모델: "${normalizedModel}"`;
+            // Error message mentions a different model name
+            finalErrorMessage += `\nRequested model: "${actualModelName}"`;
+            finalErrorMessage += `\nNormalized model: "${normalizedModel}"`;
             if (
               mentionedModel !== actualModelName &&
               mentionedModel !== normalizedModel
             ) {
-              finalErrorMessage += `\nAPI가 언급한 모델: "${mentionedModel}"`;
+              finalErrorMessage += `\nModel mentioned by API: "${mentionedModel}"`;
             }
           } else {
-            // 기본 케이스
-            finalErrorMessage += `\n모델 이름: "${normalizedModel}"`;
+            // Default case
+            finalErrorMessage += `\nModel name: "${normalizedModel}"`;
             if (actualModelName !== normalizedModel) {
-              finalErrorMessage += ` (원본: "${actualModelName}")`;
+              finalErrorMessage += ` (original: "${actualModelName}")`;
             }
           }
 
-          finalErrorMessage += `\n\n올바른 모델 이름인지 확인해주세요. Gemini API에서 사용 가능한 모델 목록을 확인하세요.`;
+          finalErrorMessage += `\n\nPlease verify the model name. Check the list of available models in Gemini API.`;
 
           return NextResponse.json(
             {
               error: finalErrorMessage,
-              details: errorMessage, // 원본 에러 메시지는 details에만 포함
+              details: errorMessage, // Keep original error message in details only
               normalizedModel,
               originalModel: model,
             },
@@ -1526,21 +1522,21 @@ export async function POST(request) {
           );
         }
 
-        // 다른 에러의 경우에도 모델 정보 포함 (에러 메시지는 이미 정규화됨)
-        let finalErrorMessage = `Gemini API 오류: ${errorMessage}`;
-        if (errorMessage.includes('model') || errorMessage.includes('모델')) {
-          // 에러 메시지에 이미 정규화된 모델 이름이 포함되어 있으므로 추가 정보만 제공
+        // Include model info for other errors too (error message is already normalized)
+        let finalErrorMessage = `Gemini API error: ${errorMessage}`;
+        if (errorMessage.includes('model')) {
+          // Since normalized model name is already in the error message, append only extra info
           if (model !== normalizedModel) {
-            finalErrorMessage += `\n사용한 모델: "${normalizedModel}" (원본: "${model}")`;
+            finalErrorMessage += `\nUsed model: "${normalizedModel}" (original: "${model}")`;
           } else {
-            finalErrorMessage += `\n사용한 모델: "${normalizedModel}"`;
+            finalErrorMessage += `\nUsed model: "${normalizedModel}"`;
           }
         }
 
         return NextResponse.json(
           {
             error: finalErrorMessage,
-            details: errorMessage, // 원본 에러 메시지는 details에만 포함
+            details: errorMessage, // Keep original error message in details only
             normalizedModel,
             originalModel: model,
           },
@@ -1567,48 +1563,48 @@ export async function POST(request) {
             level: 'error',
             hasFiles,
             fileCount: 0,
-            provider: 'gemini', // Gemini API임을 명시
+            provider: 'gemini', // Explicitly mark as Gemini API
           });
         } catch (logErr) {
-          console.error('[generate] 로그 기록 실패:', logErr);
+          console.error('[generate] Failed to write log:', logErr);
         }
         return NextResponse.json(
-          { error: `Gemini API 응답 오류: HTTP ${openaiRes.status}` },
+          { error: `Gemini API response error: HTTP ${openaiRes.status}` },
           { status: openaiRes.status }
         );
       }
 
-      // Gemini 스트리밍 응답을 OpenAI 형식으로 변환
+      // Convert Gemini streaming response to OpenAI format
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
           const reader = openaiRes.body.getReader();
           const decoder = new TextDecoder('utf-8');
           let accumulatedText = '';
-          let buffer = ''; // 완전한 JSON 객체를 수집하기 위한 버퍼
+          let buffer = ''; // Buffer for collecting complete JSON objects
           let streamClosed = false;
           let streamError = null;
 
-          // Gemini 응답 처리 함수
+          // Gemini response handler
           const processGeminiResponse = (geminiData) => {
-            if (streamClosed) return; // 이미 닫힌 스트림은 처리하지 않음
+            if (streamClosed) return; // Do not process already closed stream
 
             try {
-              // 에러 응답 확인
+              // Check for error response
               if (geminiData.error) {
                 const errorMsg =
                   geminiData.error.message || JSON.stringify(geminiData.error);
-                console.error('[generate] Gemini API 에러:', errorMsg);
+                console.error('[generate] Gemini API error:', errorMsg);
                 streamError = errorMsg;
                 streamClosed = true;
-                controller.error(new Error(`Gemini API 오류: ${errorMsg}`));
+                controller.error(new Error(`Gemini API error: ${errorMsg}`));
                 return;
               }
 
               if (geminiData.candidates && geminiData.candidates[0]) {
                 const candidate = geminiData.candidates[0];
 
-                // 차단된 응답 확인 (SAFETY, RECITATION 등)
+                // Check blocked responses (SAFETY, RECITATION, etc.)
                 if (
                   candidate.finishReason &&
                   (candidate.finishReason === 'SAFETY' ||
@@ -1621,13 +1617,13 @@ export async function POST(request) {
                     .map((r) => `${r.category}: ${r.probability}`)
                     .join(', ');
 
-                  const errorMsg = `응답이 차단되었습니다. 이유: ${
+                  const errorMsg = `Response was blocked. Reason: ${
                     candidate.finishReason
                   }${blockedReasons ? ` (${blockedReasons})` : ''}`;
-                  console.warn('[generate] Gemini 응답 차단:', errorMsg);
+                  console.warn('[generate] Gemini response blocked:', errorMsg);
                   streamError = errorMsg;
 
-                  // 에러를 스트림으로 전송
+                  // Send error through stream
                   const errorChunk = {
                     id: `chatcmpl-${Date.now()}`,
                     object: 'chat.completion.chunk',
@@ -1636,7 +1632,7 @@ export async function POST(request) {
                     choices: [
                       {
                         index: 0,
-                        delta: { content: `\n\n[오류] ${errorMsg}` },
+                        delta: { content: `\n\n[Error] ${errorMsg}` },
                         finish_reason: candidate.finishReason,
                       },
                     ],
@@ -1703,12 +1699,12 @@ export async function POST(request) {
                 geminiData.candidates &&
                 geminiData.candidates.length === 0
               ) {
-                // 후보가 없는 경우 (모두 차단됨)
+                // No candidates returned (all may be blocked)
                 console.warn(
-                  '[generate] Gemini 응답 후보 없음 - 모든 응답이 차단되었을 수 있습니다.'
+                  '[generate] No Gemini response candidates - all responses may have been blocked.'
                 );
                 streamError =
-                  '응답을 생성할 수 없습니다. 안전 필터에 의해 차단되었을 수 있습니다.';
+                  'Unable to generate a response. It may have been blocked by the safety filter.';
                 const errorChunk = {
                   id: `chatcmpl-${Date.now()}`,
                   object: 'chat.completion.chunk',
@@ -1719,7 +1715,7 @@ export async function POST(request) {
                       index: 0,
                       delta: {
                         content:
-                          '\n\n[오류] 응답을 생성할 수 없습니다. 안전 필터에 의해 차단되었을 수 있습니다.',
+                          '\n\n[Error] Unable to generate a response. It may have been blocked by the safety filter.',
                       },
                       finish_reason: 'content_filter',
                     },
@@ -1734,8 +1730,8 @@ export async function POST(request) {
                 return;
               }
             } catch (e) {
-              // 처리 중 에러 발생 시 로그만 남기고 계속 진행
-              console.warn('[generate] Gemini 응답 처리 중 오류:', e.message);
+              // If an error occurs while processing, log and continue
+              console.warn('[generate] Error while processing Gemini response:', e.message);
             }
           };
 
@@ -1743,14 +1739,14 @@ export async function POST(request) {
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
-                // 스트림 종료 시 남은 버퍼 처리
+                // Process remaining buffer when stream ends
                 if (buffer.trim() && !streamClosed) {
                   try {
                     const geminiData = JSON.parse(buffer.trim());
                     processGeminiResponse(geminiData);
                   } catch (e) {
                     console.warn(
-                      '[generate] Gemini 버퍼 JSON 파싱 실패:',
+                      '[generate] Failed to parse Gemini buffer JSON:',
                       e?.message || e
                     );
                   }
@@ -1761,8 +1757,8 @@ export async function POST(request) {
               const chunk = decoder.decode(value, { stream: true });
               buffer += chunk;
 
-              // 완전한 JSON 객체를 찾아서 처리
-              // 중괄호 매칭을 사용하여 완전한 JSON 객체 찾기
+              // Find and process complete JSON objects
+              // Use brace matching to identify complete JSON objects
               let braceCount = 0;
               let startIndex = -1;
 
@@ -1771,16 +1767,16 @@ export async function POST(request) {
 
                 if (char === '{') {
                   if (startIndex === -1) {
-                    startIndex = i; // JSON 객체 시작 위치
+                      startIndex = i; // JSON object start position
                   }
                   braceCount++;
                 } else if (char === '}') {
                   braceCount--;
 
-                  // 중괄호가 모두 닫혔으면 완전한 JSON 객체
+                  // If all braces are closed, this is a complete JSON object
                   if (braceCount === 0 && startIndex !== -1) {
                     const jsonStr = buffer.substring(startIndex, i + 1);
-                    buffer = buffer.substring(i + 1); // 처리한 부분 제거
+                    buffer = buffer.substring(i + 1);
 
                     try {
                       const geminiData = JSON.parse(jsonStr);
@@ -1788,21 +1784,21 @@ export async function POST(request) {
                         processGeminiResponse(geminiData);
                       }
                     } catch (e) {
-                      // JSON 파싱 실패는 무시 (불완전한 객체일 수 있음)
+                      // Ignore JSON parse failures (could be incomplete object)
                       console.warn(
-                        '[generate] Gemini JSON 파싱 실패:',
+                        '[generate] Gemini JSON parse failed:',
                         e.message
                       );
                     }
 
-                    // 다음 JSON 객체를 찾기 위해 초기화
+                    // Reset to find next JSON object
                     startIndex = -1;
                     braceCount = 0;
                   }
                 }
               }
 
-              // 처리되지 않은 부분만 버퍼에 유지
+              // Keep only unprocessed content in buffer
               if (startIndex !== -1) {
                 buffer = buffer.substring(startIndex);
               } else {
@@ -1810,20 +1806,20 @@ export async function POST(request) {
               }
             }
 
-            // 스트림 정상 종료
+            // Normal stream termination
             if (!streamClosed) {
               controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               controller.close();
             }
           } catch (error) {
-            console.error('[generate] Gemini 스트리밍 오류:', error);
+            console.error('[generate] Gemini streaming error:', error);
             streamError = error?.message || String(error);
             if (!streamClosed) {
               try {
                 controller.error(error);
               } catch (e) {
                 console.warn(
-                  '[generate] 스트림 종료 처리 실패:',
+                  '[generate] Failed while handling stream termination:',
                   e?.message || e
                 );
               }
@@ -1861,7 +1857,7 @@ export async function POST(request) {
               });
             } catch (logErr) {
               console.warn(
-                '[generate] Gemini 외부 API 로깅 실패(무시):',
+                '[generate] Gemini external API logging failed (ignored):',
                 logErr?.message || logErr
               );
             }
@@ -1886,15 +1882,15 @@ export async function POST(request) {
         },
       });
     } else if (endpointType === 'openai-compatible') {
-      // OpenAI 호환형 호출
+      // OpenAI-compatible call
       const base = (openaiCompatBase || '').replace(/\/+$/, '');
       if (!base) {
         return NextResponse.json(
-          { error: 'OpenAI 호환 모델서버가 설정되지 않았습니다.' },
+          { error: 'OpenAI-compatible model server is not configured.' },
           { status: 400 }
         );
       }
-      // /v1/chat/completions 경로 조합 (base에 /v1 포함돼 있어도 동작)
+      // Build /v1/chat/completions path (works even if base already includes /v1)
       const openaiUrl = `${base}${
         /\/v1(\/|$)/.test(base) ? '/chat/completions' : '/v1/chat/completions'
       }`;
@@ -1902,7 +1898,7 @@ export async function POST(request) {
       if (openaiCompatApiKey)
         headers['Authorization'] = `Bearer ${openaiCompatApiKey}`;
 
-      // OpenAI 호환 API를 위한 메시지 배열 구성
+      // Build message array for OpenAI-compatible API
       const openaiMessages = [
         ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
         ...filteredMultiturnHistory.map((msg) => ({
@@ -1919,7 +1915,7 @@ export async function POST(request) {
       ];
 
       const body = {
-        model: actualModelName, // UUID -> 실제 모델명으로 변환된 값 사용
+        model: actualModelName, // Use value converted from UUID -> actual model name
         stream: true,
         messages: openaiMessages,
       };
@@ -1931,17 +1927,17 @@ export async function POST(request) {
         body: JSON.stringify(body),
       });
 
-      // 인스턴스 식별자 구성 (OPENAI 호환 인스턴스)
+      // Build instance identifier (OpenAI-compatible instance)
       let instanceId = 'openai-compatible-unknown';
       try {
         const u = new URL(base);
         instanceId = `openai-compatible-${u.hostname}-${u.port || ''}`;
       } catch (error) {
-        console.warn('[OpenAI Compatible] URL 파싱 실패, 기본 인스턴스 ID 사용:', error.message);
+        console.warn('[OpenAI Compatible] URL parsing failed, using default instance ID:', error.message);
       }
 
       if (!openaiRes.body) {
-        // modellogs에도 에러 기록
+        // Also record error in modellogs
         try {
           const { logOpenAIRequest } = await import('@/lib/modelServerMonitor');
           await logOpenAIRequest(instanceId, {
@@ -1964,20 +1960,20 @@ export async function POST(request) {
           });
         } catch (e) {
           console.warn(
-            '[openai-compatible] modellogs 에러 기록 실패(무시):',
+            '[openai-compatible] Failed to write modellogs error (ignored):',
             e?.message || e
           );
         }
 
-        // 실패한 호출도 외부 API 로깅에 기록
+        // Also record failed calls in external API logs
         try {
           await logExternalApiRequest({
             sourceType: 'internal',
             provider: 'openai-compatible',
             apiType: apiTypeForLog,
             endpoint: openaiUrl,
-            model: actualModelName, // 실제 모델명
-            messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+            model: actualModelName, // Actual model name
+            messages: fullMessagesForLogging, // Include full message history
             promptTokenCount: finalPrompt.length,
             responseTokenCount: 0,
             responseTime: Date.now() - startAt,
@@ -1999,25 +1995,25 @@ export async function POST(request) {
           });
         } catch (logErr) {
           console.warn(
-            '[openai-compatible] 외부 API 로깅 실패(무시):',
+              '[openai-compatible] External API logging failed (ignored):',
             logErr?.message || logErr
           );
         }
 
         return NextResponse.json(
           {
-            error: `OpenAI 호환 응답 스트림이 비어있습니다. (HTTP ${openaiRes.status})`,
+              error: `OpenAI-compatible response stream is empty. (HTTP ${openaiRes.status})`,
           },
           { status: 500 }
         );
       }
 
-      // OpenAI 호환 API 실패 시 로깅 (body는 있지만 status가 실패인 경우)
+      // Log when OpenAI-compatible API fails (body exists but status is failure)
       if (!openaiRes.ok) {
         try {
           let errorText = '';
           try {
-            // 응답 본문을 읽기 전에 복제
+            // Clone before reading response body
             const clonedRes = openaiRes.clone();
             errorText = await clonedRes.text();
           } catch (e) {
@@ -2029,8 +2025,8 @@ export async function POST(request) {
             provider: 'openai-compatible',
             apiType: apiTypeForLog,
             endpoint: openaiUrl,
-            model: actualModelName, // 실제 모델명
-            messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+            model: actualModelName, // Actual model name
+            messages: fullMessagesForLogging, // Include full message history
             promptTokenCount: finalPrompt.length,
             responseTokenCount: 0,
             responseTime: Date.now() - startAt,
@@ -2052,13 +2048,13 @@ export async function POST(request) {
           });
         } catch (logErr) {
           console.warn(
-            '[openai-compatible] 외부 API 로깅 실패(무시):',
+            '[openai-compatible] External API logging failed (ignored):',
             logErr?.message || logErr
           );
         }
       }
 
-      // OpenAI SSE → 기존 JSONL {response: "..."}로 변환 스트림
+      // Convert OpenAI SSE -> existing JSONL {response: "..."} stream
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
@@ -2077,14 +2073,14 @@ export async function POST(request) {
               for (const rawLine of lines) {
                 const line = rawLine.trim();
                 if (!line) continue;
-                // SSE 형식: data: {...} 또는 [DONE]
+                // SSE format: data: {...} or [DONE]
                 const m = line.startsWith('data:')
                   ? line.slice(5).trim()
                   : null;
                 if (m === null) continue;
                 if (m === '[DONE]') {
                   controller.close();
-                  // 스트림 완료 시 외부 API 로깅 (openai-compatible)
+                  // External API logging when stream completes (openai-compatible)
                   try {
                     const responseTime = Date.now() - startAt;
                     await logExternalApiRequest({
@@ -2092,8 +2088,8 @@ export async function POST(request) {
                       provider: 'openai-compatible',
                       apiType: apiTypeForLog,
                       endpoint: openaiUrl,
-                      model: actualModelName, // 실제 모델명
-                      messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+                      model: actualModelName, // Actual model name
+                      messages: fullMessagesForLogging, // Include full message history
                       promptTokenCount: finalPrompt.length,
                       responseTokenCount: accumulatedResponse.length,
                       responseTime,
@@ -2109,7 +2105,7 @@ export async function POST(request) {
                     });
                   } catch (e) {
                     console.warn(
-                      '[openai-compatible] 외부 API 로깅 실패(무시):',
+                      '[openai-compatible] External API logging failed (ignored):',
                       e?.message || e
                     );
                   }
@@ -2122,7 +2118,7 @@ export async function POST(request) {
                     text: accumulatedResponse,
                     clientIP,
                   });
-                  // modellogs에도 OPENAI 프록시 로그 기록
+                  // Also write OPENAI proxy log to modellogs
                   try {
                     const { logOpenAIRequest } = await import(
                       '@/lib/modelServerMonitor'
@@ -2151,7 +2147,7 @@ export async function POST(request) {
                     });
                   } catch (e) {
                     console.warn(
-                      '[openai-compatible] modellogs 기록 실패(무시):',
+                      '[openai-compatible] Failed to write modellogs (ignored):',
                       e?.message || e
                     );
                   }
@@ -2173,12 +2169,12 @@ export async function POST(request) {
                     );
                   }
                 } catch (error) {
-                  console.warn('[Catch] 에러 발생:', error.message);
-                  // 무시
+                  console.warn('[Catch] Error occurred:', error.message);
+                  // Ignore
                 }
               }
             }
-            // 남은 버퍼 처리
+            // Process remaining buffer
             const rest = buffer.trim();
             if (rest.startsWith('data:')) {
               const payload = rest.slice(5).trim();
@@ -2199,13 +2195,13 @@ export async function POST(request) {
                     );
                   }
                 } catch (error) {
-                  console.warn('[Catch] 에러 발생:', error.message);
-                  // 무시
+                  console.warn('[Catch] Error occurred:', error.message);
+                  // Ignore
                 }
               }
             }
             controller.close();
-            // 스트림 자연 종료 시 외부 API 로깅 (openai-compatible)
+            // External API logging on natural stream end (openai-compatible)
             try {
               const responseTime = Date.now() - startAt;
               await logExternalApiRequest({
@@ -2213,8 +2209,8 @@ export async function POST(request) {
                 provider: 'openai-compatible',
                 apiType: apiTypeForLog,
                 endpoint: openaiUrl,
-                model: actualModelName, // 실제 모델명
-                messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+                model: actualModelName, // Actual model name
+                messages: fullMessagesForLogging, // Include full message history
                 promptTokenCount: finalPrompt.length,
                 responseTokenCount: accumulatedResponse.length,
                 responseTime,
@@ -2226,7 +2222,7 @@ export async function POST(request) {
               });
             } catch (e) {
               console.warn(
-                '[openai-compatible] 외부 API 로깅 실패(무시):',
+                  '[openai-compatible] External API logging failed (ignored):',
                 e?.message || e
               );
             }
@@ -2239,7 +2235,7 @@ export async function POST(request) {
               text: accumulatedResponse,
               clientIP,
             });
-            // modellogs에도 OPENAI 프록시 로그 기록
+            // Also write OPENAI proxy log to modellogs
             try {
               const { logOpenAIRequest } = await import(
                 '@/lib/modelServerMonitor'
@@ -2267,12 +2263,12 @@ export async function POST(request) {
               });
             } catch (e) {
               console.warn(
-                '[openai-compatible] modellogs 기록 실패(무시):',
+                  '[openai-compatible] Failed to write modellogs (ignored):',
                 e?.message || e
               );
             }
           } catch (e) {
-            console.error('[generate] OpenAI 호환 스트림 처리 오류:', e);
+            console.error('[generate] OpenAI-compatible stream processing error:', e);
             controller.error(e);
           }
         },
@@ -2283,45 +2279,45 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' },
       });
     } else {
-      // LLM 요청 (라운드로빈 추적)
+      // LLM request (round-robin tracking)
       let llmEndpoint = forcedLlmEndpoint;
       let roundRobinIndex = null;
       if (!llmEndpoint) {
-        // 모델 이름에서 서버 이름 파싱
+          // Parse server name from model name
         let { serverName } = parseModelName(model);
 
-        // 모델 ID에서 서버 이름을 파싱하지 못한 경우, DB 설정에서 확인
+          // If server name cannot be parsed from model ID, check DB settings
         if (!serverName) {
           const { getServerNameForModel } = await import('@/lib/modelServers');
           const dbServerName = await getServerNameForModel(model);
           if (dbServerName) {
             serverName = dbServerName;
             console.log(
-              `[Model Server Selection] DB 설정에서 서버 그룹 찾음: "${model}" -> "${serverName}"`
+              `[Model Server Selection] Found server group in DB settings: "${model}" -> "${serverName}"`
             );
           }
         }
 
         if (serverName) {
-          // 서버 이름이 있으면 해당 서버 그룹에서만 라운드로빈
+          // If server name exists, round-robin only within that server group
           const serverEndpoint = await getModelServerEndpointByName(serverName);
           if (serverEndpoint) {
             llmEndpoint = serverEndpoint.endpoint;
             roundRobinIndex = serverEndpoint.index;
             console.log(
-              `[Model Server Selection] 모델 "${model}" -> 서버 그룹 "${serverName}" -> 엔드포인트: ${llmEndpoint} (RR: ${roundRobinIndex})`
+              `[Model Server Selection] Model "${model}" -> server group "${serverName}" -> endpoint: ${llmEndpoint} (RR: ${roundRobinIndex})`
             );
           } else {
-            // 서버 이름으로 찾지 못하면 전체 라운드로빈 사용
+            // If not found by server name, use global round-robin
             console.warn(
-              `[Model Server Selection] 서버 그룹 "${serverName}"을 찾을 수 없어 전체 라운드로빈 사용`
+              `[Model Server Selection] Could not find server group "${serverName}", using global round-robin`
             );
             const next = await getNextModelServerEndpointWithIndex();
             llmEndpoint = next.endpoint;
             roundRobinIndex = next.index;
           }
         } else {
-          // 서버 이름이 없으면 전체 라운드로빈 사용
+          // If no server name, use global round-robin
           const next = await getNextModelServerEndpointWithIndex();
           llmEndpoint = next.endpoint;
           roundRobinIndex = next.index;
@@ -2329,12 +2325,12 @@ export async function POST(request) {
       }
       const llmUrl = `${llmEndpoint}/api/chat`;
       const startTime = Date.now();
-      const streamStartTime = Date.now(); // 스트림 시작 시간 (로깅용)
+      const streamStartTime = Date.now(); // Stream start time (for logging)
       const instanceId = `llm-${new URL(llmEndpoint).hostname}-${
         new URL(llmEndpoint).port
       }`;
 
-      // Ollama /api/chat을 위한 메시지 배열 구성
+      // Build message array for Ollama /api/chat
       const ollamaMessages = [
         ...filteredMultiturnHistory.map((msg) => ({
           role: msg.role,
@@ -2350,14 +2346,14 @@ export async function POST(request) {
       ];
 
       console.log(
-        `[generate] Ollama /api/chat 호출: ${filteredMultiturnHistory.length}개 히스토리 + 현재 질문`
+        `[generate] Ollama /api/chat call: ${filteredMultiturnHistory.length} history message(s) + current question`
       );
 
       const llmRes = await fetch(llmUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: actualModelName, // UUID -> 실제 모델명으로 변환된 값 사용
+          model: actualModelName, // Use value converted from UUID -> actual model name
           messages: ollamaMessages,
           stream: true,
           options: systemPrompt
@@ -2371,7 +2367,7 @@ export async function POST(request) {
 
       const responseTime = Date.now() - startTime;
 
-      // 상세 LLM 요청 로그 기록
+      // Record detailed LLM request log
       const requestLogData = {
         method: 'POST',
         endpoint: '/api/chat',
@@ -2384,7 +2380,7 @@ export async function POST(request) {
         requestSize: JSON.stringify({ model, messages: ollamaMessages }).length,
         responseTime,
         responseStatus: llmRes.status,
-        responseSize: 0, // 스트림이므로 나중에 계산 어려움
+        responseSize: 0, // Streaming response, difficult to calculate later
         errorMessage: llmRes.ok
           ? null
           : `HTTP ${llmRes.status}: ${llmRes.statusText}`,
@@ -2395,7 +2391,7 @@ export async function POST(request) {
 
       await logModelServerRequest(instanceId, requestLogData);
 
-      // 기존 로그도 유지
+      // Keep existing log as well
       if (llmRes.ok) {
         await logModelServerAPICall(llmEndpoint, true, responseTime);
       } else {
@@ -2406,11 +2402,11 @@ export async function POST(request) {
           new Error(`HTTP ${llmRes.status}: ${llmRes.statusText}`)
         );
 
-        // 실패한 호출도 외부 API 로깅에 기록
+        // Also record failed calls in external API logs
         try {
           let errorText = '';
           try {
-            // 응답 본문을 읽기 전에 복제 (스트림 소비 방지)
+            // Clone before reading response body (prevent stream consumption)
             const clonedRes = llmRes.clone();
             errorText = await clonedRes.text();
           } catch (e) {
@@ -2422,8 +2418,8 @@ export async function POST(request) {
             provider: 'model-server',
             apiType: apiTypeForLog,
             endpoint: llmUrl,
-            model: actualModelName, // 실제 모델명
-            messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+            model: actualModelName, // Actual model name
+            messages: fullMessagesForLogging, // Include full message history
             promptTokenCount: ollamaMessages.reduce(
               (sum, m) => sum + (m.content?.length || 0),
               0
@@ -2448,7 +2444,7 @@ export async function POST(request) {
           });
         } catch (logErr) {
           console.warn(
-            '[webapp-generate] 외부 API 로깅 실패(무시):',
+            '[webapp-generate] External API logging failed (ignored):',
             logErr?.message || logErr
           );
         }
@@ -2456,7 +2452,7 @@ export async function POST(request) {
 
       const piiFilterResponse = matchedModel?.piiFilterResponse === true;
 
-      // 스트림 응답 (응답 내용 누적하여 로깅)
+      // Stream response (accumulate response content for logging)
       const stream = new ReadableStream({
         async start(controller) {
           const reader = llmRes.body.getReader();
@@ -2564,7 +2560,7 @@ export async function POST(request) {
               });
               const finalResponse = piiResult.detected ? piiResult.maskedText : accumulatedResponse;
               if (piiResult.detected) {
-                console.log(`[PII] 응답에서 ${piiResult.detectedCnt}개 PII 감지 → 마스킹 적용`);
+                console.log(`[PII] Detected ${piiResult.detectedCnt} PII item(s) in response -> mask applied`);
               }
               if (!streamClosed) {
                 try {
@@ -2588,11 +2584,11 @@ export async function POST(request) {
 
             if (parseFailureCount > 0) {
               console.info(
-                `[generate] Ollama 응답 파싱 실패 ${parseFailureCount}건 (부분 청크로 인해 일부 라인 스킵)`
+                `[generate] Ollama response parse failed ${parseFailureCount} time(s) (some lines skipped due to partial chunks)`
               );
             }
 
-            // 스트림 완료 후 외부 API 로깅
+            // External API logging after stream completion
             if (llmRes.ok) {
               try {
                 const streamResponseTime = Date.now() - streamStartTime;
@@ -2602,7 +2598,7 @@ export async function POST(request) {
                 );
                 const responseTokens = accumulatedResponse.length;
 
-                // 사용자 정보 추출
+                // Extract user information
                 const jwtUserId = payload?.sub || null;
                 const jwtEmail = payload?.email || null;
                 const jwtName = payload?.name || null;
@@ -2613,8 +2609,8 @@ export async function POST(request) {
                   provider: 'model-server',
                   apiType: apiTypeForLog,
                   endpoint: llmUrl,
-                  model: actualModelName, // 실제 모델명
-                  messages: fullMessagesForLogging, // 전체 메시지 히스토리 포함
+                  model: actualModelName, // Actual model name
+                  messages: fullMessagesForLogging, // Include full message history
                   promptTokenCount: promptTokens,
                   responseTokenCount: responseTokens,
                   responseTime: streamResponseTime,
@@ -2635,7 +2631,7 @@ export async function POST(request) {
                 });
               } catch (logError) {
                 console.warn(
-                  '[webapp-generate] 외부 API 로깅 실패(무시):',
+                  '[webapp-generate] External API logging failed (ignored):',
                   logError?.message || logError
                 );
               }
@@ -2650,7 +2646,7 @@ export async function POST(request) {
               });
             }
           } catch (streamError) {
-            console.error('[webapp-generate] 스트림 처리 오류:', streamError);
+            console.error('[webapp-generate] Stream processing error:', streamError);
             controller.error(streamError);
           }
         },
@@ -2662,9 +2658,9 @@ export async function POST(request) {
       });
     }
   } catch (err) {
-    console.error('[/api/generate] 서버 에러:', err);
+    console.error('[/api/generate] Server error:', err);
 
-    // 에러 상황에서도 로그 기록
+    // Write logs even on error conditions
     try {
       if (typeof instanceId !== 'undefined' && instanceId) {
         await logModelServerRequest(instanceId, {
@@ -2683,11 +2679,11 @@ export async function POST(request) {
         });
       }
     } catch (logErr) {
-      console.error('LLM 에러 로깅 실패:', logErr);
+      console.error('Failed to write LLM error log:', logErr);
     }
 
     return NextResponse.json(
-      { error: '프록시 요청 실패', details: err.message },
+      { error: 'Proxy request failed', details: err.message },
       { status: 500 }
     );
   }

@@ -1,8 +1,8 @@
-let endpoints = []; // [{ url, provider }] 형태로 저장
+let endpoints = []; // Store in [{ url, provider }] format
 
 function normalizeEndpointForRuntime(url) {
   if (!url) return url;
-  // 로컬(비-Docker) 실행 시 host.docker.internal 사용을 방지
+  // Prevent using host.docker.internal in local (non-Docker) runtime
   if (process.env.DOCKER_CONTAINER || process.env.KUBERNETES_SERVICE_HOST) {
     return url;
   }
@@ -12,15 +12,15 @@ function normalizeEndpointForRuntime(url) {
 }
 
 /**
- * 모델 설정 조회 (DB에서 직접 조회)
+ * Fetch model config (direct DB query)
  */
 async function getModelConfig() {
   try {
-    // 1. 새 테이블 구조에서 조회 시도
+    // 1. Try querying from the new table structure
     const { getModelsFromTables } = await import('@/lib/modelTables');
     let categories = await getModelsFromTables();
 
-    // 2. 새 테이블에 데이터가 없으면 레거시 model_config에서 조회
+    // 2. If no data in new tables, query legacy model_config
     if (!categories) {
       const { query } = await import('@/lib/postgres');
       const modelConfigResult = await query(
@@ -41,7 +41,7 @@ async function getModelConfig() {
 }
 
 /**
- * 설정 조회 (DB에서 직접 조회)
+ * Fetch settings (direct DB query)
  */
 async function getSettings() {
   try {
@@ -53,15 +53,15 @@ async function getSettings() {
 
     return settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
   } catch (error) {
-    console.warn('[Settings] 설정 조회 실패:', error.message);
+    console.warn('[Settings] Failed to fetch settings:', error.message);
     return null;
   }
 }
 
 /**
- * 환경에 따른 기본 모델 매핑
- * 개발환경: gemma2:1b (단일 모델)
- * 실제환경: gpt-oss:20b, gpt-oss:120b (다중 모델)
+ * Default model mapping by environment
+ * Development: gemma2:1b (single model)
+ * Production: gpt-oss:20b, gpt-oss:120b (multiple models)
  */
 export const MODEL_CONFIG = {
   development: {
@@ -82,14 +82,14 @@ export const MODEL_CONFIG = {
 };
 
 /**
- * 현재 환경 확인
+ * Get current environment
  */
 export function getEnvironment() {
   return process.env.NODE_ENV === 'production' ? 'production' : 'development';
 }
 
 /**
- * 현재 환경에 맞는 모델 옵션 반환
+ * Return model options for current environment
  */
 export function getModelOptions() {
   const env = getEnvironment();
@@ -97,7 +97,7 @@ export function getModelOptions() {
 }
 
 /**
- * 현재 환경의 기본 모델 반환
+ * Return default model for current environment
  */
 export function getDefaultModel() {
   const env = getEnvironment();
@@ -105,9 +105,9 @@ export function getDefaultModel() {
 }
 
 /**
- * 모델 이름(표시 이름, UUID, 또는 모델명)을 실제 모델명(modelName)으로 변환
- * @param {string} modelName - 표시 이름, UUID, 또는 모델 이름
- * @returns {Promise<string>} 실제 모델명 (예: gemma3:1b)
+ * Convert model name (display name, UUID, or model id) to actual modelName
+ * @param {string} modelName - display name, UUID, or model name
+ * @returns {Promise<string>} actual model name (e.g., gemma3:1b)
  */
 export async function resolveModelId(modelName) {
   if (!modelName) {
@@ -115,11 +115,11 @@ export async function resolveModelId(modelName) {
   }
 
   try {
-    // 캐시된 모델 설정 사용
+    // Use cached model config
     const modelConfig = await getModelConfig();
 
     if (modelConfig && modelConfig.categories) {
-      // 모든 카테고리에서 모델 찾기
+      // Find models across all categories
       const allModels = [];
       Object.values(modelConfig.categories).forEach((category) => {
         if (category.models && Array.isArray(category.models)) {
@@ -127,39 +127,39 @@ export async function resolveModelId(modelName) {
         }
       });
 
-      // 1. UUID로 찾기 (id 필드가 UUID인 경우)
+      // 1. Find by UUID (when id field is UUID)
       let foundModel = allModels.find((m) => m.id === modelName);
       if (foundModel) {
-        // UUID로 찾았으면 modelName 반환 (실제 모델명)
+        // If found by UUID, return modelName (actual model id)
         if (foundModel.modelName) {
           console.log(
-            `[Model Resolver] UUID "${modelName}"을 모델명 "${foundModel.modelName}"으로 변환`
+            `[Model Resolver] Converted UUID "${modelName}" to model name "${foundModel.modelName}"`
           );
           return foundModel.modelName;
         }
-        // 하위 호환성: modelName이 없으면 id 반환
+        // Backward compatibility: return id if modelName is missing
         return foundModel.id;
       }
 
-      // 2. modelName 필드로 찾기 (레거시 또는 직접 모델명 입력)
+      // 2. Find by modelName field (legacy or direct model name input)
       foundModel = allModels.find((m) => m.modelName === modelName);
       if (foundModel) {
         return foundModel.modelName;
       }
 
-      // 3. 표시 이름(label)으로 찾기
+      // 3. Find by display name (label)
       foundModel = allModels.find(
         (m) => m.label && m.label.toLowerCase() === modelName.toLowerCase()
       );
       if (foundModel) {
         const resultModelName = foundModel.modelName || foundModel.id;
         console.log(
-          `[Model Resolver] 표시 이름 "${modelName}"을 모델명 "${resultModelName}"으로 변환`
+          `[Model Resolver] Converted display name "${modelName}" to model name "${resultModelName}"`
         );
         return resultModelName;
       }
 
-      // 4. 부분 일치로 찾기 (대소문자 무시)
+      // 4. Find by partial match (case-insensitive)
       foundModel = allModels.find(
         (m) =>
           (m.label &&
@@ -170,30 +170,30 @@ export async function resolveModelId(modelName) {
       if (foundModel) {
         const resultModelName = foundModel.modelName || foundModel.id;
         console.log(
-          `[Model Resolver] 부분 일치 "${modelName}"을 모델명 "${resultModelName}"으로 변환`
+          `[Model Resolver] Converted partial match "${modelName}" to model name "${resultModelName}"`
         );
         return resultModelName;
       }
     }
   } catch (error) {
     console.warn(
-      '[Model Resolver] Model settings query failed, 원본 이름 사용:',
+      '[Model Resolver] Model settings query failed, using original name:',
       error.message
     );
   }
 
-  // 매핑을 찾지 못하면 원본 이름 반환 (이미 올바른 모델명일 수 있음)
+  // Return original name when no mapping is found (it may already be valid)
   console.log(
-    `[Model Resolver] 모델 매핑을 찾지 못함, 원본 이름 사용: "${modelName}"`
+    `[Model Resolver] Model mapping not found, using original name: "${modelName}"`
   );
   return modelName;
 }
 
 /**
- * 모델 ID(UUID 또는 모델명)에서 서버 이름을 찾습니다 (DB 설정에서 확인)
- * 동일한 표시 이름(label)을 가진 모델들의 서버 그룹을 찾습니다.
- * @param {string} modelId - 모델 ID (UUID 또는 모델명)
- * @returns {Promise<string | null>} 서버 이름 또는 null
+ * Find server name from model ID (UUID or model name) using DB settings
+ * Finds the server group for models with the same display label.
+ * @param {string} modelId - model ID (UUID or model name)
+ * @returns {Promise<string | null>} server name or null
  */
 export async function getServerNameForModel(modelId) {
   if (!modelId) {
@@ -201,11 +201,11 @@ export async function getServerNameForModel(modelId) {
   }
 
   try {
-    // 캐시된 모델 설정 사용
+    // Use cached model config
     const modelConfig = await getModelConfig();
 
     if (modelConfig && modelConfig.categories) {
-      // 모든 카테고리에서 모델 찾기
+      // Find models across all categories
       const allModels = [];
       Object.values(modelConfig.categories).forEach((category) => {
         if (category.models && Array.isArray(category.models)) {
@@ -213,22 +213,22 @@ export async function getServerNameForModel(modelId) {
         }
       });
 
-      // 1. UUID로 정확히 찾기
+      // 1. Exact match by UUID
       let foundModel = allModels.find((m) => m.id === modelId);
 
       if (!foundModel) {
-        // 2. modelName으로 찾기
+        // 2. Find by modelName
         foundModel = allModels.find((m) => m.modelName === modelId);
       }
 
       if (!foundModel) {
-        // 3. 부분 매칭 시도 (modelName 기반)
+        // 3. Try partial matching (based on modelName)
         const modelBase = modelId.split(':')[0];
         foundModel = allModels.find((m) => {
           if (!m.modelName) return false;
           const mNameLower = m.modelName.toLowerCase();
           const modelIdLower = modelId.toLowerCase();
-          // 정확히 포함되거나, 기본 이름이 일치하는 경우
+          // Included exactly, or base name matches
           return (
             mNameLower.includes(modelIdLower) ||
             mNameLower.startsWith(modelBase.toLowerCase() + ':')
@@ -236,8 +236,8 @@ export async function getServerNameForModel(modelId) {
         });
       }
       if (!foundModel) {
-        // 4. 역방향 매칭 시도 (모델 설정의 modelName이 요청 모델 ID에 포함된 경우)
-        // 예: modelId가 "gemma3:27b-it-qat"이고 설정에 "gemma3:27b"가 있으면 매칭
+        // 4. Try reverse matching (configured modelName included in requested model ID)
+        // Example: modelId is "gemma3:27b-it-qat" and config has "gemma3:27b"
         foundModel = allModels.find(
           (m) =>
             m.modelName &&
@@ -246,10 +246,10 @@ export async function getServerNameForModel(modelId) {
       }
 
       if (foundModel && foundModel.label) {
-        // 동일한 표시 이름(label)을 가진 모든 모델 찾기
+        // Find all models with the same display label
         const targetLabel = foundModel.label.trim().toLowerCase();
         console.log(
-          `[Model Server Resolver] 모델 "${modelId}" 검색 - 찾은 모델:`,
+          `[Model Server Resolver] Search model "${modelId}" - found model:`,
           {
             id: foundModel.id,
             modelName: foundModel.modelName,
@@ -258,7 +258,7 @@ export async function getServerNameForModel(modelId) {
           }
         );
         console.log(
-          `[Model Server Resolver] 전체 모델 수: ${allModels.length}, 각 모델의 label:`,
+          `[Model Server Resolver] Total models: ${allModels.length}, labels by model:`,
           allModels.map((m) => ({
             id: m.id,
             modelName: m.modelName,
@@ -272,7 +272,7 @@ export async function getServerNameForModel(modelId) {
         );
 
         console.log(
-          `[Model Server Resolver] 동일 표시 이름 "${foundModel.label}" 모델 ${sameLabelModels.length}개 찾음:`,
+          `[Model Server Resolver] Found ${sameLabelModels.length} model(s) with same display label "${foundModel.label}":`,
           sameLabelModels.map((m) => ({
             id: m.id,
             modelName: m.modelName,
@@ -282,14 +282,14 @@ export async function getServerNameForModel(modelId) {
           }))
         );
 
-        // 같은 label을 가진 모델들의 서버 이름 수집
+        // Collect server names from models with same label
         const serverNames = new Set();
         for (const model of sameLabelModels) {
-          // 모델 설정에 serverName이 있으면 사용
+          // Use serverName from model config when available
           if (model.serverName) {
             serverNames.add(model.serverName);
           } else {
-            // modelName에서 서버 이름 파싱
+            // Parse server name from modelName
             const modelNameToParse = model.modelName || model.id;
             const { serverName } = parseModelName(modelNameToParse);
             if (serverName) {
@@ -298,40 +298,40 @@ export async function getServerNameForModel(modelId) {
           }
         }
 
-        // 같은 label을 가진 모델들이 같은 서버 그룹에 속해 있는지 확인
+        // Check whether models with same label belong to same server group
         if (serverNames.size === 1) {
           const serverName = Array.from(serverNames)[0];
           console.log(
-            `[Model Server Resolver] 모델 "${modelId}" (표시 이름: "${foundModel.label}") -> 서버 그룹 "${serverName}" (동일 표시 이름 모델 ${sameLabelModels.length}개)`
+            `[Model Server Resolver] Model "${modelId}" (display label: "${foundModel.label}") -> server group "${serverName}" (${sameLabelModels.length} model(s) with same display label)`
           );
           return serverName;
         } else if (serverNames.size > 1) {
           console.warn(
-            `[Model Server Resolver] 모델 "${modelId}" (표시 이름: "${
+            `[Model Server Resolver] Model "${modelId}" (display label: "${
               foundModel.label
-            }")는 여러 서버 그룹에 속해 있습니다: ${Array.from(
+            }") belongs to multiple server groups: ${Array.from(
               serverNames
             ).join(', ')}`
           );
-          // 첫 번째 서버 이름 반환 (또는 가장 일반적인 것)
+          // Return the first server name (or most common)
           return Array.from(serverNames)[0];
         } else {
-          // 서버 이름을 찾지 못한 경우, modelName에서 직접 파싱 시도
+          // If server name is not found, try parsing directly from modelName
           const modelNameToParse = foundModel.modelName || foundModel.id;
           const { serverName } = parseModelName(modelNameToParse);
           if (serverName) {
-            // 파싱된 서버 이름이 실제로 존재하는지 확인
+            // Verify parsed server name actually exists
             const serverEndpoints = await getModelServerEndpointsByName(
               serverName
             );
             if (serverEndpoints && serverEndpoints.length > 0) {
               console.log(
-                `[Model Server Resolver] 모델 "${modelId}" -> 서버 그룹 "${serverName}" (모델명에서 파싱 및 검증)`
+                `[Model Server Resolver] Model "${modelId}" -> server group "${serverName}" (parsed and validated from model name)`
               );
               return serverName;
             } else {
               console.warn(
-                `[Model Server Resolver] 모델 "${modelId}"에서 파싱한 서버 이름 "${serverName}"이 실제로 존재하지 않습니다.`
+                `[Model Server Resolver] Parsed server name "${serverName}" from model "${modelId}" does not actually exist.`
               );
             }
           }
@@ -346,19 +346,19 @@ export async function getServerNameForModel(modelId) {
 }
 
 /**
- * Docker 환경 감지
+ * Detect Docker environment
  */
 function isDockerEnvironment() {
-  // Docker 환경 감지: 환경변수 또는 파일 시스템 확인
+  // Detect Docker environment: check env vars or filesystem
   if (typeof process !== 'undefined') {
-    // Docker Compose나 Kubernetes 환경 변수 확인 (가장 신뢰할 수 있음)
+    // Check Docker Compose/Kubernetes env vars (most reliable)
     if (process.env.DOCKER_CONTAINER || process.env.KUBERNETES_SERVICE_HOST) {
       return true;
     }
 
-    // /.dockerenv 파일 존재 확인 (동기 방식)
+    // Check /.dockerenv file existence (sync)
     try {
-      // Node.js 환경에서만 동작
+      // Works only in Node.js environment
       if (typeof require !== 'undefined') {
         const fs = require('fs');
         if (fs.existsSync && fs.existsSync('/.dockerenv')) {
@@ -376,15 +376,15 @@ function isDockerEnvironment() {
 }
 
 /**
- * DB 설정에서 LLM_ENDPOINTS를 파싱해 전역 배열에 저장합니다.
- * 개발환경: http://localhost:11434 (단일 인스턴스)
- * 실제환경: 다중 인스턴스 (로드밸런싱)
- * 반환 형식: [{ url, provider }]
+ * Parse LLM_ENDPOINTS from DB settings and store in global array.
+ * Development: http://localhost:11434 (single instance)
+ * Production: multiple instances (load balancing)
+ * Return format: [{ url, provider }]
  */
 export async function initModelServerEndpoints() {
   let parsed = [];
 
-  // 서버 환경에서는 DB 설정에서만 로드
+  // In server environment, load from DB settings only
   if (typeof window === 'undefined') {
     try {
       const { query } = await import('@/lib/postgres');
@@ -399,7 +399,7 @@ export async function initModelServerEndpoints() {
       const settings =
         settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
 
-      // customEndpoints 우선, 없으면 legacy 필드 사용
+      // Prefer customEndpoints; fallback to legacy fields if absent
       if (
         Array.isArray(settings?.customEndpoints) &&
         settings.customEndpoints.length > 0
@@ -408,37 +408,37 @@ export async function initModelServerEndpoints() {
           .filter((e) => e?.url)
           .map((e) => {
             const url = e.url.trim().toLowerCase();
-            // URL 기반으로 provider 자동 감지 (우선순위: URL > 설정된 provider)
+            // Auto-detect provider from URL (priority: URL > configured provider)
             let provider = e.provider;
 
             if (url.includes('generativelanguage.googleapis.com')) {
-              // Gemini URL은 무조건 gemini로 설정
+              // Gemini URL is always treated as gemini
               provider = 'gemini';
               if (e.provider && e.provider !== 'gemini') {
                 console.warn(
-                  `[Model Servers] Gemini URL인데 provider가 '${e.provider}'로 설정되어 있습니다. 'gemini'로 자동 수정합니다.`,
+                  `[Model Servers] Gemini URL detected but provider is set to '${e.provider}'. Auto-correcting to 'gemini'.`,
                   { url: e.url, originalProvider: e.provider }
                 );
               }
             } else if (url.includes('/v1/models') || url.includes('/v1/chat')) {
-              // OpenAI 호환 URL은 무조건 openai-compatible로 설정
+              // OpenAI-compatible URL is always treated as openai-compatible
               provider = 'openai-compatible';
               if (e.provider && e.provider !== 'openai-compatible') {
                 console.warn(
-                  `[Model Servers] OpenAI 호환 URL인데 provider가 '${e.provider}'로 설정되어 있습니다. 'openai-compatible'로 자동 수정합니다.`,
+                  `[Model Servers] OpenAI-compatible URL detected but provider is set to '${e.provider}'. Auto-correcting to 'openai-compatible'.`,
                   { url: e.url, originalProvider: e.provider }
                 );
               }
             } else if (!provider || provider === 'model-server') {
-              // provider가 없거나 'model-server'인 경우, 기본값으로 설정
+              // If provider is missing or 'model-server', use default
               provider = 'model-server';
             }
-            // 그 외의 경우는 설정된 provider를 그대로 사용
+            // Otherwise, keep configured provider as-is
 
             return {
               url: e.url.trim(),
               provider,
-              apiKey: e.apiKey || '', // API key 추가
+              apiKey: e.apiKey || '', // Include API key
             };
           })
           .filter((e) => e.url);
@@ -448,25 +448,25 @@ export async function initModelServerEndpoints() {
           .split(',')
           .map((e) => e.trim())
           .filter(Boolean)
-          // name|url 또는 name=url 지원, url만 추출
+           // Support name|url or name=url; extract URL only
           .map((entry) => {
             const m = entry.match(/^(.*?)\s*[|=｜＝]\s*(https?:\/\/.+)$/i);
             return m ? m[2].trim() : entry;
           });
         parsed = urlList.map((url) => ({
           url,
-          provider: 'model-server', // legacy는 모두 model-server로 간주
+            provider: 'model-server', // Treat all legacy values as model-server
         }));
       }
     } catch (e) {
       console.warn(
-        '[Model Servers] DB에서 모델서버 로드 실패:',
+        '[Model Servers] Failed to load model servers from DB:',
         e?.message || e
       );
     }
   }
 
-  // 환경변수에서 OLLAMA_ENDPOINTS 확인 (Docker 환경에서 유용)
+  // Check OLLAMA_ENDPOINTS from environment variables (useful in Docker)
   if (
     parsed.length === 0 &&
     typeof process !== 'undefined' &&
@@ -478,22 +478,22 @@ export async function initModelServerEndpoints() {
     if (envEndpoints.length > 0) {
       parsed = envEndpoints.map((url) => ({
         url,
-        provider: 'model-server', // 환경변수는 모두 model-server로 간주
+        provider: 'model-server', // Treat all env values as model-server
       }));
       console.log(
-        '[Model Servers] 환경변수 OLLAMA_ENDPOINTS에서 모델 서버 로드:',
+        '[Model Servers] Loaded model servers from OLLAMA_ENDPOINTS env var:',
         parsed.map((e) => e.url)
       );
     }
   }
 
-  // 최종 기본값 (DB에 설정이 없을 경우에만)
+  // Final fallback defaults (only when DB has no settings)
   if (parsed.length === 0) {
     const env = getEnvironment();
     const isDocker = isDockerEnvironment();
 
     if (env === 'development') {
-      // Docker 환경에서는 host.docker.internal 사용
+      // Use host.docker.internal in Docker environment
       if (isDocker) {
         parsed = [
           {
@@ -502,16 +502,16 @@ export async function initModelServerEndpoints() {
           },
         ];
         console.log(
-          '[개발환경/Docker] DB 설정이 없어 기본 모델 서버 사용: http://host.docker.internal:11434'
+          '[Development/Docker] No DB settings found, using default model server: http://host.docker.internal:11434'
         );
       } else {
         parsed = [{ url: 'http://localhost:11434', provider: 'model-server' }];
         console.log(
-          '[개발환경] DB 설정이 없어 기본 모델 서버 사용: http://localhost:11434'
+          '[Development] No DB settings found, using default model server: http://localhost:11434'
         );
       }
     } else {
-      // 프로덕션 환경에서도 Docker인 경우 기본값 제공
+      // In production, provide fallback only when running in Docker
       if (isDocker) {
         parsed = [
           {
@@ -520,16 +520,16 @@ export async function initModelServerEndpoints() {
           },
         ];
         console.warn(
-          '[프로덕션/Docker] DB 설정이 없어 기본 모델 서버 사용: http://host.docker.internal:11434'
+          '[Production/Docker] No DB settings found, using default model server: http://host.docker.internal:11434'
         );
         console.warn(
-          '[프로덕션/Docker] 관리자 설정에서 모델서버를 등록하는 것을 권장합니다.'
+          '[Production/Docker] Register model servers in admin settings is recommended.'
         );
       } else {
         console.warn(
-          '[프로덕션] DB 설정에서 모델서버 정보를 Not found. 관리자 설정에서 모델서버를 등록해주세요.'
+          '[Production] Model server settings not found in DB. Please register model servers in admin settings.'
         );
-        // 프로덕션에서는 기본값을 사용하지 않음
+        // Do not use fallback defaults in production
         parsed = [];
       }
     }
@@ -538,24 +538,24 @@ export async function initModelServerEndpoints() {
   endpoints = parsed;
   if (endpoints.length > 0) {
     console.log(
-      `[${getEnvironment()}] 모델 서버 초기화:`,
+      `[${getEnvironment()}] Model servers initialized:`,
       endpoints.map((e) => `${e.url} (${e.provider})`)
     );
   } else {
-    console.warn(`[${getEnvironment()}] 모델 서버가 설정되지 않았습니다.`);
+    console.warn(`[${getEnvironment()}] Model servers are not configured.`);
   }
 }
 
 /**
- * 서버 이름으로 같은 이름을 가진 모든 모델 서버 엔드포인트 찾기
- * @param {string} serverName - 서버 이름 (예: "spark-ollama")
- * @returns {Promise<Array<{endpoint: string, provider: string}>>} 찾은 엔드포인트 목록
+ * Find all model server endpoints by server name
+ * @param {string} serverName - server name (e.g., "spark-ollama")
+ * @returns {Promise<Array<{endpoint: string, provider: string}>>} found endpoint list
  */
 export async function getModelServerEndpointsByName(serverName) {
   if (!serverName) return [];
 
   try {
-    // 캐시된 설정 사용
+    // Use cached settings
     const settings = await getSettings();
     const customEndpoints = settings?.custom_endpoints || null;
 
@@ -566,7 +566,7 @@ export async function getModelServerEndpointsByName(serverName) {
             e?.name &&
             e.name.trim().toLowerCase() === serverName.trim().toLowerCase() &&
             e?.url &&
-            e.isActive !== false // 비활성화된 서버 제외 (기본값은 활성화)
+            e.isActive !== false // Exclude disabled servers (default is enabled)
         )
         .map((e) => ({
           endpoint: e.url.trim(),
@@ -576,14 +576,14 @@ export async function getModelServerEndpointsByName(serverName) {
               : e.provider === 'gemini'
               ? 'gemini'
               : 'model-server',
-          apiKey: e.apiKey || '', // API key 추가
+          apiKey: e.apiKey || '', // Include API key
         }));
 
       return found;
     }
   } catch (error) {
     console.warn(
-      '[Model Servers] 서버 이름으로 엔드포인트 찾기 실패:',
+      '[Model Servers] Failed to find endpoints by server name:',
       error.message
     );
   }
@@ -592,22 +592,22 @@ export async function getModelServerEndpointsByName(serverName) {
 }
 
 /**
- * 동일한 표시 이름을 가진 모델들의 endpoint를 수집합니다
- * @param {string} modelId - 모델 ID
- * @returns {Promise<Array<{endpoint: string, provider: string}>>} endpoint 목록
+ * Collect endpoints for models that share the same display label
+ * @param {string} modelId - model ID
+ * @returns {Promise<Array<{endpoint: string, provider: string}>>} endpoint list
  */
 export async function getEndpointsByLabel(modelId) {
   if (!modelId) return [];
 
   try {
-    // 캐시된 모델 설정 사용
+    // Use cached model config
     const modelConfig = await getModelConfig();
 
     if (!modelConfig || !modelConfig.categories) {
       return [];
     }
 
-    // 모든 카테고리에서 모델 찾기
+    // Find models across all categories
     const allModels = [];
     Object.values(modelConfig.categories).forEach((category) => {
       if (category.models && Array.isArray(category.models)) {
@@ -615,16 +615,16 @@ export async function getEndpointsByLabel(modelId) {
       }
     });
 
-    // 1. UUID로 정확히 찾기
+    // 1. Exact match by UUID
     let foundModel = allModels.find((m) => m.id === modelId);
 
     if (!foundModel) {
-      // 2. modelName으로 찾기
+      // 2. Find by modelName
       foundModel = allModels.find((m) => m.modelName === modelId);
     }
 
     if (!foundModel) {
-      // 3. 부분 매칭 시도 (modelName 기반)
+      // 3. Try partial matching (based on modelName)
       const modelBase = modelId.split(':')[0];
       foundModel = allModels.find((m) => {
         if (!m.modelName) return false;
@@ -638,7 +638,7 @@ export async function getEndpointsByLabel(modelId) {
     }
 
     if (!foundModel) {
-      // 4. 역방향 매칭 시도
+      // 4. Try reverse matching
       foundModel = allModels.find(
         (m) =>
           m.modelName &&
@@ -648,14 +648,14 @@ export async function getEndpointsByLabel(modelId) {
 
     if (!foundModel || !foundModel.label) {
       console.log(
-        `[getEndpointsByLabel] 모델 "${modelId}" - foundModel 또는 label이 없음`
+        `[getEndpointsByLabel] Model "${modelId}" - foundModel or label is missing`
       );
       return [];
     }
 
-    // 동일한 표시 이름을 가진 모든 모델 찾기
+    // Find all models with the same display label
     const targetLabel = foundModel.label.trim().toLowerCase();
-    console.log(`[getEndpointsByLabel] 모델 "${modelId}" 검색 - 찾은 모델:`, {
+    console.log(`[getEndpointsByLabel] Search model "${modelId}" - found model:`, {
       id: foundModel.id,
       modelName: foundModel.modelName,
       label: foundModel.label,
@@ -663,7 +663,7 @@ export async function getEndpointsByLabel(modelId) {
         endpoint: normalizeEndpointForRuntime(foundModel.endpoint),
     });
     console.log(
-      `[getEndpointsByLabel] 전체 모델 수: ${allModels.length}, 각 모델의 label과 endpoint:`,
+      `[getEndpointsByLabel] Total models: ${allModels.length}, label and endpoint by model:`,
       allModels.map((m) => ({
         id: m.id,
         modelName: m.modelName,
@@ -678,7 +678,7 @@ export async function getEndpointsByLabel(modelId) {
     );
 
     console.log(
-      `[getEndpointsByLabel] 동일 표시 이름 "${foundModel.label}" 모델 ${sameLabelModels.length}개 찾음:`,
+      `[getEndpointsByLabel] Found ${sameLabelModels.length} model(s) with same display label "${foundModel.label}":`,
       sameLabelModels.map((m) => ({
         id: m.id,
         modelName: m.modelName,
@@ -689,32 +689,32 @@ export async function getEndpointsByLabel(modelId) {
 
     if (sameLabelModels.length === 0) {
       console.log(
-        `[getEndpointsByLabel] 동일 표시 이름을 가진 모델이 없습니다`
+        `[getEndpointsByLabel] No models found with the same display label`
       );
       return [];
     }
 
-    // 모든 모델의 endpoint 수집
+    // Collect endpoints from all matching models
     const endpoints = [];
-    const endpointSet = new Set(); // 중복 제거용
+    const endpointSet = new Set(); // For deduplication
 
     for (const model of sameLabelModels) {
       if (!model.endpoint) continue;
 
       const endpoint = normalizeEndpointForRuntime(model.endpoint.trim());
-      if (endpointSet.has(endpoint)) continue; // 이미 추가된 endpoint는 제외
+      if (endpointSet.has(endpoint)) continue; // Skip already-added endpoint
 
-      // endpoint에서 provider 확인 (URL 기반 자동 감지 + customEndpoints에서 찾기)
-      let provider = 'model-server'; // 기본값
+      // Determine provider for endpoint (URL auto-detect + customEndpoints lookup)
+      let provider = 'model-server'; // Default value
 
-      // URL 기반으로 provider 자동 감지 (우선순위: URL > DB 설정)
+      // Auto-detect provider by URL (priority: URL > DB settings)
       const url = endpoint.toLowerCase();
       if (url.includes('generativelanguage.googleapis.com')) {
         provider = 'gemini';
       } else if (url.includes('/v1/models') || url.includes('/v1/chat')) {
         provider = 'openai-compatible';
       } else {
-        // URL 기반 감지 실패 시 캐시된 설정에서 확인
+        // If URL-based detection fails, check cached settings
         try {
           const settings = await getSettings();
           const customEndpoints = settings?.custom_endpoints || null;
@@ -724,7 +724,7 @@ export async function getEndpointsByLabel(modelId) {
               (e) => e.url && e.url.trim() === endpoint
             );
             if (epConfig && epConfig.provider) {
-              // DB에서 찾은 provider도 URL 기반으로 재확인
+              // Re-validate DB provider using URL-based rules
               const dbUrl = epConfig.url.toLowerCase();
               if (dbUrl.includes('generativelanguage.googleapis.com')) {
                 provider = 'gemini';
@@ -745,7 +745,7 @@ export async function getEndpointsByLabel(modelId) {
           }
         } catch (e) {
           console.warn(
-            '[getEndpointsByLabel] provider 확인 실패:',
+            '[getEndpointsByLabel] Failed to resolve provider:',
             e.message
           );
         }
@@ -761,14 +761,14 @@ export async function getEndpointsByLabel(modelId) {
 
     if (endpoints.length > 0) {
       console.log(
-        `[Model Server Resolver] 모델 "${modelId}" (표시 이름: "${foundModel.label}") -> ${endpoints.length}개 endpoint (동일 표시 이름 모델 ${sameLabelModels.length}개)`
+        `[Model Server Resolver] Model "${modelId}" (display label: "${foundModel.label}") -> ${endpoints.length} endpoint(s) (${sameLabelModels.length} model(s) with same display label)`
       );
     }
 
     return endpoints;
   } catch (error) {
     console.warn(
-      '[Model Server Resolver] 표시 이름 기반 endpoint 조회 실패:',
+      '[Model Server Resolver] Failed to fetch endpoints by display label:',
       error.message
     );
     return [];
@@ -776,12 +776,12 @@ export async function getEndpointsByLabel(modelId) {
 }
 
 /**
- * 서버 이름으로 모델 서버 엔드포인트 찾기 (하위 호환성)
- * 같은 이름을 가진 서버가 여러 개 있으면 라운드로빈으로 선택
- * @param {string} serverName - 서버 이름 (예: "spark-ollama")
- * @returns {Promise<{endpoint: string, provider: string, index: number} | null>} 찾은 엔드포인트 정보 또는 null
+ * Find model server endpoint by server name (backward compatibility)
+ * If multiple servers have the same name, choose via round-robin
+ * @param {string} serverName - server name (e.g., "spark-ollama")
+ * @returns {Promise<{endpoint: string, provider: string, index: number} | null>} found endpoint info or null
  */
-const serverNameCursors = new Map(); // 서버 이름별 라운드로빈 커서
+const serverNameCursors = new Map(); // Round-robin cursor by server name
 
 export async function getModelServerEndpointByName(serverName) {
   if (!serverName) return null;
@@ -792,17 +792,17 @@ export async function getModelServerEndpointByName(serverName) {
     return null;
   }
 
-  // 같은 이름의 서버가 여러 개 있으면 라운드로빈
+  // Round-robin when multiple servers share same name
   if (endpoints.length > 1) {
     const currentCursor = serverNameCursors.get(serverName) || 0;
     const selectedIndex = currentCursor % endpoints.length;
     const selected = endpoints[selectedIndex];
 
-    // 커서 업데이트
+    // Update cursor
     serverNameCursors.set(serverName, (currentCursor + 1) % endpoints.length);
 
     console.log(
-      `[Model Servers] 서버 "${serverName}" 라운드로빈: ${selectedIndex + 1}/${
+      `[Model Servers] Server "${serverName}" round-robin: ${selectedIndex + 1}/${
         endpoints.length
       } -> ${selected.endpoint}`
     );
@@ -815,7 +815,7 @@ export async function getModelServerEndpointByName(serverName) {
     };
   }
 
-  // 서버가 하나만 있으면 그대로 반환
+  // If only one server exists, return it directly
   return {
     endpoint: endpoints[0].endpoint,
     provider: endpoints[0].provider,
@@ -825,24 +825,24 @@ export async function getModelServerEndpointByName(serverName) {
 }
 
 /**
- * 동일한 표시 이름을 가진 모델들의 endpoint 중 하나를 라운드로빈으로 선택
- * @param {string} modelId - 모델 ID
- * @returns {Promise<{endpoint: string, provider: string, index: number} | null>} 선택된 엔드포인트 정보 또는 null
+ * Pick one endpoint via round-robin among models with same display label
+ * @param {string} modelId - model ID
+ * @returns {Promise<{endpoint: string, provider: string, index: number} | null>} selected endpoint info or null
  */
-const labelCursors = new Map(); // 표시 이름별 라운드로빈 커서
+const labelCursors = new Map(); // Round-robin cursor by display label
 
 export async function getModelServerEndpointByLabel(modelId) {
   if (!modelId) return null;
 
   try {
-    // 캐시된 모델 설정 사용
+    // Use cached model config
     const modelConfig = await getModelConfig();
 
     if (!modelConfig || !modelConfig.categories) {
       return null;
     }
 
-    // 모든 카테고리에서 모델 찾기
+    // Find models across all categories
     const allModels = [];
     Object.values(modelConfig.categories).forEach((category) => {
       if (category.models && Array.isArray(category.models)) {
@@ -850,16 +850,16 @@ export async function getModelServerEndpointByLabel(modelId) {
       }
     });
 
-    // 1. UUID로 정확히 찾기
+    // 1. Exact match by UUID
     let foundModel = allModels.find((m) => m.id === modelId);
 
     if (!foundModel) {
-      // 2. modelName으로 찾기
+      // 2. Find by modelName
       foundModel = allModels.find((m) => m.modelName === modelId);
     }
 
     if (!foundModel) {
-      // 3. 부분 매칭 시도 (modelName 기반)
+      // 3. Try partial matching (based on modelName)
       const modelBase = modelId.split(':')[0];
       foundModel = allModels.find((m) => {
         if (!m.modelName) return false;
@@ -873,7 +873,7 @@ export async function getModelServerEndpointByLabel(modelId) {
     }
 
     if (!foundModel) {
-      // 4. 역방향 매칭 시도
+      // 4. Try reverse matching
       foundModel = allModels.find(
         (m) =>
           m.modelName &&
@@ -885,7 +885,7 @@ export async function getModelServerEndpointByLabel(modelId) {
       return null;
     }
 
-    // 표시 이름을 키로 사용
+    // Use display label as key
     const labelKey = foundModel.label.trim().toLowerCase();
     const endpoints = await getEndpointsByLabel(modelId);
 
@@ -893,19 +893,19 @@ export async function getModelServerEndpointByLabel(modelId) {
       return null;
     }
 
-    // 동일한 표시 이름을 가진 모델들의 endpoint가 여러 개 있으면 라운드로빈
+    // Round-robin if multiple endpoints share same display label
     if (endpoints.length > 1) {
       const currentCursor = labelCursors.get(labelKey) || 0;
       const selectedIndex = currentCursor % endpoints.length;
       const selected = endpoints[selectedIndex];
 
-      // 커서 업데이트 (표시 이름을 키로 사용)
+      // Update cursor (using display label as key)
       labelCursors.set(labelKey, (currentCursor + 1) % endpoints.length);
 
       console.log(
-        `[Model Servers] 표시 이름 기반 라운드로빈 (표시 이름 "${
+        `[Model Servers] Display-label-based round-robin (display label "${
           foundModel.label
-        }", 모델 "${modelId}"): ${selectedIndex + 1}/${endpoints.length} -> ${
+        }", model "${modelId}"): ${selectedIndex + 1}/${endpoints.length} -> ${
           selected.endpoint
         }`
       );
@@ -918,7 +918,7 @@ export async function getModelServerEndpointByLabel(modelId) {
       };
     }
 
-    // endpoint가 하나만 있으면 그대로 반환
+    // If only one endpoint exists, return it directly
     return {
       endpoint: endpoints[0].endpoint,
       provider: endpoints[0].provider,
@@ -927,7 +927,7 @@ export async function getModelServerEndpointByLabel(modelId) {
     };
   } catch (error) {
     console.warn(
-      '[Model Server Resolver] 표시 이름 기반 endpoint 선택 실패:',
+      '[Model Server Resolver] Failed to select endpoint by display label:',
       error.message
     );
     return null;
@@ -935,38 +935,38 @@ export async function getModelServerEndpointByLabel(modelId) {
 }
 
 /**
- * 모델 이름에서 서버 이름과 실제 모델 이름 파싱
- * 형식: {server-name}-{model-name} 또는 {server-name}:{model-name}
- * 예: "spark-ollama-gemma3:27b" -> { serverName: "spark-ollama", modelName: "gemma3:27b" }
- * @param {string} modelName - 전체 모델 이름
- * @returns {{ serverName: string | null, modelName: string }} 파싱된 서버 이름과 모델 이름
+ * Parse server name and actual model name from model name
+ * Format: {server-name}-{model-name} or {server-name}:{model-name}
+ * Example: "spark-ollama-gemma3:27b" -> { serverName: "spark-ollama", modelName: "gemma3:27b" }
+ * @param {string} modelName - full model name
+ * @returns {{ serverName: string | null, modelName: string }} parsed server name and model name
  */
 export function parseModelName(modelName) {
   if (!modelName || typeof modelName !== 'string') {
     return { serverName: null, modelName: modelName || '' };
   }
 
-  // 형식 1: {server-name}-{model-name} (하이픈으로 구분)
-  // 마지막 하이픈 이후가 모델 이름이 되도록 함 (모델 이름에 하이픈이 있을 수 있음)
-  // 하지만 서버 이름이 명확하게 구분되어야 함
-  // 예: "spark-ollama-gemma3:27b" -> 서버: "spark-ollama", 모델: "gemma3:27b"
+  // Format 1: {server-name}-{model-name} (hyphen-separated)
+  // Model name starts after the last hyphen (model name may include hyphens)
+  // Server name still needs to remain clearly separable
+  // Example: "spark-ollama-gemma3:27b" -> server: "spark-ollama", model: "gemma3:27b"
 
-  // 먼저 콜론(:)이 있는지 확인 (모델 이름에 콜론이 있을 수 있음)
+  // First check whether a colon (:) exists (model names may include colons)
   const colonIndex = modelName.lastIndexOf(':');
 
   if (colonIndex > 0) {
-    // 콜론이 있으면, 콜론 앞부분에서 서버 이름 찾기
+    // If colon exists, find server name from the part before colon
     const beforeColon = modelName.substring(0, colonIndex);
     const afterColon = modelName.substring(colonIndex + 1);
 
-    // 하이픈으로 구분된 부분 찾기 (마지막 하이픈 전까지가 서버 이름일 수 있음)
+    // Find hyphen-separated boundary (before last hyphen may be server name)
     const lastHyphenIndex = beforeColon.lastIndexOf('-');
 
     if (lastHyphenIndex > 0) {
       const potentialServerName = beforeColon.substring(0, lastHyphenIndex);
       const potentialModelPrefix = beforeColon.substring(lastHyphenIndex + 1);
 
-      // 서버 이름이 2글자 이상이고, 모델 이름이 있으면 파싱 성공
+      // Parse succeeds if server name has at least 2 chars and model part exists
       if (potentialServerName.length >= 2 && potentialModelPrefix.length > 0) {
         return {
           serverName: potentialServerName,
@@ -975,11 +975,11 @@ export function parseModelName(modelName) {
       }
     }
   } else {
-    // 콜론이 없으면 하이픈으로만 구분
-    // 마지막 하이픈을 기준으로 분리 (서버 이름은 최소 2글자 이상)
+    // If no colon, split only by hyphen
+    // Split by last hyphen (server name must be at least 2 chars)
     const parts = modelName.split('-');
     if (parts.length >= 3) {
-      // 마지막 부분을 제외한 나머지를 서버 이름으로
+      // Use everything except last part as server name
       const serverNameParts = parts.slice(0, -1);
       const modelNamePart = parts[parts.length - 1];
 
@@ -992,43 +992,43 @@ export function parseModelName(modelName) {
     }
   }
 
-  // 파싱 실패 시 서버 이름 없음
+  // If parsing fails, no server name is available
   return { serverName: null, modelName: modelName };
 }
 
 /**
- * 라운드‑로빈으로 다음 모델서버를 반환합니다.
- * 처음 호출 시 initModelServerEndpoints() 가 자동으로 실행됩니다.
- * @returns {Promise<string>} 모델 서버 URL
+ * Return the next model server via round-robin.
+ * On first call, initModelServerEndpoints() runs automatically.
+ * @returns {Promise<string>} model server URL
  */
 let cursor = 0;
 export async function getNextModelServerEndpoint() {
   if (endpoints.length === 0) await initModelServerEndpoints();
 
-  // 모델 서버가 설정되지 않은 경우
+  // When model servers are not configured
   if (endpoints.length === 0) {
-    console.warn('[Model Servers] 모델 서버가 설정되지 않았습니다.');
+    console.warn('[Model Servers] Model servers are not configured.');
     return null;
   }
 
   const ep = endpoints[cursor];
   cursor = (cursor + 1) % endpoints.length;
 
-  // ep가 undefined인 경우 처리
+  // Handle when ep is undefined
   if (!ep) {
-    console.warn('[Model Servers] 모델 서버 엔드포인트를 Not found.');
+    console.warn('[Model Servers] Model server endpoint not found.');
     return null;
   }
 
-  return ep.url || ep; // 하위 호환성: 객체 또는 문자열 모두 지원
+  return ep.url || ep; // Backward compatibility: support both object and string
 }
 
-// 현재 라운드로빈 인덱스 반환 (로깅용)
+// Return current round-robin index (for logging)
 export function getCurrentRoundRobinIndex() {
   return cursor;
 }
 
-// 라운드로빈과 모델서버를 함께 반환 (상세 로깅용)
+// Return round-robin index with model server (for detailed logging)
 // @returns {Promise<{ endpoint: string, provider: string, index: number }>}
 export async function getNextModelServerEndpointWithIndex() {
   if (endpoints.length === 0) await initModelServerEndpoints();
@@ -1036,14 +1036,14 @@ export async function getNextModelServerEndpointWithIndex() {
   const ep = endpoints[cursor];
   cursor = (cursor + 1) % endpoints.length;
   return {
-    endpoint: ep.url || ep, // 하위 호환성
-    provider: ep.provider || 'model-server', // 기본값은 model-server
+    endpoint: ep.url || ep, // Backward compatibility
+    provider: ep.provider || 'model-server', // Default is model-server
     apiKey: ep.apiKey || '',
     index: currentIndex,
   };
 }
 
-// 하위 호환성을 위한 별칭 (점진적 마이그레이션)
+// Aliases for backward compatibility (gradual migration)
 export const initLlmEndpoints = initModelServerEndpoints;
 export const getNextLlmEndpoint = getNextModelServerEndpoint;
 export const getNextLlmEndpointWithIndex = getNextModelServerEndpointWithIndex;

@@ -7,25 +7,25 @@ export async function GET(request) {
     // Admin auth check
     const adminCheck = verifyAdmin(request);
     if (!adminCheck.success) {
-      // verifyAdmin에서 반환된 NextResponse 객체를 그대로 반환
+      // Return the NextResponse object from verifyAdmin as-is
       return adminCheck;
     }
 
-    // 등록된 endpoint 목록 가져오기
+    // Get the list of registered endpoints
     const allEndpoints = await getAllEndpoints();
 
     if (allEndpoints.length === 0) {
       return NextResponse.json(
         {
           success: false,
-          error: '등록된 endpoint가 없습니다.',
+          error: 'No registered endpoints found.',
           models: [],
         },
         { status: 404 }
       );
     }
 
-    // OpenAI 호환 API Key 조회
+    // Retrieve OpenAI-compatible API key
     let openaiApiKey = process.env.OPENAI_COMPAT_API_KEY || '';
     try {
       const { query } = await import('@/lib/postgres');
@@ -39,7 +39,7 @@ export async function GET(request) {
       }
     } catch (e) {
       console.warn(
-        '[get-local-models] settings 조회 실패, ENV 사용:',
+        '[get-local-models] Failed to load settings, using ENV:',
         e?.message || e
       );
     }
@@ -47,7 +47,7 @@ export async function GET(request) {
     const allModels = [];
     const endpointResults = [];
 
-    // 모든 endpoint에서 모델 수집
+    // Collect models from all endpoints
     for (const endpoint of allEndpoints) {
       try {
         const provider = endpoint.provider || 'llm';
@@ -57,14 +57,14 @@ export async function GET(request) {
           // Gemini API: /v1beta/models
           const apiKey = endpoint.apiKey || '';
           if (!apiKey) {
-            console.warn(`[get-local-models] Gemini API key가 없습니다: ${endpoint.url}`);
+            console.warn(`[get-local-models] Gemini API key is missing: ${endpoint.url}`);
             endpointResults.push({
               endpoint: endpoint.url,
               endpointName: endpoint.name || endpoint.url,
               provider: 'gemini',
               count: 0,
               success: false,
-              error: 'API key가 설정되지 않았습니다.',
+              error: 'API key is not configured.',
             });
             continue;
           }
@@ -73,7 +73,7 @@ export async function GET(request) {
           const url = `${base}/v1beta/models?key=${apiKey}`;
           const headers = { 'Content-Type': 'application/json' };
 
-          console.log(`[get-local-models] Gemini 모델서버 조회: ${url}`);
+          console.log(`[get-local-models] Querying Gemini model server: ${url}`);
 
           const response = await fetch(url, {
             method: 'GET',
@@ -99,11 +99,11 @@ export async function GET(request) {
               }));
           } else {
             console.warn(
-              `[get-local-models] Gemini 모델서버 실패: ${endpoint.url} - ${response.status}`
+              `[get-local-models] Gemini model server failed: ${endpoint.url} - ${response.status}`
             );
           }
         } else if (provider === 'openai-compatible') {
-          // OpenAI 호환 API: /v1/models
+          // OpenAI-compatible API: /v1/models
           const base = endpoint.url.replace(/\/+$/, '');
           const path = /\/v1(\/|$)/.test(base) ? '/models' : '/v1/models';
           const url = `${base}${path}`;
@@ -112,7 +112,7 @@ export async function GET(request) {
             headers['Authorization'] = `Bearer ${openaiApiKey}`;
           }
 
-          console.log(`[get-local-models] OpenAI 호환 모델서버 조회: ${url}`);
+          console.log(`[get-local-models] Querying OpenAI-compatible model server: ${url}`);
 
           const response = await fetch(url, {
             method: 'GET',
@@ -140,12 +140,12 @@ export async function GET(request) {
             }));
           } else {
             console.warn(
-              `[get-local-models] OpenAI 호환 모델서버 실패: ${endpoint.url} - ${response.status}`
+              `[get-local-models] OpenAI-compatible model server failed: ${endpoint.url} - ${response.status}`
             );
           }
         } else {
           // LLM API: /api/tags
-          console.log(`[get-local-models] LLM 모델서버 조회: ${endpoint.url}`);
+          console.log(`[get-local-models] Querying LLM model server: ${endpoint.url}`);
 
           const response = await fetch(`${endpoint.url}/api/tags`, {
             method: 'GET',
@@ -169,7 +169,7 @@ export async function GET(request) {
             }));
           } else {
             console.warn(
-              `[get-local-models] LLM 모델서버 실패: ${endpoint.url} - ${response.status}`
+              `[get-local-models] LLM model server failed: ${endpoint.url} - ${response.status}`
             );
           }
         }
@@ -190,12 +190,12 @@ export async function GET(request) {
             provider: provider,
             count: 0,
             success: false,
-            error: '모델이 없거나 조회 실패',
+            error: 'No models found or query failed',
           });
         }
       } catch (error) {
         console.error(
-          `[get-local-models] 모델서버 ${endpoint.url} 조회 실패:`,
+          `[get-local-models] Failed to query model server ${endpoint.url}:`,
           error.message
         );
         endpointResults.push({
@@ -210,7 +210,7 @@ export async function GET(request) {
     }
 
     console.log(
-      `[get-local-models] 총 ${allModels.length}개 모델 발견 (${endpointResults.length}개 endpoint)`
+      `[get-local-models] Found ${allModels.length} models total (${endpointResults.length} endpoints)`
     );
 
     return NextResponse.json({
@@ -220,7 +220,7 @@ export async function GET(request) {
       count: allModels.length,
     });
   } catch (error) {
-    console.error('[get-local-models] 실패:', error);
+    console.error('[get-local-models] Failed:', error);
     return NextResponse.json(
       {
         success: false,

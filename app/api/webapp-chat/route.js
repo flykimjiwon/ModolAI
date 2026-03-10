@@ -3,14 +3,14 @@ import { query } from '@/lib/postgres';
 import { verifyToken, updateLastActive } from '@/lib/auth';
 import { verifyAdmin } from '@/lib/adminAuth';
 
-// soft delete 컬럼 확인 및 추가
+// Check and add soft-delete columns
 let softDeleteColumnsChecked = false;
 
 async function ensureSoftDeleteColumns() {
   if (softDeleteColumnsChecked) return;
 
   try {
-    // is_deleted 컬럼이 있는지 확인
+    // Check whether is_deleted column exists
     const checkColumn = await query(`
       SELECT column_name 
       FROM information_schema.columns 
@@ -18,44 +18,44 @@ async function ensureSoftDeleteColumns() {
     `);
 
     if (checkColumn.rows.length === 0) {
-      console.log('⚠️ messages 테이블에 soft delete 컬럼 추가 중...');
+      console.log('⚠️ Adding soft-delete columns to messages table...');
       
-      // is_deleted 컬럼 추가
+      // Add is_deleted column
       await query(`
         ALTER TABLE messages 
         ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false
       `);
 
-      // deleted_at 컬럼 추가
+      // Add deleted_at column
       await query(`
         ALTER TABLE messages 
         ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP
       `);
 
-      // deleted_by 컬럼 추가
+      // Add deleted_by column
       await query(`
         ALTER TABLE messages 
         ADD COLUMN IF NOT EXISTS deleted_by UUID REFERENCES users(id) ON DELETE SET NULL
       `);
 
-      // 인덱스 추가
+      // Add index
       await query(`
         CREATE INDEX IF NOT EXISTS idx_messages_is_deleted 
         ON messages(is_deleted) 
         WHERE is_deleted = false
       `);
 
-      console.log('✅ soft delete 컬럼 추가 완료');
+      console.log('✅ Soft-delete columns added');
     }
 
     softDeleteColumnsChecked = true;
   } catch (error) {
-    console.error('soft delete 컬럼 확인/추가 실패:', error);
-    // 에러가 발생해도 계속 진행 (기존 로직 유지)
+    console.error('Failed to check/add soft-delete columns:', error);
+    // Continue even if an error occurs (keep existing behavior)
   }
 }
 
-// GET: 채팅 메시지 목록 조회 (페이지네이션 지원)
+// GET: Fetch chat message list (pagination supported)
 export async function GET(request) {
   try {
     const userPayload = verifyToken(request);
@@ -69,14 +69,14 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20', 10);
-    const before = searchParams.get('before'); // 이전 메시지 로드를 위한 기준점 (ISO 날짜 문자열)
-    const since = searchParams.get('since'); // 최신 이후 메시지 로드용 (ISO 날짜 문자열)
+    const before = searchParams.get('before'); // Cursor for loading earlier messages (ISO date string)
+    const since = searchParams.get('since'); // Cursor for loading messages after latest point (ISO date string)
 
-    // soft delete 컬럼이 있는지 확인하고 없으면 추가
+    // Check whether soft-delete columns exist and add if missing
     await ensureSoftDeleteColumns();
 
-    // 채팅 위젯 메시지만 조회 (room_id가 NULL인 것만)
-    // 일반 채팅방(chat_rooms에 연결된) 메시지는 제외
+    // Fetch only chat-widget messages (room_id is NULL only)
+    // Exclude normal chat-room messages (linked to chat_rooms)
     let sql = '';
     const params = [];
     let paramIndex = 1;
@@ -85,7 +85,7 @@ export async function GET(request) {
       const sinceDate = new Date(since);
       if (Number.isNaN(sinceDate.getTime())) {
         return NextResponse.json(
-          { error: 'since 파라미터 형식이 올바르지 않습니다.' },
+          { error: 'Invalid since parameter format.' },
           { status: 400 }
         );
       }
@@ -130,7 +130,7 @@ export async function GET(request) {
       return new NextResponse(null, { status: 204 });
     }
 
-    // 결과를 camelCase로 변환하고 _id 추가
+    // Convert result to camelCase and add _id
     const messages = result.rows.map((row) => {
       const camelRow = {
         _id: row.id,
@@ -145,15 +145,15 @@ export async function GET(request) {
       return camelRow;
     });
 
-    // DB에서는 최신순으로 가져왔지만, 클라이언트에서는 시간순으로 보여주기 위해 배열을 뒤집음
+    // DB fetches newest first, reverse for chronological display on client
     const reversedMessages = since ? messages : messages.reverse();
 
     return NextResponse.json(reversedMessages);
   } catch (error) {
-    console.error('[/api/chat GET] 에러:', error);
+    console.error('[/api/chat GET] Error:', error);
     return NextResponse.json(
       {
-        error: '메시지를 가져오는 중 오류가 발생했습니다.',
+        error: 'An error occurred while fetching messages.',
         details: error.message,
       },
       { status: 500 }
@@ -161,10 +161,10 @@ export async function GET(request) {
   }
 }
 
-// POST: 새 채팅 메시지 저장
+// POST: Save a new chat message
 export async function POST(request) {
   try {
-    // 인증 토큰 검증
+    // Validate auth token
     const userPayload = verifyToken(request);
     if (!userPayload) {
       return NextResponse.json(
@@ -178,22 +178,22 @@ export async function POST(request) {
 
     if (!text || typeof text !== 'string' || text.trim() === '') {
       return NextResponse.json(
-        { error: '메시지 내용이 비어있습니다.' },
+        { error: 'Message content is empty.' },
         { status: 400 }
       );
     }
 
-    // 사용자 정보 조회 (user_role 정보를 위해)
+    // Fetch user info (for user_role)
     const userResult = await query(
       'SELECT role as user_role FROM users WHERE email = $1 LIMIT 1',
       [userPayload.email]
     );
     const user = userResult.rows[0] || null;
 
-    // messages 테이블에 직접 저장
-    // 채팅 위젯 메시지는 항상 room_id를 NULL로 저장 (일반 채팅방과 구분)
-    // 'general' 같은 특수 룸도 NULL로 처리
-    // 정규화: email, name, department, cell 제거 (users 테이블에서 JOIN으로 조회)
+    // Save directly to messages table
+    // Chat-widget messages always store room_id as NULL (to separate from normal chat rooms)
+    // Treat special rooms like 'general' as NULL as well
+    // Normalization: remove email, name, department, cell (fetch via JOIN from users table)
     const finalRoomId = null;
     
     const insertResult = await query(
@@ -223,30 +223,30 @@ export async function POST(request) {
 
     return NextResponse.json(newMessage, { status: 201 });
   } catch (error) {
-    console.error('[/api/chat POST] 에러:', error);
+    console.error('[/api/chat POST] Error:', error);
     return NextResponse.json(
-      { error: '메시지 저장 중 오류가 발생했습니다.', details: error.message },
+      { error: 'An error occurred while saving the message.', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// DELETE: 채팅 위젯 메시지 이력 미노출 처리 (관리자 전용)
-// 실제로 삭제하지 않고 is_deleted를 true로 설정 (soft delete)
+// DELETE: Hide chat-widget message history (admin only)
+// Do not physically delete; set is_deleted to true (soft delete)
 export async function DELETE(request) {
   try {
-    // 관리자 권한 확인
+    // Verify admin permission
     const adminCheck = verifyAdmin(request);
     if (!adminCheck.success) {
       return adminCheck;
     }
 
-    // soft delete 컬럼 확인 및 추가
+    // Check and add soft-delete columns
     await ensureSoftDeleteColumns();
 
-    // messages 테이블에서 채팅 위젯 메시지를 soft delete
-    // room_id가 NULL인 메시지만 미노출 처리 (채팅 위젯 전용)
-    // 일반 채팅방(chat_rooms에 연결된) 메시지는 제외
+    // Soft-delete chat-widget messages in messages table
+    // Hide only messages with room_id NULL (chat-widget only)
+    // Exclude normal chat-room messages (linked to chat_rooms)
     const updateResult = await query(
       `UPDATE messages 
        SET is_deleted = true, 
@@ -262,13 +262,13 @@ export async function DELETE(request) {
 
     return NextResponse.json({
       success: true,
-      message: `${hiddenCount}개의 채팅 위젯 메시지가 미노출 처리되었습니다.`,
+      message: `${hiddenCount} chat-widget messages have been hidden.`,
       hiddenCount,
     });
   } catch (error) {
-    console.error('[/api/chat DELETE] 에러:', error);
+    console.error('[/api/chat DELETE] Error:', error);
     return NextResponse.json(
-      { error: '메시지 미노출 처리 중 오류가 발생했습니다.', details: error.message },
+      { error: 'An error occurred while hiding messages.', details: error.message },
       { status: 500 }
     );
   }

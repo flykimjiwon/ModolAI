@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { isValidUUID } from '@/lib/utils';
 import { createAuthError, createValidationError, createNotFoundError, createServerError } from '@/lib/errorHandler';
 
-// 암호화/복호화 함수
+// Encryption/decryption functions
 function encryptToken(token) {
   const algorithm = 'aes-256-cbc';
   const key = crypto.scryptSync(process.env.JWT_SECRET || 'default-secret', 'salt', 32);
@@ -29,12 +29,12 @@ function decryptToken(encryptedToken) {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (error) {
-    console.error('키 복호화 실패:', error);
+    console.error('Failed to decrypt key:', error);
     return null;
   }
 }
 
-// 본인 API 토큰 목록 조회
+// Get current user's API token list
 export async function GET(request) {
   try {
     const tokenPayload = verifyToken(request);
@@ -48,12 +48,12 @@ export async function GET(request) {
     const limit = Math.min(parseInt(searchParams.get('limit')) || 20, 100);
     const skip = (page - 1) * limit;
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(userId)) {
-      return createValidationError('유효하지 않은 사용자 ID입니다.');
+      return createValidationError('Invalid user ID.');
     }
 
-    // 토큰 목록 조회
+    // Fetch token list
     const tokensResult = await query(
       `SELECT id, user_id, token_hash, encrypted_token, name, expires_at, is_active, 
               last_used_at, created_by, created_at, updated_at
@@ -66,14 +66,14 @@ export async function GET(request) {
 
     const tokens = tokensResult.rows;
 
-    // 전체 개수 조회
+    // Fetch total count
     const totalCountResult = await query(
       `SELECT COUNT(*) as count FROM api_tokens WHERE user_id = $1`,
       [userId]
     );
     const totalCount = parseInt(totalCountResult.rows[0].count);
 
-    // 사용량 통계 (external_api_logs에서)
+    // Usage stats (from external_api_logs)
     const tokenHashes = tokens.map((t) => t.token_hash).filter(Boolean);
     let usageStats = [];
     
@@ -101,7 +101,7 @@ export async function GET(request) {
       };
     });
 
-    // 사용량 정보 추가 및 원본 토큰 복호화
+    // Add usage information and decrypt original token
     const tokensWithUsage = tokens.map((token) => {
       let decryptedToken = null;
       if (token.encrypted_token) {
@@ -119,7 +119,7 @@ export async function GET(request) {
         createdBy: token.created_by,
         createdAt: token.created_at,
         updatedAt: token.updated_at,
-        originalToken: decryptedToken, // 복호화된 원본 토큰 (개인 키 관리 화면에서만 사용)
+        originalToken: decryptedToken, // Decrypted original token (used only in personal key management screen)
         usage: usageMap[token.token_hash] || {
           requestCount: 0,
           totalTokens: 0,
@@ -141,20 +141,20 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('[User API Tokens GET] 오류:', {
+    console.error('[User API Tokens GET] Error:', {
       message: error.message,
       stack: error.stack,
       code: error.code,
       detail: error.detail,
       hint: error.hint,
     });
-    const errorMessage = error.message || '알 수 없는 오류가 발생했습니다.';
-    const hint = error.hint || (error.code === '42P01' ? 'api_tokens 테이블이 존재하지 않습니다. 스키마를 생성해주세요.' : null);
-    return createServerError(error, `키 목록 조회 실패: ${errorMessage}${hint ? ` (${hint})` : ''}`);
+    const errorMessage = error.message || 'An unknown error occurred.';
+    const hint = error.hint || (error.code === '42P01' ? 'The api_tokens table does not exist. Please create the schema.' : null);
+    return createServerError(error, `Failed to fetch key list: ${errorMessage}${hint ? ` (${hint})` : ''}`);
   }
 }
 
-// 새 API 토큰 발급 (본인용)
+// Issue a new API token (for current user)
 export async function POST(request) {
   try {
     const tokenPayload = verifyToken(request);
@@ -166,12 +166,12 @@ export async function POST(request) {
     const body = await request.json();
     const { name, expiresInDays = 90 } = body;
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(userId)) {
-      return createValidationError('유효하지 않은 사용자 ID입니다.');
+      return createValidationError('Invalid user ID.');
     }
 
-    // 사용자 정보 조회
+    // Fetch user information
     const userResult = await query(
       `SELECT id, email, name, department, cell, role FROM users WHERE id = $1`,
       [userId]
@@ -183,17 +183,17 @@ export async function POST(request) {
 
     const user = userResult.rows[0];
 
-    // 기존 활성 토큰이 있는지 확인 (1인당 1개 제한)
+    // Check for existing active token (limit: 1 per user)
     const existingTokenResult = await query(
       `SELECT COUNT(*) as count FROM api_tokens WHERE user_id = $1 AND is_active = true`,
       [userId]
     );
     if (parseInt(existingTokenResult.rows[0].count) > 0) {
-      return createValidationError('이미 발급된 키가 있습니다. 기존 키를 삭제한 후 새 키를 발급하세요.');
+      return createValidationError('An issued key already exists. Delete the existing key before issuing a new one.');
     }
 
-    // JWT 토큰 생성
-    const expiresIn = expiresInDays * 24 * 60 * 60; // 일을 초로 변환
+    // Generate JWT token
+    const expiresIn = expiresInDays * 24 * 60 * 60; // Convert days to seconds
     const tokenPayloadData = {
       sub: user.id,
       email: user.email,
@@ -201,24 +201,24 @@ export async function POST(request) {
       department: user.department,
       cell: user.cell,
       role: user.role || 'user',
-      type: 'api_token', // API 토큰임을 표시
+      type: 'api_token', // Indicates this is an API token
     };
 
     const token = jwt.sign(tokenPayloadData, process.env.JWT_SECRET, {
       expiresIn: `${expiresInDays}d`,
     });
 
-    // 토큰 해시 생성
+    // Generate token hash
     const tokenHash = crypto
       .createHash('sha256')
       .update(token)
       .digest('hex')
       .substring(0, 16);
 
-    // 원본 토큰 암호화 저장 (개인 키 관리 화면에서만 사용)
+    // Encrypt and store original token (used only in personal key management screen)
     const encryptedToken = encryptToken(token);
 
-    // 토큰 정보 저장
+    // Save token information
     const tokenName = name || `API Token ${new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}`;
     const expiresAt = new Date(Date.now() + expiresIn * 1000);
 
@@ -234,7 +234,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       data: {
-        token, // 처음 발급 시에만 토큰 반환
+        token, // Return token only on initial issuance
         tokenInfo: {
           _id: tokenInfo.id,
           tokenHash: tokenInfo.token_hash,
@@ -245,21 +245,21 @@ export async function POST(request) {
           isActive: tokenInfo.is_active,
         },
       },
-      message: '키가 성공적으로 발급되었습니다. 이 키는 이번에만 표시됩니다.',
+      message: 'The key was issued successfully. This key is shown only this time.',
     });
   } catch (error) {
-    console.error('[User API Tokens POST] 오류:', {
+    console.error('[User API Tokens POST] Error:', {
       message: error.message,
       stack: error.stack,
       code: error.code,
       detail: error.detail,
       hint: error.hint,
     });
-    return createServerError(error, `키 발급 실패: ${error.message || '알 수 없는 오류가 발생했습니다.'}`);
+    return createServerError(error, `Failed to issue key: ${error.message || 'An unknown error occurred.'}`);
   }
 }
 
-// 토큰 삭제 (본인 토큰만)
+// Delete token (current user's token only)
 export async function DELETE(request) {
   try {
     const tokenPayload = verifyToken(request);
@@ -272,41 +272,41 @@ export async function DELETE(request) {
     const tokenId = searchParams.get('id');
 
     if (!tokenId) {
-      return createValidationError('키 ID가 필요합니다.');
+      return createValidationError('Key ID is required.');
     }
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(tokenId) || !isValidUUID(userId)) {
-      return createValidationError('유효하지 않은 키 ID입니다.');
+      return createValidationError('Invalid key ID.');
     }
 
-    // 본인의 토큰인지 확인 후 삭제
+    // Verify ownership, then delete
     const result = await query(
       `DELETE FROM api_tokens WHERE id = $1 AND user_id = $2`,
       [tokenId, userId]
     );
 
     if (result.rowCount === 0) {
-      return createNotFoundError('키를 찾을 수 없거나 삭제 Unauthorized.');
+      return createNotFoundError('Key not found or unauthorized to delete.');
     }
 
     return NextResponse.json({
       success: true,
-      message: '키가 Deleted.',
+      message: 'Key deleted.',
     });
   } catch (error) {
-    console.error('[User API Tokens DELETE] 오류:', {
+    console.error('[User API Tokens DELETE] Error:', {
       message: error.message,
       stack: error.stack,
       code: error.code,
       detail: error.detail,
       hint: error.hint,
     });
-    return createServerError(error, `키 삭제 실패: ${error.message || '알 수 없는 오류가 발생했습니다.'}`);
+    return createServerError(error, `Failed to delete key: ${error.message || 'An unknown error occurred.'}`);
   }
 }
 
-// 토큰 활성화/비활성화 (본인 토큰만)
+// Activate/deactivate token (current user's token only)
 export async function PATCH(request) {
   try {
     const tokenPayload = verifyToken(request);
@@ -319,36 +319,36 @@ export async function PATCH(request) {
     const { id, isActive } = body;
 
     if (!id || typeof isActive !== 'boolean') {
-      return createValidationError('키 ID와 isActive 상태가 필요합니다.');
+      return createValidationError('Key ID and isActive status are required.');
     }
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(id) || !isValidUUID(userId)) {
-      return createValidationError('유효하지 않은 키 ID입니다.');
+      return createValidationError('Invalid key ID.');
     }
 
-    // 본인의 토큰인지 확인 후 업데이트
+    // Verify ownership, then update
     const result = await query(
       `UPDATE api_tokens SET is_active = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3`,
       [isActive, id, userId]
     );
 
     if (result.rowCount === 0) {
-      return createNotFoundError('키를 찾을 수 없거나 수정 Unauthorized.');
+      return createNotFoundError('Key not found or unauthorized to modify.');
     }
 
     return NextResponse.json({
       success: true,
-      message: `키가 ${isActive ? '활성화' : '비활성화'}되었습니다.`,
+      message: `Key has been ${isActive ? 'activated' : 'deactivated'}.`,
     });
   } catch (error) {
-    console.error('[User API Tokens PATCH] 오류:', {
+    console.error('[User API Tokens PATCH] Error:', {
       message: error.message,
       stack: error.stack,
       code: error.code,
       detail: error.detail,
       hint: error.hint,
     });
-    return createServerError(error, `키 상태 변경 실패: ${error.message || '알 수 없는 오류가 발생했습니다.'}`);
+    return createServerError(error, `Failed to change key status: ${error.message || 'An unknown error occurred.'}`);
   }
 }

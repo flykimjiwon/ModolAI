@@ -1,15 +1,15 @@
 /**
- * 자동 마이그레이션 유틸 (2026-02-27)
+ * Auto-migration utility (2026-02-27)
  *
- * admin 역할 로그인 시 자동으로 호출된다.
- * init-schema(테이블 생성) + migrate-models(컬럼 추가) 로직을 통합.
- * 모든 쿼리가 IF NOT EXISTS / nullable 처리라 멱등성 보장.
+ * Automatically called on admin-role login.
+ * Integrates init-schema (table creation) + migrate-models (column addition) logic.
+ * All queries use IF NOT EXISTS / nullable handling, ensuring idempotency.
  */
 
 import { query, getPostgresClient } from '@/lib/postgres';
 
 // ─────────────────────────────────────────────
-// 1. 초기 스키마 생성 (테이블)
+// 1. Create initial schema (tables)
 // ─────────────────────────────────────────────
 
 const CORE_TABLES = [
@@ -288,11 +288,11 @@ const CORE_INDEXES = [
 ];
 
 // ─────────────────────────────────────────────
-// 2. 컬럼 마이그레이션 (기존 테이블에 추가)
+// 2. Column migration (add to existing tables)
 // ─────────────────────────────────────────────
 
 async function runColumnMigrations() {
-  // models 테이블
+  // models table
   await query(`
     ALTER TABLE models
     ADD COLUMN IF NOT EXISTS api_config JSONB,
@@ -306,7 +306,7 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS pii_response_mask_opt BOOLEAN DEFAULT true
   `);
 
-  // settings 테이블
+  // settings table
   await query(`
     ALTER TABLE settings
     ADD COLUMN IF NOT EXISTS max_images_per_message INTEGER DEFAULT 5,
@@ -323,7 +323,7 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local'
   `);
 
-  // external_api_logs 테이블
+  // external_api_logs table
   await query(`
     ALTER TABLE external_api_logs
     ADD COLUMN IF NOT EXISTS first_response_time INTEGER,
@@ -365,7 +365,7 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50)
   `);
 
-  // users 테이블: SSO 필드 + 보안 개선 필드
+  // users table: SSO fields + security enhancement fields
   await query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS employee_no VARCHAR(20),
@@ -395,57 +395,57 @@ async function runColumnMigrations() {
   // users.password_hash nullable
   await query(`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`).catch(() => {});
 
-  // notices/board_posts views 컬럼
+  // notices/board_posts views column
   await query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`).catch(() => {});
   await query(`ALTER TABLE board_posts ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`).catch(() => {});
 
-  // 인덱스
+  // Indexes
   await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no) WHERE employee_no IS NOT NULL`).catch(() => {});
   await query(`CREATE INDEX IF NOT EXISTS idx_models_endpoint ON models(endpoint)`).catch(() => {});
 }
 
 // ─────────────────────────────────────────────
-// 메인 진입점
+// Main entry point
 // ─────────────────────────────────────────────
 
 export async function runAutoMigration() {
   const client = await getPostgresClient();
   if (!client) {
-    console.warn('[AutoMigrate] DB 연결 실패 — 건너뜀');
+    console.warn('[AutoMigrate] DB connection failed - skipping');
     return;
   }
 
   try {
-    console.log('[AutoMigrate] 시작...');
+    console.log('[AutoMigrate] Starting...');
     await client.query('BEGIN');
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
 
-    // 테이블 생성
+    // Create tables
     for (const table of CORE_TABLES) {
       await client.query(table.sql);
     }
 
-    // 인덱스 생성
+    // Create indexes
     for (const idx of CORE_INDEXES) {
       await client.query(idx).catch(() => {});
     }
 
     await client.query('COMMIT');
-    console.log('[AutoMigrate] ✓ 테이블/인덱스 생성 완료');
+    console.log('[AutoMigrate] ✓ Table/index creation completed');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    console.warn('[AutoMigrate] 테이블 생성 중 오류 (일부 무시):', err.message);
+    console.warn('[AutoMigrate] Error during table creation (partially ignored):', err.message);
   } finally {
     client.release();
   }
 
-  // 컬럼 마이그레이션은 트랜잭션 밖에서 개별 실행 (에러 격리)
+  // Run column migrations individually outside transaction (error isolation)
   try {
     await runColumnMigrations();
-    console.log('[AutoMigrate] ✓ 컬럼 마이그레이션 완료');
+    console.log('[AutoMigrate] ✓ Column migration completed');
   } catch (err) {
-    console.warn('[AutoMigrate] 컬럼 마이그레이션 중 오류 (일부 무시):', err.message);
+    console.warn('[AutoMigrate] Error during column migration (partially ignored):', err.message);
   }
 
-  console.log('[AutoMigrate] 완료');
+  console.log('[AutoMigrate] Completed');
 }

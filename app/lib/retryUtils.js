@@ -1,5 +1,5 @@
 /**
- * 재시도 가능한 네트워크 오류인지 확인
+ * Check whether the network error is retryable
  */
 function isRetryableError(error) {
   return (
@@ -13,7 +13,7 @@ function isRetryableError(error) {
 }
 
 /**
- * 재시도 가능한 HTTP 상태 코드인지 확인
+ * Check whether the HTTP status code is retryable
  */
 function isRetryableHttpStatus(status) {
   return status === 404 || // Not Found
@@ -23,37 +23,37 @@ function isRetryableHttpStatus(status) {
 }
 
 /**
- * 지수 백오프 지연 시간 계산
+ * Calculate exponential backoff delay
  */
 function getBackoffDelay(attempt, baseDelay = 500) {
   return baseDelay * Math.pow(2, attempt);
 }
 
 /**
- * 모델 서버 호출을 위한 재시도 로직
- * @param {string} url - 호출할 URL
- * @param {object} options - fetch 옵션
- * @param {object} config - 재시도 설정
- * @param {number} config.maxRetries - 최대 재시도 횟수 (기본값: 2)
- * @param {boolean} config.isStreaming - 스트리밍 여부 (기본값: false)
- * @param {number} config.streamTimeoutMs - 스트리밍 타임아웃 (기본값: 900000)
- * @param {number} config.normalTimeoutMs - 일반 타임아웃 (기본값: 600000)
- * @param {function} config.getNextEndpoint - 다음 엔드포인트를 가져오는 함수 (선택사항)
- * @param {object} config.providerRef - 프로바이더 참조 객체 (선택사항)
- * @param {function} config.onRetry - 재시도 시 호출되는 콜백 (선택사항)
- * @param {string} config.endpointPath - 엔드포인트 경로 (예: '/api/chat', '/api/generate') (선택사항)
- * @returns {Promise<Response>} fetch 응답
+ * Retry logic for model server calls
+ * @param {string} url - URL to call
+ * @param {object} options - fetch options
+ * @param {object} config - retry settings
+ * @param {number} config.maxRetries - maximum retry count (default: 2)
+ * @param {boolean} config.isStreaming - whether streaming is enabled (default: false)
+ * @param {number} config.streamTimeoutMs - streaming timeout (default: 900000)
+ * @param {number} config.normalTimeoutMs - normal timeout (default: 600000)
+ * @param {function} config.getNextEndpoint - function to get next endpoint (optional)
+ * @param {object} config.providerRef - provider reference object (optional)
+ * @param {function} config.onRetry - callback called on retry (optional)
+ * @param {string} config.endpointPath - endpoint path (e.g., '/api/chat', '/api/generate') (optional)
+ * @returns {Promise<Response>} fetch response
  */
 export async function fetchWithRetry(url, options, config = {}) {
   const {
     maxRetries = 2,
     isStreaming = false,
-    streamTimeoutMs = 900000, // 15분
-    normalTimeoutMs = 600000, // 10분
+    streamTimeoutMs = 900000, // 15 minutes
+    normalTimeoutMs = 600000, // 10 minutes
     getNextEndpoint = null,
     providerRef = null,
     onRetry = null,
-    endpointPath = '', // 엔드포인트 경로 (예: '/api/chat')
+    endpointPath = '', // Endpoint path (e.g., '/api/chat')
   } = config;
 
   let lastError;
@@ -64,44 +64,44 @@ export async function fetchWithRetry(url, options, config = {}) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       console.log(
-        `[Retry Utils] 모델 서버 호출 시도 ${attempt + 1}/${maxRetries + 1}`,
+        `[Retry Utils] Model server call attempt ${attempt + 1}/${maxRetries + 1}`,
         {
           url: currentUrl,
-          timeout: `${timeoutMs / 1000}초`,
+           timeout: `${timeoutMs / 1000}s`,
           stream: isStreaming,
         }
       );
 
-      // AbortController를 사용한 타임아웃 설정
+      // Set timeout with AbortController
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
         controller.abort();
       }, timeoutMs);
 
       try {
-        // fetch 호출
+        // Call fetch
         const response = await fetch(currentUrl, {
           ...options,
           signal: controller.signal,
         });
 
-        // 성공 시 타임아웃 정리
+        // Clear timeout on success
         clearTimeout(timeoutId);
 
-        // HTTP 응답 상태 코드 확인
+        // Check HTTP response status code
         if (!response.ok) {
           const status = response.status;
           const isRetryableHttpError = isRetryableHttpStatus(status);
 
           if (isRetryableHttpError && attempt < maxRetries && getNextEndpoint) {
             console.warn(
-              `[Retry Utils] HTTP ${status} 오류, 다음 인스턴스로 재시도`,
+              `[Retry Utils] HTTP ${status} error, retrying with next instance`,
               { url: currentUrl, status, attempt: attempt + 1 }
             );
 
             lastResponse = response;
 
-            // 다음 엔드포인트로 변경
+            // Switch to next endpoint
             const nextEndpointInfo = await getNextEndpoint();
             if (nextEndpointInfo && nextEndpointInfo.endpoint) {
               currentUrl = endpointPath 
@@ -112,44 +112,44 @@ export async function fetchWithRetry(url, options, config = {}) {
               }
             }
 
-            // 재시도 콜백 호출
+            // Call retry callback
             if (onRetry) {
               onRetry(attempt, currentUrl, status);
             }
 
-            // 재시도 전 지연 (지수 백오프)
+            // Delay before retry (exponential backoff)
             const delayMs = getBackoffDelay(attempt);
             await new Promise((resolve) => setTimeout(resolve, delayMs));
 
             continue;
           }
 
-          // 재시도 불가능한 HTTP 오류면 응답 반환
+          // Return response if HTTP error is not retryable
           console.log(
-            `[Retry Utils] 모델 서버 호출 완료 (HTTP ${status}, 재시도 불가)`
+            `[Retry Utils] Model server call completed (HTTP ${status}, not retryable)`
           );
           return response;
         }
 
-        // 성공 응답
+        // Successful response
         console.log(
-          `[Retry Utils] 모델 서버 호출 성공 (시도 ${attempt + 1})`
+          `[Retry Utils] Model server call succeeded (attempt ${attempt + 1})`
         );
         return response;
       } catch (fetchErr) {
-        // fetch 실패 시 타임아웃 정리
+        // Clear timeout when fetch fails
         clearTimeout(timeoutId);
         throw fetchErr;
       }
     } catch (error) {
       lastError = error;
 
-      // 재시도 가능한 네트워크 오류인지 확인
+      // Check whether network error is retryable
       const isRetryable = isRetryableError(error);
 
-      // 재시도 가능한 오류이고 마지막 시도가 아니면 재시도
+      // Retry if error is retryable and this is not the last attempt
       if (isRetryable && attempt < maxRetries && getNextEndpoint) {
-        // 다음 엔드포인트로 변경
+        // Switch to next endpoint
         const nextEndpointInfo = await getNextEndpoint();
         if (nextEndpointInfo && nextEndpointInfo.endpoint) {
           const nextUrl = endpointPath
@@ -160,7 +160,7 @@ export async function fetchWithRetry(url, options, config = {}) {
           }
 
           console.warn(
-            `[Retry Utils] 시도 ${attempt + 1} 실패, 다음 인스턴스로 재시도`,
+            `[Retry Utils] Attempt ${attempt + 1} failed, retrying with next instance`,
             {
               currentUrl,
               nextUrl,
@@ -170,12 +170,12 @@ export async function fetchWithRetry(url, options, config = {}) {
 
           currentUrl = nextUrl;
 
-          // 재시도 콜백 호출
+          // Call retry callback
           if (onRetry) {
             onRetry(attempt, currentUrl, null, error);
           }
 
-          // 재시도 전 지연 (지수 백오프)
+          // Delay before retry (exponential backoff)
           const delayMs = getBackoffDelay(attempt);
           await new Promise((resolve) => setTimeout(resolve, delayMs));
 
@@ -183,15 +183,14 @@ export async function fetchWithRetry(url, options, config = {}) {
         }
       }
 
-      // 재시도 불가능하거나 마지막 시도면 에러 throw
+      // Throw error if not retryable or last attempt
       throw error;
     }
   }
 
-  // 모든 재시도 실패 시 마지막 응답 또는 에러 반환
+  // Return last response or error if all retries fail
   if (lastResponse) {
     return lastResponse;
   }
   throw lastError;
 }
-

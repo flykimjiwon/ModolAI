@@ -7,10 +7,10 @@ import {
   createServerError,
 } from '@/lib/errorHandler';
 
-// 모델 Server error 이력 조회
+// Retrieve model server error history
 export async function GET(request) {
   try {
-    // 관리자 권한 확인
+    // Check admin privileges
     const adminCheck = verifyAdminWithResult(request);
     if (!adminCheck.valid) {
       return createAuthError(adminCheck.error);
@@ -22,26 +22,26 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit') || '100', 10);
     const hours = parseInt(searchParams.get('hours') || '24', 10);
 
-    // 기본 쿼리 구성
+    // Build base query
     let whereConditions = [];
     let params = [];
     let paramIndex = 1;
 
-    // 시간 범위 필터
+    // Time range filter
     const hoursAgo = new Date();
     hoursAgo.setHours(hoursAgo.getHours() - hours);
     whereConditions.push(`checked_at >= $${paramIndex}`);
     params.push(hoursAgo.toISOString());
     paramIndex++;
 
-    // endpoint 필터
+    // Endpoint filter
     if (endpointUrl) {
       whereConditions.push(`endpoint_url = $${paramIndex}`);
       params.push(endpointUrl);
       paramIndex++;
     }
 
-    // provider 필터
+    // Provider filter
     if (provider) {
       whereConditions.push(`provider = $${paramIndex}`);
       params.push(provider);
@@ -53,7 +53,7 @@ export async function GET(request) {
         ? `WHERE ${whereConditions.join(' AND ')}`
         : '';
 
-    // 오류 이력 조회
+    // Retrieve error history
     const result = await query(
       `SELECT 
         id,
@@ -73,7 +73,7 @@ export async function GET(request) {
       [...params, limit]
     );
 
-    // 통계 조회
+    // Retrieve stats
     const statsResult = await query(
       `SELECT 
         COUNT(*) as total_errors,
@@ -94,7 +94,7 @@ export async function GET(request) {
       last_error: null,
     };
 
-    // endpoint별 통계
+    // Stats by endpoint
     const endpointStatsResult = await query(
       `SELECT 
         endpoint_url,
@@ -139,15 +139,15 @@ export async function GET(request) {
       })),
     });
   } catch (error) {
-    console.error('모델 Server error 이력 조회 실패:', error);
-    return createServerError(error, '오류 이력을 불러오는데 실패했습니다.');
+    console.error('Failed to retrieve model server error history:', error);
+    return createServerError(error, 'Failed to load error history.');
   }
 }
 
-// 모델 Server error 이력 삭제
+// Delete model server error history
 export async function DELETE(request) {
   try {
-    // 관리자 권한 확인
+    // Check admin privileges
     const adminCheck = verifyAdminWithResult(request);
     if (!adminCheck.valid) {
       return createAuthError(adminCheck.error);
@@ -157,10 +157,10 @@ export async function DELETE(request) {
     const endpointUrl = searchParams.get('endpoint');
 
     if (!endpointUrl) {
-      return createValidationError('endpoint 파라미터가 필요합니다.');
+      return createValidationError('The endpoint parameter is required.');
     }
 
-    // 특정 endpoint의 오류 이력 전체 삭제
+    // Delete all error history for a specific endpoint
     const result = await query(
       `DELETE FROM model_server_error_history 
        WHERE endpoint_url = $1`,
@@ -169,11 +169,11 @@ export async function DELETE(request) {
 
     return NextResponse.json({
       success: true,
-      message: '오류 이력이 성공적으로 Deleted.',
+      message: 'Error history deleted successfully.',
       deletedCount: result.rowCount || 0,
     });
   } catch (error) {
-    console.error('모델 Server error 이력 삭제 실패:', error);
-    return createServerError(error, '오류 이력 삭제에 실패했습니다.');
+    console.error('Failed to delete model server error history:', error);
+    return createServerError(error, 'Failed to delete error history.');
   }
 }

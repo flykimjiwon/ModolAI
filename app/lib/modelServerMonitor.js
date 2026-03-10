@@ -1,6 +1,6 @@
 import { query } from './postgres';
 
-// Docker 환경 감지 함수
+// Docker environment detection function
 function isDockerEnvironment() {
   if (typeof process !== 'undefined') {
     if (process.env.DOCKER_CONTAINER || process.env.KUBERNETES_SERVICE_HOST) {
@@ -23,13 +23,13 @@ function isDockerEnvironment() {
   return false;
 }
 
-// Docker 환경에서 localhost를 host.docker.internal로 변환
+// Convert localhost to host.docker.internal in Docker environments
 function normalizeEndpointUrl(url) {
   if (!url) return url;
 
-  // Docker 환경에서만 변환
+  // Convert only in Docker environments
   if (isDockerEnvironment()) {
-    // localhost 또는 127.0.0.1을 host.docker.internal로 변환
+    // Convert localhost or 127.0.0.1 to host.docker.internal
     const normalized = url
       .replace(/^http:\/\/localhost:/, 'http://host.docker.internal:')
       .replace(/^http:\/\/127\.0\.0\.1:/, 'http://host.docker.internal:')
@@ -38,7 +38,7 @@ function normalizeEndpointUrl(url) {
 
     if (normalized !== url) {
       console.log(
-        `[Model Server Monitor] Docker 환경에서 URL 변환: ${url} -> ${normalized}`
+        `[Model Server Monitor] URL converted in Docker environment: ${url} -> ${normalized}`
       );
     }
 
@@ -48,11 +48,11 @@ function normalizeEndpointUrl(url) {
   return url;
 }
 
-// DB 설정에서 모델 서버 엔드포인트들 파싱
+// Parse model server endpoints from DB settings
 export async function getModelServerEndpoints() {
   let raw = '';
 
-  // 서버 환경에서는 DB 설정에서만 로드
+  // In server environments, load only from DB settings
   if (typeof window === 'undefined') {
     try {
       const settingsResult = await query(
@@ -62,7 +62,7 @@ export async function getModelServerEndpoints() {
       const settings =
         settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
 
-      // customEndpoints 우선, 없으면 legacy 필드 사용
+      // Prefer customEndpoints; use legacy field if missing
       const customEndpoints = settings?.custom_endpoints || null;
       if (
         customEndpoints &&
@@ -83,7 +83,7 @@ export async function getModelServerEndpoints() {
       }
     } catch (e) {
       console.warn(
-        '[Model Server Monitor] DB에서 모델서버 로드 실패:',
+        '[Model Server Monitor] Failed to load model servers from DB:',
         e.message
       );
     }
@@ -96,14 +96,14 @@ export async function getModelServerEndpoints() {
 
   const mapped = entries
     .map((entry) => {
-      // 지원 형식:
+      // Supported formats:
       // 1) http://host:port
       // 2) name|http://host:port
       // 3) name=http://host:port
-      // 4) 유니코드 구분자 지원: ｜(U+FF5C), ＝(U+FF1D)
-      // 5) 구분자 인식 실패 시 http(s):// 위치로 강제 분리 (폴백)
+      // 4) Unicode delimiters supported: ｜(U+FF5C), ＝(U+FF1D)
+      // 5) If delimiter parsing fails, force split at http(s):// position (fallback)
       let raw = entry.trim();
-      // 외곽 따옴표 제거
+      // Remove surrounding quotes
       if (
         (raw.startsWith('"') && raw.endsWith('"')) ||
         (raw.startsWith("'") && raw.endsWith("'")) ||
@@ -115,18 +115,18 @@ export async function getModelServerEndpoints() {
       let name = null;
       let urlText = raw;
 
-      // 우선 구분자 기반 매칭
+      // Try delimiter-based matching first
       const sepMatch = raw.match(/^(.*?)\s*[|=｜＝]\s*(https?:\/\/.+)$/i);
       if (sepMatch) {
         name = (sepMatch[1] || '').trim();
         urlText = (sepMatch[2] || '').trim();
       } else {
-        // 폴백: http(s):// 시작 위치로 강제 분리
+        // Fallback: force split at the http(s):// start position
         const httpIndex = raw.search(/https?:\/\//i);
         if (httpIndex > 0) {
           const before = raw.slice(0, httpIndex).trim();
           const after = raw.slice(httpIndex).trim();
-          // before 끝의 구분자 제거
+          // Remove trailing delimiter from before
           const cleanedBefore = before.replace(/[|=｜＝]\s*$/u, '').trim();
           if (cleanedBefore.length > 0) {
             name = cleanedBefore;
@@ -142,16 +142,16 @@ export async function getModelServerEndpoints() {
           url: urlText,
           host: url.hostname,
           port: url.port,
-          name: name || `모델 서버 ${url.port}`,
+          name: name || `Model Server ${url.port}`,
         };
       } catch (e) {
-        console.warn('[Model Server Monitor] 잘못된 모델서버 무시:', entry);
+        console.warn('[Model Server Monitor] Ignoring invalid model server:', entry);
         return null;
       }
     })
     .filter(Boolean);
 
-  // URL 기준 중복 제거 (이름 있는 항목 우선)
+  // Remove duplicates by URL (prefer entries with names)
   const byUrl = new Map();
   for (const ep of mapped) {
     const exist = byUrl.get(ep.url);
@@ -165,9 +165,9 @@ export async function getModelServerEndpoints() {
 }
 
 /**
- * settings.customEndpoints 또는 legacy llmEndpoints/ollamaEndpoints에서
- * 모든 모델서버를 로드합니다.
- * 결과: [{ id, url, host, port, name, provider }]
+ * Loads all model servers from settings.customEndpoints or legacy
+ * llmEndpoints/ollamaEndpoints.
+ * Result: [{ id, url, host, port, name, provider }]
  */
 export async function getAllEndpoints() {
   try {
@@ -179,19 +179,19 @@ export async function getAllEndpoints() {
       settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
     const customEndpoints = settings?.custom_endpoints || null;
 
-    // 비활성화된 서버 URL 목록 수집 (customEndpoints에서)
+    // Collect inactive server URL list (from customEndpoints)
     const inactiveUrls = new Set();
     if (customEndpoints && Array.isArray(customEndpoints)) {
       customEndpoints.forEach((ep) => {
         if (ep.isActive === false && ep.url) {
-          // URL 정규화 (trailing slash 제거)
+          // Normalize URL (remove trailing slash)
           const normalizedUrl = ep.url.trim().replace(/\/+$/, '');
           inactiveUrls.add(normalizedUrl);
         }
       });
     }
 
-    // 1) customEndpoints 우선
+    // 1) Prefer customEndpoints
     if (
       customEndpoints &&
       Array.isArray(customEndpoints) &&
@@ -200,38 +200,38 @@ export async function getAllEndpoints() {
       const mapped = [];
       for (const item of customEndpoints) {
         if (!item?.url) continue;
-        // 비활성화된 서버도 포함하되 isActive 필드 포함 (기본값은 활성화)
+        // Include inactive servers as well, with isActive field (default: active)
         const isActive = item.isActive !== false;
         try {
           const u = new URL(item.url);
-          // provider를 URL 기반으로 자동 감지 (잘못된 provider도 무조건 수정)
+          // Auto-detect provider from URL (always correct invalid provider values)
           const url = item.url.toLowerCase();
           let provider = item.provider;
 
-          // URL 기반으로 provider 자동 감지 및 수정 (우선순위: URL > 설정된 provider)
+          // Auto-detect and correct provider by URL (priority: URL > configured provider)
           if (url.includes('generativelanguage.googleapis.com')) {
-            // Gemini URL은 무조건 gemini로 설정
+            // Gemini URLs must always be set to gemini
             provider = 'gemini';
             if (item.provider && item.provider !== 'gemini') {
               console.warn(
-                `[Model Server Monitor] Gemini URL인데 provider가 '${item.provider}'로 설정되어 있습니다. 'gemini'로 자동 수정합니다.`,
+                `[Model Server Monitor] URL is Gemini but provider is set to '${item.provider}'. Auto-correcting to 'gemini'.`,
                 { url: item.url, originalProvider: item.provider }
               );
             }
           } else if (url.includes('/v1/models') || url.includes('/v1/chat')) {
-            // OpenAI 호환 URL은 무조건 openai-compatible로 설정
+            // OpenAI-compatible URLs must always be set to openai-compatible
             provider = 'openai-compatible';
             if (item.provider && item.provider !== 'openai-compatible') {
               console.warn(
-                `[Model Server Monitor] OpenAI 호환 URL인데 provider가 '${item.provider}'로 설정되어 있습니다. 'openai-compatible'로 자동 수정합니다.`,
+                `[Model Server Monitor] URL is OpenAI-compatible but provider is set to '${item.provider}'. Auto-correcting to 'openai-compatible'.`,
                 { url: item.url, originalProvider: item.provider }
               );
             }
           } else if (!provider || provider === 'model-server') {
-            // provider가 없거나 'model-server'인 경우, 기본값으로 설정
+            // If provider is missing or 'model-server', set default value
             provider = 'ollama';
           }
-          // 그 외의 경우는 설정된 provider를 그대로 사용
+          // Otherwise, keep the configured provider
 
           mapped.push({
             id: `${provider}-${u.hostname}-${u.port || ''}`,
@@ -240,34 +240,34 @@ export async function getAllEndpoints() {
             port: u.port || '',
             name: item.name || `${provider} ${u.port || u.hostname}`,
             provider,
-            isActive, // 비활성화 상태 포함
+            isActive, // includes inactive state
           });
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn('[Catch] Error occurred:', error.message);
           // skip invalid
         }
       }
       if (mapped.length > 0) return mapped;
     }
 
-    // 2) legacy llmEndpoints/ollamaEndpoints 파싱 (model-server로 간주)
+    // 2) Parse legacy llmEndpoints/ollamaEndpoints (treated as model-server)
     const legacy = await getModelServerEndpoints();
-    // 비활성화된 서버도 포함하되 isActive 필드 추가
+    // Include inactive servers as well, adding the isActive field
     const filteredLegacy = legacy.map((e) => {
       const normalizedUrl = e.url ? e.url.trim().replace(/\/+$/, '') : '';
       const isActive = !normalizedUrl || !inactiveUrls.has(normalizedUrl);
       return {
         ...e,
         provider: 'model-server',
-        isActive, // 비활성화 상태 포함
+        isActive, // includes inactive state
       };
     });
     return filteredLegacy;
   } catch (error) {
-    console.warn('[Catch] 에러 발생:', error.message);
-    // 3) 완전 폴백: env 기반 model-server 목록
+    console.warn('[Catch] Error occurred:', error.message);
+    // 3) Full fallback: env-based model-server list
     const legacy = await getModelServerEndpoints();
-    // 비활성화된 서버 필터링 (settings를 다시 읽어서 확인)
+    // Filter inactive servers (re-read settings to verify)
     try {
       const inactiveUrls = await getInactiveUrls();
 
@@ -277,22 +277,22 @@ export async function getAllEndpoints() {
         return {
           ...e,
           provider: 'model-server',
-          isActive, // 비활성화 상태 포함
+          isActive, // includes inactive state
         };
       });
     } catch (error) {
-      console.warn('[Catch] 에러 발생:', error.message);
-      // settings 읽기 실패 시 필터링 없이 반환 (기본값은 활성화)
+      console.warn('[Catch] Error occurred:', error.message);
+      // If settings read fails, return without filtering (default: active)
       return legacy.map((e) => ({
         ...e,
         provider: 'model-server',
-        isActive: true, // 기본값은 활성화
+        isActive: true, // default is active
       }));
     }
   }
 }
 
-// 비활성화된 서버 URL 목록 수집 헬퍼 함수
+// Helper function to collect inactive server URL list
 async function getInactiveUrls() {
   try {
     const settingsResult = await query(
@@ -314,12 +314,12 @@ async function getInactiveUrls() {
     }
     return inactiveUrls;
   } catch (error) {
-    console.warn('[Catch] 에러 발생:', error.message);
+    console.warn('[Catch] Error occurred:', error.message);
     return new Set();
   }
 }
 
-// 모델 Server error 이력 저장
+// Save model server error history
 async function saveModelServerErrorHistory(
   endpoint,
   error,
@@ -329,11 +329,11 @@ async function saveModelServerErrorHistory(
     const errorType = error.name || 'UnknownError';
     const errorMessage = error.message || String(error);
 
-    // provider 자동 감지 (URL 기반, 잘못된 provider도 수정)
+    // Auto-detect provider (URL-based, also fix invalid provider values)
     let provider = endpoint.provider;
     if (endpoint.url) {
       const url = endpoint.url.toLowerCase();
-      // URL 기반으로 provider 자동 감지 및 수정 (우선순위: URL > 설정된 provider)
+      // Auto-detect and fix provider by URL (priority: URL > configured provider)
       if (url.includes('generativelanguage.googleapis.com')) {
         provider = 'gemini';
       } else if (url.includes('/v1/models') || url.includes('/v1/chat')) {
@@ -341,9 +341,9 @@ async function saveModelServerErrorHistory(
       } else if (!provider || provider === 'model-server') {
         provider = 'model-server';
       }
-      // 그 외의 경우는 설정된 provider를 그대로 사용
+      // Otherwise, keep the configured provider
     }
-    // provider가 여전히 없으면 기본값
+    // If provider is still missing, use default
     if (!provider) {
       provider = 'model-server';
     }
@@ -365,19 +365,19 @@ async function saveModelServerErrorHistory(
           url: endpoint.url,
           name: endpoint.name,
           provider: provider,
-          originalProvider: endpoint.provider, // 원본 provider도 저장
+          originalProvider: endpoint.provider, // also store original provider
         }),
       ]
     );
   } catch (saveError) {
-    // 테이블이 없으면 생성 시도
+    // Try creating the table if it does not exist
     if (
       saveError.code === '42P01' &&
       saveError.message?.includes('model_server_error_history')
     ) {
       try {
         console.log(
-          '[Model Server Monitor] model_server_error_history 테이블이 없어 생성합니다...'
+          '[Model Server Monitor] model_server_error_history table not found, creating it...'
         );
         await query(`
           CREATE TABLE IF NOT EXISTS model_server_error_history (
@@ -402,14 +402,14 @@ async function saveModelServerErrorHistory(
           ON model_server_error_history(provider, checked_at DESC)
         `);
         console.log(
-          '[Model Server Monitor] model_server_error_history 테이블 생성 완료'
+          '[Model Server Monitor] model_server_error_history table created successfully'
         );
 
-        // provider 자동 감지 (URL 기반, 잘못된 provider도 수정)
+        // Auto-detect provider (URL-based, also fix invalid provider values)
         let provider = endpoint.provider;
         if (endpoint.url) {
           const url = endpoint.url.toLowerCase();
-          // URL 기반으로 provider 자동 감지 및 수정 (우선순위: URL > 설정된 provider)
+          // Auto-detect and fix provider by URL (priority: URL > configured provider)
           if (url.includes('generativelanguage.googleapis.com')) {
             provider = 'gemini';
           } else if (url.includes('/v1/models') || url.includes('/v1/chat')) {
@@ -417,13 +417,13 @@ async function saveModelServerErrorHistory(
           } else if (!provider || provider === 'model-server') {
             provider = 'model-server';
           }
-          // 그 외의 경우는 설정된 provider를 그대로 사용
+          // Otherwise, keep the configured provider
         }
         if (!provider) {
           provider = 'model-server';
         }
 
-        // 다시 저장 시도
+        // Retry saving
         await query(
           `INSERT INTO model_server_error_history 
            (endpoint_url, endpoint_name, provider, error_message, error_type, response_time, status, metadata)
@@ -446,35 +446,35 @@ async function saveModelServerErrorHistory(
           ]
         );
       } catch (createError) {
-        console.error('[Model Server Monitor] 테이블 생성 실패:', createError);
+        console.error('[Model Server Monitor] Failed to create table:', createError);
         console.warn(
-          '[Model Server Monitor] 스키마 생성 스크립트를 실행하세요: npm run setup-postgres'
+          '[Model Server Monitor] Run schema setup script: npm run setup-postgres'
         );
       }
     } else {
-      console.error('[Model Server Monitor] 오류 이력 저장 실패:', saveError);
+      console.error('[Model Server Monitor] Failed to save error history:', saveError);
     }
   }
 }
 
-// 모델 서버 인스턴스 상태 체크
+// Check model server instance health
 export async function checkModelServerHealth(endpoint) {
   const startAt = Date.now();
   let abortController = null;
   let timeoutId = null;
 
   try {
-    // Docker 환경에서 localhost를 host.docker.internal로 변환
+    // Convert localhost to host.docker.internal in Docker environments
     const normalizedUrl = normalizeEndpointUrl(endpoint.url);
     const fetchUrl = `${normalizedUrl}/api/tags`;
 
-    // AbortSignal.timeout이 지원되지 않는 환경을 위한 폴백
+    // Fallback for environments without AbortSignal.timeout support
     let signal;
     if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
       try {
-        signal = AbortSignal.timeout(5000); // 5초 타임아웃
+        signal = AbortSignal.timeout(5000); // 5-second timeout
       } catch (e) {
-        // AbortSignal.timeout이 실패하면 수동으로 구현
+        // If AbortSignal.timeout fails, implement manually
         abortController = new AbortController();
         signal = abortController.signal;
         timeoutId = setTimeout(() => {
@@ -482,7 +482,7 @@ export async function checkModelServerHealth(endpoint) {
         }, 5000);
       }
     } else {
-      // AbortSignal.timeout이 없는 경우 수동으로 구현
+      // Manually implement when AbortSignal.timeout is unavailable
       abortController = new AbortController();
       signal = abortController.signal;
       timeoutId = setTimeout(() => {
@@ -495,11 +495,11 @@ export async function checkModelServerHealth(endpoint) {
       signal,
     });
 
-    // 응답 본문을 먼저 텍스트로 읽어서 확인
+    // Read response body as text first for validation
     const responseText = await response.text();
 
     if (!response.ok) {
-      // 에러 응답 본문 읽기 시도
+      // Try reading error response body
       let errorMessage = `HTTP ${response.status} ${response.statusText}`;
       if (responseText && responseText.trim()) {
         try {
@@ -507,7 +507,7 @@ export async function checkModelServerHealth(endpoint) {
           errorMessage =
             errorJson.error?.message || errorJson.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn('[Catch] Error occurred:', error.message);
           errorMessage = responseText.substring(0, 200);
         }
       }
@@ -515,22 +515,22 @@ export async function checkModelServerHealth(endpoint) {
     }
 
     if (!responseText || responseText.trim() === '') {
-      throw new Error('모델 서버에서 빈 응답을 받았습니다.');
+      throw new Error('Received an empty response from the model server.');
     }
 
-    // JSON 파싱 시도
+    // Attempt JSON parsing
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('[Model Server Monitor] JSON 파싱 실패:', {
+      console.error('[Model Server Monitor] JSON parsing failed:', {
         error: parseError.message,
         responsePreview: responseText.substring(0, 200),
         status: response.status,
         statusText: response.statusText,
         url: `${normalizedUrl}/api/tags`,
       });
-      throw new Error(`JSON 파싱 실패: ${parseError.message}`);
+      throw new Error(`JSON parsing failed: ${parseError.message}`);
     }
 
     const responseTime = Date.now() - startAt;
@@ -545,37 +545,37 @@ export async function checkModelServerHealth(endpoint) {
       error: null,
     };
   } catch (error) {
-    // 타임아웃 정리
+    // Clear timeout
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
 
     const responseTime = Date.now() - startAt;
 
-    // 에러 메시지 개선
+    // Improve error message
     let errorMessage = error.message || 'Unknown error';
 
-    // 네트워크 에러인 경우 더 자세한 정보 제공
+    // Provide more detailed info for network errors
     if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-      errorMessage = `연결 타임아웃 (5초 초과): ${endpoint.url}`;
+      errorMessage = `Connection timeout (over 5 seconds): ${endpoint.url}`;
     } else if (
       error.code === 'ECONNREFUSED' ||
       error.message?.includes('ECONNREFUSED')
     ) {
-      errorMessage = `연결 거부됨: ${endpoint.url} (서버가 실행 중인지 확인하세요)`;
+      errorMessage = `Connection refused: ${endpoint.url} (check whether the server is running)`;
     } else if (
       error.code === 'ENOTFOUND' ||
       error.message?.includes('ENOTFOUND')
     ) {
-      errorMessage = `호스트를 찾을 수 없음: ${endpoint.url} (DNS 확인 필요)`;
+      errorMessage = `Host not found: ${endpoint.url} (DNS check required)`;
     } else if (error.message?.includes('fetch failed')) {
       const causeMessage = error.cause?.message || '';
-      errorMessage = `네트워크 연결 실패: ${endpoint.url}${
+      errorMessage = `Network connection failed: ${endpoint.url}${
         causeMessage ? ` (${causeMessage})` : ''
       }`;
     }
 
-    // 오류 이력 저장
+    // Save error history
     await saveModelServerErrorHistory(endpoint, error, responseTime);
 
     return {
@@ -588,7 +588,7 @@ export async function checkModelServerHealth(endpoint) {
       error: errorMessage,
     };
   } finally {
-    // 타임아웃 정리 (성공 시에도)
+    // Clear timeout (also on success)
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -596,9 +596,9 @@ export async function checkModelServerHealth(endpoint) {
 }
 
 /**
- * OpenAI-compatible 인스턴스 상태 체크
- * 표준: GET {base}/v1/models (또는 base가 /v1 포함시 /models)
- * Authorization: Bearer {openaiCompatApiKey} (있으면)
+ * Check OpenAI-compatible instance health
+ * Standard: GET {base}/v1/models (or /models if base already includes /v1)
+ * Authorization: Bearer {openaiCompatApiKey} (if present)
  */
 export async function checkOpenAICompatibleHealth(endpoint) {
   const startAt = Date.now();
@@ -614,7 +614,7 @@ export async function checkOpenAICompatibleHealth(endpoint) {
       settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
     const apiKey = settings?.openai_compat_api_key || '';
 
-    // Docker 환경에서 localhost를 host.docker.internal로 변환
+    // Convert localhost to host.docker.internal in Docker environments
     const normalizedBaseUrl = normalizeEndpointUrl(endpoint.url);
     const base = normalizedBaseUrl.replace(/\/+$/, '');
     const path = /\/v1(\/|$)/.test(base) ? '/models' : '/v1/models';
@@ -622,13 +622,13 @@ export async function checkOpenAICompatibleHealth(endpoint) {
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
-    // AbortSignal.timeout이 지원되지 않는 환경을 위한 폴백
+    // Fallback for environments without AbortSignal.timeout support
     let signal;
     if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
       try {
-        signal = AbortSignal.timeout(5000); // 5초 타임아웃
+        signal = AbortSignal.timeout(5000); // 5-second timeout
       } catch (e) {
-        // AbortSignal.timeout이 실패하면 수동으로 구현
+        // If AbortSignal.timeout fails, implement manually
         abortController = new AbortController();
         signal = abortController.signal;
         timeoutId = setTimeout(() => {
@@ -636,7 +636,7 @@ export async function checkOpenAICompatibleHealth(endpoint) {
         }, 5000);
       }
     } else {
-      // AbortSignal.timeout이 없는 경우 수동으로 구현
+      // Manually implement when AbortSignal.timeout is unavailable
       abortController = new AbortController();
       signal = abortController.signal;
       timeoutId = setTimeout(() => {
@@ -650,11 +650,11 @@ export async function checkOpenAICompatibleHealth(endpoint) {
       signal,
     });
 
-    // 응답 본문을 먼저 텍스트로 읽어서 확인 (한 번만 읽기)
+    // Read response body as text first for validation (read once)
     const responseText = await res.text();
 
     if (!res.ok) {
-      // 에러 응답 본문 처리
+      // Handle error response body
       let errorMessage = `HTTP ${res.status} ${res.statusText}`;
       if (responseText && responseText.trim()) {
         try {
@@ -662,7 +662,7 @@ export async function checkOpenAICompatibleHealth(endpoint) {
           errorMessage =
             errorJson.error?.message || errorJson.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn('[Catch] Error occurred:', error.message);
           errorMessage = responseText.substring(0, 200);
         }
       }
@@ -670,16 +670,16 @@ export async function checkOpenAICompatibleHealth(endpoint) {
     }
 
     if (!responseText || responseText.trim() === '') {
-      throw new Error('OpenAI-compatible API에서 빈 응답을 받았습니다.');
+      throw new Error('Received an empty response from the OpenAI-compatible API.');
     }
 
-    // JSON 파싱 시도
+    // Attempt JSON parsing
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
       console.error(
-        '[Model Server Monitor] OpenAI-compatible JSON 파싱 실패:',
+        '[Model Server Monitor] OpenAI-compatible JSON parsing failed:',
         {
           error: parseError.message,
           responsePreview: responseText.substring(0, 200),
@@ -688,10 +688,10 @@ export async function checkOpenAICompatibleHealth(endpoint) {
           url: url,
         }
       );
-      throw new Error(`JSON 파싱 실패: ${parseError.message}`);
+      throw new Error(`JSON parsing failed: ${parseError.message}`);
     }
 
-    // OpenAI 표준은 { data: [...] }, 일부 호환 구현은 { models: [...] }
+    // OpenAI standard is { data: [...] }, some compatible implementations use { models: [...] }
     const models = Array.isArray(data?.data)
       ? data.data
       : Array.isArray(data?.models)
@@ -710,37 +710,37 @@ export async function checkOpenAICompatibleHealth(endpoint) {
       error: null,
     };
   } catch (error) {
-    // 타임아웃 정리
+    // Clear timeout
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
 
     const responseTime = Date.now() - startAt;
 
-    // 에러 메시지 개선
+    // Improve error message
     let errorMessage = error.message || 'Unknown error';
 
-    // 네트워크 에러인 경우 더 자세한 정보 제공
+    // Provide more detailed info for network errors
     if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-      errorMessage = `연결 타임아웃 (5초 초과): ${endpoint.url}`;
+      errorMessage = `Connection timeout (over 5 seconds): ${endpoint.url}`;
     } else if (
       error.code === 'ECONNREFUSED' ||
       error.message?.includes('ECONNREFUSED')
     ) {
-      errorMessage = `연결 거부됨: ${endpoint.url} (서버가 실행 중인지 확인하세요)`;
+      errorMessage = `Connection refused: ${endpoint.url} (check whether the server is running)`;
     } else if (
       error.code === 'ENOTFOUND' ||
       error.message?.includes('ENOTFOUND')
     ) {
-      errorMessage = `호스트를 찾을 수 없음: ${endpoint.url} (DNS 확인 필요)`;
+      errorMessage = `Host not found: ${endpoint.url} (DNS check required)`;
     } else if (error.message?.includes('fetch failed')) {
       const causeMessage = error.cause?.message || '';
-      errorMessage = `네트워크 연결 실패: ${endpoint.url}${
+      errorMessage = `Network connection failed: ${endpoint.url}${
         causeMessage ? ` (${causeMessage})` : ''
       }`;
     }
 
-    // 오류 이력 저장
+    // Save error history
     await saveModelServerErrorHistory(endpoint, error, responseTime);
 
     return {
@@ -753,7 +753,7 @@ export async function checkOpenAICompatibleHealth(endpoint) {
       error: errorMessage,
     };
   } finally {
-    // 타임아웃 정리 (성공 시에도)
+    // Clear timeout (also on success)
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -761,7 +761,7 @@ export async function checkOpenAICompatibleHealth(endpoint) {
 }
 
 /**
- * Gemini 인스턴스 상태 체크
+ * Check Gemini instance health
  * GET {base}/v1beta/models?key={apiKey}
  */
 export async function checkGeminiHealth(endpoint) {
@@ -770,7 +770,7 @@ export async function checkGeminiHealth(endpoint) {
   let timeoutId = null;
 
   try {
-    // DB에서 API Key 조회
+    // Look up API key from DB
     let apiKey = '';
     try {
       const settingsResult = await query(
@@ -788,7 +788,7 @@ export async function checkGeminiHealth(endpoint) {
       }
     } catch (e) {
       console.warn(
-        '[Model Server Monitor] Gemini API key 조회 실패:',
+        '[Model Server Monitor] Failed to retrieve Gemini API key:',
         e.message
       );
     }
@@ -803,13 +803,13 @@ export async function checkGeminiHealth(endpoint) {
     const url = `${base}/v1beta/models?key=${apiKey}`;
     const headers = { 'Content-Type': 'application/json' };
 
-    // AbortSignal.timeout이 지원되지 않는 환경을 위한 폴백
+    // Fallback for environments without AbortSignal.timeout support
     let signal;
     if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
       try {
-        signal = AbortSignal.timeout(5000); // 5초 타임아웃
+        signal = AbortSignal.timeout(5000); // 5-second timeout
       } catch (e) {
-        // AbortSignal.timeout이 실패하면 수동으로 구현
+        // If AbortSignal.timeout fails, implement manually
         abortController = new AbortController();
         signal = abortController.signal;
         timeoutId = setTimeout(() => {
@@ -817,7 +817,7 @@ export async function checkGeminiHealth(endpoint) {
         }, 5000);
       }
     } else {
-      // AbortSignal.timeout이 없는 경우 수동으로 구현
+      // Manually implement when AbortSignal.timeout is unavailable
       abortController = new AbortController();
       signal = abortController.signal;
       timeoutId = setTimeout(() => {
@@ -831,11 +831,11 @@ export async function checkGeminiHealth(endpoint) {
       signal,
     });
 
-    // 응답 본문을 먼저 텍스트로 읽어서 확인 (한 번만 읽기)
+    // Read response body as text first for validation (read once)
     const responseText = await res.text();
 
     if (!res.ok) {
-      // 에러 응답 본문 처리
+      // Handle error response body
       let errorMessage = `HTTP ${res.status} ${res.statusText}`;
       if (responseText && responseText.trim()) {
         try {
@@ -843,7 +843,7 @@ export async function checkGeminiHealth(endpoint) {
           errorMessage =
             errorJson.error?.message || errorJson.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn('[Catch] Error occurred:', error.message);
           errorMessage = responseText.substring(0, 200);
         }
       }
@@ -851,22 +851,22 @@ export async function checkGeminiHealth(endpoint) {
     }
 
     if (!responseText || responseText.trim() === '') {
-      throw new Error('Gemini API에서 빈 응답을 받았습니다.');
+      throw new Error('Received an empty response from the Gemini API.');
     }
 
-    // JSON 파싱 시도
+    // Attempt JSON parsing
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('[Model Server Monitor] Gemini JSON 파싱 실패:', {
+      console.error('[Model Server Monitor] Gemini JSON parsing failed:', {
         error: parseError.message,
         responsePreview: responseText.substring(0, 200),
         status: res.status,
         statusText: res.statusText,
-        url: url.replace(/key=[^&]+/, 'key=***'), // API 키 마스킹
+        url: url.replace(/key=[^&]+/, 'key=***'), // API key masking
       });
-      throw new Error(`JSON 파싱 실패: ${parseError.message}`);
+      throw new Error(`JSON parsing failed: ${parseError.message}`);
     }
 
     const rawModels = Array.isArray(data?.models) ? data.models : [];
@@ -886,37 +886,37 @@ export async function checkGeminiHealth(endpoint) {
       error: null,
     };
   } catch (error) {
-    // 타임아웃 정리
+    // Clear timeout
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
 
     const responseTime = Date.now() - startAt;
 
-    // 에러 메시지 개선
+    // Improve error message
     let errorMessage = error.message || 'Unknown error';
 
-    // 네트워크 에러인 경우 더 자세한 정보 제공
+    // Provide more detailed info for network errors
     if (error.name === 'AbortError' || error.name === 'TimeoutError') {
-      errorMessage = `연결 타임아웃 (5초 초과): ${endpoint.url}`;
+      errorMessage = `Connection timeout (over 5 seconds): ${endpoint.url}`;
     } else if (
       error.code === 'ECONNREFUSED' ||
       error.message?.includes('ECONNREFUSED')
     ) {
-      errorMessage = `연결 거부됨: ${endpoint.url} (서버가 실행 중인지 확인하세요)`;
+      errorMessage = `Connection refused: ${endpoint.url} (check whether the server is running)`;
     } else if (
       error.code === 'ENOTFOUND' ||
       error.message?.includes('ENOTFOUND')
     ) {
-      errorMessage = `호스트를 찾을 수 없음: ${endpoint.url} (DNS 확인 필요)`;
+      errorMessage = `Host not found: ${endpoint.url} (DNS check required)`;
     } else if (error.message?.includes('fetch failed')) {
       const causeMessage = error.cause?.message || '';
-      errorMessage = `네트워크 연결 실패: ${endpoint.url}${
+      errorMessage = `Network connection failed: ${endpoint.url}${
         causeMessage ? ` (${causeMessage})` : ''
       }`;
     }
 
-    // 오류 이력 저장
+    // Save error history
     await saveModelServerErrorHistory(endpoint, error, responseTime);
 
     return {
@@ -929,28 +929,28 @@ export async function checkGeminiHealth(endpoint) {
       error: errorMessage,
     };
   } finally {
-    // 타임아웃 정리 (성공 시에도)
+    // Clear timeout (also on success)
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
   }
 }
 
-// 마지막 상태 확인 시간 추적
+// Track last status check time
 let lastCheckTime = 0;
-const MIN_CHECK_INTERVAL = 30000000; // 최소 500분 간격
+const MIN_CHECK_INTERVAL = 30000000; // Minimum 500-minute interval
 
-// 모든 인스턴스 상태 확인 (model-server + openai-compatible)
+// Check status of all instances (model-server + openai-compatible)
 export async function checkAllModelServerInstances() {
   const now = Date.now();
   const timeSinceLastCheck = now - lastCheckTime;
 
-  // 최소 간격 이내 호출 시 스킵
+  // Skip if called within the minimum interval
   if (timeSinceLastCheck < MIN_CHECK_INTERVAL) {
     console.log(
-      `[Model Server Monitor] 상태 확인 스킵: 마지막 확인 후 ${Math.round(
+      `[Model Server Monitor] Skipping status check: ${Math.round(
         timeSinceLastCheck / 1000
-      )}초 경과 (최소 ${MIN_CHECK_INTERVAL / 1000}초 간격 필요)`
+      )} seconds since last check (minimum ${MIN_CHECK_INTERVAL / 1000} seconds required)`
     );
     return [];
   }
@@ -958,21 +958,21 @@ export async function checkAllModelServerInstances() {
   lastCheckTime = now;
 
   try {
-    // 비활성화된 서버 목록 확인 (추가 보장)
+    // Check inactive server list (extra safeguard)
     const inactiveUrls = await getInactiveUrls();
 
     const endpoints = await getAllEndpoints();
 
-    // 비활성화된 서버 추가 필터링 (이중 보장)
-    // OpenAI Compatible과 Gemini는 외부 API이므로 상태 체크 제외
+    // Additional filtering for inactive servers (double safeguard)
+    // Exclude OpenAI Compatible and Gemini from health checks (external APIs)
     const activeEndpoints = endpoints.filter((endpoint) => {
-      if (!endpoint.url) return true; // URL이 없으면 유지
+      if (!endpoint.url) return true; // keep if URL is missing
       const normalizedUrl = endpoint.url.trim().replace(/\/+$/, '');
 
-      // 비활성화된 서버 제외
+      // Exclude inactive servers
       if (inactiveUrls.has(normalizedUrl)) return false;
 
-      // 외부 API는 상태 체크 제외 (항상 온라인으로 간주)
+      // Exclude external APIs from health checks (assume always online)
       if (endpoint.provider === 'openai-compatible') return false;
       if (endpoint.provider === 'gemini') return false;
 
@@ -980,27 +980,27 @@ export async function checkAllModelServerInstances() {
     });
 
     console.log(
-      `[Model Server Monitor] ${
+      `[Model Server Monitor] Checking health for ${
         activeEndpoints.length
-      }개 인스턴스 상태 확인 중... (비활성 ${
+      } instances... (excluding ${
         endpoints.length - activeEndpoints.length
-      }개 제외)`
+      } inactive)`
     );
 
     const checks = await Promise.allSettled(
       activeEndpoints.map(async (endpoint) => {
         try {
-          // URL 기반으로 provider 재확인 및 강제 수정 (이중 체크)
+          // Re-validate and force-correct provider by URL (double check)
           let provider = endpoint.provider;
           if (endpoint.url) {
             const url = endpoint.url.toLowerCase();
 
-            // Gemini URL 체크 (가장 우선)
+            // Gemini URL check (highest priority)
             if (url.includes('generativelanguage.googleapis.com')) {
               provider = 'gemini';
               if (endpoint.provider !== 'gemini') {
                 console.warn(
-                  '[Model Server Monitor] Gemini URL이지만 provider가 gemini가 아닙니다. provider를 gemini로 수정합니다.',
+                  '[Model Server Monitor] URL is Gemini but provider is not gemini. Correcting provider to gemini.',
                   {
                     url: endpoint.url,
                     currentProvider: endpoint.provider,
@@ -1013,12 +1013,12 @@ export async function checkAllModelServerInstances() {
               });
             }
 
-            // OpenAI 호환 URL 체크
+            // OpenAI-compatible URL check
             if (url.includes('/v1/models') || url.includes('/v1/chat')) {
               provider = 'openai-compatible';
               if (endpoint.provider !== 'openai-compatible') {
                 console.warn(
-                  '[Model Server Monitor] OpenAI 호환 URL이지만 provider가 openai-compatible이 아닙니다. provider를 openai-compatible로 수정합니다.',
+                  '[Model Server Monitor] URL is OpenAI-compatible but provider is not openai-compatible. Correcting provider to openai-compatible.',
                   {
                     url: endpoint.url,
                     currentProvider: endpoint.provider,
@@ -1032,22 +1032,22 @@ export async function checkAllModelServerInstances() {
             }
           }
 
-          // URL 기반 체크를 통과한 경우, provider에 따라 분기
+          // If URL-based checks pass, branch by provider
           if (provider === 'openai-compatible') {
             return await checkOpenAICompatibleHealth({ ...endpoint, provider });
           } else if (provider === 'gemini') {
             return await checkGeminiHealth({ ...endpoint, provider });
           } else {
-            // 기본값: model-server (Ollama 등)
+            // Default: model-server (Ollama, etc.)
             return await checkModelServerHealth({
               ...endpoint,
               provider: provider || 'model-server',
             });
           }
         } catch (error) {
-          // 개별 엔드포인트 체크 실패 시에도 계속 진행
+          // Continue even if an individual endpoint check fails
           console.error(
-            `[Model Server Monitor] 엔드포인트 체크 실패: ${endpoint.url}`,
+            `[Model Server Monitor] Endpoint check failed: ${endpoint.url}`,
             error
           );
           return {
@@ -1063,13 +1063,13 @@ export async function checkAllModelServerInstances() {
       })
     );
 
-    // Promise.allSettled 결과를 처리
+    // Process Promise.allSettled results
     const results = checks.map((result) => {
       if (result.status === 'fulfilled') {
         return result.value;
       } else {
-        // 이론적으로는 위의 catch에서 처리되지만, 안전장치로 추가
-        console.error('[Model Server Monitor] Promise 실패:', result.reason);
+        // Theoretically handled by the catch above, but added as a safeguard
+        console.error('[Model Server Monitor] Promise failed:', result.reason);
         return {
           status: 'unhealthy',
           models: [],
@@ -1083,12 +1083,12 @@ export async function checkAllModelServerInstances() {
 
     return results;
   } catch (error) {
-    console.error('[Model Server Monitor] 인스턴스 상태 확인 실패:', error);
+    console.error('[Model Server Monitor] Instance health check failed:', error);
     return [];
   }
 }
 
-// 상세 API 요청 로그 기록 (라운드로빈 추적 포함)
+// Record detailed API request logs (including round-robin tracking)
 export async function logModelServerRequest(instanceId, requestData) {
   try {
     const logEntry = {
@@ -1110,7 +1110,7 @@ export async function logModelServerRequest(instanceId, requestData) {
       responseStatus: requestData.responseStatus || null,
       responseSize: requestData.responseSize || 0, // bytes
       errorMessage: requestData.errorMessage || null,
-      roundRobinIndex: requestData.roundRobinIndex || null, // 라운드로빈 순서
+      roundRobinIndex: requestData.roundRobinIndex || null, // round-robin order
       roomId: requestData.roomId || null,
       userId: requestData.userId || null,
       timestamp: new Date(),
@@ -1137,20 +1137,20 @@ export async function logModelServerRequest(instanceId, requestData) {
     } - ${requestData.responseTime}ms`;
     console.log(`[Model Server Request] [${instanceId}] ${logMessage}`);
   } catch (error) {
-    console.error('모델 서버 요청 로그 저장 실패:', error);
+    console.error('Failed to save model server request log:', error);
   }
 }
 
-// OpenAI-compatible 인스턴스 요청 로그 기록
+// Record OpenAI-compatible instance request logs
 export async function logOpenAIRequest(instanceId, requestData) {
   try {
-    // provider 감지 (instanceId 또는 endpoint에서)
+    // Detect provider (from instanceId or endpoint)
     const isGemini =
       instanceId?.includes('gemini') ||
       requestData.endpoint?.includes('generativelanguage.googleapis.com') ||
       requestData.provider === 'gemini';
 
-    // 요청 타입 결정 (messages에 이미지가 있는지 확인)
+    // Determine request type (check whether messages include images)
     let requestType = 'text';
     if (requestData.messages) {
       const hasImage = requestData.messages.some(
@@ -1164,29 +1164,29 @@ export async function logOpenAIRequest(instanceId, requestData) {
       requestType = hasImage ? 'multimodal' : 'text';
     }
 
-    // 파일 정보 추출
+    // Extract file info
     const hasFiles =
       requestType === 'multimodal' || requestData.hasFiles || false;
     const fileCount = requestData.fileCount || (hasFiles ? 1 : 0);
 
-    // 메시지 생성 (간결하게 - 이미 배지로 표시되는 정보는 제외)
-    // 메시지는 엔드포인트 정보만 포함 (배지에 표시되지 않는 추가 정보만)
+    // Build message (concise - exclude info already shown in badges)
+    // Message includes only endpoint info (only extra info not shown in badges)
     const messageParts = [];
     messageParts.push(
       `${requestData.method || 'POST'} ${
         requestData.endpoint || '/v1/chat/completions'
       }`
     );
-    // 배지에 이미 표시되는 정보는 메시지에서 제외:
-    // - Model (배지에 표시됨)
-    // - Response time (배지에 표시됨)
-    // - Status (배지에 표시됨)
-    // - Prompt/Completion/Total tokens (배지에 표시됨)
-    // - Stream (배지에 표시됨)
-    // - RoundRobinIndex (배지에 표시됨)
-    // 추가 컨텍스트만 포함 (예: 에러 메시지, 특별한 정보 등)
+    // Exclude info already shown in badges from message:
+    // - Model (shown in badge)
+    // - Response time (shown in badge)
+    // - Status (shown in badge)
+    // - Prompt/Completion/Total tokens (shown in badge)
+    // - Stream (shown in badge)
+    // - RoundRobinIndex (shown in badge)
+    // Include only additional context (e.g., error messages, special details)
 
-    // metadata에 추가 정보 포함 (null/undefined 제외)
+    // Include additional info in metadata (exclude null/undefined)
     const metadata = {
       ...(requestData.metadata || {}),
       endpoint: requestData.endpoint || '/v1/chat/completions',
@@ -1224,14 +1224,14 @@ export async function logOpenAIRequest(instanceId, requestData) {
       provider: isGemini ? 'gemini' : 'openai-compatible',
     };
 
-    // null/undefined 값 제거
+    // Remove null/undefined values
     Object.keys(metadata).forEach((key) => {
       if (metadata[key] === null || metadata[key] === undefined) {
         delete metadata[key];
       }
     });
 
-    // Gemini인 경우 별도 카테고리 사용
+    // Use a separate category for Gemini
     const category = isGemini ? 'gemini_proxy' : 'openai_proxy';
     const type = isGemini ? 'gemini_proxy' : 'openai_proxy';
 
@@ -1261,7 +1261,7 @@ export async function logOpenAIRequest(instanceId, requestData) {
       promptTokens: requestData.promptTokens || null,
       completionTokens: requestData.completionTokens || null,
       totalTokens: requestData.totalTokens || null,
-      message: messageParts.join(' | '), // 상세 메시지 추가
+      message: messageParts.join(' | '), // add detailed message
       timestamp: new Date(),
       metadata,
     };
@@ -1281,11 +1281,11 @@ export async function logOpenAIRequest(instanceId, requestData) {
       `[OpenAI-Compatible Request] [${instanceId}] ${logEntry.method} ${logEntry.endpoint} - Model: ${logEntry.model} - ${logEntry.responseStatus} - ${logEntry.responseTime}ms`
     );
   } catch (error) {
-    console.error('OpenAI-compatible 요청 로그 저장 실패:', error);
+    console.error('Failed to save OpenAI-compatible request log:', error);
   }
 }
 
-// 기본 이벤트 로그 기록
+// Record basic event logs
 export async function logModelServerEvent(
   instanceId,
   level,
@@ -1308,24 +1308,24 @@ export async function logModelServerEvent(
 
     console.log(`[Model Server Log] [${level}] [${instanceId}] ${message}`);
   } catch (error) {
-    console.error('모델 서버 로그 저장 실패:', error);
+    console.error('Failed to save model server log:', error);
   }
 }
 
-// 모델 서버 인스턴스 상태를 DB에 저장
+// Save model server instance status to DB
 export async function saveendpointStatus(modelServers) {
   try {
-    // 비활성화된 서버 목록 확인
+    // Check inactive server list
     const inactiveUrls = await getInactiveUrls();
 
-    // 비활성화된 서버 필터링
+    // Filter inactive servers
     const activeModelServers = modelServers.filter((instance) => {
-      if (!instance.url) return true; // URL이 없으면 유지 (legacy 데이터)
+      if (!instance.url) return true; // keep if URL is missing (legacy data)
       const normalizedUrl = instance.url.trim().replace(/\/+$/, '');
       return !inactiveUrls.has(normalizedUrl);
     });
 
-    // 기존 데이터 삭제 후 새로 삽입
+    // Delete existing data, then insert new data
     await query('DELETE FROM model_server');
 
     if (activeModelServers.length > 0) {
@@ -1349,7 +1349,7 @@ export async function saveendpointStatus(modelServers) {
       }
     }
 
-    // 로그 기록
+    // Log records
     const healthyCount = activeModelServers.filter(
       (i) => i.status === 'healthy'
     ).length;
@@ -1358,7 +1358,7 @@ export async function saveendpointStatus(modelServers) {
     logModelServerEvent(
       'system',
       'INFO',
-      `모델 서버 상태 업데이트 완료: 정상 ${healthyCount}개, 비정상 ${unhealthyCount}개`,
+      `Model server status update completed: ${healthyCount} healthy, ${unhealthyCount} unhealthy`,
       {
         healthy: healthyCount,
         unhealthy: unhealthyCount,
@@ -1366,14 +1366,14 @@ export async function saveendpointStatus(modelServers) {
       }
     );
   } catch (error) {
-    console.error('모델 서버 상태 저장 실패:', error);
-    logModelServerEvent('system', 'ERROR', '모델 서버 상태 저장 실패', {
+    console.error('Failed to save model server status:', error);
+    logModelServerEvent('system', 'ERROR', 'Failed to save model server status', {
       error: error.message,
     });
   }
 }
 
-// 모델 서버 API 호출 성공/실패 로그
+// Log success/failure of model server API calls
 export async function logModelServerAPICall(
   endpoint,
   success,
@@ -1385,12 +1385,12 @@ export async function logModelServerAPICall(
   }`;
 
   if (success) {
-    logModelServerEvent(instanceId, 'INFO', `API 호출 성공`, {
+    logModelServerEvent(instanceId, 'INFO', `API call succeeded`, {
       endpoint,
       responseTime: `${responseTime}ms`,
     });
   } else {
-    logModelServerEvent(instanceId, 'ERROR', `API 호출 실패`, {
+    logModelServerEvent(instanceId, 'ERROR', `API call failed`, {
       endpoint,
       error: error?.message || 'Unknown error',
       responseTime: responseTime ? `${responseTime}ms` : 'timeout',
@@ -1398,18 +1398,18 @@ export async function logModelServerAPICall(
   }
 }
 
-// 정기적인 모델 서버 모니터링 시작
+// Start periodic model server monitoring
 let monitoringInterval = null;
 
 export function startModelServerMonitoring() {
   if (monitoringInterval) return;
 
-  console.log('[Model Server Monitor] 모니터링 시작...');
+  console.log('[Model Server Monitor] Monitoring started...');
 
-  // 즉시 한번 실행
+  // Run once immediately
   checkAndSaveendpointStatus();
 
-  // 200분마다 상태 확인
+  // Check status every 200 minutes
   monitoringInterval = setInterval(checkAndSaveendpointStatus, 12000000);
 }
 
@@ -1417,7 +1417,7 @@ export function stopModelServerMonitoring() {
   if (monitoringInterval) {
     clearInterval(monitoringInterval);
     monitoringInterval = null;
-    console.log('[Model Server Monitor] 모니터링 중단');
+    console.log('[Model Server Monitor] Monitoring stopped');
   }
 }
 
@@ -1425,12 +1425,12 @@ async function checkAndSaveendpointStatus() {
   const now = Date.now();
   const timeSinceLastCheck = now - lastCheckTime;
 
-  // 최소 간격 이내 호출 시 스킵
+  // Skip if called within the minimum interval
   if (timeSinceLastCheck < MIN_CHECK_INTERVAL) {
     console.log(
-      `[Model Server Monitor] 상태 확인 스킵: 마지막 확인 후 ${Math.round(
+      `[Model Server Monitor] Skipping status check: ${Math.round(
         timeSinceLastCheck / 1000
-      )}초 경과 (최소 ${MIN_CHECK_INTERVAL / 1000}초 간격 필요)`
+      )} seconds since last check (minimum ${MIN_CHECK_INTERVAL / 1000} seconds required)`
     );
     return;
   }
@@ -1439,30 +1439,30 @@ async function checkAndSaveendpointStatus() {
     const modelServers = await checkAllModelServerInstances();
     await saveendpointStatus(modelServers);
   } catch (error) {
-    console.error('[Model Server Monitor] 상태 확인 실패:', error);
-    logModelServerEvent('system', 'ERROR', '상태 확인 실패', {
+    console.error('[Model Server Monitor] Status check failed:', error);
+    logModelServerEvent('system', 'ERROR', 'Status check failed', {
       error: error.message,
     });
   }
 }
 
-// 서버 시작시 자동 실행 (브라우저에서는 실행되지 않음)
-// 빌드 단계에서는 모니터링을 시작하지 않음
+// Auto-run on server start (does not run in browser)
+// Do not start monitoring during build phase
 if (
   typeof window === 'undefined' &&
   process.env.NEXT_PHASE !== 'phase-production-build'
 ) {
-  // 5초 후 모니터링 시작 (서버 초기화 완료 후)
+  // Start monitoring after 5 seconds (after server initialization)
   setTimeout(() => {
     startModelServerMonitoring();
   }, 5000);
 
-  // 프로세스 종료시 모니터링 중단
+  // Stop monitoring on process termination
   process.on('SIGTERM', stopModelServerMonitoring);
   process.on('SIGINT', stopModelServerMonitoring);
 }
 
-// 하위 호환성을 위한 별칭 (점진적 마이그레이션)
+// Aliases for backward compatibility (gradual migration)
 export const getLlmEndpoints = getModelServerEndpoints;
 export const checkLlmHealth = checkModelServerHealth;
 export const checkAllLlmInstances = checkAllModelServerInstances;

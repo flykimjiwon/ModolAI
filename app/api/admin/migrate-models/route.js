@@ -13,33 +13,33 @@ const REQUIRED_MODEL_COLUMNS = [
   { name: 'pii_response_mask_opt', type: 'boolean' },
 ];
 
-// SSO 연동을 위한 users 테이블 추가 컬럼
+// Additional users table columns for SSO integration
 const REQUIRED_USER_COLUMNS = [
-  { name: 'employee_no', type: 'varchar' },           // 사번 (UNIQUE)
-  { name: 'employee_id', type: 'varchar' },           // 직원 ID
+  { name: 'employee_no', type: 'varchar' },           // Employee number (UNIQUE)
+  { name: 'employee_id', type: 'varchar' },           // Employee ID
   { name: 'sso_user_id', type: 'varchar' },           // SSO userId
-  { name: 'company_code', type: 'varchar' },          // 그룹사 코드
-  { name: 'company_name', type: 'varchar' },          // 그룹사명
-  { name: 'company_id', type: 'varchar' },            // 그룹사 ID
-  { name: 'department_id', type: 'varchar' },         // 부서 ID
-  { name: 'department_no', type: 'varchar' },         // 부서 번호
-  { name: 'department_location', type: 'text' },      // 부서 위치 경로
-  { name: 'employee_position_name', type: 'varchar' },// 직급
-  { name: 'employee_class', type: 'varchar' },        // 직원 유형
-  { name: 'employee_security_level', type: 'integer' },// 보안 등급
-  { name: 'lang', type: 'varchar' },                  // 언어
-  { name: 'login_deny_yn', type: 'varchar' },         // 로그인 거부 여부
-  { name: 'auth_type', type: 'varchar' },             // 인증 타입 ('local' | 'sso')
-  { name: 'auth_result', type: 'varchar' },           // 인증 결과 (SUCCESS 등)
-  { name: 'auth_result_message', type: 'text' },      // 인증 결과 메시지
-  { name: 'auth_event_id', type: 'varchar' },         // 인증 이벤트 ID
-  // SSO common 필드
-  { name: 'sso_result_code', type: 'varchar' },       // common.resultCode (200 등)
+  { name: 'company_code', type: 'varchar' },          // Group company code
+  { name: 'company_name', type: 'varchar' },          // Group company name
+  { name: 'company_id', type: 'varchar' },            // Group company ID
+  { name: 'department_id', type: 'varchar' },         // Department ID
+  { name: 'department_no', type: 'varchar' },         // Department number
+  { name: 'department_location', type: 'text' },      // Department location path
+  { name: 'employee_position_name', type: 'varchar' },// Position
+  { name: 'employee_class', type: 'varchar' },        // Employee type
+  { name: 'employee_security_level', type: 'integer' },// Security level
+  { name: 'lang', type: 'varchar' },                  // Language
+  { name: 'login_deny_yn', type: 'varchar' },         // Login denied flag
+  { name: 'auth_type', type: 'varchar' },             // Auth type ('local' | 'sso')
+  { name: 'auth_result', type: 'varchar' },           // Auth result (SUCCESS, etc.)
+  { name: 'auth_result_message', type: 'text' },      // Auth result message
+  { name: 'auth_event_id', type: 'varchar' },         // Auth event ID
+  // SSO common fields
+  { name: 'sso_result_code', type: 'varchar' },       // common.resultCode (200, etc.)
   { name: 'sso_response_datetime', type: 'timestamp' }, // common.responseDatetime
   { name: 'sso_response_datetime', type: 'timestamp' }, // common.responseDatetime
   { name: 'sso_transaction_id', type: 'varchar' },    // common.transactionId
-  // 인증 보안 개선 (2026-02-27)
-  { name: 'last_active_at', type: 'timestamp' },      // 마지막 실제 활동 시각
+  // Authentication security enhancement (2026-02-27)
+  { name: 'last_active_at', type: 'timestamp' },      // Last actual activity timestamp
 ];
 const REQUIRED_SETTINGS_COLUMNS = [
   { name: 'max_images_per_message', type: 'integer' },
@@ -53,7 +53,7 @@ const REQUIRED_SETTINGS_COLUMNS = [
   { name: 'board_enabled', type: 'boolean' },
   { name: 'support_contacts', type: 'jsonb' },
   { name: 'support_contacts_enabled', type: 'boolean' },
-  { name: 'login_type', type: 'varchar' },  // 'local' | 'sso' - 기본 로그인 방식
+  { name: 'login_type', type: 'varchar' },  // 'local' | 'sso' - default login method
 ];
 const REQUIRED_EXTERNAL_API_LOGS_COLUMNS = [
   { name: 'first_response_time', type: 'integer' },
@@ -374,13 +374,13 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: upToDate
-        ? '스키마가 최신 상태입니다.'
-        : '스키마 보정이 필요합니다.',
+        ? 'Schema is up to date.'
+        : 'Schema adjustment is required.',
       ...status,
       isUpToDate: upToDate,
     });
   } catch (error) {
-    console.error('[Migration] 상태 조회 실패:', error);
+    console.error('[Migration] Failed to fetch status:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -390,9 +390,9 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    console.log('[Migration] 데이터베이스 마이그레이션 시작...');
+    console.log('[Migration] Starting database migration...');
 
-    // models 테이블: api_config, api_key, visible, PII 컬럼 추가
+    // models table: add api_config, api_key, visible, and PII columns
     await query(`
       ALTER TABLE models
       ADD COLUMN IF NOT EXISTS api_config JSONB,
@@ -405,9 +405,9 @@ export async function POST(request) {
       ADD COLUMN IF NOT EXISTS pii_response_mxt_vrf BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS pii_response_mask_opt BOOLEAN DEFAULT true
     `);
-    console.log('[Migration] ✓ models 테이블 컬럼 추가 완료');
+    console.log('[Migration] ✓ Added models table columns');
 
-    // settings 테이블: 이미지/위젯 설정 컬럼 추가
+    // settings table: add image/widget setting columns
     await query(`
       ALTER TABLE settings
       ADD COLUMN IF NOT EXISTS max_images_per_message INTEGER DEFAULT 5,
@@ -423,7 +423,7 @@ export async function POST(request) {
       ADD COLUMN IF NOT EXISTS manual_preset_api_base VARCHAR(500) DEFAULT 'https://api.openai.com',
       ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local'
     `);
-    console.log('[Migration] ✓ settings 테이블 컬럼 추가 완료');
+    console.log('[Migration] ✓ Added settings table columns');
 
     await query(`
       ALTER TABLE external_api_logs
@@ -465,9 +465,9 @@ export async function POST(request) {
       ADD COLUMN IF NOT EXISTS prompt_id UUID,
       ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50)
     `);
-    console.log('[Migration] ✓ external_api_logs 테이블 컬럼 추가 완료');
+    console.log('[Migration] ✓ Added external_api_logs table columns');
 
-    // users 테이블: SSO 연동을 위한 컬럼 추가
+    // users table: add columns for SSO integration
     await query(`
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS employee_no VARCHAR(20),
@@ -492,22 +492,22 @@ export async function POST(request) {
       ADD COLUMN IF NOT EXISTS sso_response_datetime TIMESTAMP,
       ADD COLUMN IF NOT EXISTS sso_transaction_id VARCHAR(50)
     `);
-    // users 테이블: 보안 개선 컬럼 추가 (2026-02-27)
+    // users table: add security enhancement column (2026-02-27)
     await query(`
       ALTER TABLE users
       ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP
     `);
-    console.log('[Migration] ✓ users.last_active_at 컬럼 추가 완료');
-    console.log('[Migration] ✓ users 테이블 SSO 컬럼 추가 완료');
+    console.log('[Migration] ✓ Added users.last_active_at column');
+    console.log('[Migration] ✓ Added users table SSO columns');
 
-    // model_logs 테이블: user_id 컬럼 추가 (웹채팅 토큰 합산용)
+    // model_logs table: add user_id column (for web chat token aggregation)
     await query(`
       ALTER TABLE model_logs
       ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL
     `);
-    console.log('[Migration] ✓ model_logs.user_id 컬럼 추가 완료');
+    console.log('[Migration] ✓ Added model_logs.user_id column');
 
-    // notices, board_posts 조회수 컬럼 추가
+    // Add view count columns to notices and board_posts
     await query(`
       ALTER TABLE notices
       ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0
@@ -516,7 +516,7 @@ export async function POST(request) {
       ALTER TABLE board_posts
       ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0
     `);
-    console.log('[Migration] ✓ notices/board_posts views 컬럼 추가 완료');
+    console.log('[Migration] ✓ Added notices/board_posts views columns');
 
     await query(`
       UPDATE notices SET views = 0 WHERE views IS NULL
@@ -524,9 +524,9 @@ export async function POST(request) {
     await query(`
       UPDATE board_posts SET views = 0 WHERE views IS NULL
     `);
-    console.log('[Migration] ✓ notices/board_posts views 기본값 보정 완료');
+    console.log('[Migration] ✓ Backfilled default values for notices/board_posts views');
 
-    // 개인정보 컬럼 초기화 (기존 데이터 제거)
+    // Initialize personal-information columns (remove existing data)
     await query(`
       DO $$
       BEGIN
@@ -556,71 +556,71 @@ export async function POST(request) {
         END IF;
       END $$;
     `);
-    console.log('[Migration] ✓ users 개인정보 컬럼 데이터 초기화 완료');
+    console.log('[Migration] ✓ Cleared data in users personal-information columns');
 
-    // password_hash를 nullable로 변경 (SSO 사용자는 비밀번호 없음)
+    // Make password_hash nullable (SSO users have no password)
     await query(`
       ALTER TABLE users
       ALTER COLUMN password_hash DROP NOT NULL
     `).catch((err) => {
-      // 이미 nullable이면 무시
+      // Ignore if already nullable
       if (!err.message.includes('not exist')) {
-        console.log('[Migration] password_hash 이미 nullable 상태');
+        console.log('[Migration] password_hash is already nullable');
       }
     });
-    console.log('[Migration] ✓ users.password_hash nullable 변경 완료');
+    console.log('[Migration] ✓ Changed users.password_hash to nullable');
 
-    // employee_no UNIQUE 인덱스 추가
+    // Add UNIQUE index on employee_no
     await query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no)
       WHERE employee_no IS NOT NULL
     `);
-    console.log('[Migration] ✓ users.employee_no UNIQUE 인덱스 추가 완료');
+    console.log('[Migration] ✓ Added UNIQUE index on users.employee_no');
 
-    // 인덱스 추가
+    // Add index
     await query(`
       CREATE INDEX IF NOT EXISTS idx_models_endpoint ON models(endpoint)
     `);
-    console.log('[Migration] ✓ 인덱스 추가 완료');
+    console.log('[Migration] ✓ Added index');
 
     await query(`
       CREATE INDEX IF NOT EXISTS idx_model_logs_user_id ON model_logs(user_id)
     `);
 
-    // 오류 로그 테이블 보정
+    // Adjust error log-related tables
     for (const table of REQUIRED_TABLES) {
       await query(table.create);
       for (const indexQuery of table.indexes || []) {
         await query(indexQuery);
       }
-      console.log(`[Migration] ✓ ${table.name} 테이블 보정 완료`);
+      console.log(`[Migration] ✓ Adjusted ${table.name} table`);
     }
 
-    // 결과 확인
+    // Check results
     const status = await getSchemaStatus();
 
-    console.log('[Migration] 현재 models 테이블 컬럼:');
+    console.log('[Migration] Current models table columns:');
     status.columns.forEach((r) =>
       console.log(`  - ${r.column_name}: ${r.data_type}`)
     );
 
-    console.log('[Migration] 현재 settings 테이블 컬럼:');
+    console.log('[Migration] Current settings table columns:');
     status.settingsColumns.forEach((r) =>
       console.log(`  - ${r.column_name}: ${r.data_type}`)
     );
 
-    console.log('[Migration] 현재 users 테이블 컬럼:');
+    console.log('[Migration] Current users table columns:');
     status.usersColumns.forEach((r) =>
       console.log(`  - ${r.column_name}: ${r.data_type}`)
     );
 
     return NextResponse.json({
       success: true,
-      message: '마이그레이션 완료',
+      message: 'Migration completed',
       ...status,
     });
   } catch (error) {
-    console.error('[Migration] 실패:', error);
+    console.error('[Migration] Failed:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

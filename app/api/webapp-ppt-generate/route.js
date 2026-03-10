@@ -209,7 +209,7 @@ function getBlueTemplateVariant(theme, tone) {
   const variants = {
     'light-casual': {
       id: 'light-casual',
-      label: '라이트 x 캐주얼',
+      label: 'Light x Casual',
       bgStart: '#eff6ff',
       bgEnd: '#dbeafe',
       panel: 'rgba(255, 255, 255, 0.92)',
@@ -223,11 +223,11 @@ function getBlueTemplateVariant(theme, tone) {
       subtitleWeight: '600',
       kickerSpacing: '0.16em',
       cardShadow: '0 18px 40px rgba(56, 189, 248, 0.16)',
-      note: '밝고 가벼운 리듬, 카드/칩 요소를 적극 활용',
+      note: 'Bright and light rhythm, actively use card/chip elements',
     },
     'light-business': {
       id: 'light-business',
-      label: '라이트 x 비즈니스',
+      label: 'Light x Business',
       bgStart: '#f8fbff',
       bgEnd: '#dbeafe',
       panel: 'rgba(255, 255, 255, 0.97)',
@@ -241,11 +241,11 @@ function getBlueTemplateVariant(theme, tone) {
       subtitleWeight: '500',
       kickerSpacing: '0.12em',
       cardShadow: '0 12px 28px rgba(30, 64, 175, 0.10)',
-      note: '정돈된 기업형 레이아웃, 과한 장식 최소화',
+      note: 'Structured corporate layout with minimal excessive decoration',
     },
     'dark-casual': {
       id: 'dark-casual',
-      label: '다크 x 캐주얼',
+      label: 'Dark x Casual',
       bgStart: '#0b1226',
       bgEnd: '#082f49',
       panel: 'rgba(12, 25, 48, 0.88)',
@@ -259,11 +259,11 @@ function getBlueTemplateVariant(theme, tone) {
       subtitleWeight: '600',
       kickerSpacing: '0.18em',
       cardShadow: '0 20px 52px rgba(8, 47, 73, 0.35)',
-      note: '어두운 배경 위에 선명한 블루 포인트와 유연한 카드',
+      note: 'Vivid blue highlights and flexible cards on a dark background',
     },
     'dark-business': {
       id: 'dark-business',
-      label: '다크 x 비즈니스',
+      label: 'Dark x Business',
       bgStart: '#0a1022',
       bgEnd: '#1e293b',
       panel: 'rgba(15, 23, 42, 0.9)',
@@ -277,7 +277,7 @@ function getBlueTemplateVariant(theme, tone) {
       subtitleWeight: '500',
       kickerSpacing: '0.13em',
       cardShadow: '0 16px 36px rgba(15, 23, 42, 0.44)',
-      note: '리포트/컨설팅 톤의 묵직한 대비와 선형 구조',
+      note: 'Strong report/consulting-style contrast with linear structure',
     },
   };
 
@@ -288,9 +288,9 @@ function buildBlueThemeTemplate(theme, tone) {
   const variant = getBlueTemplateVariant(theme, tone);
 
   return [
-    `[선택 템플릿: ${variant.label} (${variant.id})]`,
-    `템플릿 특징: ${variant.note}`,
-    '아래 샘플 템플릿을 기준으로 유사한 시각 언어를 유지하세요.',
+    `[Selected template: ${variant.label} (${variant.id})]`,
+    `Template characteristics: ${variant.note}`,
+    'Maintain a similar visual language based on the sample template below.',
     '<section class="ppt-slide">',
     '  <style>',
     `    .ppt-slide { min-height: 100vh; width: 100%; box-sizing: border-box; padding: 4.2vw; background: linear-gradient(150deg, ${variant.bgStart}, ${variant.bgEnd}); color: ${variant.textMain}; font-family: "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }`,
@@ -307,16 +307,16 @@ function buildBlueThemeTemplate(theme, tone) {
     '  </style>',
     '  <div class="ppt-surface">',
     '    <p class="ppt-kicker">Modol AI Template</p>',
-    '    <h1 class="ppt-title">슬라이드 대제목</h1>',
-    '    <p class="ppt-subtitle">핵심 메시지를 한 문장으로 전달</p>',
+    '    <h1 class="ppt-title">Main Slide Title</h1>',
+    '    <p class="ppt-subtitle">Deliver the core message in one sentence</p>',
     '    <div class="ppt-grid">',
     '      <article class="ppt-card">',
-    '        <h3 class="ppt-card-title">핵심 포인트 A</h3>',
-    '        <p class="ppt-card-body">문장형 설명과 <span class="ppt-accent">강조 키워드</span>를 함께 배치</p>',
+    '        <h3 class="ppt-card-title">Key Point A</h3>',
+    '        <p class="ppt-card-body">Place sentence-style explanation and <span class="ppt-accent">highlighted keywords</span> together</p>',
     '      </article>',
     '      <article class="ppt-card">',
-    '        <h3 class="ppt-card-title">핵심 포인트 B</h3>',
-    '        <p class="ppt-card-body">비즈니스 수치 또는 실행 항목을 간결하게 배치</p>',
+    '        <h3 class="ppt-card-title">Key Point B</h3>',
+    '        <p class="ppt-card-body">Present business metrics or action items concisely</p>',
     '      </article>',
     '    </div>',
     '    <p class="ppt-footer">2026 | Internal Draft</p>',
@@ -326,34 +326,34 @@ function buildBlueThemeTemplate(theme, tone) {
 }
 
 function buildPptSystemPrompt({ theme, tone, slideCount }) {
-  const toneText = tone === 'casual' ? '친근하고 이해하기 쉬운 톤' : '정중하고 보고서형 비즈니스 톤';
-  const themeText = theme === 'dark' ? '다크 배경 기반' : '라이트 배경 기반';
+  const toneText = tone === 'casual' ? 'friendly and easy-to-understand tone' : 'polite, report-style business tone';
+  const themeText = theme === 'dark' ? 'dark background based' : 'light background based';
   const selectedVariant = getBlueTemplateVariant(theme, tone);
   const designTemplate = buildBlueThemeTemplate(theme, tone);
 
   return [
-    '당신은 프레젠테이션 콘텐츠 생성기입니다.',
-    `반드시 ${slideCount}장의 슬라이드를 생성하세요.`,
-    `스타일은 ${themeText}, 문체는 ${toneText}을 사용하세요.`,
-    `선택된 디자인 템플릿은 ${selectedVariant.label}(${selectedVariant.id}) 입니다.`,
-    '템플릿 혼합은 금지하고, 선택된 템플릿에 맞는 톤과 구조를 유지하세요.',
-    '중요: 디자인/CSS는 클라이언트에서 강제 적용되므로 style 태그와 인라인 스타일을 작성하지 마세요.',
-    '중요: 각 슬라이드는 의미 태그(h1/h2/h3/p/ul/li 등) 중심으로 콘텐츠만 작성하세요.',
-    '내부적으로 아래 순서를 지킨 뒤 최종 결과만 출력하세요.',
-    '1) 먼저 슬라이드 개요를 설계한다(장수와 정확히 일치).',
-    '2) 첫 슬라이드는 제목/한 줄 핵심 메시지 중심으로 작성한다.',
-    '3) 중간 슬라이드는 목록/비교/지표 설명을 균형 있게 배치한다.',
-    '4) 마지막 슬라이드는 결론/요청사항/연락 포인트로 마무리한다.',
-    '최종 출력은 슬라이드별 HTML 본문 조각만 연속으로 출력한다.',
-    '각 슬라이드는 한 장 분량의 콘텐츠만 작성하세요.',
-    '권장 템플릿(슬라이드마다 변형 가능):',
-    '<h1>슬라이드 제목</h1>',
-    '<p>핵심 설명</p>',
-    '<ul><li>포인트 A</li><li>포인트 B</li></ul>',
+    'You are a presentation content generator.',
+    `You must generate exactly ${slideCount} slides.`,
+    `Use ${themeText} for style and ${toneText} for writing tone.`,
+    `The selected design template is ${selectedVariant.label} (${selectedVariant.id}).`,
+    'Do not mix templates; keep the tone and structure aligned with the selected template.',
+    'Important: Design/CSS is forcibly applied on the client, so do not write style tags or inline styles.',
+    'Important: For each slide, write only content centered around semantic tags (h1/h2/h3/p/ul/li, etc.).',
+    'Internally follow the sequence below, then output only the final result.',
+    '1) First design the slide outline (must match the exact number of slides).',
+    '2) The first slide should focus on the title and one-line core message.',
+    '3) Middle slides should balance lists/comparisons/metric explanations.',
+    '4) The final slide should conclude with conclusion/requests/contact points.',
+    'In the final output, continuously output only the HTML body fragments for each slide.',
+    'Each slide should contain only one slide-worth of content.',
+    'Recommended template (can be adapted per slide):',
+    '<h1>Slide Title</h1>',
+    '<p>Core description</p>',
+    '<ul><li>Point A</li><li>Point B</li></ul>',
     designTemplate,
-    '슬라이드와 슬라이드 사이는 정확히 <!-- SLIDE_BREAK --> 로 구분하세요.',
-    '절대 markdown 코드블록(```)을 사용하지 마세요.',
-    '스크립트 태그(<script>), style 태그(<style>), on* 이벤트 속성을 절대 사용하지 마세요.',
+    'Separate slides with exactly <!-- SLIDE_BREAK --> between them.',
+    'Never use markdown code blocks (``` ).',
+    'Never use script tags (<script>), style tags (<style>), or on* event attributes.',
   ].join('\n');
 }
 
@@ -375,7 +375,7 @@ async function getAgent7Settings() {
       allowUserModelOverride: row.allow_user_model_override === true,
     };
   } catch (error) {
-    console.warn('[webapp-ppt-generate] agent_settings 조회 실패:', error.message);
+    console.warn('[webapp-ppt-generate] Failed to query agent_settings:', error.message);
     return DEFAULT_SETTINGS;
   }
 }
@@ -459,7 +459,7 @@ export async function GET(request) {
     const hasPermission = await checkAgentPermissionForUser(authResult.user, '7');
     if (!hasPermission) {
         return NextResponse.json(
-          { error: 'PPT 에이전트 Access denied.' },
+          { error: 'Access denied to PPT agent.' },
           { status: 403 }
         );
     }
@@ -470,7 +470,7 @@ export async function GET(request) {
   } catch (error) {
     console.error('[webapp-ppt-generate:GET] error:', error);
     return NextResponse.json(
-      { error: 'PPT 기본 설정 조회에 실패했습니다.' },
+      { error: 'Failed to retrieve PPT default settings.' },
       { status: 500 }
     );
   }
@@ -486,7 +486,7 @@ export async function POST(request) {
     const hasPermission = await checkAgentPermissionForUser(authResult.user, '7');
     if (!hasPermission) {
       return NextResponse.json(
-        { error: 'PPT 에이전트 Access denied.' },
+        { error: 'Access denied to PPT agent.' },
         { status: 403 }
       );
     }
@@ -500,13 +500,13 @@ export async function POST(request) {
     const requestedModel = String(body?.model || '').trim();
 
     if (!topic) {
-      return NextResponse.json({ error: '주제를 입력해 주세요.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please enter a topic.' }, { status: 400 });
     }
     if (topic.length > 500) {
-      return NextResponse.json({ error: '주제는 500자 이하로 입력해 주세요.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please enter a topic with 500 characters or fewer.' }, { status: 400 });
     }
     if (brief.length > 3000) {
-      return NextResponse.json({ error: '간단한 내용은 3000자 이하로 입력해 주세요.' }, { status: 400 });
+      return NextResponse.json({ error: 'Please enter the brief content with 3000 characters or fewer.' }, { status: 400 });
     }
 
     const settings = await getAgent7Settings();
@@ -529,7 +529,7 @@ export async function POST(request) {
     if (settings.allowUserModelOverride && requestedModel) {
       if (!modelOptionIds.has(requestedModel)) {
         return NextResponse.json(
-          { error: '선택한 모델을 사용할 수 없습니다.' },
+          { error: 'The selected model cannot be used.' },
           { status: 400 }
         );
       }
@@ -544,12 +544,12 @@ export async function POST(request) {
     });
 
     const prompt = [
-      `주제: ${topic}`,
-      `간단한 내용: ${brief || '없음'}`,
-      `슬라이드 수: ${slideCount}`,
-      `테마: ${theme}`,
-      `톤: ${tone}`,
-      '요청: 위 조건으로 발표용 슬라이드 콘텐츠를 생성하세요. 반드시 슬라이드 본문 HTML 조각만 제공합니다.',
+      `Topic: ${topic}`,
+      `Brief content: ${brief || 'None'}`,
+      `Number of slides: ${slideCount}`,
+      `Theme: ${theme}`,
+      `Tone: ${tone}`,
+      'Request: Generate presentation slide content with the conditions above. Provide only slide body HTML fragments.',
     ].join('\n');
 
     const origin = new URL(request.url).origin;
@@ -583,7 +583,7 @@ export async function POST(request) {
       if (error?.name === 'AbortError') {
         const timeoutSec = Math.floor(timeoutMs / 1000);
         return NextResponse.json(
-          { error: `PPT 생성 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요. (허용 시간: ${timeoutSec}초)` },
+          { error: `PPT generation timed out. Please try again shortly. (Allowed time: ${timeoutSec} seconds)` },
           { status: 504 }
         );
       }
@@ -596,7 +596,7 @@ export async function POST(request) {
       const text = await upstreamResponse.text().catch(() => '');
       return NextResponse.json(
         {
-          error: `PPT 생성 호출 실패 (HTTP ${upstreamResponse.status})`,
+          error: `PPT generation call failed (HTTP ${upstreamResponse.status})`,
           details: text,
         },
         { status: upstreamResponse.status }
@@ -694,9 +694,9 @@ export async function POST(request) {
           emitDone();
         } catch (error) {
           if (!streamClosed) {
-            const fallback = sanitizeHtmlForPpt(error?.message || 'PPT 스트림 처리 중 오류가 발생했습니다.');
+            const fallback = sanitizeHtmlForPpt(error?.message || 'An error occurred while processing the PPT stream.');
             const normalizedError = JSON.stringify({
-              choices: [{ delta: { content: `\n[오류] ${fallback}` } }],
+               choices: [{ delta: { content: `\n[Error] ${fallback}` } }],
             });
             controller.enqueue(encoder.encode(`data: ${normalizedError}\n\n`));
             emitDone();
@@ -717,7 +717,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('[webapp-ppt-generate] error:', error);
     return NextResponse.json(
-      { error: 'PPT 생성 요청 처리에 실패했습니다.' },
+      { error: 'Failed to process the PPT generation request.' },
       { status: 500 }
     );
   }

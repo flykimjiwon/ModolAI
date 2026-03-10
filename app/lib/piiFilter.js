@@ -109,13 +109,13 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
         responseBody: logData.responseBody || null,
       });
     } catch (logError) {
-      console.warn('[PII] 로그 기록 실패(무시):', logError.message);
+      console.warn('[PII] Log recording failed (ignored):', logError.message);
     }
   }
 
   try {
     if (!endpoint) {
-      console.warn('[PII] PII_DETECT_API_URL 미설정 - 필터링 스킵');
+      console.warn('[PII] PII_DETECT_API_URL not configured - skipping filtering');
       const result = {
         ...baseResult,
         skipped: true,
@@ -143,7 +143,7 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
     const parsedResponseBody = parseJsonSafe(rawResponseBody);
 
     if (!res.ok) {
-      console.warn(`[PII] API 응답 오류: ${res.status}`);
+      console.warn(`[PII] API response error: ${res.status}`);
       const responseBody =
         parsedResponseBody !== null
           ? parsedResponseBody
@@ -213,7 +213,7 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
     });
     return result;
   } catch (err) {
-    console.warn('[PII] API 호출 실패 (필터링 스킵):', err.message);
+    console.warn('[PII] API call failed (skipping filtering):', err.message);
     const result = {
       ...baseResult,
       skipped: true,

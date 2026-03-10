@@ -3,7 +3,7 @@ import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { isValidUUID } from '@/lib/utils';
 
-// 메시지 피드백 저장/업데이트
+// Save/update message feedback
 export async function POST(request, { params }) {
   try {
     const payload = verifyToken(request);
@@ -18,23 +18,23 @@ export async function POST(request, { params }) {
     const body = await request.json();
     const { feedback } = body;
 
-    // 피드백 값 검증
+    // Validate feedback value
     if (feedback !== null && feedback !== 'like' && feedback !== 'dislike') {
       return NextResponse.json(
-        { error: '유효하지 않은 피드백 값입니다.' },
+        { error: 'Invalid feedback value.' },
         { status: 400 }
       );
     }
 
-    // messageId 검증
+    // Validate messageId
     if (!messageId || !isValidUUID(messageId)) {
       return NextResponse.json(
-        { error: '유효하지 않은 메시지 ID입니다.' },
+        { error: 'Invalid message ID.' },
         { status: 400 }
       );
     }
 
-    // 메시지 조회 및 소유자 확인
+    // Fetch message and verify ownership
     const messageResult = await query(
       'SELECT id, room_id, user_id, text, role, created_at FROM chat_history WHERE id = $1',
       [messageId]
@@ -42,30 +42,30 @@ export async function POST(request, { params }) {
 
     if (messageResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '메시지를 Not found.' },
+        { error: 'Message not found.' },
         { status: 404 }
       );
     }
 
     const message = messageResult.rows[0];
 
-    // 메시지 소유자 확인 (user_id로 확인)
+    // Verify message owner (by user_id)
     if (message.user_id !== payload.sub) {
       return NextResponse.json(
-        { error: '이 메시지에 대한 Unauthorized.' },
+        { error: 'Unauthorized for this message.' },
         { status: 403 }
       );
     }
 
-    // 피드백 업데이트 (null이면 NULL로 설정)
+    // Update feedback (set NULL if null)
     if (feedback === null) {
-      // 피드백 제거
+      // Remove feedback
       await query(
         'UPDATE chat_history SET feedback = NULL WHERE id = $1',
         [messageId]
       );
 
-      // messages 테이블에도 동기화
+      // Sync to messages table as well
       await query(
         `UPDATE messages 
          SET feedback = NULL 
@@ -73,13 +73,13 @@ export async function POST(request, { params }) {
         [message.room_id, message.text, message.role, message.created_at]
       );
     } else {
-      // 피드백 설정
+      // Set feedback
       await query(
         'UPDATE chat_history SET feedback = $1 WHERE id = $2',
         [feedback, messageId]
       );
 
-      // messages 테이블에도 동기화
+      // Sync to messages table as well
       await query(
         `UPDATE messages 
          SET feedback = $1 
@@ -93,11 +93,10 @@ export async function POST(request, { params }) {
       feedback: feedback,
     });
   } catch (error) {
-    console.error('피드백 저장 실패:', error);
+    console.error('Failed to save feedback:', error);
     return NextResponse.json(
-      { error: '피드백 저장에 실패했습니다.', details: error.message },
+      { error: 'Failed to save feedback.', details: error.message },
       { status: 500 }
     );
   }
 }
-

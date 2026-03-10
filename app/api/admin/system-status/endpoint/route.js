@@ -13,7 +13,7 @@ import {
   createServerError,
 } from '@/lib/errorHandler';
 
-// 개별 endpoint 상태 조회
+// Check status of a single endpoint
 export async function GET(request) {
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
@@ -25,18 +25,18 @@ export async function GET(request) {
     const endpointUrl = searchParams.get('url');
 
     if (!endpointUrl) {
-      return createValidationError('endpoint URL이 필요합니다.');
+      return createValidationError('Endpoint URL is required.');
     }
 
-    // 등록된 endpoint 목록에서 찾기
+    // Find from registered endpoint list
     const allEndpoints = await getAllEndpoints();
     const endpoint = allEndpoints.find((ep) => ep.url === endpointUrl);
 
     if (!endpoint) {
-      return createNotFoundError('등록되지 않은 endpoint입니다.');
+      return createNotFoundError('Endpoint is not registered.');
     }
 
-    // 비활성화된 서버는 상태 조회 스킵
+    // Skip health check for inactive servers
     if (endpoint.isActive === false) {
       return NextResponse.json({
         success: true,
@@ -45,7 +45,7 @@ export async function GET(request) {
           name: endpoint.name || endpoint.url,
           provider: endpoint.provider || 'model-server',
           status: 'inactive',
-          message: '비활성화됨',
+          message: 'Inactive',
           responseTime: null,
           modelsCount: 0,
           isActive: false,
@@ -53,7 +53,7 @@ export async function GET(request) {
       });
     }
 
-    // URL 기반으로 provider 재확인 (이중 체크)
+    // Re-check provider from URL (double-check)
     let provider = endpoint.provider;
     if (endpoint.url) {
       const url = endpoint.url.toLowerCase();
@@ -64,7 +64,7 @@ export async function GET(request) {
       }
     }
 
-    // Provider에 따라 상태 확인
+    // Check status by provider
     let result;
     if (provider === 'openai-compatible') {
       result = await checkOpenAICompatibleHealth({ ...endpoint, provider });
@@ -77,7 +77,7 @@ export async function GET(request) {
       });
     }
 
-    // 결과 형식 통일
+    // Normalize response format
     const formattedResult = {
       endpoint: result.url,
       name: result.name || result.url,
@@ -102,9 +102,9 @@ export async function GET(request) {
       endpoint: formattedResult,
     });
   } catch (error) {
-    console.error('[system-status/endpoint] 실패:', error);
+    console.error('[system-status/endpoint] Failed:', error);
 
-    // 타임아웃 에러를 명시적으로 처리
+    // Handle timeout errors explicitly
     if (
       error.name === 'TimeoutError' ||
       error.name === 'AbortError' ||
@@ -116,15 +116,15 @@ export async function GET(request) {
       return NextResponse.json(
         {
           success: false,
-          error: 'endpoint 상태 조회 타임아웃',
+          error: 'Endpoint status check timed out',
           message:
-            '모델 서버 연결 타임아웃입니다. 모델 서버가 실행 중인지 확인하세요.',
+            'Model server connection timed out. Check whether the model server is running.',
           errorType: 'timeout',
         },
         { status: 504 }
       );
     }
 
-    return createServerError(error, 'endpoint 상태 조회 실패');
+    return createServerError(error, 'Failed to check endpoint status.');
   }
 }

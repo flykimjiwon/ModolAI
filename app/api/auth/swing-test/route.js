@@ -1,20 +1,20 @@
 import { NextResponse } from 'next/server';
 
-// Swing SSO 테스트용 프록시 API (CORS 우회)
+// Swing SSO test proxy API (CORS bypass)
 export async function POST(request) {
   try {
     const { swingUrl, payload } = await request.json();
 
     if (!swingUrl || !payload) {
       return NextResponse.json(
-        { error: 'swingUrl과 payload가 필요합니다.' },
+        { error: 'swingUrl and payload are required.' },
         { status: 400 }
       );
     }
 
     const endpoint = `${swingUrl}/cau/v1/idpw-authorize`;
 
-    console.log('[Swing Test] API 호출:', endpoint);
+    console.log('[Swing Test] API call:', endpoint);
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -30,7 +30,7 @@ export async function POST(request) {
       json = null;
     }
 
-    console.log('[Swing Test] 응답:', {
+    console.log('[Swing Test] Response:', {
       status: response.status,
       resultCode: json?.common?.resultCode,
       authResult: json?.data?.authResult,
@@ -39,7 +39,7 @@ export async function POST(request) {
     if (!response.ok) {
       return NextResponse.json(
         {
-          error: 'Swing API 응답 오류',
+          error: 'Swing API response error',
           detail: response.statusText,
           status: response.status,
           data: json,
@@ -55,7 +55,7 @@ export async function POST(request) {
       rawTextPreview: rawText ? rawText.slice(0, 1000) : null,
     });
   } catch (error) {
-    console.error('[Swing Test] 오류:', error);
+    console.error('[Swing Test] Error:', error);
     const details = {
       name: error?.name,
       message: error?.message,
@@ -67,8 +67,8 @@ export async function POST(request) {
     };
     return NextResponse.json(
       {
-        error: 'Swing API 호출 실패',
-        detail: '서버에서 Swing API 호출 중 오류가 발생했습니다.',
+        error: 'Swing API call failed',
+        detail: 'An error occurred while calling the Swing API from the server.',
         errorDetails: details,
       },
       { status: 500 }

@@ -4,7 +4,7 @@ import { query } from '@/lib/postgres';
 import { isValidUUID } from '@/lib/utils';
 
 export async function DELETE(request, { params }) {
-  // 관리자 권한 확인
+  // Check admin privileges
   const authResult = verifyAdmin(request);
   if (!authResult.success) {
     return authResult;
@@ -13,15 +13,15 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
 
-    // UUID 검증
+    // Validate UUID
     if (!isValidUUID(id)) {
       return NextResponse.json(
-        { error: '유효하지 않은 메시지 ID입니다.' },
+        { error: 'Invalid message ID.' },
         { status: 400 }
       );
     }
 
-    // 메시지 존재 여부 확인
+    // Check whether message exists
     const checkResult = await query(
       'SELECT id FROM messages WHERE id = $1 LIMIT 1',
       [id]
@@ -29,12 +29,12 @@ export async function DELETE(request, { params }) {
     
     if (checkResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '메시지를 Not found.' },
+        { error: 'Message not found.' },
         { status: 404 }
       );
     }
 
-    // 메시지 삭제
+    // Delete message
     const result = await query(
       'DELETE FROM messages WHERE id = $1',
       [id]
@@ -42,19 +42,19 @@ export async function DELETE(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { error: '메시지 삭제에 실패했습니다.' },
+        { error: 'Failed to delete message.' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: '메시지가 성공적으로 Deleted.',
+      message: 'Message deleted successfully.',
     });
   } catch (error) {
-    console.error('메시지 삭제 실패:', error);
+    console.error('Failed to delete message:', error);
     return NextResponse.json(
-      { error: '메시지 삭제 실패', details: error.message },
+      { error: 'Message deletion failed', details: error.message },
       { status: 500 }
     );
   }

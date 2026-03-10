@@ -67,7 +67,7 @@ export async function logAppError({
     );
   } catch (error) {
     if (typeof console !== 'undefined' && console.error) {
-      console.error('[AppErrorLogger] 로그 저장 실패:', error.message);
+      console.error('[AppErrorLogger] Failed to save log:', error.message);
     }
   }
 }

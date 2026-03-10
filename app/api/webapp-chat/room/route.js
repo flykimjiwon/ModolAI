@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 
-// 사용자의 채팅방 목록 조회
+// Retrieve user's chat room list
 export async function GET(request) {
   try {
     const payload = verifyToken(request);
@@ -13,7 +13,7 @@ export async function GET(request) {
       );
     }
 
-    // 사용자 ID 조회 (이메일 기반)
+    // Fetch user ID (email-based)
     const userResult = await query(
       'SELECT id FROM users WHERE email = $1',
       [payload.email]
@@ -28,7 +28,7 @@ export async function GET(request) {
 
     const userId = userResult.rows[0].id;
 
-    // 사용자의 채팅방 목록 조회 (최근 수정일 순)
+    // Fetch user's chat room list (latest updated first)
     const roomsResult = await query(
       `SELECT id, user_id, name, message_count, created_at, updated_at 
        FROM chat_rooms 
@@ -37,7 +37,7 @@ export async function GET(request) {
       [userId]
     );
 
-    // PostgreSQL 결과를 변환
+    // Transform PostgreSQL results
     const formattedRooms = roomsResult.rows.map((room) => ({
       _id: room.id,
       userId: room.user_id,
@@ -52,15 +52,15 @@ export async function GET(request) {
       rooms: formattedRooms,
     });
   } catch (error) {
-    console.error('채팅방 목록 조회 실패:', error);
+    console.error('Failed to fetch chat room list:', error);
     return NextResponse.json(
-      { error: '채팅방 목록 조회 실패', details: error.message },
+      { error: 'Failed to fetch chat room list', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// 새 채팅방 생성
+// Create new chat room
 export async function POST(request) {
   try {
     const payload = verifyToken(request);
@@ -76,19 +76,19 @@ export async function POST(request) {
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
-        { error: '채팅방 이름을 입력해주세요.' },
+        { error: 'Please enter a chat room name.' },
         { status: 400 }
       );
     }
 
     if (name.trim().length > 50) {
       return NextResponse.json(
-        { error: '채팅방 이름은 50자 이하로 입력해주세요.' },
+        { error: 'Chat room name must be 50 characters or fewer.' },
         { status: 400 }
       );
     }
 
-    // 사용자 ID 조회 (이메일 기반)
+    // Fetch user ID (email-based)
     const userResult = await query(
       'SELECT id FROM users WHERE email = $1',
       [payload.email]
@@ -103,7 +103,7 @@ export async function POST(request) {
 
     const userId = userResult.rows[0].id;
 
-    // 사용자의 채팅방 개수 확인 (최대 20개)
+    // Check user's chat room count (max 20)
     const roomCountResult = await query(
       'SELECT COUNT(*) as count FROM chat_rooms WHERE user_id = $1',
       [userId]
@@ -112,12 +112,12 @@ export async function POST(request) {
     
     if (roomCount >= 20) {
       return NextResponse.json(
-        { error: '최대 20개의 채팅방만 생성할 수 있습니다.' },
+        { error: 'You can create up to 20 chat rooms.' },
         { status: 400 }
       );
     }
 
-    // 새 채팅방 생성
+    // Create new chat room
     const newRoomResult = await query(
       `INSERT INTO chat_rooms (user_id, name, message_count, created_at, updated_at)
        VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -139,9 +139,9 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.error('채팅방 생성 실패:', error);
+    console.error('Failed to create chat room:', error);
     return NextResponse.json(
-      { error: '채팅방 생성 실패', details: error.message },
+      { error: 'Failed to create chat room', details: error.message },
       { status: 500 }
     );
   }

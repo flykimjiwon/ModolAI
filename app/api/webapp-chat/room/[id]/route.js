@@ -3,7 +3,7 @@ import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { isValidUUID } from '@/lib/utils';
 
-// 채팅방 정보 수정
+// Update chat room information
 export async function PATCH(request, { params }) {
   try {
     const payload = verifyToken(request);
@@ -20,19 +20,19 @@ export async function PATCH(request, { params }) {
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
-        { error: '채팅방 이름을 입력해주세요.' },
+        { error: 'Please enter a chat room name.' },
         { status: 400 }
       );
     }
 
     if (name.trim().length > 50) {
       return NextResponse.json(
-        { error: '채팅방 이름은 50자 이하로 입력해주세요.' },
+        { error: 'Chat room name must be 50 characters or fewer.' },
         { status: 400 }
       );
     }
 
-    // 사용자 ID 조회 (이메일 기반)
+    // Look up user ID (email-based)
     const userResult = await query(
       'SELECT id FROM users WHERE email = $1',
       [payload.email]
@@ -47,7 +47,7 @@ export async function PATCH(request, { params }) {
 
     const userId = userResult.rows[0].id;
 
-    // 채팅방 조회 및 소유자 확인
+    // Fetch chat room and verify owner
     const roomResult = await query(
       `SELECT cr.id, cr.user_id, cr.name, u.email 
        FROM chat_rooms cr
@@ -56,21 +56,21 @@ export async function PATCH(request, { params }) {
       [id]
     );
 
-    // 채팅방이 존재하지 않는 경우
+    // If chat room does not exist
     if (roomResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '채팅방을 Not found.' },
+        { error: 'Chat room not found.' },
         { status: 404 }
       );
     }
 
     const room = roomResult.rows[0];
 
-    // 채팅방 소유자 확인 (이메일 기반)
+    // Verify chat room owner (email-based)
     if (room.email !== payload.email) {
       return NextResponse.json(
         {
-          error: '채팅방에 접근할 Unauthorized.',
+          error: 'Unauthorized to access this chat room.',
           shouldLogout: true,
           message: 'Authentication expired. Please log in again.',
         },
@@ -78,7 +78,7 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // 채팅방 이름 수정
+    // Update chat room name
     const updateResult = await query(
       `UPDATE chat_rooms 
        SET name = $1, updated_at = CURRENT_TIMESTAMP 
@@ -89,25 +89,25 @@ export async function PATCH(request, { params }) {
 
     if (updateResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '채팅방 수정에 실패했습니다.' },
+        { error: 'Failed to update chat room.' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: '채팅방 이름이 Updated.',
+      message: 'Chat room name updated.',
     });
   } catch (error) {
-    console.error('채팅방 수정 실패:', error);
+    console.error('Failed to update chat room:', error);
     return NextResponse.json(
-      { error: '채팅방 수정 실패', details: error.message },
+      { error: 'Failed to update chat room', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// 채팅방 삭제
+// Delete chat room
 export async function DELETE(request, { params }) {
   let id = 'unknown';
   let payload = null;
@@ -124,26 +124,26 @@ export async function DELETE(request, { params }) {
     const paramsData = await params;
     id = paramsData.id;
 
-    console.log('DELETE 요청 - Room ID:', id, 'User ID:', payload.sub);
+    console.log('DELETE request - Room ID:', id, 'User ID:', payload.sub);
 
-    // ID 검사 및 UUID 유효성 검사
+    // Check ID and validate UUID
     if (!id) {
-      console.error('ID가 비어있음');
+      console.error('ID is empty');
       return NextResponse.json(
-        { error: '방 ID가 필요합니다.' },
+        { error: 'Room ID is required.' },
         { status: 400 }
       );
     }
 
     if (!isValidUUID(id)) {
-      console.error('잘못된 UUID 형식:', id);
+      console.error('Invalid UUID format:', id);
       return NextResponse.json(
-        { error: `잘못된 방 ID 형식: ${id}` },
+        { error: `Invalid room ID format: ${id}` },
         { status: 400 }
       );
     }
 
-    // 사용자 ID 조회 (이메일 기반)
+    // Look up user ID (email-based)
     const userResult = await query(
       'SELECT id FROM users WHERE email = $1',
       [payload.email]
@@ -158,7 +158,7 @@ export async function DELETE(request, { params }) {
 
     const userId = userResult.rows[0].id;
 
-    // 채팅방 조회 및 소유자 확인
+    // Fetch chat room and verify owner
     const roomResult = await query(
       `SELECT cr.id, cr.user_id, cr.name, u.email 
        FROM chat_rooms cr
@@ -167,23 +167,23 @@ export async function DELETE(request, { params }) {
       [id]
     );
 
-    console.log('찾은 방:', roomResult.rows.length > 0 ? '존재' : '없음');
+    console.log('Found room:', roomResult.rows.length > 0 ? 'exists' : 'not found');
 
-    // 채팅방이 존재하지 않는 경우
+    // If chat room does not exist
     if (roomResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '채팅방을 Not found.' },
+        { error: 'Chat room not found.' },
         { status: 404 }
       );
     }
 
     const room = roomResult.rows[0];
 
-    // 채팅방 소유자 확인 (이메일 기반)
+    // Verify chat room owner (email-based)
     if (room.email !== payload.email) {
       return NextResponse.json(
         {
-          error: '채팅방에 접근할 Unauthorized.',
+          error: 'Unauthorized to access this chat room.',
           shouldLogout: true,
           message: 'Authentication expired. Please log in again.',
         },
@@ -191,43 +191,43 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // PostgreSQL 트랜잭션으로 순차적 삭제
+    // Sequential deletion via PostgreSQL transaction
     try {
-      console.log('채팅방 삭제 시작:', id);
+      console.log('Starting chat room deletion:', id);
 
-      // 채팅 히스토리 삭제 (CASCADE로 자동 삭제되지만 명시적으로 삭제)
+      // Delete chat history (auto-deleted by CASCADE, but explicitly deleting)
       const historyDeleteResult = await query(
         'DELETE FROM chat_history WHERE room_id = $1',
         [id]
       );
       console.log(
-        '채팅 히스토리 삭제 완료:',
+        'Chat history deletion completed:',
         historyDeleteResult.rowCount,
-        '개'
+        'items'
       );
 
-      // 3. 채팅방 삭제
-      console.log('채팅방 삭제 시작:', id);
+      // 3. Delete chat room
+      console.log('Starting chat room deletion:', id);
       const roomDeleteResult = await query(
         'DELETE FROM chat_rooms WHERE id = $1 AND user_id = $2',
         [id, userId]
       );
-      console.log('채팅방 삭제 완료:', roomDeleteResult.rowCount, '개');
+      console.log('Chat room deletion completed:', roomDeleteResult.rowCount, 'items');
 
       if (roomDeleteResult.rowCount === 0) {
-        console.warn('채팅방이 삭제되지 않음 - 이미 없거나 권한 없음');
+        console.warn('Chat room was not deleted - already removed or no permission');
       }
     } catch (transactionError) {
-      console.error('삭제 과정 중 오류:', transactionError);
+      console.error('Error during deletion process:', transactionError);
       throw transactionError;
     }
 
     return NextResponse.json({
       success: true,
-      message: '채팅방이 Deleted.',
+      message: 'Chat room deleted.',
     });
   } catch (error) {
-    console.error('채팅방 삭제 실패:', {
+    console.error('Failed to delete chat room:', {
       error: error.message,
       stack: error.stack,
       roomId: id,
@@ -235,10 +235,10 @@ export async function DELETE(request, { params }) {
       type: error.constructor.name,
     });
 
-    // 구체적인 오류 유형별 처리
+    // Handle specific error types
     if (error.message.includes('UUID') || error.message.includes('invalid input syntax')) {
       return NextResponse.json(
-        { error: '잘못된 방 ID 형식입니다.' },
+        { error: 'Invalid room ID format.' },
         { status: 400 }
       );
     }
@@ -247,7 +247,7 @@ export async function DELETE(request, { params }) {
       error.message.includes('Authentication') ||
       error.message.includes('authorization')
     ) {
-      return NextResponse.json({ error: '인증 실패' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
 
     if (
@@ -261,10 +261,10 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // 일반적인 Server error
+    // Generic server error
     return NextResponse.json(
       {
-        error: '채팅방 삭제 중 오류가 발생했습니다.',
+        error: 'An error occurred while deleting the chat room.',
         details:
           process.env.NODE_ENV === 'development' ? error.message : 'Server error',
       },

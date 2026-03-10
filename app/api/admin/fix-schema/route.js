@@ -31,7 +31,7 @@ export async function GET() {
             await query(`ALTER TABLE users ${columnDef}`);
         }
 
-        // 인덱스 생성 (auth_type, employee_no)
+        // Create indexes (auth_type, employee_no)
         await query(`CREATE INDEX IF NOT EXISTS idx_users_auth_type ON users(auth_type)`);
         await query(`CREATE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no)`);
 

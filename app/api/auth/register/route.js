@@ -4,31 +4,31 @@ import bcryptjs from 'bcryptjs';
 export async function POST(request) {
   const { name, email, password, department, position } = await request.json();
 
-  // 입력값 검증
+  // Validate input values
   if (!name || !email || !password || !department || !position) {
     return new Response(
-      JSON.stringify({ error: '모든 필드를 입력해주세요.' }),
+      JSON.stringify({ error: 'Please fill in all fields.' }),
       {
         status: 400,
       }
     );
   }
 
-  // 이메일을 소문자로 정규화 (중복 방지)
+  // Normalize email to lowercase (prevent duplicates)
   const normalizedEmail = email.toLowerCase().trim();
 
-  // 유효한 부서인지 확인
+  // Check whether department is valid
   const validDepartments = [
-    '디지털서비스개발부',
-    '글로벌서비스개발부',
-    '금융서비스개발부',
-    '정보서비스개발부',
-    'Tech혁신Unit',
-    '기타부서',
+    'Digital Service Development Department',
+    'Global Service Development Department',
+    'Financial Service Development Department',
+    'Information Service Development Department',
+    'Tech Innovation Unit',
+    'Other Department',
   ];
   if (!validDepartments.includes(department)) {
     return new Response(
-      JSON.stringify({ error: '유효하지 않은 부서입니다.' }),
+      JSON.stringify({ error: 'Invalid department.' }),
       {
         status: 400,
       }
@@ -36,7 +36,7 @@ export async function POST(request) {
   }
 
   try {
-    // 중복 이메일 사전 검증 (정규화된 이메일로 검색)
+    // Pre-check duplicate emails (search by normalized email)
     const existingResult = await query(
       'SELECT id FROM users WHERE email = $1 LIMIT 1',
       [normalizedEmail]
@@ -51,7 +51,7 @@ export async function POST(request) {
       );
     }
 
-    // 비밀번호 해시
+    // Hash password
     const hash = await bcryptjs.hash(password, 12);
 
     await query(
@@ -59,17 +59,17 @@ export async function POST(request) {
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [
         name,
-        normalizedEmail, // 정규화된 이메일 저장
+        normalizedEmail, // Store normalized email
         hash,
         department,
         position,
-        'user', // 기본 역할
+        'user', // Default role
         new Date(),
       ]
     );
     return new Response(JSON.stringify({ ok: true }), { status: 201 });
   } catch (e) {
-    // 중복 이메일(Unique constraint) 오류
+    // Duplicate email (unique constraint) error
     if (e.code === '23505') {
       return new Response(
         JSON.stringify({ error: 'Email already registered.' }),
@@ -79,7 +79,7 @@ export async function POST(request) {
       );
     }
     return new Response(
-      JSON.stringify({ error: '회원가입 중 오류가 발생했습니다.' }),
+      JSON.stringify({ error: 'An error occurred during sign-up.' }),
       {
         status: 500,
       }

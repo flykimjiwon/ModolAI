@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 
-// 클라이언트 IP를 서버사이드에서 감지하는 API
-// 외부 IP 서비스 호출 없이 요청 헤더에서 직접 추출
+// API to detect client IP on server side
+// Extract directly from request headers without calling external IP services
 
 export async function GET(request) {
   try {
-    // 1. 프록시/로드밸런서를 거친 경우 x-forwarded-for 헤더 확인
+    // 1. Check x-forwarded-for when behind proxy/load balancer
     const forwarded = request.headers.get('x-forwarded-for');
     if (forwarded) {
       const ip = forwarded.split(',')[0].trim();
@@ -14,7 +14,7 @@ export async function GET(request) {
       }
     }
 
-    // 2. x-real-ip 헤더 확인
+    // 2. Check x-real-ip header
     const realIP = request.headers.get('x-real-ip');
     if (realIP && !isLocalIP(realIP)) {
       return NextResponse.json({ ip: realIP, source: 'x-real-ip' });
@@ -32,22 +32,22 @@ export async function GET(request) {
       return NextResponse.json({ ip: trueClientIP, source: 'true-client-ip' });
     }
 
-    // 5. 외부 서비스에서 IP 조회 시도 (서버사이드에서 호출하면 SSL 문제 없음)
+    // 5. Try retrieving IP from external service (no SSL issue from server-side calls)
     const externalIP = await getIPFromExternalService();
     if (externalIP) {
       return NextResponse.json({ ip: externalIP, source: 'external-service' });
     }
 
-    // IP를 감지할 수 없는 경우
+    // If IP cannot be detected
     return NextResponse.json({ ip: null, source: 'not-detected' });
 
   } catch (error) {
-    console.error('[Client IP API] 오류:', error.message);
+    console.error('[Client IP API] Error:', error.message);
     return NextResponse.json({ ip: null, source: 'error', error: error.message });
   }
 }
 
-// 외부 IP 서비스에서 조회 (서버사이드)
+// Retrieve from external IP services (server-side)
 async function getIPFromExternalService() {
   const services = [
     { url: 'https://api.ipify.org?format=json', parser: (d) => d.ip },
@@ -77,7 +77,7 @@ async function getIPFromExternalService() {
         }
       }
     } catch (error) {
-      // 다음 서비스로 시도
+      // Try next service
       continue;
     }
   }
@@ -85,7 +85,7 @@ async function getIPFromExternalService() {
   return null;
 }
 
-// 로컬/사설 IP 확인
+// Check local/private IP
 function isLocalIP(ip) {
   if (!ip) return true;
 
@@ -97,7 +97,7 @@ function isLocalIP(ip) {
   const first = parseInt(parts[0]);
   const second = parseInt(parts[1]);
 
-  // 사설 IP 대역
+  // Private IP ranges
   if (first === 10) return true;
   if (first === 172 && second >= 16 && second <= 31) return true;
   if (first === 192 && second === 168) return true;

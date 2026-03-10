@@ -3,7 +3,7 @@ import { verifyTokenWithResult } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
-// 사용자가 받은 쪽지 목록 조회
+// Get list of messages received by user
 export async function GET(request) {
   const authResult = verifyTokenWithResult(request);
   if (!authResult.valid) {
@@ -20,14 +20,14 @@ export async function GET(request) {
     const params = [authResult.user.sub];
     let paramIndex = 2;
 
-    // 삭제된 쪽지는 기본적으로 제외
+    // Exclude deleted messages by default
     if (!includeDeleted) {
       whereConditions.push('dm.deleted_by_recipient = false');
     }
 
     const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
 
-    // 총 개수 조회
+    // Get total count
     const countResult = await query(
       `SELECT COUNT(*) as count
        FROM direct_messages dm
@@ -37,7 +37,7 @@ export async function GET(request) {
     const totalCount = parseInt(countResult.rows[0].count);
     const totalPages = Math.ceil(totalCount / limit);
 
-    // 쪽지 목록 조회
+    // Get message list
     const offset = (page - 1) * limit;
     const messagesResult = await query(
       `SELECT
@@ -63,7 +63,7 @@ export async function GET(request) {
       updatedAt: msg.updated_at,
       sender: {
         id: msg.sender_id,
-        name: msg.sender_name || '관리자',
+        name: msg.sender_name || 'Admin',
         email: msg.sender_email,
       },
     }));
@@ -79,7 +79,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('쪽지 목록 조회 실패:', error);
-    return createServerError(error, '쪽지 목록 조회 실패');
+    console.error('Failed to get message list:', error);
+    return createServerError(error, 'Failed to get message list');
   }
 }

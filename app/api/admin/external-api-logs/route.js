@@ -5,7 +5,7 @@ import { createAuthError, createServerError } from '@/lib/errorHandler';
 
 export async function GET(request) {
   try {
-    // 관리자 권한 확인
+    // Verify admin permission
     const authCheck = verifyAdminWithResult(request);
     if (!authCheck.valid) {
       return createAuthError(authCheck.error);
@@ -13,39 +13,39 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
 
-    // 페이지네이션 파라미터
+    // Pagination parameters
     const page = parseInt(searchParams.get('page')) || 1;
-    const limit = Math.min(parseInt(searchParams.get('limit')) || 50, 100); // 최대 100개
+    const limit = Math.min(parseInt(searchParams.get('limit')) || 50, 100); // Max 100
     const skip = (page - 1) * limit;
 
-    // 필터링 파라미터
+    // Filtering parameters
     const apiType = searchParams.get('apiType');
     const model = searchParams.get('model');
     const clientTool = searchParams.get('clientTool');
-    const clientIP = searchParams.get('clientIP'); // IP 필터 추가
+    const clientIP = searchParams.get('clientIP'); // Added IP filter
     const timeRange = searchParams.get('timeRange') || '24h'; // '1h' | '6h' | '24h' | '7d' | '30d' | 'custom'
     const source = searchParams.get('source'); // 'external' | 'internal'
     const statusCode = searchParams.get('statusCode');
     const isStream = searchParams.get('isStream');
     const endpoint = searchParams.get('endpoint');
     const provider = searchParams.get('provider');
-    // 세션 필터 파라미터
+    // Session filter parameters
     const sessionHash = searchParams.get('sessionHash');
     const userId = searchParams.get('userId');
     const tokenHash = searchParams.get('tokenHash');
     const sessionFilter = searchParams.get('sessionFilter'); // 'exact' | 'user' | 'session'
-    const conversationId = searchParams.get('conversationId'); // 대화 세션 ID
-    const groupByConversation = searchParams.get('groupByConversation') === 'true'; // 대화 세션별 그룹화
-    // custom 날짜 파라미터
+    const conversationId = searchParams.get('conversationId'); // Conversation session ID
+    const groupByConversation = searchParams.get('groupByConversation') === 'true'; // Group by conversation session
+    // Custom date parameters
     const customStartDateParam = searchParams.get('startDate');
     const customEndDateParam = searchParams.get('endDate');
 
-    // 시간 범위 계산
+    // Calculate time range
     const now = new Date();
     let startDate;
     let endDate = now;
 
-    // custom 날짜 파싱 함수
+    // Custom date parsing function
     const parseCustomDate = (dateStr, isEnd) => {
       if (!dateStr) return null;
       const suffix = isEnd ? 'T23:59:59.999' : 'T00:00:00';
@@ -54,16 +54,16 @@ export async function GET(request) {
     };
 
     if (timeRange === 'custom') {
-      // 기간 지정 모드
+      // Custom date range mode
       startDate = parseCustomDate(customStartDateParam, false);
       endDate = parseCustomDate(customEndDateParam, true) || now;
 
-      // startDate가 없으면 기본값 24시간
+      // If startDate is missing, default to 24 hours
       if (!startDate) {
         startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       }
     } else {
-      // 기존 시간 범위 옵션
+      // Existing time range options
       switch (timeRange) {
         case '1h':
           startDate = new Date(now.getTime() - 60 * 60 * 1000);
@@ -85,7 +85,7 @@ export async function GET(request) {
       }
     }
 
-    // 필터 조건 구성
+    // Build filter conditions
     const whereConditions = ['timestamp >= $1'];
     const queryParams = [startDate];
     let paramIndex = 2;
@@ -143,9 +143,9 @@ export async function GET(request) {
       paramIndex++;
     }
 
-    // 세션 필터 처리
+    // Process session filters
     if (sessionFilter === 'exact' && sessionHash && userId && tokenHash) {
-      // 정확한 세션 매칭: sessionHash + userId + tokenHash 모두 일치
+      // Exact session match: sessionHash + userId + tokenHash must all match
       whereConditions.push(`session_hash = $${paramIndex}`);
       queryParams.push(sessionHash);
       paramIndex++;
@@ -156,7 +156,7 @@ export async function GET(request) {
       queryParams.push(tokenHash);
       paramIndex++;
     } else if (sessionFilter === 'user' && userId && tokenHash) {
-      // 사용자 + 토큰 매칭: 같은 사용자가 같은 토큰으로 보낸 요청
+      // User + token match: requests sent by same user with same token
       whereConditions.push(`user_id = $${paramIndex}`);
       queryParams.push(userId);
       paramIndex++;
@@ -164,7 +164,7 @@ export async function GET(request) {
       queryParams.push(tokenHash);
       paramIndex++;
     } else if (sessionFilter === 'session' && sessionHash && userId) {
-      // 세션 + 사용자 매칭: 같은 사용자가 같은 세션에서 보낸 요청
+      // Session + user match: requests sent by same user in same session
       whereConditions.push(`session_hash = $${paramIndex}`);
       queryParams.push(sessionHash);
       paramIndex++;
@@ -172,7 +172,7 @@ export async function GET(request) {
       queryParams.push(userId);
       paramIndex++;
     } else {
-      // 개별 필터 (하위 호환성)
+      // Individual filters (backward compatibility)
       if (sessionHash) {
         whereConditions.push(`session_hash = $${paramIndex}`);
         queryParams.push(sessionHash);
@@ -190,7 +190,7 @@ export async function GET(request) {
       }
     }
 
-    // conversationId 필터 추가
+    // Add conversationId filter
     if (conversationId) {
       whereConditions.push(`conversation_id = $${paramIndex}`);
       queryParams.push(conversationId);
@@ -199,14 +199,14 @@ export async function GET(request) {
 
     const whereClause = whereConditions.join(' AND ');
 
-    // 전체 개수 조회
+    // Fetch total count
     const countResult = await query(
       `SELECT COUNT(*) as count FROM external_api_logs WHERE ${whereClause}`,
       queryParams
     );
     const totalCount = parseInt(countResult.rows[0].count);
 
-    // external_api_prompts 테이블 존재 여부 확인
+    // Check if external_api_prompts table exists
     let promptsTableExists = false;
     try {
       const tableCheckResult = await query(
@@ -218,13 +218,13 @@ export async function GET(request) {
       );
       promptsTableExists = tableCheckResult.rows[0]?.exists || false;
     } catch (checkError) {
-      // 테이블 확인 실패 시 false로 설정 (JOIN 없이 진행)
-      console.warn('[External API Logs] 테이블 존재 여부 확인 실패:', checkError.message);
+      // Set false on table check failure (proceed without JOIN)
+      console.warn('[External API Logs] Failed to check table existence:', checkError.message);
       promptsTableExists = false;
     }
 
-    // 로그 데이터 조회 (프롬프트 데이터 JOIN - 테이블이 있을 경우만)
-    // 정규화: users 테이블과 JOIN하여 사용자 정보 조회
+    // Fetch log data (JOIN prompt data only if table exists)
+    // Normalization: JOIN users table to fetch user info
     const logsQuery = promptsTableExists
       ? `SELECT 
           l.*,
@@ -262,7 +262,7 @@ export async function GET(request) {
 
     const logsResult = await query(logsQuery, [...queryParams, limit, skip]);
 
-    // 로그 데이터 변환
+    // Transform log data
     const logs = logsResult.rows.map((row) => {
       const derivedSource =
         row.source === 'internal' || row.source === 'external'
@@ -277,10 +277,10 @@ export async function GET(request) {
         model: row.model,
         modelLabel: row.model_name || row.model,
         provider: row.provider,
-        prompt: row.full_prompt || row.prompt, // 전체 프롬프트 우선 사용
+        prompt: row.full_prompt || row.prompt, // Use full prompt first
         messages: row.full_messages 
           ? (typeof row.full_messages === 'string' ? JSON.parse(row.full_messages) : row.full_messages)
-          : (row.messages ? (typeof row.messages === 'string' ? JSON.parse(row.messages) : row.messages) : null), // 전체 메시지 우선 사용
+          : (row.messages ? (typeof row.messages === 'string' ? JSON.parse(row.messages) : row.messages) : null), // Use full messages first
         responseTokenCount: row.response_token_count,
         promptTokenCount: row.prompt_token_count,
         totalTokenCount: row.total_token_count,
@@ -330,7 +330,7 @@ export async function GET(request) {
         timestamp: row.timestamp,
         source: derivedSource,
         rawSource: row.source,
-        // HTTP 전체 정보
+        // Full HTTP information
         requestHeaders: row.request_headers ? (typeof row.request_headers === 'string' ? JSON.parse(row.request_headers) : row.request_headers) : null,
         requestBody: row.request_body ? (typeof row.request_body === 'string' ? JSON.parse(row.request_body) : row.request_body) : null,
         responseHeaders: row.response_headers ? (typeof row.response_headers === 'string' ? JSON.parse(row.response_headers) : row.response_headers) : null,
@@ -339,7 +339,7 @@ export async function GET(request) {
       return log;
     });
 
-    // 통계 데이터 계산
+    // Calculate statistics
     const statsQueries = {
       byApiType: `SELECT api_type as _id, COUNT(*) as count, SUM(total_token_count) as total_tokens,
                     AVG(COALESCE(first_response_time, response_time)) as avg_first_response_time,
@@ -385,14 +385,14 @@ export async function GET(request) {
       query(statsQueries.overall, queryParams),
     ]);
 
-    // 대화 세션별 그룹화 처리
+    // Group by conversation session
     let processedLogs = logs.map((log) => ({
       ...log,
       _id: log._id.toString(),
     }));
 
     if (groupByConversation) {
-      // conversationId별로 그룹화
+      // Group by conversationId
       const groupedByConversation = {};
       processedLogs.forEach((log) => {
         const convId = log.conversationId || 'no-conversation';
@@ -411,7 +411,7 @@ export async function GET(request) {
         groupedByConversation[convId].totalRequests++;
         groupedByConversation[convId].totalTokens += log.totalTokenCount || 0;
         
-        // 첫 번째 메시지 추출
+        // Extract first message
         if (!groupedByConversation[convId].firstMessage && log.messages) {
           const firstUserMsg = Array.isArray(log.messages) 
             ? log.messages.find(msg => msg.role === 'user')
@@ -424,7 +424,7 @@ export async function GET(request) {
           }
         }
         
-        // 시간 범위 업데이트
+        // Update time range
         const logTime = new Date(log.timestamp);
         if (!groupedByConversation[convId].startTime || logTime < new Date(groupedByConversation[convId].startTime)) {
           groupedByConversation[convId].startTime = log.timestamp;
@@ -434,7 +434,7 @@ export async function GET(request) {
         }
       });
 
-      // 그룹화된 데이터를 배열로 변환 (최신 대화 세션부터)
+      // Convert grouped data to array (newest conversation first)
       processedLogs = Object.values(groupedByConversation)
         .sort((a, b) => new Date(b.endTime) - new Date(a.endTime))
         .map((group) => ({
@@ -527,13 +527,13 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error('[External API Logs] 조회 실패:', error);
-    console.error('[External API Logs] 에러 스택:', error.stack);
+    console.error('[External API Logs] Fetch failed:', error);
+    console.error('[External API Logs] Error stack:', error.stack);
     console.error('[External API Logs] Error details:', {
       message: error.message,
       name: error.name,
       code: error.code,
     });
-    return createServerError(error, `로그 조회에 실패했습니다: ${error.message}`);
+    return createServerError(error, `Failed to fetch logs: ${error.message}`);
   }
 }

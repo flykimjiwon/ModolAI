@@ -1,20 +1,20 @@
-// 브라우저 환경 체크 (최상위에서 먼저 확인)
+// Browser environment check (first at top level)
 const isBrowser = typeof window !== 'undefined';
 
-// 서버 사이드에서만 winston import
+// Import winston only on server side
 let winston = null;
 let path = null;
 let fileURLToPath = null;
 
 if (!isBrowser) {
-  // 동적 import를 사용하여 서버 환경에서만 winston 로드
+  // Use dynamic import to load winston only in server environment
   winston = require('winston');
   path = require('path');
   const url = require('url');
   fileURLToPath = url.fileURLToPath;
 }
 
-// 로그 레벨 정의
+// Define log levels
 const LOG_LEVELS = {
   error: 0,
   warn: 1,
@@ -23,7 +23,7 @@ const LOG_LEVELS = {
   debug: 4,
 };
 
-// 로그 컬러 정의
+// Define log colors
 const LOG_COLORS = {
   error: 'red',
   warn: 'yellow',
@@ -32,7 +32,7 @@ const LOG_COLORS = {
   debug: 'blue',
 };
 
-// 환경 변수에서 로그 레벨 가져오기
+// Get log level from environment variables
 const getLogLevel = () => {
   const env = process.env.NODE_ENV || 'development';
   if (env === 'development') {
@@ -41,17 +41,17 @@ const getLogLevel = () => {
   return process.env.LOG_LEVEL || 'info';
 };
 
-// Winston logger 생성 (서버 사이드 전용)
+// Create Winston logger (server-side only)
 const createWinstonLogger = () => {
   if (isBrowser || !winston || !path) {
     return null;
   }
 
-  // ES 모듈에서 __dirname 대체
+  // Replace __dirname in ES modules
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  // 로그 포맷 정의
+  // Define log format
   const logFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.errors({ stack: true }),
@@ -59,22 +59,22 @@ const createWinstonLogger = () => {
     winston.format.json()
   );
 
-  // 콘솔 출력 포맷 (개발 환경용)
+  // Console output format (for development)
   const consoleFormat = winston.format.combine(
     winston.format.colorize({ all: true }),
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     winston.format.printf(({ timestamp, level, message, ...metadata }) => {
       let msg = `${timestamp} [${level}]: ${message}`;
 
-      // 메타데이터가 있으면 추가
+      // Add metadata if present
       if (Object.keys(metadata).length > 0) {
-        // stack trace가 있으면 별도로 표시
+        // Show stack trace separately if present
         if (metadata.stack) {
           msg += `\n${metadata.stack}`;
           delete metadata.stack;
         }
 
-        // 나머지 메타데이터 표시
+        // Show remaining metadata
         const remainingMetadata = { ...metadata };
         delete remainingMetadata.timestamp;
         delete remainingMetadata.level;
@@ -91,15 +91,15 @@ const createWinstonLogger = () => {
 
   const transports = [];
 
-  // 파일 전송 (프로덕션 환경)
+  // File transport (production environment)
   if (
     process.env.NODE_ENV === 'production' ||
     process.env.ENABLE_FILE_LOGGING === 'true'
   ) {
-    // 로그 디렉토리 (프로젝트 루트 기준)
+    // Log directory (relative to project root)
     const logDir = path.join(__dirname, '../../logs');
 
-    // 에러 로그
+    // Error log
     transports.push(
       new winston.transports.File({
         filename: path.join(logDir, 'error.log'),
@@ -110,7 +110,7 @@ const createWinstonLogger = () => {
       })
     );
 
-    // 결합 로그
+    // Combined log
     transports.push(
       new winston.transports.File({
         filename: path.join(logDir, 'combined.log'),
@@ -121,7 +121,7 @@ const createWinstonLogger = () => {
     );
   }
 
-  // 콘솔 전송 (개발 환경 또는 명시적 활성화)
+  // Console transport (development or explicitly enabled)
   if (
     process.env.NODE_ENV !== 'production' ||
     process.env.ENABLE_CONSOLE_LOGGING === 'true'
@@ -133,7 +133,7 @@ const createWinstonLogger = () => {
     );
   }
 
-  // Winston logger 인스턴스 생성
+  // Create Winston logger instance
   const winstonLogger = winston.createLogger({
     level: getLogLevel(),
     levels: LOG_LEVELS,
@@ -141,13 +141,13 @@ const createWinstonLogger = () => {
     exitOnError: false,
   });
 
-  // 색상 추가
+  // Add colors
   winston.addColors(LOG_COLORS);
 
   return winstonLogger;
 };
 
-// 클라이언트 사이드용 간단한 로거
+// Simple logger for client side
 const createBrowserLogger = () => {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -186,14 +186,14 @@ const createBrowserLogger = () => {
   };
 };
 
-// Logger 인스턴스 생성
+// Create logger instance
 let winstonLogger = null;
 
 if (!isBrowser) {
   winstonLogger = createWinstonLogger();
 }
 
-// 안전한 logger 메서드 래퍼 (winston logger 종료 후 호출 방지)
+// Safe logger method wrapper (prevents calls after winston logger shutdown)
 const safeLogMethod = (methodName) => {
   return (message, ...meta) => {
     if (!winstonLogger) return;
@@ -203,36 +203,36 @@ const safeLogMethod = (methodName) => {
         method.call(winstonLogger, message, ...meta);
       }
     } catch (error) {
-      // logger가 이미 종료된 경우 무시 (write after end 에러 방지)
+      // Ignore if logger is already ended (prevent write-after-end error)
       if (error.code !== 'ERR_STREAM_WRITE_AFTER_END') {
-        // 다른 종류의 에러는 console에 출력
+        // Print other error types to console
         if (typeof console !== 'undefined' && console.error) {
-          console.error(`Logger ${methodName} 호출 실패:`, error.message);
+          console.error(`Logger ${methodName} call failed:`, error.message);
         }
       }
     }
   };
 };
 
-// 편의 함수들과 함께 export
+// Export with convenience methods
 export const logger = isBrowser
   ? createBrowserLogger()
   : {
-      // 기본 로깅 메서드 (안전하게 래핑)
+      // Base logging methods (safely wrapped)
       error: safeLogMethod('error'),
       warn: safeLogMethod('warn'),
       info: safeLogMethod('info'),
       http: safeLogMethod('http'),
       debug: safeLogMethod('debug'),
 
-      // 기존 호환성을 위한 log 메서드 (info와 동일)
+      // log method for backward compatibility (same as info)
       log: safeLogMethod('info'),
 
-      // Winston 인스턴스 직접 접근 (고급 사용)
+      // Direct access to Winston instance (advanced use)
       getInstance: () => winstonLogger,
     };
 
-// 서버 사이드에서만 초기화 메시지 출력
+// Print initialization message on server side only
 if (!isBrowser && winstonLogger) {
   logger.info('Logger initialized', {
     level: getLogLevel(),
@@ -246,27 +246,27 @@ if (!isBrowser && winstonLogger) {
   });
 }
 
-// 프로세스 종료 시 로그 스트림 정리 (서버 사이드만)
+// Clean up log streams on process shutdown (server side only)
 if (!isBrowser && winstonLogger) {
   let isShuttingDown = false;
   
   const gracefulShutdown = () => {
-    // 이미 종료 중이면 무시
+    // Ignore if already shutting down
     if (isShuttingDown) {
       return;
     }
     isShuttingDown = true;
     
-    // winstonLogger를 직접 사용하여 end() 전에 로그 기록
+    // Log before end() by using winstonLogger directly
     try {
       winstonLogger.info('Logger shutting down...');
-      // end() 호출 시 모든 로그가 flush될 때까지 대기
+      // Wait until all logs are flushed when end() is called
       winstonLogger.end(() => {
-        // 종료 완료 후 추가 작업이 필요한 경우 여기서 처리
+        // Handle any follow-up work after shutdown completes here
       });
     } catch (error) {
-      // 이미 종료된 경우 에러 무시
-      // console.error는 사용 가능한 경우에만 사용
+      // Ignore errors if already shut down
+      // Use console.error only when available
       if (typeof console !== 'undefined' && console.error) {
         console.error('Logger shutdown error:', error);
       }

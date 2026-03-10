@@ -274,10 +274,10 @@ export async function GET(request) {
         dbConnectionPriority: ['POSTGRES_URI', 'DATABASE_URL'],
         dbConnectionSummary:
           connectionSource === 'POSTGRES_URI'
-            ? 'POSTGRES_URI가 우선 사용되고 DATABASE_URL은 fallback입니다.'
+            ? 'POSTGRES_URI takes priority and DATABASE_URL is used as fallback.'
             : connectionSource === 'DATABASE_URL'
-              ? 'POSTGRES_URI 미설정으로 DATABASE_URL이 사용됩니다.'
-              : 'DB 연결 환경변수를 찾지 못했습니다.',
+              ? 'POSTGRES_URI is not set, so DATABASE_URL is being used.'
+              : 'No DB connection environment variable found.',
       },
       connection: {
         source: connectionSource,
@@ -310,11 +310,11 @@ export async function GET(request) {
         probableRootCause,
         connectionFingerprint,
         fingerprintGuide:
-          '다른 환경 페이지에서 fingerprint가 동일하면 같은 대상 DB/데이터를 보고 있을 가능성이 높습니다.',
+          'If the fingerprint is identical on different environment pages, they are likely pointing to the same target DB/data.',
       },
     });
   } catch (error) {
-    console.error('DB 연결 확인 실패:', error);
-    return createServerError(error, 'DB 연결 확인에 실패했습니다.');
+    console.error('DB connection check failed:', error);
+    return createServerError(error, 'DB connection check failed.');
   }
 }

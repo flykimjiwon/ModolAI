@@ -32,7 +32,7 @@ export async function DELETE(request, { params }) {
     const commentId = Number(params.id);
     if (!Number.isFinite(commentId)) {
       return NextResponse.json(
-        { error: '유효하지 않은 댓글 ID입니다.' },
+        { error: 'Invalid comment ID.' },
         { status: 400 }
       );
     }
@@ -43,7 +43,7 @@ export async function DELETE(request, { params }) {
     );
     if (commentResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '댓글을 Not found.' },
+        { error: 'Comment not found.' },
         { status: 404 }
       );
     }
@@ -52,7 +52,7 @@ export async function DELETE(request, { params }) {
     const isAdmin = auth.user?.role === 'admin';
     if (!isAdmin && commentResult.rows[0].user_id !== userId) {
       return NextResponse.json(
-        { error: '삭제 Unauthorized.' },
+        { error: 'Unauthorized to delete.' },
         { status: 403 }
       );
     }
@@ -61,8 +61,8 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('댓글 삭제 실패:', error);
-    return createServerError(error, '댓글 삭제에 실패했습니다.');
+    console.error('Failed to delete comment:', error);
+    return createServerError(error, 'Failed to delete comment.');
   }
 }
 
@@ -82,13 +82,13 @@ export async function PUT(request, { params }) {
 
     const commentId = Number(params.id);
     if (!Number.isFinite(commentId)) {
-      return createValidationError('유효하지 않은 댓글 ID입니다.');
+      return createValidationError('Invalid comment ID.');
     }
 
     const body = await request.json();
     const content = typeof body.content === 'string' ? body.content.trim() : '';
     if (!content || content.length > 2000) {
-      return createValidationError('댓글은 1~2,000자 사이여야 합니다.');
+      return createValidationError('Comment must be between 1 and 2,000 characters.');
     }
 
     const commentResult = await query(
@@ -97,7 +97,7 @@ export async function PUT(request, { params }) {
     );
     if (commentResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '댓글을 Not found.' },
+        { error: 'Comment not found.' },
         { status: 404 }
       );
     }
@@ -106,7 +106,7 @@ export async function PUT(request, { params }) {
     const isAdmin = auth.user?.role === 'admin';
     if (!isAdmin && commentResult.rows[0].user_id !== userId) {
       return NextResponse.json(
-        { error: '수정 Unauthorized.' },
+        { error: 'Unauthorized to edit.' },
         { status: 403 }
       );
     }
@@ -123,7 +123,7 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('댓글 수정 실패:', error);
-    return createServerError(error, '댓글 수정에 실패했습니다.');
+    console.error('Failed to update comment:', error);
+    return createServerError(error, 'Failed to update comment.');
   }
 }

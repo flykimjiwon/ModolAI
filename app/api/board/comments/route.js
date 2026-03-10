@@ -34,11 +34,11 @@ export async function POST(request) {
     const content = typeof body.content === 'string' ? body.content.trim() : '';
 
     if (!Number.isFinite(postId)) {
-      return createValidationError('유효하지 않은 게시글 ID입니다.');
+      return createValidationError('Invalid post ID.');
     }
 
     if (!content || content.length > 2000) {
-      return createValidationError('댓글은 1~2,000자 사이여야 합니다.');
+      return createValidationError('Comment must be between 1 and 2,000 characters.');
     }
 
     const postExists = await query(
@@ -47,14 +47,14 @@ export async function POST(request) {
     );
     if (postExists.rows.length === 0) {
       return NextResponse.json(
-        { error: '게시글을 Not found.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
 
     const userId = auth.user?.sub || auth.user?.id;
     if (!userId) {
-      return createAuthError('사용자 정보를 확인할 수 없습니다.');
+      return createAuthError('Unable to verify user information.');
     }
 
     const result = await query(
@@ -72,7 +72,7 @@ export async function POST(request) {
       createdAt: result.rows[0]?.created_at,
     });
   } catch (error) {
-    console.error('댓글 작성 실패:', error);
-    return createServerError(error, '댓글 작성에 실패했습니다.');
+    console.error('Failed to create comment:', error);
+    return createServerError(error, 'Failed to create comment.');
   }
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getNextModelServerEndpoint } from '@/lib/modelServers';
 
-// OpenAI 호환 Models API
-// 모델 서버의 모델 목록을 OpenAI 형식으로 반환
+// OpenAI-compatible Models API
+// Returns model server's model list in OpenAI format
 
 export async function GET(request) {
   const corsHeaders = {
@@ -12,11 +12,11 @@ export async function GET(request) {
   };
 
   try {
-    // 모델 서버 엔드포인트 가져오기
+    // Get model server endpoint
     const modelServerEndpoint = await getNextModelServerEndpoint();
     const modelsUrl = `${modelServerEndpoint}/api/tags`;
 
-    console.log('[OpenAI Models] 모델 목록 조회:', modelsUrl);
+    console.log('[OpenAI Models] Fetching model list:', modelsUrl);
 
     const res = await fetch(modelsUrl, {
       method: 'GET',
@@ -28,7 +28,7 @@ export async function GET(request) {
 
     if (!res.ok) {
       console.error(
-        `[OpenAI Models] 모델 Server error: ${res.status} ${res.statusText}`
+        `[OpenAI Models] Model server error: ${res.status} ${res.statusText}`
       );
       return NextResponse.json(
         {
@@ -43,8 +43,8 @@ export async function GET(request) {
 
     const data = await res.json().catch(() => ({}));
 
-    // Ollama 형식: { models: [{ name, ... }] }
-    // OpenAI 형식: { data: [{ id, object: "model", created, owned_by }] }
+    // Ollama format: { models: [{ name, ... }] }
+    // OpenAI format: { data: [{ id, object: "model", created, owned_by }] }
     const ollamaModels = Array.isArray(data.models) ? data.models : [];
     const openaiModels = ollamaModels.map((model, index) => ({
       id: model.name || `model-${index}`,

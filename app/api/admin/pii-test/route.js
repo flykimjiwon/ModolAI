@@ -26,35 +26,35 @@ function parseMaybeJson(value) {
 function buildFailureMessage(result) {
   switch (result?.reason) {
     case 'missing-endpoint':
-      return 'PII 엔드포인트가 비어 있습니다. 환경변수(PII_DETECT_API_URL) 또는 입력한 Endpoint를 확인하세요.';
+      return 'PII endpoint is empty. Check env var (PII_DETECT_API_URL) or the entered endpoint.';
     case 'http-error':
-      return `PII API가 HTTP ${result?.statusCode ?? '오류'}를 반환했습니다. 응답 본문/헤더를 확인하세요.`;
+      return `PII API returned HTTP ${result?.statusCode ?? 'error'}. Check response body/headers.`;
     case 'fetch-failed':
-      return `PII API 네트워크 호출이 실패했습니다: ${
-        result?.errorMessage || '알 수 없는 네트워크 오류'
+      return `PII API network call failed: ${
+        result?.errorMessage || 'Unknown network error'
       }`;
     case 'invalid-json':
-      return 'PII API 응답이 JSON 형식이 아닙니다. rawResponse와 응답 헤더를 확인하세요.';
+      return 'PII API response is not valid JSON. Check rawResponse and response headers.';
     default:
       return result?.reason
-        ? `PII API 호출 실패(${result.reason})`
-        : 'PII API 호출 실패';
+        ? `PII API call failed (${result.reason})`
+        : 'PII API call failed';
   }
 }
 
 function buildSuccessMessage(result) {
   if (result?.skipped) {
     if (result.reason === 'empty-text') {
-      return '입력 텍스트가 비어 있어 검사를 생략했습니다.';
+      return 'Input text is empty, so validation was skipped.';
     }
-    return `PII 필터가 ${result?.reason || 'unknown'} 사유로 스킵되어 원문을 그대로 사용했습니다.`;
+    return `PII filter was skipped due to ${result?.reason || 'unknown'}, so the original text was used.`;
   }
 
   if (result?.detected) {
-    return `PII ${result?.detectedCnt || 0}건을 탐지했고 마스킹 결과를 반환했습니다.`;
+    return `Detected ${result?.detectedCnt || 0} PII item(s) and returned a masked result.`;
   }
 
-  return 'PII가 탐지되지 않아 원문을 유지한 정상 응답입니다.';
+  return 'No PII was detected, so the original text was kept.';
 }
 
 async function findLatestPiiTestLog({ userId, endpoint, startedAt }) {
@@ -136,7 +136,7 @@ async function findLatestPiiTestLog({ userId, endpoint, startedAt }) {
     };
   } catch (error) {
     return {
-      lookupError: error.message || '로그 조회 실패',
+      lookupError: error.message || 'Failed to retrieve logs',
     };
   }
 }
@@ -145,7 +145,7 @@ export async function POST(request) {
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
     return NextResponse.json(
-      { success: false, error: authResult.error || '관리자 인증 실패' },
+      { success: false, error: authResult.error || 'Admin authentication failed' },
       { status: 401 }
     );
   }
@@ -236,7 +236,7 @@ export async function POST(request) {
     );
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: error.message || 'PII 테스트 실패' },
+      { success: false, error: error.message || 'PII test failed' },
       { status: 500 }
     );
   }

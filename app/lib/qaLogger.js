@@ -2,8 +2,8 @@ import { query } from './postgres';
 import { logger } from './logger';
 
 /**
- * 질문과 답변(Q&A) 내용을 별도의 'qa_logs' 테이블에 기록합니다.
- * @param {object} logData - 기록할 데이터 객체
+ * Records Q&A content to a separate 'qa_logs' table.
+ * @param {object} logData - Data object to record
  */
 export async function logQARequest(logData) {
   try {
@@ -12,11 +12,11 @@ export async function logQARequest(logData) {
        VALUES (CURRENT_TIMESTAMP, $1)`,
       [JSON.stringify(logData)]
     );
-    logger.debug('[QA Logger] Q&A 로깅 완료', {
+    logger.debug('[QA Logger] Q&A logging complete', {
       logDataSize: JSON.stringify(logData).length,
     });
   } catch (error) {
-    logger.error('[QA Logger] Q&A 로깅 실패', {
+    logger.error('[QA Logger] Q&A logging failed', {
       error: error.message,
       stack: error.stack,
     });

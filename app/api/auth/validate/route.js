@@ -2,26 +2,26 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
 /**
- * 토큰 유효성 검증 API
+ * Token validation API
  */
 export async function POST(request) {
   try {
     const authHeader = request.headers.get("authorization");
     
     if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "인증 토큰이 필요합니다." }, { status: 401 });
+      return NextResponse.json({ error: "Authentication token is required." }, { status: 401 });
     }
 
     const token = authHeader.split(" ")[1];
     
     if (!token) {
-      return NextResponse.json({ error: "토큰이 제공되지 않았습니다." }, { status: 401 });
+      return NextResponse.json({ error: "Token was not provided." }, { status: 401 });
     }
 
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       
-      // 토큰이 유효하면 사용자 정보 반환
+      // Return user info if token is valid
       return NextResponse.json({
         success: true,
         user: {
@@ -40,12 +40,12 @@ export async function POST(request) {
       });
 
     } catch (jwtError) {
-      console.log('[Auth Validate] JWT 검증 실패:', jwtError.message);
+      console.log('[Auth Validate] JWT verification failed:', jwtError.message);
       
-      // JWT 에러 타입에 따른 구체적인 응답
+      // Specific response based on JWT error type
       if (jwtError.name === 'TokenExpiredError') {
         return NextResponse.json({ 
-          error: "토큰이 만료되었습니다.", 
+          error: "Token has expired.", 
           errorType: "expired" 
         }, { status: 401 });
       }
@@ -58,13 +58,13 @@ export async function POST(request) {
       }
       
       return NextResponse.json({ 
-        error: "토큰 검증에 실패했습니다.", 
+        error: "Token validation failed.", 
         errorType: "validation_failed" 
       }, { status: 401 });
     }
 
   } catch (error) {
-    console.error('[Auth Validate] 토큰 검증 중 오류:', error);
+    console.error('[Auth Validate] Error during token validation:', error);
     return NextResponse.json({ 
       error: "Server error occurred.",
       errorType: "server_error" 

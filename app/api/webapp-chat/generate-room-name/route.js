@@ -81,7 +81,7 @@ function convertToResponsesInput(messages) {
     .filter(Boolean);
 }
 
-// 방 이름 생성 API
+// Room name generation API
 export async function POST(request) {
   const startTime = Date.now();
   const clientIP = getClientIP(request);
@@ -100,27 +100,27 @@ export async function POST(request) {
 
     if (!roomId) {
       return NextResponse.json(
-        { error: '방 ID가 필요합니다.' },
+        { error: 'Room ID is required.' },
         { status: 400 }
       );
     }
 
     if (!userMessage) {
       return NextResponse.json(
-        { error: '사용자 메시지가 필요합니다.' },
+        { error: 'User message is required.' },
         { status: 400 }
       );
     }
 
-    // UUID 검증
+    // UUID validation
     if (!isValidUUID(roomId)) {
       return NextResponse.json(
-        { error: '올바른 방 ID 형식이 아닙니다.' },
+        { error: 'Invalid room ID format.' },
         { status: 400 }
       );
     }
 
-    // 채팅방 조회 및 소유자 확인
+    // Fetch chat room and verify ownership
     const roomResult = await query(
       `SELECT cr.id, cr.user_id, cr.name, u.email, u.name as user_name, 
               u.department, u.cell, u.role as user_role
@@ -132,7 +132,7 @@ export async function POST(request) {
 
     if (roomResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '채팅방을 Not found.' },
+        { error: 'Chat room not found.' },
         { status: 404 }
       );
     }
@@ -155,11 +155,11 @@ export async function POST(request) {
       role: roomRow.user_role,
     };
 
-    // 채팅방 소유자 확인
+    // Verify chat room owner
     if (roomOwner.email !== payload.email) {
       return NextResponse.json(
         {
-          error: '채팅방에 접근할 Unauthorized.',
+          error: 'Unauthorized access to this chat room.',
           shouldLogout: true,
           message: 'Authentication expired. Please log in again.',
         },
@@ -167,17 +167,17 @@ export async function POST(request) {
       );
     }
 
-    // 방 이름이 이미 변경되었는지 확인 (New Chat이 아니면 이미 생성됨)
+    // Check whether room name has already been changed (if not New Chat, already generated)
     if (room.name !== 'New Chat') {
       return NextResponse.json({
         success: true,
         roomName: room.name,
-        message: '방 이름이 이미 설정되어 있습니다.',
+        message: 'Room name is already set.',
       });
     }
 
-    // 첫 대화인지 확인: chat_history에서 해당 방의 실제 대화 메시지 개수 확인
-    // 로그 메시지([방제목 생성], [파일 파싱] 등)는 제외
+    // Check whether this is the first conversation: count actual chat messages in chat_history
+    // Exclude log messages ([Room Title Generation], [File Parsing], etc.)
     const messageCountResult = await query(
       `SELECT COUNT(*) as count FROM chat_history 
        WHERE room_id = $1 
@@ -186,7 +186,7 @@ export async function POST(request) {
     );
     const messageCount = parseInt(messageCountResult.rows[0]?.count || 0);
 
-    // 관리자 설정에서 대화방명 생성 모델 정보 가져오기 (일관성을 위해 먼저 조회)
+    // Load room-name generation model config from admin settings (query first for consistency)
     const settingsResult = await query(
       `SELECT room_name_generation_model, file_parsing_model FROM settings WHERE config_type = 'general' LIMIT 1`
     );
@@ -217,7 +217,7 @@ export async function POST(request) {
         ) ||
         null;
     } catch (error) {
-      console.warn('[generate-room-name] 모델 레코드 조회 실패:', error.message);
+      console.warn('[generate-room-name] Failed to fetch model record:', error.message);
     }
 
     const resolvedModel = await resolveModelId(model);
@@ -245,18 +245,18 @@ export async function POST(request) {
           null;
       }
     } catch (error) {
-      console.warn('[generate-room-name] 모델 레코드 조회 실패:', error.message);
+      console.warn('[generate-room-name] Failed to fetch model record:', error.message);
     }
-    console.log('[generate-room-name] 모델 선택:', {
+    console.log('[generate-room-name] Selected model:', {
       model: modelForRequest,
       endpoint: modelRecord?.endpoint || null,
       hasApiConfig: !!modelRecord?.apiConfig,
       hasApiKey: !!modelRecord?.apiKey,
     });
 
-    // 메시지 개수 확인 (2개 초과면 이미 여러 대화가 진행된 것)
+    // Check message count (if over 2, multiple turns already happened)
     if (messageCount > 2) {
-      // 요청 로그 기록 (사용자 요청) - 모델 정보 포함
+      // Record request log (user request) - includes model info
       try {
         const requestText =
           userMessage.length > 100
@@ -266,7 +266,7 @@ export async function POST(request) {
           roomId: roomId,
           userId: room.userId,
           role: 'user',
-          text: `[방제목 생성 요청] ${requestText}`,
+          text: `[Room Title Generation Request] ${requestText}`,
           model: modelForRequest,
           email: roomOwner.email || payload.email,
           name: roomOwner.name || payload.name || '',
@@ -277,18 +277,18 @@ export async function POST(request) {
         });
       } catch (msgLogError) {
         console.warn(
-          '[generate-room-name] 요청 로그 저장 실패(무시):',
+          '[generate-room-name] Failed to save request log (ignored):',
           msgLogError.message
         );
       }
 
-      // API 호출 로그 기록 (이미 메시지가 있는 경우)
+      // Record API call log (when messages already exist)
       try {
         await saveMessageDual({
           roomId: roomId,
           userId: room.userId,
           role: 'assistant',
-          text: `[방제목 생성 응답] 첫 대화가 아니므로 방제목 생성 스킵 (메시지 ${messageCount}개 존재)`,
+          text: `[Room Title Generation Response] Skipped because this is not the first conversation (${messageCount} messages exist)`,
           model: modelForRequest,
           email: roomOwner.email || payload.email,
           name: roomOwner.name || payload.name || '',
@@ -299,7 +299,7 @@ export async function POST(request) {
         });
       } catch (msgLogError) {
         console.warn(
-          '[generate-room-name] 메시지 저장 실패(무시):',
+          '[generate-room-name] Failed to save message (ignored):',
           msgLogError.message
         );
       }
@@ -307,12 +307,12 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         roomName: room.name,
-        message: '첫 대화가 아니므로 방 이름 생성을 하지 않습니다.',
+        message: 'Room name generation is skipped because this is not the first conversation.',
       });
     }
 
-    // LLM을 사용하여 방 이름 생성
-    // 사용자 메시지가 너무 길 경우 앞 100자, 뒤 100자만 사용
+    // Generate room name with LLM
+    // If user message is too long, only use first 100 and last 100 characters
     let processedUserMessage = userMessage;
     if (userMessage && userMessage.length > 200) {
       const frontPart = userMessage.substring(0, 100);
@@ -322,30 +322,30 @@ export async function POST(request) {
 
     let prompt;
     if (assistantMessage) {
-      // 응답이 있는 경우 (기존 방식)
-      prompt = `다음 대화 내용을 바탕으로 적절한 채팅방 이름을 생성해주세요. 
-사용자 요청이 길 경우 앞 100자와 뒤 100자만 사용하여 방 제목을 설정합니다.
-방 이름은 30자 이내로 간결하고 명확하게 작성해주세요.
-방 이름만 출력하고, 다른 설명은 포함하지 마세요.
+      // When assistant response exists (existing flow)
+      prompt = `Generate an appropriate chat room name based on the conversation below.
+If the user request is long, use only the first 100 and last 100 characters to set the title.
+Keep the room name concise and clear within 30 characters.
+Output only the room name, without any additional explanation.
 
-사용자: ${processedUserMessage}
-응답: ${assistantMessage}
+User: ${processedUserMessage}
+Assistant: ${assistantMessage}
 
-방 이름:`;
+Room name:`;
     } else {
-      // 사용자 요청만 있는 경우 (context 절약)
-      prompt = `다음 사용자 요청을 바탕으로 적절한 채팅방 이름을 생성해주세요. 
-사용자 요청이 길 경우 앞 100자와 뒤 100자만 사용하여 방 제목을 설정합니다.
-방 이름은 30자 이내로 간결하고 명확하게 작성해주세요.
-방 이름만 출력하고, 다른 설명은 포함하지 마세요.
+      // When only user request exists (save context)
+      prompt = `Generate an appropriate chat room name based on the user request below.
+If the user request is long, use only the first 100 and last 100 characters to set the title.
+Keep the room name concise and clear within 30 characters.
+Output only the room name, without any additional explanation.
 
-사용자 요청: ${processedUserMessage}
+User request: ${processedUserMessage}
 
-방 이름:`;
+Room name:`;
     }
 
 
-    // 방제목 생성 요청 로그 기록 (사용자 요청) - 모델 정보 포함
+    // Record room-title generation request log (user request) - includes model info
     try {
       const requestText =
         userMessage.length > 100
@@ -355,7 +355,7 @@ export async function POST(request) {
         roomId: roomId,
         userId: room.userId,
         role: 'user',
-        text: `[방제목 생성 요청] ${requestText}`,
+        text: `[Room Title Generation Request] ${requestText}`,
         model: modelForRequest,
         email: roomOwner.email || payload.email,
         name: roomOwner.name || payload.name || '',
@@ -366,7 +366,7 @@ export async function POST(request) {
       });
     } catch (msgLogError) {
       console.warn(
-        '[generate-room-name] 요청 로그 저장 실패(무시):',
+        '[generate-room-name] Failed to save request log (ignored):',
         msgLogError.message
       );
     }
@@ -378,7 +378,7 @@ export async function POST(request) {
             ? JSON.parse(modelRecord.apiConfig)
             : modelRecord.apiConfig;
         if (!manualConfig?.url) {
-          throw new Error('수동 API URL이 설정되지 않았습니다.');
+          throw new Error('Manual API URL is not configured.');
         }
         const responsePath = manualConfig?.responseMapping?.path || null;
 
@@ -420,7 +420,7 @@ export async function POST(request) {
             body = { ...body, input: convertToResponsesInput(context.messages) };
           }
         }
-        console.log('[generate-room-name] 수동 API 요청:', {
+        console.log('[generate-room-name] Manual API request:', {
           url: manualUrl,
           method,
           hasBody: body !== undefined,
@@ -450,7 +450,7 @@ export async function POST(request) {
             responseTime,
             statusCode: manualRes.status,
             isStream: false,
-            error: `수동 API 요청 실패: HTTP ${manualRes.status} (responseMapping: ${
+            error: `Manual API request failed: HTTP ${manualRes.status} (responseMapping: ${
               responsePath || 'none'
             })`,
             clientIP: clientIP,
@@ -460,7 +460,7 @@ export async function POST(request) {
             jwtName: payload.name || null,
           });
           throw new Error(
-            `수동 API 요청 실패: HTTP ${manualRes.status} ${errorText}`
+            `Manual API request failed: HTTP ${manualRes.status} ${errorText}`
           );
         }
 
@@ -491,15 +491,15 @@ export async function POST(request) {
         generatedName = (generatedName || '').trim();
         const responseIssue =
           !generatedName || generatedName.length < 2
-            ? `응답 파싱 실패 또는 빈 결과 (responseMapping: ${
+            ? `Response parsing failed or returned empty result (responseMapping: ${
                 responsePath || 'none'
               })`
             : null;
         if (responseIssue) {
-          generatedName = '새 대화';
+          generatedName = 'New Chat';
         }
         generatedName = generatedName
-          .replace(/^방 이름:\s*/i, '')
+          .replace(/^Room name:\s*/i, '')
           .replace(/^["']|["']$/g, '')
           .trim()
           .substring(0, 30);
@@ -525,7 +525,7 @@ export async function POST(request) {
             jwtName: payload.name || null,
           });
         } catch (logError) {
-          console.warn('[generate-room-name] 로깅 실패(무시):', logError.message);
+          console.warn('[generate-room-name] Logging failed (ignored):', logError.message);
         }
 
         await query(
@@ -539,8 +539,8 @@ export async function POST(request) {
           roomId: roomId,
           userId: room.userId,
           role: 'assistant',
-          text: `[방제목 생성 성공] ${generatedName}${
-            responseIssue ? ` (주의: ${responseIssue}, 로그: ${logLink})` : ''
+          text: `[Room Title Generation Success] ${generatedName}${
+            responseIssue ? ` (Warning: ${responseIssue}, log: ${logLink})` : ''
           }`,
           model: modelForRequest,
           email: roomOwner.email || payload.email,
@@ -584,7 +584,7 @@ export async function POST(request) {
       if (!response.ok) {
         const errorText = await response.text();
 
-        // 에러 시에도 로깅
+        // Log even on error
         try {
           await logExternalApiRequest({
             sourceType: 'internal',
@@ -598,7 +598,7 @@ export async function POST(request) {
             responseTime: responseTime,
             statusCode: response.status,
             isStream: false,
-            error: `LLM API 실패: ${response.status} - ${errorText}`,
+            error: `LLM API failure: ${response.status} - ${errorText}`,
             clientIP: clientIP,
             userAgent: userAgent,
             jwtEmail: payload.email,
@@ -607,18 +607,18 @@ export async function POST(request) {
           });
         } catch (logError) {
           console.warn(
-            '[generate-room-name] 로깅 실패(무시):',
+            '[generate-room-name] Logging failed (ignored):',
             logError.message
           );
         }
 
-        // 메시지 관리 화면에서 집계되도록 messages 테이블에 저장 (HTTP 에러)
+        // Save to messages table for aggregation in message admin view (HTTP error)
         try {
           await saveMessageDual({
             roomId: roomId,
             userId: room.userId,
             role: 'assistant',
-            text: `[방제목 생성 실패] HTTP ${
+            text: `[Room Title Generation Failed] HTTP ${
               response.status
             }: ${errorText.substring(0, 100)}`,
             model: modelForRequest,
@@ -631,18 +631,18 @@ export async function POST(request) {
           });
         } catch (msgLogError) {
           console.warn(
-            '[generate-room-name] 메시지 저장 실패(무시):',
+            '[generate-room-name] Failed to save message (ignored):',
             msgLogError.message
           );
         }
 
-        throw new Error(`LLM API 실패: ${response.status} - ${errorText}`);
+        throw new Error(`LLM API failure: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
       let generatedName = (result.response || '').trim();
 
-      // 성공 시 로깅
+      // Log on success
       try {
         const responseText = generatedName || '';
         await logExternalApiRequest({
@@ -664,22 +664,22 @@ export async function POST(request) {
           jwtName: payload.name || null,
         });
       } catch (logError) {
-        console.warn('[generate-room-name] 로깅 실패(무시):', logError.message);
+        console.warn('[generate-room-name] Logging failed (ignored):', logError.message);
       }
 
-      // 방 이름 정리 (30자 이내로 제한)
+      // Clean room name (limit to 30 characters)
       generatedName = generatedName
-        .replace(/^방 이름:\s*/i, '')
+        .replace(/^Room name:\s*/i, '')
         .replace(/^["']|["']$/g, '')
         .trim()
         .substring(0, 30);
 
-      // 빈 이름이거나 너무 짧은 경우 기본값 사용
+      // Use default if name is empty or too short
       if (!generatedName || generatedName.length < 2) {
-        generatedName = '새 대화';
+        generatedName = 'New Chat';
       }
 
-      // 방 이름 업데이트
+      // Update room name
       await query(
         `UPDATE chat_rooms 
          SET name = $1, updated_at = CURRENT_TIMESTAMP 
@@ -687,13 +687,13 @@ export async function POST(request) {
         [generatedName, roomId]
       );
 
-      // 메시지 관리 화면에서 집계되도록 messages 테이블에 저장 (성공)
+      // Save to messages table for aggregation in message admin view (success)
       try {
         await saveMessageDual({
           roomId: roomId,
           userId: room.userId,
           role: 'assistant',
-          text: `[방제목 생성 성공] ${generatedName}`,
+          text: `[Room Title Generation Success] ${generatedName}`,
           model: modelForRequest,
           email: roomOwner.email || payload.email,
           name: roomOwner.name || payload.name || '',
@@ -704,7 +704,7 @@ export async function POST(request) {
         });
       } catch (msgLogError) {
         console.warn(
-          '[generate-room-name] 메시지 저장 실패(무시):',
+          '[generate-room-name] Failed to save message (ignored):',
           msgLogError.message
         );
       }
@@ -714,9 +714,9 @@ export async function POST(request) {
         roomName: generatedName,
       });
     } catch (llmError) {
-      console.error('방 이름 생성 실패:', llmError);
+      console.error('Room name generation failed:', llmError);
 
-      // 에러 시 로깅
+      // Log on error
       let modelForLog = null;
       try {
         const endpointInfo = await getNextModelServerEndpointWithIndex();
@@ -755,13 +755,13 @@ export async function POST(request) {
         });
       } catch (logError) {
         console.warn(
-          '[generate-room-name] 에러 로깅 실패(무시):',
+          '[generate-room-name] Error logging failed (ignored):',
           logError.message
         );
       }
 
-      // LLM 실패 시 기본 이름 사용
-      const defaultName = '새 대화';
+      // Use default name when LLM fails
+      const defaultName = 'New Chat';
       await query(
         `UPDATE chat_rooms 
          SET name = $1, updated_at = CURRENT_TIMESTAMP 
@@ -769,15 +769,15 @@ export async function POST(request) {
         [defaultName, roomId]
       );
 
-      // 메시지 관리 화면에서 집계되도록 messages 테이블에 저장 (실패 - 기본값 사용)
+      // Save to messages table for aggregation in message admin view (failure - default used)
       try {
         await saveMessageDual({
           roomId: roomId,
           userId: room.userId,
           role: 'assistant',
-          text: `[방제목 생성 실패] 기본값으로 설정: ${defaultName} (오류: ${
-            llmError.message || '알 수 없는 오류'
-          }) (로그: /admin/external-api-logs?apiType=generate-room-name&model=${encodeURIComponent(
+          text: `[Room Title Generation Failed] Set to default: ${defaultName} (error: ${
+            llmError.message || 'Unknown error'
+          }) (log: /admin/external-api-logs?apiType=generate-room-name&model=${encodeURIComponent(
             modelForLog || modelForRequest
           )})`,
           model: modelForLog || null,
@@ -790,7 +790,7 @@ export async function POST(request) {
         });
       } catch (msgLogError) {
         console.warn(
-          '[generate-room-name] 메시지 저장 실패(무시):',
+          '[generate-room-name] Failed to save message (ignored):',
           msgLogError.message
         );
       }
@@ -798,13 +798,13 @@ export async function POST(request) {
       return NextResponse.json({
         success: true,
         roomName: defaultName,
-        message: '기본 이름으로 설정되었습니다.',
+        message: 'Set to default name.',
       });
     }
   } catch (error) {
-    console.error('방 이름 생성 API 오류:', error);
+    console.error('Room name generation API error:', error);
     return NextResponse.json(
-      { error: '방 이름 생성 실패', details: error.message },
+      { error: 'Room name generation failed', details: error.message },
       { status: 500 }
     );
   }

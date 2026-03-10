@@ -1,9 +1,9 @@
 /**
- * 클라이언트 사이드에서 실제 IP 주소를 감지하는 유틸리티
+ * Client-side utility for detecting real IP address
  */
 
 /**
- * WebRTC를 사용하여 클라이언트의 실제 IP 주소를 감지
+ * Detect client's real IP address using WebRTC
  */
 export async function getClientRealIP() {
   return new Promise((resolve) => {
@@ -66,8 +66,8 @@ export async function getClientRealIP() {
 }
 
 /**
- * 서버사이드 API를 통한 IP 조회
- * (사내망 SSL 인증서 문제 우회)
+ * IP lookup via server-side API
+ * (bypasses internal network SSL certificate issues)
  */
 export async function getIPFromExternalService() {
   try {
@@ -87,7 +87,7 @@ export async function getIPFromExternalService() {
       }
     }
   } catch (error) {
-    console.warn('[ClientIP] 서버 API를 통한 IP 조회 실패:', error.message);
+    console.warn('[ClientIP] Failed to get IP via server API:', error.message);
   }
 
   return null;
@@ -113,7 +113,7 @@ function isLocalIP(ip) {
 }
 
 /**
- * 최선의 방법으로 클라이언트 IP를 감지
+ * Detect client IP using the best available method
  */
 export async function detectClientIP() {
   try {

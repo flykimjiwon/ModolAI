@@ -9,14 +9,14 @@ export async function POST(request) {
 
     if (!name || !email || !password) {
       return NextResponse.json(
-        { error: '이름, 이메일, 비밀번호를 모두 입력해주세요.' },
+        { error: 'Please enter name, email, and password.' },
         { status: 400 }
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: '비밀번호는 6자 이상이어야 합니다.' },
+        { error: 'Password must be at least 6 characters.' },
         { status: 400 }
       );
     }
@@ -29,7 +29,7 @@ export async function POST(request) {
 
     if (adminCount > 0) {
       return NextResponse.json(
-        { error: '이미 관리자 계정이 존재합니다. 기존 관리자에게 권한을 요청하세요.' },
+        { error: 'An admin account already exists. Please request permissions from the existing admin.' },
         { status: 403 }
       );
     }
@@ -71,11 +71,11 @@ export async function POST(request) {
     );
 
     return NextResponse.json(
-      { ok: true, message: '관리자 계정이 Created.', token },
+      { ok: true, message: 'Admin account created.', token },
       { status: 201 }
     );
   } catch (error) {
-    console.error('[create-first-admin] 오류:', error);
+    console.error('[create-first-admin] Error:', error);
     if (error.code === '23505') {
       return NextResponse.json(
         { error: 'Email already registered.' },
@@ -83,7 +83,7 @@ export async function POST(request) {
       );
     }
     return NextResponse.json(
-      { error: '관리자 계정 생성 중 오류가 발생했습니다.' },
+      { error: 'An error occurred while creating the admin account.' },
       { status: 500 }
     );
   }
@@ -99,9 +99,9 @@ export async function GET() {
 
     return NextResponse.json({ hasAdmin: adminCount > 0 });
   } catch (error) {
-    console.error('[create-first-admin] GET 오류:', error);
+    console.error('[create-first-admin] GET error:', error);
     return NextResponse.json(
-      { error: 'DB 확인 중 오류가 발생했습니다.' },
+      { error: 'An error occurred while checking the database.' },
       { status: 500 }
     );
   }

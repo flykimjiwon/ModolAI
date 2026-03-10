@@ -151,7 +151,7 @@ export async function getModelsFromTables() {
       } catch (error) {
         // Log and continue on model query failure for specific category
         console.warn(
-          `[modelTables] 카테고리 ${category.category_key}model query failed:`,
+          `[modelTables] Category ${category.category_key} model query failed:`,
           error.message
         );
         categories[category.category_key] = {
@@ -1330,7 +1330,7 @@ export async function saveModelsToTables(categories) {
               // Transaction already aborted, cannot execute additional queries
               // Throw error immediately to rollback transaction
               throw new Error(
-                `카테고리 ID ${categoryId}does not exist. Category insert may have failed. Original error: ${error.message}`
+                `Category ID ${categoryId} does not exist. Category insert may have failed. Original error: ${error.message}`
               );
             }
 
@@ -1347,7 +1347,7 @@ export async function saveModelsToTables(categories) {
 
         if (modelsToDelete.length > 0) {
           console.log(
-            `[modelTables] 카테고리 ${categoryKey}에서 ${modelsToDelete.length}model(s) deleted`
+            `[modelTables] Category ${categoryKey}: ${modelsToDelete.length} model(s) deleted`
           );
           await client.query(`DELETE FROM models WHERE id = ANY($1::uuid[])`, [
             modelsToDelete,

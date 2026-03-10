@@ -46,7 +46,7 @@ export async function GET(request, { params }) {
 
     const postId = Number(params.id);
     if (!Number.isFinite(postId)) {
-      return createValidationError('유효하지 않은 게시글 ID입니다.');
+      return createValidationError('Invalid post ID.');
     }
 
     const postResult = await query(
@@ -61,7 +61,7 @@ export async function GET(request, { params }) {
 
     if (postResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '게시글을 Not found.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
@@ -128,8 +128,8 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ post, comments });
   } catch (error) {
-    console.error('자유게시판 상세 조회 실패:', error);
-    return createServerError(error, '게시글을 불러오는데 실패했습니다.');
+    console.error('Failed to fetch board post details:', error);
+    return createServerError(error, 'Failed to load post.');
   }
 }
 
@@ -149,7 +149,7 @@ export async function PUT(request, { params }) {
 
     const postId = Number(params.id);
     if (!Number.isFinite(postId)) {
-      return createValidationError('유효하지 않은 게시글 ID입니다.');
+      return createValidationError('Invalid post ID.');
     }
 
     const body = await request.json();
@@ -158,12 +158,12 @@ export async function PUT(request, { params }) {
 
     if (!title || title.length > 200) {
       return createValidationError(
-        '제목은 1~200자 사이여야 합니다.'
+        'Title must be between 1 and 200 characters.'
       );
     }
     if (!content || content.length > 10000) {
       return createValidationError(
-        '내용은 1~10,000자 사이여야 합니다.'
+        'Content must be between 1 and 10,000 characters.'
       );
     }
 
@@ -178,7 +178,7 @@ export async function PUT(request, { params }) {
     );
     if (ownerResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '게시글을 Not found.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
@@ -186,7 +186,7 @@ export async function PUT(request, { params }) {
     const ownerId = ownerResult.rows[0].user_id;
     if (!isAdmin && ownerId !== userId) {
       return NextResponse.json(
-        { error: '수정 Unauthorized.' },
+        { error: 'Unauthorized to edit.' },
         { status: 403 }
       );
     }
@@ -205,7 +205,7 @@ export async function PUT(request, { params }) {
       );
       if (existingCount >= 5) {
         return createValidationError(
-          '공지글은 최대 5개까지 등록할 수 있습니다.'
+          'A maximum of 5 notice posts can be registered.'
         );
       }
     }
@@ -224,8 +224,8 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('자유게시판 수정 실패:', error);
-    return createServerError(error, '게시글 수정에 실패했습니다.');
+    console.error('Failed to update board post:', error);
+    return createServerError(error, 'Failed to update post.');
   }
 }
 
@@ -245,7 +245,7 @@ export async function DELETE(request, { params }) {
 
     const postId = Number(params.id);
     if (!Number.isFinite(postId)) {
-      return createValidationError('유효하지 않은 게시글 ID입니다.');
+      return createValidationError('Invalid post ID.');
     }
 
     const userId = auth.user?.sub || auth.user?.id;
@@ -256,14 +256,14 @@ export async function DELETE(request, { params }) {
     );
     if (ownerResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '게시글을 Not found.' },
+        { error: 'Post not found.' },
         { status: 404 }
       );
     }
 
     if (!isAdmin && ownerResult.rows[0].user_id !== userId) {
       return NextResponse.json(
-        { error: '삭제 Unauthorized.' },
+        { error: 'Unauthorized to delete.' },
         { status: 403 }
       );
     }
@@ -272,7 +272,7 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('자유게시판 삭제 실패:', error);
-    return createServerError(error, '게시글 삭제에 실패했습니다.');
+    console.error('Failed to delete board post:', error);
+    return createServerError(error, 'Failed to delete post.');
   }
 }

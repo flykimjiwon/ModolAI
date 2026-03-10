@@ -1,6 +1,6 @@
 /**
- * 공개 설정 API - 인증 없이 접근 가능
- * loginType 등 공개 가능한 설정만 반환
+ * Public settings API - accessible without authentication
+ * Returns only publicly available settings such as loginType
  */
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
@@ -28,7 +28,7 @@ export async function GET() {
     );
     const settings = result.rows[0] || {};
 
-    // 공개 가능한 설정만 반환 (민감 정보 제외)
+    // Return only publicly available settings (exclude sensitive info)
     return NextResponse.json(
       {
         loginType: settings.login_type || 'local',
@@ -41,9 +41,9 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('공개 설정 조회 실패:', error);
+    console.error('Failed to fetch public settings:', error);
 
-    // DB 오류 시 기본값 반환
+    // Return defaults on DB error
     return NextResponse.json(
       {
         loginType: 'local',

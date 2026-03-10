@@ -3,7 +3,7 @@ import { verifyAdminWithResult } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
-// 관리자가 보낸 쪽지 삭제
+// Delete message sent by admin
 export async function DELETE(request, { params }) {
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
@@ -15,12 +15,12 @@ export async function DELETE(request, { params }) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: '쪽지 ID가 필요합니다.' },
+        { success: false, error: 'Message ID is required.' },
         { status: 400 }
       );
     }
 
-    // 관리자가 보낸 쪽지인지 확인 후 삭제
+    // Verify the message was sent by admin before deleting
     const result = await query(
       `DELETE FROM direct_messages
        WHERE id = $1 AND sender_id = $2
@@ -30,17 +30,17 @@ export async function DELETE(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { success: false, error: '쪽지를 찾을 수 없거나 삭제 Unauthorized.' },
+        { success: false, error: 'Message not found or unauthorized to delete.' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      message: '쪽지가 Deleted.',
+      message: 'Message deleted.',
     });
   } catch (error) {
-    console.error('쪽지 삭제 실패:', error);
-    return createServerError(error, '쪽지 삭제 실패');
+    console.error('Failed to delete message:', error);
+    return createServerError(error, 'Failed to delete message');
   }
 }

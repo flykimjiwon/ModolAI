@@ -9,7 +9,7 @@ const REFRESH_TOKEN_EXPIRES_DAYS = 30;
 
 /**
  * POST /api/auth/refresh
- * httpOnly cookie의 refresh token으로 새 access token + refresh token 발급 (rotation)
+ * Issue new access token + refresh token (rotation) using refresh token in httpOnly cookie
  */
 export async function POST(request) {
   try {
@@ -17,12 +17,12 @@ export async function POST(request) {
 
     if (!refreshToken) {
       return NextResponse.json(
-        { error: 'refresh token이 없습니다.', errorType: 'no_refresh_token' },
+         { error: 'Refresh token is missing.', errorType: 'no_refresh_token' },
         { status: 401 }
       );
     }
 
-    // DB에서 refresh token 검증
+    // Validate refresh token in DB
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const tokenResult = await query(
       `SELECT rt.*, u.id as uid, u.email, u.name, u.department, u.cell, u.role,
@@ -36,9 +36,9 @@ export async function POST(request) {
     );
 
     if (tokenResult.rows.length === 0) {
-      // 만료되거나 revoke된 토큰 — cookie 삭제
+      // Expired or revoked token - clear cookie
       const response = NextResponse.json(
-        { error: 'refresh token이 만료되었거나 유효하지 않습니다.', errorType: 'refresh_expired' },
+        { error: 'Refresh token is expired or invalid.', errorType: 'refresh_expired' },
         { status: 401 }
       );
       response.cookies.set('refresh_token', '', {
@@ -54,13 +54,13 @@ export async function POST(request) {
     const tokenRow = tokenResult.rows[0];
     const userId = tokenRow.uid;
 
-    // 기존 refresh token revoke
+    // Revoke existing refresh token
     await query(
       `UPDATE refresh_tokens SET revoked = TRUE, revoked_at = NOW() WHERE token_hash = $1`,
       [tokenHash]
     );
 
-    // 새 refresh token 생성
+    // Generate new refresh token
     const newRefreshToken = crypto.randomBytes(32).toString('hex');
     const newTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
     const newExpiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_DAYS * 24 * 60 * 60 * 1000);
@@ -76,7 +76,7 @@ export async function POST(request) {
       [userId, newTokenHash, newExpiresAt, ipAddress, userAgent]
     );
 
-    // 새 access token 발급
+    // Issue new access token
     const newAccessToken = jwt.sign(
       {
         sub: userId,
@@ -92,7 +92,7 @@ export async function POST(request) {
       { expiresIn: ACCESS_TOKEN_EXPIRES }
     );
 
-    // last_active_at 업데이트 (refresh = 활동 중)
+    // Update last_active_at (refresh means active session)
     await query(
       `UPDATE users SET last_active_at = NOW()
        WHERE id = $1
@@ -111,7 +111,7 @@ export async function POST(request) {
     return response;
 
   } catch (error) {
-    console.error('[Auth Refresh] 오류:', error);
+    console.error('[Auth Refresh] Error:', error);
     return NextResponse.json(
       { error: 'Server error occurred.', errorType: 'server_error' },
       { status: 500 }

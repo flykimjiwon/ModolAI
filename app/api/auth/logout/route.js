@@ -4,7 +4,7 @@ import { query } from '@/lib/postgres';
 
 /**
  * POST /api/auth/logout
- * refresh token revoke + cookie 삭제
+ * refresh token revoke + cookie deletion
  */
 export async function POST(request) {
   try {
@@ -29,8 +29,8 @@ export async function POST(request) {
     return response;
 
   } catch (error) {
-    console.error('[Auth Logout] 오류:', error);
-    // 오류가 있어도 cookie는 삭제
+    console.error('[Auth Logout] Error:', error);
+    // Delete cookie even if there's an error
     const response = NextResponse.json({ success: true });
     response.cookies.set('refresh_token', '', {
       httpOnly: true,

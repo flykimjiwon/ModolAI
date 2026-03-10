@@ -2,11 +2,11 @@ import { query } from './postgres';
 import { logger } from './logger';
 import { randomBytes } from 'crypto';
 
-// 인스턴스 ID 생성 (서버 시작시 한번만)
+// Generate instance ID (once at server startup)
 const instanceId = `instance-${Date.now()}-${randomBytes(6).toString('hex')}`;
 const startTime = new Date();
 
-// 인스턴스 정보
+// Instance information
 export const getInstanceInfo = () => ({
   instanceId,
   startTime,
@@ -17,7 +17,7 @@ export const getInstanceInfo = () => ({
   environment: process.env.NODE_ENV || 'development',
 });
 
-// 로그 레벨
+// Log level
 export const LogLevel = {
   ERROR: 'ERROR',
   WARN: 'WARN',
@@ -25,7 +25,7 @@ export const LogLevel = {
   DEBUG: 'DEBUG',
 };
 
-// 로그 저장 (model_logs 테이블에 통합)
+// Store log (unified in model_logs table)
 export async function logToDatabase(level, message, metadata = {}) {
   try {
     const logMetadata = {
@@ -49,7 +49,7 @@ export async function logToDatabase(level, message, metadata = {}) {
       ]
     );
 
-    // winston logger로 출력 (안전하게 처리)
+    // Output with winston logger (safe handling)
     try {
       const logLevel = level.toLowerCase();
       if (logger[logLevel]) {
@@ -58,24 +58,24 @@ export async function logToDatabase(level, message, metadata = {}) {
         logger.info(`[${instanceId}] ${message}`, metadata);
       }
     } catch (loggerError) {
-      // logger가 이미 종료된 경우 무시
-      console.error(`[${instanceId}] Logger 출력 실패 (무시됨):`, loggerError.message);
+      // Ignore if logger is already closed
+      console.error(`[${instanceId}] Logger output failed (ignored):`, loggerError.message);
     }
   } catch (error) {
-    // logger.error 호출도 안전하게 처리
+    // Handle logger.error safely as well
     try {
-      logger.error('로그 저장 실패', {
+      logger.error('Failed to save log', {
         error: error.message,
         stack: error.stack,
       });
     } catch (loggerError) {
-      // logger가 이미 종료된 경우 console.error 사용
-      console.error('로그 저장 실패 (logger 종료됨):', error.message);
+      // Use console.error if logger is already closed
+      console.error('Failed to save log (logger closed):', error.message);
     }
   }
 }
 
-// 인스턴스 상태 업데이트 (heartbeat)
+// Update instance status (heartbeat)
 export async function updatemodelServerstatus() {
   try {
     const instanceInfo = getInstanceInfo();
@@ -126,20 +126,20 @@ export async function updatemodelServerstatus() {
       ]
     );
   } catch (error) {
-    // logger.error 호출도 안전하게 처리
+    // Handle logger.error safely as well
     try {
-      logger.error('인스턴스 상태 업데이트 실패', {
+      logger.error('Failed to update instance status', {
         error: error.message,
         instanceId,
       });
     } catch (loggerError) {
-      // logger가 이미 종료된 경우 console.error 사용
-      console.error('인스턴스 상태 업데이트 실패 (logger 종료됨):', error.message);
+      // Use console.error if logger is already closed
+      console.error('Failed to update instance status (logger closed):', error.message);
     }
   }
 }
 
-// 편의 함수들
+// Convenience functions
 export const logError = (message, metadata) =>
   logToDatabase(LogLevel.ERROR, message, metadata);
 export const logWarn = (message, metadata) =>
@@ -149,25 +149,25 @@ export const logInfo = (message, metadata) =>
 export const logDebug = (message, metadata) =>
   logToDatabase(LogLevel.DEBUG, message, metadata);
 
-// 서버 시작 시 자동 실행
+// Auto-run at server startup
 if (typeof window === 'undefined') {
-  // 인스턴스 등록
+  // Register instance
   updatemodelServerstatus();
 
-  // 5분마다 heartbeat
+  // Heartbeat every 5 minutes
   setInterval(updatemodelServerstatus, 5 * 60 * 1000);
 
-  // 시작 로그
-  logInfo('인스턴스 시작됨', getInstanceInfo());
+  // Startup log
+  logInfo('Instance started', getInstanceInfo());
 
-  // 프로세스 종료 시 정리 (logger 종료 전에 호출되도록 주의)
+  // Cleanup on process shutdown (ensure this runs before logger closes)
   const shutdownHandler = async (signal) => {
     try {
-      // logger가 종료되기 전에 로그 기록 시도
-      await logInfo(`인스턴스 종료됨 (${signal})`);
+      // Try to log before logger shuts down
+      await logInfo(`Instance stopped (${signal})`);
     } catch (error) {
-      // logger가 이미 종료된 경우 무시
-      console.log(`인스턴스 종료됨 (${signal})`);
+      // Ignore if logger is already closed
+      console.log(`Instance stopped (${signal})`);
     }
   };
 

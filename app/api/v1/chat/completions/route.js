@@ -1537,7 +1537,7 @@ export async function POST(request) {
      * @param {object} options - fetch options
      * @param {number} maxRetries - maximum retry count
      * @param {string} specifiedServerName - specified server name (if any)
-     * @param {string} currentProvider - 현재 provider
+     * @param {string} currentProvider - current provider
      * @param {string} modelId - model ID (for display-name-based round robin)
      * @returns {Promise<{response: Response, retryCount: number}>} model server response and retry count
      */
@@ -1624,12 +1624,12 @@ export async function POST(request) {
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          // 지정된 서버가 있으면 같은 서버로 재시도, 없으면 다른 인스턴스로 재시도
+          // If a server is specified, retry on the same server; otherwise retry on another instance
           let nextEndpoint;
           let nextProvider;
 
           if (specifiedServerName) {
-            // 지정된 서버로 재시도 (같은 이름의 서버가 여러 개 있으면 라운드로빈)
+            // Retry on the specified server (round robin if multiple servers share the same name)
             const serverEndpoint = await getModelServerEndpointByName(
               specifiedServerName
             );
@@ -1637,12 +1637,12 @@ export async function POST(request) {
               nextEndpoint = serverEndpoint.endpoint;
               nextProvider = serverEndpoint.provider;
             } else {
-              // 지정된 서버를 찾을 수 없으면 원본 URL 사용
+              // Use the original URL if specified server cannot be found
               nextEndpoint = url.split('/api/')[0].split('/v1/')[0];
               nextProvider = currentProvider;
             }
           } else {
-            // 서버 이름이 없는 경우, 표시 이름 기반 라운드로빈 시도
+            // If server name is missing, try display-name-based round robin
             if (modelId) {
               const labelBasedEndpoint = await getModelServerEndpointByLabel(
                 modelId
@@ -1651,14 +1651,14 @@ export async function POST(request) {
                 nextEndpoint = labelBasedEndpoint.endpoint;
                 nextProvider = labelBasedEndpoint.provider;
               } else {
-                // 표시 이름 기반 라운드로빈도 실패하면 전체 라운드로빈 사용
+                // If display-name-based round robin also fails, use global round robin
                 const roundRobinResult =
                   await getNextModelServerEndpointWithIndex();
                 nextEndpoint = roundRobinResult.endpoint;
                 nextProvider = roundRobinResult.provider;
               }
             } else {
-              // 라운드로빈: 다른 모델 서버 인스턴스로 재시도
+              // Round robin: retry with another model server instance
               const roundRobinResult =
                 await getNextModelServerEndpointWithIndex();
               nextEndpoint = roundRobinResult.endpoint;
@@ -1666,7 +1666,7 @@ export async function POST(request) {
             }
           }
 
-          // Gemini provider인 경우 API key 가져오기 및 URL 구성
+          // For Gemini provider, fetch API key and build URL
           if (nextProvider === 'gemini') {
             let nextApiKey = '';
             try {
@@ -1687,7 +1687,7 @@ export async function POST(request) {
               }
             } catch (e) {
               console.warn(
-                '[OpenAI Chat Completions] 재시도 시 API key 조회 실패:',
+                '[OpenAI Chat Completions] Failed to retrieve API key during retry:',
                 e.message
               );
             }
@@ -1702,7 +1702,7 @@ export async function POST(request) {
                 modelId || model
               }:${action}?key=${nextApiKey}`;
             } else {
-              // API key가 없으면 재시도 불가
+              // Cannot retry without API key
               throw new Error('Gemini API key not found for retry');
             }
           } else {
@@ -1713,14 +1713,14 @@ export async function POST(request) {
             retryUrl = `${nextEndpoint}${nextEndpointPath}`;
           }
 
-          // 재시도 전 대기 (환경변수로 설정 가능)
+          // Wait before retry (can be configured via environment variable)
           await new Promise((resolve) =>
             setTimeout(resolve, MODEL_SERVER_RETRY_DELAY)
           );
 
           const response = await fetchModelServer(retryUrl, options);
 
-          // HTTP 응답 상태 코드 확인
+          // Check HTTP response status code
           if (!response.ok) {
             const status = response.status;
             const isRetryableHttpError =
@@ -1729,29 +1729,29 @@ export async function POST(request) {
               status === 503 ||
               status === 504;
 
-            // HTTP 오류 응답 본문 읽기
+            // Read HTTP error response body
             let errorBody = '';
             try {
               const clonedResponse = response.clone();
               errorBody = await clonedResponse.text();
             } catch (e) {
               console.warn(
-                '[OpenAI Chat Completions] 응답 본문 읽기 실패:',
+                '[OpenAI Chat Completions] Failed to read response body:',
                 e?.message || e
               );
             }
 
             if (isRetryableHttpError && attempt < maxRetries) {
               console.warn(
-                `[OpenAI Chat Completions] HTTP ${status} 오류, 재시도 중...`
+                `[OpenAI Chat Completions] HTTP ${status} error, retrying...`
               );
               lastResponse = response;
               continue;
             }
 
-            // 재시도 불가능한 HTTP 오류면 응답 반환
+            // Return response for non-retryable HTTP errors
             console.error(
-              `[OpenAI Chat Completions] HTTP ${status} 오류: ${errorBody.substring(
+              `[OpenAI Chat Completions] HTTP ${status} error: ${errorBody.substring(
                 0,
                 200
               )}`
@@ -1759,12 +1759,12 @@ export async function POST(request) {
             return { response, retryCount: attempt + 1 };
           }
 
-          // 성공 응답
+          // Successful response
           return { response, retryCount: attempt + 1 };
         } catch (error) {
           lastError = error;
 
-          // 재시도 가능한 네트워크 오류인지 확인
+          // Check whether this is a retryable network error
           const isRetryable =
             error.name === 'AbortError' ||
             error.name === 'TimeoutError' ||
@@ -1773,25 +1773,25 @@ export async function POST(request) {
             error.message?.includes('fetch failed') ||
             error.message?.includes('timeout');
 
-          // 재시도 가능한 오류이고 마지막 시도가 아니면 계속
+          // Continue if error is retryable and this is not the last attempt
           if (isRetryable && attempt < maxRetries) {
             console.warn(
-              `[OpenAI Chat Completions] 재시도 ${
+              `[OpenAI Chat Completions] Retry ${
                 attempt + 1
-              }/${maxRetries} 실패: ${error.message}`
+              }/${maxRetries} failed: ${error.message}`
             );
             continue;
           }
 
-          // 재시도 불가능하거나 마지막 시도면 에러 throw
+          // Throw error if not retryable or this is the last attempt
           console.error(
-            `[OpenAI Chat Completions] 모델 서버 호출 실패: ${error.message}`
+            `[OpenAI Chat Completions] Model server call failed: ${error.message}`
           );
           throw error;
         }
       }
 
-      // 모든 재시도 실패 시 마지막 응답 또는 에러 반환
+      // Return final response or error after all retries fail
       if (lastResponse) {
         return { response: lastResponse, retryCount: maxRetries + 1 };
       }
@@ -1801,7 +1801,7 @@ export async function POST(request) {
     const stringifiedBody = JSON.stringify(requestBody);
 
     let modelServerRes;
-    let retryCount = 1; // 기본값: 첫 시도에서 성공
+    let retryCount = 1; // Default: success on first attempt
     try {
       const fetchResult = await fetchWithRetry(
         modelServerUrl,
@@ -1812,10 +1812,10 @@ export async function POST(request) {
           },
           body: stringifiedBody,
         },
-        2, // 최대 2회 재시도 (총 3회 시도)
-        serverName || null, // 지정된 서버 이름 전달
-        provider, // 현재 provider 전달
-        model // 모델 ID (표시 이름 기반 라운드로빈용)
+        2, // Maximum 2 retries (3 attempts total)
+        serverName || null, // Pass specified server name
+        provider, // Pass current provider
+        model // Model ID (for display-name-based round robin)
       );
       modelServerRes = fetchResult.response;
       retryCount = fetchResult.retryCount;
@@ -1828,24 +1828,24 @@ export async function POST(request) {
       const isTimeout =
         errorMessage.includes('timeout') || errorMessage.includes('TIMEOUT');
 
-      console.error('[OpenAI Chat Completions] 모델 서버 연결 오류:', {
+      console.error('[OpenAI Chat Completions] Model server connection error:', {
         url: modelServerUrl,
         error: errorMessage,
         type: fetchError.name || 'Unknown',
         code: fetchError.code,
       });
 
-      // Docker 환경에서의 연결 문제 안내
+      // Guidance for connection issues in Docker environments
       if (isConnectionRefused) {
         console.error(
-          '[OpenAI Chat Completions] 연결 거부됨. Docker 환경인 경우:',
-          '- 호스트의 Ollama 서버에 접근하려면 http://host.docker.internal:11434 사용',
-          '- 또는 docker compose.yml에서 같은 네트워크 사용',
-          '- 또는 OLLAMA_ENDPOINTS 환경변수 설정'
+          '[OpenAI Chat Completions] Connection refused. In Docker environments:',
+          '- Use http://host.docker.internal:11434 to access the host Ollama server',
+          '- Or use the same network in docker compose.yml',
+          '- Or set the OLLAMA_ENDPOINTS environment variable'
         );
       }
 
-      // 로깅을 fire-and-forget 방식으로 실행 (응답 속도 향상)
+      // Run logging in fire-and-forget mode (improves response speed)
       Promise.all([
         logOpenAIProxyRequest({
           provider: 'openai-compatible',
@@ -1876,7 +1876,7 @@ export async function POST(request) {
           statusCode: 503,
           isStream: false,
           error: `Connection error: ${errorMessage}`,
-          retryCount: 3, // 최대 재시도 횟수 (실패)
+          retryCount: 3, // Maximum retry count (failed)
           clientIP,
           userAgent,
           jwtUserId: userInfo?.userId,
@@ -1890,10 +1890,10 @@ export async function POST(request) {
           ...identificationHeaders,
         }),
       ]).catch((logError) => {
-        console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+        console.error('[OpenAI Chat Completions] Logging failed:', logError);
       });
 
-      // 더 명확한 에러 메시지 제공
+      // Provide a clearer error message
       let userFriendlyMessage = `Model server connection error: ${errorMessage}`;
       if (isConnectionRefused) {
         userFriendlyMessage +=
@@ -1943,7 +1943,7 @@ export async function POST(request) {
 
           if (fallbackRes.ok) {
             console.warn(
-              '[OpenAI Chat Completions] 모델이 tools 미지원으로 응답하여 tools 제거 후 재시도 성공'
+              '[OpenAI Chat Completions] Model responded that tools are unsupported; retry succeeded after removing tools'
             );
             modelServerRes = fallbackRes;
             retryCount += 1;
@@ -1953,7 +1953,7 @@ export async function POST(request) {
           }
         } catch (fallbackError) {
           console.error(
-            '[OpenAI Chat Completions] tools 제거 fallback 재시도 실패:',
+            '[OpenAI Chat Completions] tools-removed fallback retry failed:',
             fallbackError?.message || fallbackError
           );
         }
@@ -1962,7 +1962,7 @@ export async function POST(request) {
       if (!modelServerRes.ok) {
         const responseTime = Date.now() - startTime;
         console.error(
-          `[OpenAI Chat Completions] 모델 Server error: ${modelServerRes.status}`,
+          `[OpenAI Chat Completions] Model server error: ${modelServerRes.status}`,
           {
             url: modelServerUrl,
             status: modelServerRes.status,
@@ -1972,13 +1972,13 @@ export async function POST(request) {
           }
         );
 
-        // 프롬프트 토큰 추정
+        // Estimate prompt tokens
         const promptTokens = messages.reduce(
           (acc, msg) => acc + (msg.content?.length || 0),
           0
         );
 
-        // 로깅을 fire-and-forget 방식으로 실행 (응답 속도 향상)
+        // Run logging in fire-and-forget mode (improves response speed)
         Promise.all([
           logOpenAIProxyRequest({
             provider: 'openai-compatible',
@@ -2023,7 +2023,7 @@ export async function POST(request) {
             ...identificationHeaders,
           }),
         ]).catch((logError) => {
-          console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+          console.error('[OpenAI Chat Completions] Logging failed:', logError);
         });
 
         return NextResponse.json(
@@ -2038,14 +2038,14 @@ export async function POST(request) {
       }
     }
 
-    // 프롬프트 토큰 추정
+    // Estimate prompt tokens
     const promptTokens = messages.reduce(
       (acc, msg) => acc + (msg.content?.length || 0),
       0
     );
 
     if (stream) {
-      // 스트리밍 응답 처리
+      // Handle streaming response
       const encoder = new TextEncoder();
       let accumulatedResponse = '';
       let responseId = createChatCompletionId();
@@ -2060,7 +2060,7 @@ export async function POST(request) {
           let sseBuffer = '';
           let firstResponseAt = null;
 
-          // 안전한 enqueue 헬퍼 함수
+          // Safe enqueue helper function
           const safeEnqueue = (chunk) => {
             if (!controllerClosed) {
               try {
@@ -2078,12 +2078,12 @@ export async function POST(request) {
             }
           };
 
-          // 안전한 close 헬퍼 함수
+          // Safe close helper function
           const safeClose = async () => {
-            // Next.js App Router race condition 방지:
-            // controller.close()를 즉시 호출하면 [DONE] 청크가 TCP flush 되기 전에
-            // 연결이 닫혀 Continue/Cline에서 "premature close" 오류가 발생함.
-            // 20ms 대기로 마지막 청크가 클라이언트에 전달될 시간을 확보.
+            // Prevent Next.js App Router race condition:
+            // If controller.close() is called immediately, the connection may close
+            // before the [DONE] chunk is TCP-flushed, causing a "premature close"
+            // error in Continue/Cline. Wait 20ms to let the final chunk reach the client.
             await new Promise((r) => setTimeout(r, 20));
             if (!controllerClosed) {
               try {
@@ -2093,7 +2093,7 @@ export async function POST(request) {
                 if (e.name === 'TypeError' && e.message.includes('closed')) {
                   controllerClosed = true;
                 }
-                // 다른 에러는 무시 (이미 닫혔거나 에러 상태)
+                // Ignore other errors (already closed or in error state)
               }
             }
           };
@@ -2123,13 +2123,13 @@ export async function POST(request) {
           };
 
           try {
-            // 첫 번째 청크를 읽어서 형식 감지
+            // Read first chunk to detect format
             let firstChunk = null;
             let isSSEFormat =
               provider === 'openai-compatible' || provider === 'gemini';
 
             if (provider === 'gemini') {
-              // Gemini API 스트리밍 응답 처리
+              // Handle Gemini API streaming response
               try {
                 while (true) {
                   const { done, value } = await reader.read();
@@ -2142,7 +2142,7 @@ export async function POST(request) {
                     if (!line.trim() || controllerClosed) continue;
 
                     try {
-                      // Gemini 스트리밍 응답은 JSON 객체가 줄바꿈으로 구분됨
+                      // Gemini streaming response uses newline-delimited JSON objects
                       const geminiData = JSON.parse(line);
 
                       if (geminiData.candidates && geminiData.candidates[0]) {
@@ -2154,7 +2154,7 @@ export async function POST(request) {
                           if (text) {
                             accumulatedResponse += text;
 
-                            // OpenAI SSE 형식으로 변환
+                            // Convert to OpenAI SSE format
                             const openaiChunk = {
                               id: responseId,
                               object: 'chat.completion.chunk',
@@ -2177,7 +2177,7 @@ export async function POST(request) {
                           }
                         }
 
-                        // 완료 신호 처리
+                        // Handle completion signal
                         if (candidate.finishReason) {
                           const finalChunk = {
                             id: responseId,
@@ -2203,10 +2203,10 @@ export async function POST(request) {
                         }
                       }
                     } catch (e) {
-                      // JSON 파싱 실패 무시 (빈 줄 등)
+                      // Ignore JSON parse failures (empty lines, etc.)
                       if (line.trim()) {
                         console.warn(
-                          '[OpenAI Chat Completions] Gemini JSON 파싱 실패:',
+                          '[OpenAI Chat Completions] Gemini JSON parse failed:',
                           line.substring(0, 100)
                         );
                       }
@@ -2214,12 +2214,12 @@ export async function POST(request) {
                   }
                 }
 
-                // 스트림 종료
+                // End stream
                 safeEnqueue(encoder.encode('data: [DONE]\n\n'));
                 await safeClose();
               } catch (error) {
                 console.error(
-                  '[OpenAI Chat Completions] Gemini 스트리밍 오류:',
+                  '[OpenAI Chat Completions] Gemini streaming error:',
                   error
                 );
                 await safeClose();
@@ -2228,7 +2228,7 @@ export async function POST(request) {
             }
 
             if (!isSSEFormat) {
-              // provider가 model-server인 경우, 실제 응답 형식을 확인
+              // If provider is model-server, detect actual response format
               const peekResult = await reader.read();
               if (peekResult.done) {
                 await safeClose();
@@ -2236,17 +2236,17 @@ export async function POST(request) {
               }
               firstChunk = peekResult.value;
               const peekText = decoder.decode(firstChunk, { stream: true });
-              // SSE 형식 감지: "data: "로 시작하는지 확인
+              // Detect SSE format: check whether it starts with "data: "
               isSSEFormat = peekText.trim().startsWith('data:');
 
-              // 첫 번째 청크를 버퍼에 추가
+              // Add first chunk to buffer
               buffer = peekText;
             }
 
             if (isSSEFormat || provider === 'openai-compatible') {
-              // OpenAI 호환 서버 또는 SSE 형식: 원본 SSE 스트림을 그대로 전달
+              // OpenAI-compatible server or SSE format: pass through original SSE stream
               if (firstChunk) {
-                // 이미 읽은 첫 번째 청크 전달
+                // Send the already-read first chunk
                 safeEnqueue(firstChunk);
                 processSseText(decoder.decode(firstChunk, { stream: true }));
               }
@@ -2258,13 +2258,13 @@ export async function POST(request) {
                 processSseText(decoder.decode(value, { stream: true }));
                 if (controllerClosed) break;
               }
-              // openai-compatible: 업스트림이 [DONE]을 보내지 않는 경우를 대비해 명시적으로 전송
-              // (업스트림이 이미 [DONE]을 보냈다면 Continue는 중복을 무해하게 처리함)
+              // openai-compatible: explicitly send [DONE] in case upstream does not
+              // (If upstream already sent [DONE], Continue handles duplication safely)
               if (!controllerClosed) {
                 safeEnqueue(encoder.encode('data: [DONE]\n\n'));
               }
             } else {
-              // Ollama 서버: JSONL → OpenAI SSE 형식으로 변환
+              // Ollama server: convert JSONL to OpenAI SSE format
               let ollamaToolCallsEmitted = false;
               if (firstChunk) {
                 buffer = decoder.decode(firstChunk, { stream: true });
@@ -2334,7 +2334,7 @@ export async function POST(request) {
                   } catch (e) {
                     if (!line.trim().startsWith('data:')) {
                       console.warn(
-                        '[OpenAI Chat Completions] JSON 파싱 실패:',
+                        '[OpenAI Chat Completions] JSON parse failed:',
                         line.substring(0, 100)
                       );
                     }
@@ -2342,7 +2342,7 @@ export async function POST(request) {
                 }
               }
 
-              // 남은 버퍼 처리 및 종료 신호
+              // Handle remaining buffer and end signal
               if (!controllerClosed) {
                 if (buffer.trim()) {
                   try {
@@ -2401,13 +2401,13 @@ export async function POST(request) {
                   } catch (e) {
                     if (process.env.NODE_ENV === 'development') {
                       console.debug(
-                        '[OpenAI Chat Completions] Ollama JSON 파싱 실패:',
+                        '[OpenAI Chat Completions] Ollama JSON parse failed:',
                         e?.message || e
                       );
                     }
                   }
                 }
-              // 종료 신호 (Ollama 변환 시에만)
+              // End signal (only for Ollama conversion)
                 const doneChunk = {
                   id: responseId,
                   object: 'chat.completion.chunk',
@@ -2428,14 +2428,14 @@ export async function POST(request) {
               }
             }
 
-            // 로깅 (controller를 닫기 전에 로깅 완료)
+            // Logging (complete before closing controller)
             const responseTime = Date.now() - startTime;
             const firstResponseTime = firstResponseAt
               ? firstResponseAt - startTime
               : responseTime;
             const completionTokens = accumulatedResponse.length;
 
-            // 로깅은 비동기로 실행하되, 에러가 발생해도 스트림 종료에 영향을 주지 않음
+            // Run logging asynchronously without affecting stream closure on errors
             Promise.all([
               logOpenAIProxyRequest({
                 provider: 'openai-compatible',
@@ -2514,20 +2514,20 @@ export async function POST(request) {
                 roomId: null,
               }),
             ]).catch((logError) => {
-              // 로깅 실패는 무시 (스트림 종료에 영향 없음)
-              console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+              // Ignore logging failures (no impact on stream closure)
+              console.error('[OpenAI Chat Completions] Logging failed:', logError);
             });
 
-            // 스트림 정상 종료
+            // Close stream successfully
             await safeClose();
           } catch (e) {
-            console.error('[OpenAI Chat Completions] 스트림 처리 오류:', e);
+            console.error('[OpenAI Chat Completions] Stream processing error:', e);
             if (!controllerClosed) {
               try {
                 controller.error(e);
                 controllerClosed = true;
               } catch (err) {
-                // controller가 이미 닫혔거나 에러 상태면 무시
+                // Ignore if controller is already closed or in error state
                 controllerClosed = true;
               }
             }
@@ -2545,7 +2545,7 @@ export async function POST(request) {
         },
       });
     } else {
-      // 비스트리밍 응답 처리
+      // Handle non-streaming response
       const responseData = await modelServerRes.text();
       const responseTime = Date.now() - startTime;
 
@@ -2554,7 +2554,7 @@ export async function POST(request) {
       let responseContent = '';
 
       if (provider === 'gemini') {
-        // Gemini API: 응답을 OpenAI 형식으로 변환
+        // Gemini API: convert response to OpenAI format
         try {
           const geminiResponse = JSON.parse(responseData);
           if (geminiResponse.candidates && geminiResponse.candidates[0]) {
@@ -2568,7 +2568,7 @@ export async function POST(request) {
 
           completionTokens = responseContent.length;
 
-          // OpenAI 형식으로 변환
+          // Convert to OpenAI format
           openaiResponse = {
             id: createChatCompletionId(),
             object: 'chat.completion',
@@ -2592,7 +2592,7 @@ export async function POST(request) {
             },
           };
         } catch (e) {
-          console.error('[OpenAI Chat Completions] Gemini 응답 파싱 실패:', e);
+          console.error('[OpenAI Chat Completions] Failed to parse Gemini response:', e);
           return NextResponse.json(
             {
               error: {
@@ -2604,10 +2604,10 @@ export async function POST(request) {
           );
         }
       } else if (provider === 'openai-compatible') {
-        // OpenAI 호환 서버: 원본 응답을 그대로 사용
+        // OpenAI-compatible server: use original response as-is
         try {
           openaiResponse = JSON.parse(responseData);
-          // OpenAI 응답 형식이 이미 올바르므로 그대로 사용
+          // OpenAI response format is already valid, so use it directly
           responseContent =
             openaiResponse.choices?.[0]?.message?.content || '';
           completionTokens =
@@ -2615,7 +2615,7 @@ export async function POST(request) {
             responseContent.length ||
             0;
         } catch (e) {
-          console.error('[OpenAI Chat Completions] 응답 파싱 실패:', e);
+          console.error('[OpenAI Chat Completions] Failed to parse response:', e);
           return NextResponse.json(
             {
               error: {
@@ -2627,7 +2627,7 @@ export async function POST(request) {
           );
         }
       } else {
-        // Ollama 서버: JSON → OpenAI JSON 형식으로 변환
+        // Ollama server: convert JSON to OpenAI JSON format
         let ollamaToolCalls = null;
         try {
           const ollamaResponse = JSON.parse(responseData);
@@ -2636,7 +2636,7 @@ export async function POST(request) {
           completionTokens = responseContent.length;
           ollamaToolCalls = ollamaResponse.message?.tool_calls || null;
         } catch (e) {
-          console.error('[OpenAI Chat Completions] 응답 파싱 실패:', e);
+          console.error('[OpenAI Chat Completions] Failed to parse response:', e);
           return NextResponse.json(
             {
               error: {
@@ -2648,7 +2648,7 @@ export async function POST(request) {
           );
         }
 
-        // message 에 tool_calls 포함
+        // Include tool_calls in message
         const messageObj = { role: 'assistant', content: responseContent || null };
         if (ollamaToolCalls && ollamaToolCalls.length > 0) {
           messageObj.tool_calls = ollamaToolCalls.map((tc, idx) => ({
@@ -2662,7 +2662,7 @@ export async function POST(request) {
             },
           }));
         }
-        // OpenAI 형식으로 변환
+        // Convert to OpenAI format
         openaiResponse = {
           id: createChatCompletionId(),
           object: 'chat.completion',
@@ -2683,13 +2683,13 @@ export async function POST(request) {
         };
       }
 
-      // 요청 헤더 수집
+      // Collect request headers
       const requestHeadersObj = {};
       request.headers.forEach((value, key) => {
         requestHeadersObj[key] = value;
       });
 
-      // 요청 본문 수집
+      // Collect request body
       const requestBodyObj = {
         model,
         messages,
@@ -2707,20 +2707,20 @@ export async function POST(request) {
         }),
       };
 
-      // 응답 헤더 수집
+      // Collect response headers
       const responseHeadersObj = {};
       modelServerRes.headers.forEach((value, key) => {
         responseHeadersObj[key] = value;
       });
 
-      // 응답 본문 수집 (이미 읽은 responseContent 사용)
+      // Collect response body (use already-read responseContent)
       let responseBodyObj = null;
       if (!stream && responseContent) {
         try {
-          // openaiResponse 객체가 있으면 사용, 없으면 responseContent 파싱
+          // Use openaiResponse object if available; otherwise parse responseContent
           responseBodyObj = openaiResponse || JSON.parse(responseContent);
         } catch (e) {
-          // 이미 파싱된 객체인 경우
+          // If it is already a parsed object
           try {
             responseBodyObj =
               typeof responseContent === 'string'
@@ -2732,7 +2732,7 @@ export async function POST(request) {
         }
       }
 
-      // 로깅을 fire-and-forget 방식으로 실행 (응답 속도 향상)
+      // Run logging in fire-and-forget mode (improves response speed)
       Promise.all([
         logOpenAIProxyRequest({
           provider: 'openai-compatible',
@@ -2813,7 +2813,7 @@ export async function POST(request) {
           roomId: null,
         }),
       ]).catch((logError) => {
-        console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+        console.error('[OpenAI Chat Completions] Logging failed:', logError);
       });
 
       return NextResponse.json(openaiResponse, {
@@ -2827,7 +2827,7 @@ export async function POST(request) {
     const responseTime = Date.now() - startTime;
     const errorMessage = error.message || 'Internal server error';
 
-    // 로깅을 fire-and-forget 방식으로 실행 (응답 속도 향상)
+    // Run logging in fire-and-forget mode (improves response speed)
     Promise.all([
       logOpenAIProxyRequest({
         provider: 'openai-compatible',
@@ -2858,7 +2858,7 @@ export async function POST(request) {
         statusCode: 500,
         isStream: false,
         error: errorMessage,
-        retryCount: 0, // Server error로 재시도 전에 실패
+        retryCount: 0, // Failed before retry due to server error
         clientIP,
         userAgent,
         jwtUserId: userInfo?.userId,
@@ -2872,7 +2872,7 @@ export async function POST(request) {
         ...identificationHeaders,
       }),
     ]).catch((logError) => {
-      console.error('[OpenAI Chat Completions] 로깅 실패:', logError);
+      console.error('[OpenAI Chat Completions] Logging failed:', logError);
     });
 
     return NextResponse.json(

@@ -15,14 +15,14 @@ import {
 import { isValidUUID } from './utils';
 
 /**
- * API 라우트 핸들러를 래핑하여 공통 에러 처리 및 인증 검증 제공
+ * Wrap API route handlers to provide common error handling and auth validation
  * 
- * @param {Function} handler - API 핸들러 함수
- * @param {object} options - 옵션
- * @param {boolean} options.requireAuth - 인증 필요 여부 (기본값: false)
- * @param {boolean} options.requireAdmin - 관리자 권한 필요 여부 (기본값: false)
- * @param {string} options.logPrefix - 로그 접두사
- * @returns {Function} 래핑된 핸들러 함수
+ * @param {Function} handler - API handler function
+ * @param {object} options - options
+ * @param {boolean} options.requireAuth - whether auth is required (default: false)
+ * @param {boolean} options.requireAdmin - whether admin privileges are required (default: false)
+ * @param {string} options.logPrefix - log prefix
+ * @returns {Function} wrapped handler function
  */
 export function withApiHandler(handler, options = {}) {
   const {
@@ -33,39 +33,39 @@ export function withApiHandler(handler, options = {}) {
 
   return async (request, context) => {
     try {
-      // 인증 검증
+      // Auth validation
       if (needsAdmin) {
         const adminResult = requireAdmin(request);
         if (!adminResult) {
           return createForbiddenError('Admin privileges required.');
         }
-        // context에 user 정보 추가
+        // Add user info to context
         context.user = adminResult.user;
       } else if (needsAuth) {
         const authResult = requireAuth(request);
         if (!authResult) {
           return createAuthError('Authentication required.');
         }
-        // context에 user 정보 추가
+        // Add user info to context
         context.user = authResult.user;
       }
 
-      // 핸들러 실행
+      // Execute handler
       const result = await handler(request, context);
 
-      // NextResponse가 이미 반환된 경우 그대로 반환
+      // Return as-is if NextResponse is already returned
       if (result instanceof NextResponse) {
         return result;
       }
 
-      // 일반 객체인 경우 성공 응답으로 변환
+      // Convert plain object to success response
       return NextResponse.json({
         success: true,
         data: result,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      // 커스텀 에러 처리
+      // Handle custom errors
       if (error instanceof ValidationError) {
         return createValidationError(error.message);
       }
@@ -79,30 +79,30 @@ export function withApiHandler(handler, options = {}) {
         return createNotFoundError(error.message);
       }
 
-      // 일반 에러 처리
-      console.error(`${logPrefix} 에러:`, error);
+      // Handle generic errors
+      console.error(`${logPrefix} Error:`, error);
       return createServerError(error);
     }
   };
 }
 
 /**
- * UUID 검증 미들웨어
- * @param {string} id - 검증할 UUID
- * @param {string} fieldName - 필드 이름 (에러 메시지용)
- * @throws {ValidationError} UUID가 유효하지 않은 경우
+ * UUID validation middleware
+ * @param {string} id - UUID to validate
+ * @param {string} fieldName - field name (for error message)
+ * @throws {ValidationError} if UUID is invalid
  */
 export function validateUUID(id, fieldName = 'ID') {
   if (!id) {
-    throw new ValidationError(`${fieldName}가 필요합니다.`);
+    throw new ValidationError(`${fieldName} is required.`);
   }
   if (!isValidUUID(id)) {
-    throw new ValidationError(`유효하지 않은 ${fieldName}입니다.`);
+    throw new ValidationError(`Invalid ${fieldName}.`);
   }
 }
 
 /**
- * 인증이 필요한 API 핸들러 래퍼
+ * API handler wrapper that requires authentication
  */
 export function withAuth(handler, logPrefix) {
   return withApiHandler(handler, {
@@ -112,7 +112,7 @@ export function withAuth(handler, logPrefix) {
 }
 
 /**
- * 관리자 권한이 필요한 API 핸들러 래퍼
+ * API handler wrapper that requires admin privileges
  */
 export function withAdmin(handler, logPrefix) {
   return withApiHandler(handler, {
@@ -122,11 +122,11 @@ export function withAdmin(handler, logPrefix) {
 }
 
 /**
- * 요청 본문 검증 헬퍼
- * @param {Request} request - Next.js Request 객체
- * @param {Array<string>} requiredFields - 필수 필드 목록
- * @returns {Promise<object>} 파싱된 요청 본문
- * @throws {ValidationError} 필수 필드가 없는 경우
+ * Request body validation helper
+ * @param {Request} request - Next.js Request object
+ * @param {Array<string>} requiredFields - required field list
+ * @returns {Promise<object>} parsed request body
+ * @throws {ValidationError} if required fields are missing
  */
 export async function validateRequestBody(request, requiredFields = []) {
   try {
@@ -134,7 +134,7 @@ export async function validateRequestBody(request, requiredFields = []) {
     
     for (const field of requiredFields) {
       if (body[field] === undefined || body[field] === null || body[field] === '') {
-        throw new ValidationError(`${field} 필드는 필수입니다.`);
+        throw new ValidationError(`${field} field is required.`);
       }
     }
     
@@ -148,11 +148,11 @@ export async function validateRequestBody(request, requiredFields = []) {
 }
 
 /**
- * 쿼리 파라미터 검증 헬퍼
- * @param {URLSearchParams} searchParams - URLSearchParams 객체
- * @param {Array<string>} requiredParams - 필수 파라미터 목록
- * @returns {object} 파싱된 쿼리 파라미터
- * @throws {ValidationError} 필수 파라미터가 없는 경우
+ * Query parameter validation helper
+ * @param {URLSearchParams} searchParams - URLSearchParams object
+ * @param {Array<string>} requiredParams - required parameter list
+ * @returns {object} parsed query parameters
+ * @throws {ValidationError} if required parameters are missing
  */
 export function validateQueryParams(searchParams, requiredParams = []) {
   const params = {};
@@ -163,10 +163,9 @@ export function validateQueryParams(searchParams, requiredParams = []) {
   
   for (const param of requiredParams) {
     if (!params[param]) {
-      throw new ValidationError(`${param} 파라미터는 필수입니다.`);
+      throw new ValidationError(`${param} parameter is required.`);
     }
   }
   
   return params;
 }
-

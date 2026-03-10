@@ -1,12 +1,12 @@
-// 컨텍스트 크기 관리 시스템
+// Context size management system
 
-// 사용자 질문 최대 허용 길이 (관리자 설정값 없을 때 기본값)
+// Maximum allowed user question length (default when no admin setting)
 const DEFAULT_MAX_USER_QUESTION_LENGTH = 300000;
 
-// 모델별 제한 대신 단일 컨텍스트 한도 사용
+// Use a single context limit instead of model-specific limits
 const DEFAULT_MAX_CONTEXT_TOKENS = 300000;
 
-// 대략적인 토큰-문자 비율 (영어 기준 1토큰 ≈ 4자, 한국어는 더 적음)
+// Approximate token-to-character ratio (about 1 token ~= 4 chars in English)
 const CHAR_TO_TOKEN_RATIO = 3;
 
 export function estimateTokens(text) {
@@ -24,7 +24,7 @@ export function canFitInContext(
   const promptTokens = estimateTokens(prompt);
   const historyTokens = estimateTokens(multiturnHistory);
   const fileTokens = estimateTokens(fileContent);
-  const responseBuffer = 500; // 응답을 위한 여유 공간
+  const responseBuffer = 500; // Reserved space for response
 
   const totalTokens =
     promptTokens + historyTokens + fileTokens + responseBuffer;
@@ -46,7 +46,7 @@ export function truncateToFit(content, maxTokens) {
   const maxChars = maxTokens * CHAR_TO_TOKEN_RATIO;
   if (content.length <= maxChars) return content;
 
-  // 단어 경계에서 자르기
+  // Trim at word boundary
   const truncated = content.substring(0, maxChars);
   const lastSpaceIndex = truncated.lastIndexOf(' ');
 
@@ -55,12 +55,12 @@ export function truncateToFit(content, maxTokens) {
     : truncated + '...';
 }
 
-// 사용자 질문 길이 검증
+// Validate user question length
 export function validateUserQuestion(
   userPrompt,
   maxLength = DEFAULT_MAX_USER_QUESTION_LENGTH
 ) {
-  // null/undefined 체크 추가
+  // Add null/undefined check
   if (!userPrompt || typeof userPrompt !== 'string') {
     return {
       valid: false,
@@ -71,32 +71,32 @@ export function validateUserQuestion(
   if (userPrompt.length > maxLength) {
     return {
       valid: false,
-      error: `질문이 너무 깁니다. 최대 ${maxLength.toLocaleString()}자까지 입력 가능합니다. (현재: ${userPrompt.length.toLocaleString()}자)`,
+      error: `Question is too long. You can enter up to ${maxLength.toLocaleString()} characters. (Current: ${userPrompt.length.toLocaleString()} characters)`,
     };
   }
   return { valid: true };
 }
 
-// 시스템 메시지나 상태 메시지 필터링
+// Filter system or status messages
 function isSystemMessage(text) {
   const systemPatterns = [
-    /^✅ 요청 성공/,
-    /^❌ error 요청 실패/,
-    /^🐣 요청 안내/,
-    /^⚡ 응답 중단/,
-    /^😊 잘 지내시죠/,
+    /^✅ Request successful/,
+    /^❌ error Request failed/,
+    /^🐣 Request guide/,
+    /^⚡ Response stopped/,
+    /^😊 Hope you are doing well/,
     /^🌟/,
-    /성공.*😊/,
-    /실패.*error/,
+    /success.*😊/,
+    /failed.*error/,
   ];
   return systemPatterns.some((pattern) => pattern.test(text.trim()));
 }
 
-// 멀티턴 히스토리를 스마트하게 잘라내기 (시스템 메시지 필터링 + 가장 긴 대화부터 제거)
+// Smart trimming for multi-turn history (filter system messages + remove longest messages first)
 export function trimMultiturnHistory(messages, maxLength) {
   if (!messages || messages.length === 0) return '';
 
-  // 시스템 메시지나 상태 메시지 필터링
+  // Filter system or status messages
   let workingMessages = messages.filter((msg) => !isSystemMessage(msg.text));
 
   let currentLength = workingMessages.reduce(
@@ -105,7 +105,7 @@ export function trimMultiturnHistory(messages, maxLength) {
   );
 
   while (currentLength > maxLength && workingMessages.length > 1) {
-    // 가장 긴 메시지 찾기
+    // Find longest message
     let longestIndex = 0;
     let longestLength = 0;
 
@@ -116,7 +116,7 @@ export function trimMultiturnHistory(messages, maxLength) {
       }
     });
 
-    // 가장 긴 메시지 제거
+    // Remove longest message
     const removedMsg = workingMessages.splice(longestIndex, 1)[0];
     currentLength -= removedMsg.text.length;
   }
@@ -135,10 +135,10 @@ export function smartContextManager(
   maxMultiturnCount = null
 ) {
   console.log(
-    '[smartContextManager] 받은 multiturnMessages:',
+    '[smartContextManager] Received multiturnMessages:',
     multiturnMessages
-  ); // 로그 추가
-  // 1순위: 사용자 질문 길이 검증
+  ); // Added log
+  // Priority 1: validate user question length
   const userValidation = validateUserQuestion(userPrompt);
   if (!userValidation.valid) {
     return {
@@ -153,9 +153,9 @@ export function smartContextManager(
   const userPromptLength = userPrompt.length;
   const fileContentLength = fileContent ? fileContent.length : 0;
   const systemPromptLength = systemPrompt ? systemPrompt.length : 0;
-  const responseBuffer = 2000; // 응답을 위한 여유 공간 (문자 기준)
+  const responseBuffer = 2000; // Reserved response space (character-based)
 
-  // 사용자 질문 + 파일 내용 + 시스템 프롬프트 + 응답 버퍼는 보장
+  // Guarantee user question + file content + system prompt + response buffer
   const guaranteedLength =
     userPromptLength + fileContentLength + systemPromptLength + responseBuffer;
   const remainingForHistory = maxChars - guaranteedLength;
@@ -165,14 +165,14 @@ export function smartContextManager(
 
   if (multiturnMessages && multiturnMessages.length > 0) {
     if (remainingForHistory > 0) {
-      // 남은 공간에 멀티턴 히스토리 맞추기
+      // Fit multi-turn history into remaining space
       multiturnHistory = trimMultiturnHistory(
         multiturnMessages,
         remainingForHistory
       );
 
-      // 원본과 비교해서 잘렸는지 확인
-      // 단, maxMultiturnCount가 설정되어 있고 아직 최대 개수에 도달하지 않았다면 경고하지 않음
+      // Check if it was truncated by comparing with original
+      // Do not warn if maxMultiturnCount is set and max count has not been reached
       const originalLength = multiturnMessages.reduce(
         (sum, msg) => sum + msg.text.length,
         0
@@ -180,27 +180,27 @@ export function smartContextManager(
       const trimmedLength = multiturnHistory.split('\n').filter(line => line.trim()).length;
       const originalMessageCount = multiturnMessages.length;
       
-      // 컨텍스트 제한으로 인해 잘렸는지 확인
-      // maxMultiturnCount가 설정되어 있고, 아직 최대 개수에 도달하지 않았다면 경고하지 않음
+      // Check whether truncation happened due to context limit
+      // Do not warn if maxMultiturnCount is set and max count has not been reached
       const isTruncated = multiturnHistory.length < originalLength;
       const isAtMaxCount = maxMultiturnCount !== null && originalMessageCount >= maxMultiturnCount;
       
       if (isTruncated && (maxMultiturnCount === null || isAtMaxCount)) {
-        warning = `대화 히스토리가 컨텍스트 제한으로 인해 일부 제외되었습니다. (${originalMessageCount}개 중 일부)`;
+        warning = `Some conversation history was excluded due to context limits. (Part of ${originalMessageCount} messages)`;
       }
     } else {
-      // 공간이 부족하면 히스토리 없이 진행
-      warning = '컨텍스트 제한으로 인해 이전 대화 내용을 포함할 수 없습니다.';
+      // Proceed without history if there is not enough space
+      warning = 'Previous conversation cannot be included due to context limits.';
     }
   }
 
-  // 최종 프롬프트 구성
+  // Build final prompt
   let finalPrompt;
   const systemPart = systemPrompt ? `${systemPrompt}\n\n` : '';
   const historyPart = multiturnHistory ? `${multiturnHistory}\n` : '';
 
-  // 파일 내용이 있을 경우, 히스토리와 파일 내용을 모두 포함
-  // fileContent 자체에 이미 강력한 지시사항이 포함되어 있음
+  // If file content exists, include both history and file content
+  // fileContent itself already includes strong instructions
   const mainContent = fileContent
     ? `${historyPart}${fileContent}\n`
     : historyPart;

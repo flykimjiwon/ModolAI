@@ -10,13 +10,13 @@ const SWING_COMPANY_CODE = process.env.SWING_COMPANY_CODE || 'SH';
 const SWING_CLIENT_ID = process.env.SWING_CLIENT_ID;
 const SWING_CLIENT_SECRET = process.env.SWING_CLIENT_SECRET;
 
-// SHA256 해시 함수 (hex)
+// SHA256 hash function (hex)
 async function sha256Hex(text) {
   const crypto = await import('crypto');
   return crypto.createHash('sha256').update(text).digest('hex');
 }
 
-// SSO 로그 테이블 생성 확인
+// Ensure SSO log table exists
 async function ensureSSOLogsTable() {
   try {
     await query(`
@@ -54,11 +54,11 @@ async function ensureSSOLogsTable() {
       )
     `);
   } catch (error) {
-    console.warn('[SSO] 로그 테이블 생성 실패 (무시):', error.message);
+    console.warn('[SSO] Failed to create log table (ignored):', error.message);
   }
 }
 
-// SSO 로그 기록
+// Record SSO log
 async function logSSOAttempt(logData) {
   try {
     await ensureSSOLogsTable();
@@ -100,11 +100,11 @@ async function logSSOAttempt(logData) {
       ]
     );
   } catch (error) {
-    console.error('[SSO] 로그 기록 실패:', error.message);
+    console.error('[SSO] Failed to write log:', error.message);
   }
 }
 
-// Swing SSO API 호출
+// Call Swing SSO API
 async function callSwingSSO(employeeNo, hashedPassword) {
   const endpoint = `${OAUTH_URL}/cau/v1/idpw-authorize`;
 
@@ -120,7 +120,7 @@ async function callSwingSSO(employeeNo, hashedPassword) {
     },
   };
 
-  console.log('[SSO] Swing API 호출:', endpoint);
+  console.log('[SSO] Calling Swing API:', endpoint);
 
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -129,7 +129,7 @@ async function callSwingSSO(employeeNo, hashedPassword) {
   });
 
   const json = await response.json();
-  console.log('[SSO] Swing API 응답:', {
+  console.log('[SSO] Swing API response:', {
     resultCode: json.common?.resultCode,
     authResult: json.data?.authResult,
   });
@@ -137,7 +137,7 @@ async function callSwingSSO(employeeNo, hashedPassword) {
   return json;
 }
 
-// 사번으로 사용자 조회
+// Find user by employee number
 async function findUserByEmployeeNo(employeeNo) {
   const result = await query(
     'SELECT * FROM users WHERE employee_no = $1',
@@ -146,7 +146,7 @@ async function findUserByEmployeeNo(employeeNo) {
   return result.rows[0] || null;
 }
 
-// SSO 사용자 신규 생성
+// Create new SSO user
 async function createSSOUser(ssoData, ssoCommon, hashedPassword) {
   const result = await query(
     `INSERT INTO users (
@@ -194,17 +194,17 @@ async function createSSOUser(ssoData, ssoCommon, hashedPassword) {
   return result.rows[0];
 }
 
-// 변경 이력 기록
+// Record change history
 async function logUserChanges(userId, employeeNo, oldData, newData) {
   const fieldsToCompare = [
-    { db: 'name', sso: 'employeeName', label: '이름' },
-    { db: 'department', sso: 'departmentName', label: '부서' },
-    { db: 'company_name', sso: 'companyName', label: '회사명' },
-    { db: 'department_id', sso: 'departmentId', label: '부서ID' },
-    { db: 'department_no', sso: 'departmentNo', label: '부서번호' },
-    { db: 'employee_position_name', sso: 'employeePositionName', label: '직급' },
-    { db: 'employee_class', sso: 'employeeClass', label: '직원유형' },
-    { db: 'employee_security_level', sso: 'employeeSecurityLevel', label: '보안등급' },
+    { db: 'name', sso: 'employeeName', label: 'Name' },
+    { db: 'department', sso: 'departmentName', label: 'Department' },
+    { db: 'company_name', sso: 'companyName', label: 'Company name' },
+    { db: 'department_id', sso: 'departmentId', label: 'Department ID' },
+    { db: 'department_no', sso: 'departmentNo', label: 'Department number' },
+    { db: 'employee_position_name', sso: 'employeePositionName', label: 'Position' },
+    { db: 'employee_class', sso: 'employeeClass', label: 'Employee type' },
+    { db: 'employee_security_level', sso: 'employeeSecurityLevel', label: 'Security level' },
   ];
 
   const changes = [];
@@ -221,7 +221,7 @@ async function logUserChanges(userId, employeeNo, oldData, newData) {
         old_value: oldStr || null,
         new_value: newStr || null,
       });
-      console.log(`[SSO] 변경 감지 - ${field.label}: "${oldStr}" → "${newStr}"`);
+      console.log(`[SSO] Change detected - ${field.label}: "${oldStr}" → "${newStr}"`);
     }
   }
 
@@ -234,16 +234,16 @@ async function logUserChanges(userId, employeeNo, oldData, newData) {
           [userId, employeeNo, change.field_name, change.old_value, change.new_value]
         );
       } catch (err) {
-        console.warn('[SSO] 변경 이력 기록 실패 (무시):', err.message);
+        console.warn('[SSO] Failed to write change history (ignored):', err.message);
       }
     }
-    console.log(`[SSO] ${changes.length}개 변경 이력 기록 완료`);
+    console.log(`[SSO] Recorded ${changes.length} change history entries`);
   }
 
   return changes;
 }
 
-// SSO 사용자 정보 업데이트
+// Update SSO user information
 async function updateSSOUser(userId, ssoData, ssoCommon, hashedPassword, existingUser) {
   if (existingUser) {
     await logUserChanges(userId, ssoData.employeeNo, existingUser, ssoData);
@@ -297,7 +297,7 @@ async function updateSSOUser(userId, ssoData, ssoCommon, hashedPassword, existin
   return result.rows[0];
 }
 
-// 클라이언트 IP 추출
+// Extract client IP
 function getClientIP(request) {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
@@ -310,7 +310,7 @@ export async function POST(request) {
   const clientIP = getClientIP(request);
   const userAgent = request.headers.get('user-agent') || '';
 
-  // 로그 데이터 초기화
+  // Initialize log data
   const logData = {
     employeeNo: null,
     clientIP,
@@ -344,7 +344,7 @@ export async function POST(request) {
 
     logData.employeeNo = employeeNo;
 
-    // 브라우저 정보 저장
+    // Save browser info
     if (browserInfo) {
       logData.browserName = browserInfo.browserName;
       logData.browserVersion = browserInfo.browserVersion;
@@ -353,36 +353,36 @@ export async function POST(request) {
       logData.deviceType = browserInfo.deviceType;
     }
 
-    // 입력값 검증
+    // Validate input
     if (!employeeNo || !password) {
       logData.errorType = 'VALIDATION_ERROR';
-      logData.errorMessage = '사번과 비밀번호를 입력해주세요.';
+      logData.errorMessage = 'Please enter employee number and password.';
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: '사번과 비밀번호를 입력해주세요.', errorCode: 'VALIDATION_ERROR' },
+        { error: 'Please enter employee number and password.', errorCode: 'VALIDATION_ERROR' },
         { status: 400 }
       );
     }
 
-    // 비밀번호 SHA256 해시
+    // SHA256-hash password
     const hashedPassword = await sha256Hex(password);
 
-    // 1. Swing SSO API 호출
+    // 1. Call Swing SSO API
     let ssoResponse;
     try {
       ssoResponse = await callSwingSSO(employeeNo, hashedPassword);
     } catch (ssoError) {
       logData.errorType = 'SSO_CONNECTION_ERROR';
-      logData.errorMessage = 'SSO 서버 연결에 실패했습니다.';
+      logData.errorMessage = 'Failed to connect to SSO server.';
       logData.errorDetail = ssoError.message;
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: 'SSO 서버 연결에 실패했습니다.', errorCode: 'SSO_CONNECTION_ERROR', detail: ssoError.message },
+        { error: 'Failed to connect to SSO server.', errorCode: 'SSO_CONNECTION_ERROR', detail: ssoError.message },
         { status: 502 }
       );
     }
 
-    // SSO 응답 로그 데이터 저장
+    // Save SSO response data in log
     logData.ssoResultCode = ssoResponse.common?.resultCode;
     logData.ssoAuthResult = ssoResponse.data?.authResult;
     logData.ssoAuthResultMessage = ssoResponse.data?.authResultMessage;
@@ -394,15 +394,15 @@ export async function POST(request) {
     logData.ssoCompanyCode = ssoResponse.data?.companyCode;
     logData.ssoCompanyName = ssoResponse.data?.companyName;
 
-    // SSO 응답 검증
+    // Validate SSO response
     const resultCode = ssoResponse.common?.resultCode;
 
     if (resultCode === '400') {
       logData.errorType = 'SSO_SYSTEM_ERROR';
-      logData.errorMessage = 'SSO 시스템 오류가 발생했습니다.';
+      logData.errorMessage = 'An SSO system error occurred.';
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: 'SSO 시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', errorCode: 'SSO_SYSTEM_ERROR' },
+        { error: 'An SSO system error occurred. Please try again shortly.', errorCode: 'SSO_SYSTEM_ERROR' },
         { status: 502 }
       );
     }
@@ -412,28 +412,28 @@ export async function POST(request) {
       logData.errorMessage = 'SSO Server error occurred.';
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: 'SSO Server error occurred. 잠시 후 다시 시도해주세요.', errorCode: 'SSO_SERVER_ERROR' },
+        { error: 'SSO server error occurred. Please try again shortly.', errorCode: 'SSO_SERVER_ERROR' },
         { status: 502 }
       );
     }
 
     if (resultCode !== '200') {
       logData.errorType = 'SSO_UNKNOWN_RESPONSE';
-      logData.errorMessage = 'SSO 서버에서 알 수 없는 응답을 받았습니다.';
+      logData.errorMessage = 'Received an unknown response from the SSO server.';
       logData.errorDetail = `resultCode: ${resultCode}`;
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: 'SSO 서버에서 알 수 없는 응답을 받았습니다.', errorCode: 'SSO_UNKNOWN_RESPONSE' },
+        { error: 'Received an unknown response from the SSO server.', errorCode: 'SSO_UNKNOWN_RESPONSE' },
         { status: 502 }
       );
     }
 
-    // authResult 분기 처리
+    // Handle authResult branches
     const authResult = ssoResponse.data?.authResult;
     const authResultMessage = ssoResponse.data?.authResultMessage || '';
 
     if (authResult !== 'SUCCESS') {
-      const errorMessage = authResultMessage || '인증에 실패했습니다. 사번 또는 비밀번호를 확인해주세요.';
+      const errorMessage = authResultMessage || 'Authentication failed. Please check employee number or password.';
       logData.errorType = 'AUTH_FAILED';
       logData.errorMessage = errorMessage;
       await logSSOAttempt(logData);
@@ -443,13 +443,13 @@ export async function POST(request) {
       );
     }
 
-    // 로그인 거부 확인
+    // Check login denial
     if (ssoResponse.data?.loginDenyYn === 'Y') {
       logData.errorType = 'LOGIN_DENIED';
-      logData.errorMessage = '로그인이 거부된 계정입니다.';
+      logData.errorMessage = 'This account is denied from logging in.';
       await logSSOAttempt(logData);
       return NextResponse.json(
-        { error: '로그인이 거부된 계정입니다. 관리자에게 문의하세요.', errorCode: 'LOGIN_DENIED' },
+        { error: 'This account is denied from logging in. Please contact an administrator.', errorCode: 'LOGIN_DENIED' },
         { status: 403 }
       );
     }
@@ -457,26 +457,26 @@ export async function POST(request) {
     const ssoData = ssoResponse.data;
     const ssoCommon = ssoResponse.common;
 
-    // 기존 사용자 조회
+    // Find existing user
     let user = await findUserByEmployeeNo(ssoData.employeeNo);
 
     if (!user) {
-      console.log('[SSO] 신규 사용자 생성:', ssoData.employeeNo);
+      console.log('[SSO] Creating new user:', ssoData.employeeNo);
       user = await createSSOUser(ssoData, ssoCommon, hashedPassword);
     } else {
-      console.log('[SSO] 기존 사용자 업데이트:', ssoData.employeeNo);
+      console.log('[SSO] Updating existing user:', ssoData.employeeNo);
       const existingUser = user;
       user = await updateSSOUser(user.id, ssoData, ssoCommon, hashedPassword, existingUser);
     }
 
-    // last_login_at 업데이트
+    // Update last_login_at
     await query(
       'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1',
       [user.id]
     );
 
-    // JWT 토큰 발급
-    const jwtExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1시간 후
+    // Issue JWT token
+    const jwtExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour later
     const token = jwt.sign(
       {
         sub: user.id,
@@ -492,18 +492,18 @@ export async function POST(request) {
       { expiresIn: '1h' }
     );
 
-    // 성공 로그 기록
+    // Record success log
     logData.loginSuccess = true;
     logData.jwtIssued = true;
     logData.jwtExpiresAt = jwtExpiresAt;
     await logSSOAttempt(logData);
 
-    console.log('[SSO] 로그인 성공:', {
+    console.log('[SSO] Login successful:', {
       employeeNo: user.employee_no,
       name: user.name,
     });
 
-    // Refresh token 발급 (30일) → httpOnly cookie
+    // Issue refresh token (30 days) -> httpOnly cookie
     const refreshToken = crypto.randomBytes(32).toString('hex');
     const rtHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const rtExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -516,7 +516,7 @@ export async function POST(request) {
        VALUES ($1, $2, $3, $4, $5)`,
       [user.id, rtHash, rtExpiresAt, ipAddress, userAgent]
     ).catch((err) => {
-      console.warn('[SSO] refresh token 저장 실패 (skip):', err.message);
+      console.warn('[SSO] Failed to save refresh token (skip):', err.message);
     });
 
     const jsonResponse = NextResponse.json({
@@ -542,13 +542,13 @@ export async function POST(request) {
     return jsonResponse;
 
   } catch (error) {
-    console.error('[SSO] 로그인 오류:', error);
+    console.error('[SSO] Login error:', error);
     logData.errorType = 'SERVER_ERROR';
     logData.errorMessage = 'Server error occurred.';
     logData.errorDetail = error.message;
     await logSSOAttempt(logData);
     return NextResponse.json(
-      { error: 'Server error occurred. 잠시 후 다시 시도해주세요.', errorCode: 'SERVER_ERROR' },
+      { error: 'Server error occurred. Please try again shortly.', errorCode: 'SERVER_ERROR' },
       { status: 500 }
     );
   }

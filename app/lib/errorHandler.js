@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { logAppError } from '@/lib/appErrorLogger';
 
 /**
- * 표준화된 에러 응답 생성
+ * Create a standardized error response
  */
 export function createErrorResponse(error, status = 500) {
   const errorResponse = {
@@ -12,7 +12,7 @@ export function createErrorResponse(error, status = 500) {
     status
   };
 
-  // 개발 환경에서만 상세 정보 포함
+  // Include detailed info only in development
   if (process.env.NODE_ENV === 'development') {
     errorResponse.stack = error.stack;
   }
@@ -34,7 +34,7 @@ export function createErrorResponse(error, status = 500) {
 }
 
 /**
- * 표준화된 성공 응답 생성
+ * Create a standardized success response
  */
 export function createSuccessResponse(data, status = 200) {
   const successResponse = {
@@ -47,42 +47,42 @@ export function createSuccessResponse(data, status = 200) {
 }
 
 /**
- * 인증 에러 응답
+ * Authentication error response
  */
 export function createAuthError(message = 'Authentication required.') {
   return createErrorResponse(new Error(message), 401);
 }
 
 /**
- * 권한 에러 응답
+ * Authorization error response
  */
 export function createForbiddenError(message = 'Access denied.') {
   return createErrorResponse(new Error(message), 403);
 }
 
 /**
- * 찾을 수 없음 에러 응답
+ * Not-found error response
  */
 export function createNotFoundError(message = 'Requested resource not found.') {
   return createErrorResponse(new Error(message), 404);
 }
 
 /**
- * 검증 에러 응답
+ * Validation error response
  */
 export function createValidationError(message) {
   return createErrorResponse(new Error(message), 400);
 }
 
 /**
- * 서버 에러 응답
+ * Server error response
  */
 export function createServerError(error, message = 'Internal server error.') {
   return createErrorResponse(error || new Error(message), 500);
 }
 
 /**
- * API 에러 처리 헬퍼 (기존 라우트 호환)
+ * API error handling helper (compatible with existing routes)
  */
 export function handleApiError(error, context = '') {
   if (context) {
@@ -94,7 +94,7 @@ export function handleApiError(error, context = '') {
 }
 
 /**
- * 비동기 함수를 래핑하여 에러를 자동으로 처리
+ * Wrap an async function and handle errors automatically
  */
 export function withErrorHandler(handler) {
   return async (...args) => {
@@ -120,7 +120,7 @@ export function withErrorHandler(handler) {
 }
 
 /**
- * 커스텀 에러 클래스들
+ * Custom error classes
  */
 export class ValidationError extends Error {
   constructor(message) {

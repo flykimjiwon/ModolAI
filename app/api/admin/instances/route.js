@@ -6,10 +6,10 @@ import {
   saveendpointStatus,
 } from '@/lib/modelServerMonitor';
 
-// Ollama 인스턴스 목록 조회
+// Retrieve Ollama instance list
 export async function GET(request) {
   try {
-    // 관리자 권한 확인
+    // Check admin privileges
     const adminCheck = verifyAdmin(request);
     if (!adminCheck.success) {
       return adminCheck;
@@ -18,7 +18,7 @@ export async function GET(request) {
     const url = new URL(request.url);
     const shouldRefresh = url.searchParams.get('refresh') === 'true';
 
-    // 비활성화된 서버 목록 확인
+    // Check list of inactive servers
     const settingsResult = await query(
       'SELECT custom_endpoints FROM settings WHERE config_type = $1 LIMIT 1',
       ['general']
@@ -31,7 +31,7 @@ export async function GET(request) {
       if (customEndpoints && Array.isArray(customEndpoints)) {
         customEndpoints.forEach((ep) => {
           if (ep.isActive === false && ep.url) {
-            // URL 정규화 (trailing slash 제거)
+            // Normalize URL (remove trailing slash)
             const normalizedUrl = ep.url.trim().replace(/\/+$/, '');
             inactiveUrls.add(normalizedUrl);
           }
@@ -39,25 +39,25 @@ export async function GET(request) {
       }
     }
 
-    // DB에서 마지막 저장된 Ollama 상태 조회
+    // Get the last saved Ollama status from DB
     const ollamamodelServersResult = await query(
       'SELECT * FROM model_server ORDER BY endpoint ASC'
     );
     const ollamamodelServersRaw = ollamamodelServersResult.rows;
 
-    // 비활성화된 서버 필터링 및 중복 제거: id 기준 유니크
-    // metadata에서 host, port, url 등을 추출하여 인스턴스 객체 구성
+    // Filter inactive servers and remove duplicates: unique by id
+    // Build instance objects by extracting host, port, url, etc. from metadata
     const uniqMap = new Map();
     for (const inst of ollamamodelServersRaw) {
-      // metadata에서 정보 추출 (metadata는 JSONB 필드)
+      // Extract info from metadata (metadata is a JSONB field)
       let instanceData = { ...inst };
       
-      // metadata가 있으면 파싱하여 host, port, url 등 추출
+      // If metadata exists, parse and extract host, port, url, etc.
       if (inst.metadata && typeof inst.metadata === 'object') {
         instanceData = {
           ...instanceData,
           ...inst.metadata,
-          // metadata의 필드들을 최상위로 복사
+          // Copy metadata fields to top level
           host: inst.metadata.host || inst.metadata.hostname || null,
           port: inst.metadata.port || null,
           url: inst.metadata.url || inst.endpoint || null,
@@ -76,10 +76,10 @@ export async function GET(request) {
           };
         } catch (e) {
           console.warn(
-            '[instances] metadata JSON 파싱 실패:',
+            '[instances] Failed to parse metadata JSON:',
             e?.message || e
           );
-          // 파싱 실패 시 endpoint에서 URL 파싱 시도
+          // If parsing fails, try parsing URL from endpoint
           try {
             const url = new URL(inst.endpoint);
             instanceData.host = url.hostname;
@@ -87,13 +87,13 @@ export async function GET(request) {
             instanceData.url = inst.endpoint;
           } catch (e2) {
             console.warn(
-              '[instances] endpoint URL 파싱 실패:',
+              '[instances] Failed to parse endpoint URL:',
               e2?.message || e2
             );
           }
         }
       } else {
-        // metadata가 없으면 endpoint에서 URL 파싱
+        // If metadata is missing, parse URL from endpoint
         try {
           const url = new URL(inst.endpoint);
           instanceData.host = url.hostname;
@@ -101,13 +101,13 @@ export async function GET(request) {
           instanceData.url = inst.endpoint;
         } catch (e) {
           console.warn(
-            '[instances] endpoint URL 파싱 실패:',
+            '[instances] Failed to parse endpoint URL:',
             e?.message || e
           );
         }
       }
       
-      // 비활성화된 서버 제외
+      // Exclude inactive servers
       const urlToCheck = instanceData.url || inst.endpoint;
       if (urlToCheck) {
         const normalizedUrl = urlToCheck.trim().replace(/\/+$/, '');
@@ -123,7 +123,7 @@ export async function GET(request) {
     }
     const ollamamodelServers = Array.from(uniqMap.values());
 
-    // 각 인스턴스별 최근 로그 개수도 함께 조회 (직접 로그 + Proxy 로그)
+    // Also fetch recent log count per instance (direct logs + proxy logs)
     const modelServersWithLogCount = await Promise.all(
       ollamamodelServers.map(async (instance) => {
         const hostPort = `${instance.host || ''}${
@@ -135,7 +135,7 @@ export async function GET(request) {
           'openai_proxy',
         ];
 
-        // 직접 로그 (instance_id로 조회)
+        // Direct logs (query by instance_id)
         const directLogResult = await query(
           `SELECT COUNT(*) as count FROM model_logs 
            WHERE instance_id = $1 AND timestamp >= $2`,
@@ -143,9 +143,9 @@ export async function GET(request) {
         );
         const directLogCount = parseInt(directLogResult.rows[0]?.count || 0);
 
-        // Proxy 로그 (metadata에서 type과 endpoint 확인)
-        // metadata JSONB에서 type과 endpoint를 확인해야 함
-        // proxyTypes 배열을 OR 조건으로 변환
+        // Proxy logs (check type and endpoint from metadata)
+        // Need to check type and endpoint in metadata JSONB
+        // Convert proxyTypes array into OR conditions
         const proxyTypeConditions = proxyTypes.map((_, i) => `metadata->>'type' = $${i + 2}`).join(' OR ');
         const endpointParamIndex = proxyTypes.length + 2;
         const messageParamIndex = proxyTypes.length + 3;
@@ -165,22 +165,22 @@ export async function GET(request) {
 
         return {
           ...instance,
-          logCount24h: directLogCount + proxyLogCount, // 총 로그 수
-          proxyLogCount24h: proxyLogCount, // Proxy 로그 수만 따로
+          logCount24h: directLogCount + proxyLogCount, // Total log count
+          proxyLogCount24h: proxyLogCount, // Proxy-only log count
           isActive: instance.status === 'healthy',
         };
       })
     );
 
-    // 실시간 상태 확인도 함께 제공 (선택사항)
+    // Also provide real-time status check (optional)
     const realTimeCheck = await checkAllModelServerInstances();
 
-    // 강제 새로고침 요청 시 실시간 상태를 저장
+    // Save real-time status on forced refresh request
     if (shouldRefresh && Array.isArray(realTimeCheck)) {
       try {
         await saveendpointStatus(realTimeCheck);
       } catch (e) {
-        console.warn('실시간 상태 저장 실패 (무시):', e.message);
+        console.warn('Failed to save real-time status (ignored):', e.message);
       }
     }
 
@@ -191,9 +191,9 @@ export async function GET(request) {
       realTimeStatus: Array.isArray(realTimeCheck) 
         ? realTimeCheck.map((i) => ({
             id: i.id,
-            url: i.url, // URL 추가
-            host: i.host, // host 추가
-            port: i.port, // port 추가
+            url: i.url, // Add URL
+            host: i.host, // Add host
+            port: i.port, // Add port
             status: i.status,
             responseTime: i.responseTime,
             modelCount: i.modelCount,
@@ -201,10 +201,10 @@ export async function GET(request) {
         : [],
     });
   } catch (error) {
-    console.error('Ollama 인스턴스 목록 조회 실패:', error);
+    console.error('Failed to retrieve Ollama instance list:', error);
     return NextResponse.json(
       { 
-        error: 'Ollama 인스턴스 목록을 조회하는데 실패했습니다.',
+        error: 'Failed to retrieve the Ollama instance list.',
         details: error.message 
       },
       { status: 500 }

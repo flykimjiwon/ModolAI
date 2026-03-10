@@ -5,12 +5,12 @@ export async function POST(request) {
     const { email } = await request.json();
 
     if (!email) {
-      return new Response(JSON.stringify({ error: '이메일이 필요합니다.' }), {
+      return new Response(JSON.stringify({ error: 'Email is required.' }), {
         status: 400,
       });
     }
 
-    // 이메일을 소문자로 정규화 (중복 방지)
+    // Normalize email to lowercase (prevent duplicates)
     const normalizedEmail = email.toLowerCase().trim();
 
     const result = await query(
@@ -24,14 +24,14 @@ export async function POST(request) {
         available: !existingUser,
         message: existingUser
           ? 'Email already registered.'
-          : '사용 가능한 이메일입니다.',
+          : 'Email is available.',
       }),
       {
         status: 200,
       }
     );
   } catch (error) {
-    console.error('이메일 검증 오류:', error);
+    console.error('Email validation error:', error);
     return new Response(
       JSON.stringify({ error: 'Server error occurred.' }),
       {

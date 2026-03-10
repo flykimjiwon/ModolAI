@@ -127,10 +127,10 @@ export async function GET(request) {
       pagination: { page, limit, totalPages, totalCount },
     });
   } catch (error) {
-    console.error('자유게시판 목록 조회 실패:', error);
+    console.error('Failed to fetch board post list:', error);
     return createServerError(
       error,
-      '자유게시판 목록을 불러오는데 실패했습니다.'
+      'Failed to load board post list.'
     );
   }
 }
@@ -157,19 +157,19 @@ export async function POST(request) {
 
     if (!title || title.length > 200) {
       return createValidationError(
-        '제목은 1~200자 사이여야 합니다.'
+        'Title must be between 1 and 200 characters.'
       );
     }
 
     if (!content || content.length > 10000) {
       return createValidationError(
-        '내용은 1~10,000자 사이여야 합니다.'
+        'Content must be between 1 and 10,000 characters.'
       );
     }
 
     const userId = auth.user?.sub || auth.user?.id;
     if (!userId) {
-      return createAuthError('사용자 정보를 확인할 수 없습니다.');
+      return createAuthError('Unable to verify user information.');
     }
 
     if (isNotice) {
@@ -182,7 +182,7 @@ export async function POST(request) {
       );
       if (existingCount >= 5) {
         return createValidationError(
-          '공지글은 최대 5개까지 등록할 수 있습니다.'
+          'A maximum of 5 notice posts can be registered.'
         );
       }
     }
@@ -202,7 +202,7 @@ export async function POST(request) {
       createdAt: result.rows[0]?.created_at,
     });
   } catch (error) {
-    console.error('자유게시판 글쓰기 실패:', error);
-    return createServerError(error, '글쓰기 중 오류가 발생했습니다.');
+    console.error('Failed to create board post:', error);
+    return createServerError(error, 'An error occurred while creating the post.');
   }
 }

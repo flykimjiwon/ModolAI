@@ -12,7 +12,7 @@ function getAvailableTargets() {
   if (process.env.POSTGRES_URI || process.env.DATABASE_URL) {
     targets.push({
       value: 'main',
-      label: '기본 DB (POSTGRES_URI)',
+      label: 'Default DB (POSTGRES_URI)',
     });
   }
 
@@ -26,7 +26,7 @@ function getAvailableTargets() {
   if (targets.length === 0) {
     targets.push({
       value: 'main',
-      label: '기본 DB (POSTGRES_URI)',
+      label: 'Default DB (POSTGRES_URI)',
     });
   }
 
@@ -50,7 +50,7 @@ export async function GET(request) {
       return NextResponse.json(
         {
           success: false,
-          error: '유효하지 않은 DB 대상입니다.',
+          error: 'Invalid DB target.',
         },
         { status: 400 }
       );
@@ -60,7 +60,7 @@ export async function GET(request) {
       return NextResponse.json(
         {
           success: false,
-          error: 'POSTGRES_API_URI가 설정되지 않았습니다.',
+          error: 'POSTGRES_API_URI is not configured.',
           selectedTarget,
           availableTargets,
         },
@@ -125,14 +125,14 @@ export async function GET(request) {
       })),
     });
   } catch (error) {
-    console.error('DB 스키마 조회 실패:', error);
-    return createServerError(error, 'DB 스키마 조회에 실패했습니다.');
+    console.error('Failed to query DB schema:', error);
+    return createServerError(error, 'Failed to query DB schema.');
   } finally {
     if (targetPool) {
       try {
         await targetPool.end();
       } catch (poolCloseError) {
-        console.error('DB 스키마 조회용 API 풀 종료 실패:', poolCloseError);
+        console.error('Failed to close API pool for DB schema query:', poolCloseError);
       }
     }
   }

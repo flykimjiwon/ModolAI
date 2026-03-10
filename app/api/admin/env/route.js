@@ -111,7 +111,7 @@ export async function GET(request) {
         nodeEnvMatchedFiles,
         postgresUriMatchedFiles,
         caveat:
-          '같은 값이 여러 파일에 있으면 실제 최종 반영 파일은 런타임만으로 단정할 수 없습니다.',
+          'If the same value exists in multiple files, the actual final effective file cannot be determined by runtime alone.',
         snapshots: snapshots.map((snapshot) => ({
           fileName: snapshot.fileName,
           exists: snapshot.exists,
@@ -129,6 +129,6 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    return createServerError(error, '환경 변수 점검에 실패했습니다.');
+    return createServerError(error, 'Failed to check environment variables.');
   }
 }

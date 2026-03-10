@@ -32,7 +32,7 @@ async function ensureNoticeColumns() {
   }
 }
 
-// 공지사항 상세 조회
+// Retrieve notice details
 export async function GET(request, { params }) {
   try {
     await ensureNoticeColumns();
@@ -40,12 +40,12 @@ export async function GET(request, { params }) {
 
     if (!isValidUUID(id)) {
       return NextResponse.json(
-        { error: '유효하지 않은 ID입니다.' },
+        { error: 'Invalid ID.' },
         { status: 400 }
       );
     }
 
-    // 조회수 증가 및 공지사항 조회
+    // Increase view count and retrieve notice
     const noticeResult = await query(
       `UPDATE notices
        SET views = COALESCE(views, 0) + 1
@@ -57,7 +57,7 @@ export async function GET(request, { params }) {
 
     if (noticeResult.rows.length === 0) {
       return NextResponse.json(
-        { error: '공지사항을 Not found.' },
+        { error: 'Notice not found.' },
         { status: 404 }
       );
     }
@@ -82,15 +82,15 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ notice });
   } catch (error) {
-    console.error('공지사항 상세 조회 실패:', error);
+    console.error('Failed to retrieve notice details:', error);
     return NextResponse.json(
-      { error: '공지사항을 불러오는데 실패했습니다.', details: error.message },
+      { error: 'Failed to load notice.', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// 공지사항 수정 (관리자만)
+// Update notice (admin only)
 export async function PUT(request, { params }) {
   try {
     await ensureNoticeColumns();
@@ -98,12 +98,12 @@ export async function PUT(request, { params }) {
 
     if (!isValidUUID(id)) {
       return NextResponse.json(
-        { error: '유효하지 않은 ID입니다.' },
+        { error: 'Invalid ID.' },
         { status: 400 }
       );
     }
 
-    // 토큰 검증
+    // Validate token
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
@@ -112,7 +112,7 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // 관리자 권한 확인
+    // Check admin privileges
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin privileges required.' },
@@ -125,12 +125,12 @@ export async function PUT(request, { params }) {
 
     if (!title || !content) {
       return NextResponse.json(
-        { error: '제목과 내용을 입력해주세요.' },
+        { error: 'Please enter both title and content.' },
         { status: 400 }
       );
     }
 
-    // 공지사항 수정
+    // Update notice
     const result = await query(
       `UPDATE notices
        SET title = $1, content = $2, is_popup = $3, is_popup_login = $4, is_active = $5,
@@ -141,34 +141,34 @@ export async function PUT(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { error: '공지사항을 Not found.' },
+        { error: 'Notice not found.' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('공지사항 수정 실패:', error);
+    console.error('Failed to update notice:', error);
     return NextResponse.json(
-      { error: '공지사항 수정에 실패했습니다.', details: error.message },
+      { error: 'Failed to update notice.', details: error.message },
       { status: 500 }
     );
   }
 }
 
-// 공지사항 삭제 (관리자만)
+// Delete notice (admin only)
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params;
 
     if (!isValidUUID(id)) {
       return NextResponse.json(
-        { error: '유효하지 않은 ID입니다.' },
+        { error: 'Invalid ID.' },
         { status: 400 }
       );
     }
 
-    // 토큰 검증
+    // Validate token
     const payload = verifyToken(request);
     if (!payload) {
       return NextResponse.json(
@@ -177,7 +177,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // 관리자 권한 확인
+    // Check admin privileges
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin privileges required.' },
@@ -185,7 +185,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // 공지사항 삭제
+    // Delete notice
     const result = await query(
       'DELETE FROM notices WHERE id = $1',
       [id]
@@ -193,16 +193,16 @@ export async function DELETE(request, { params }) {
 
     if (result.rowCount === 0) {
       return NextResponse.json(
-        { error: '공지사항을 Not found.' },
+        { error: 'Notice not found.' },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('공지사항 삭제 실패:', error);
+    console.error('Failed to delete notice:', error);
     return NextResponse.json(
-      { error: '공지사항 삭제에 실패했습니다.', details: error.message },
+      { error: 'Failed to delete notice.', details: error.message },
       { status: 500 }
     );
   }

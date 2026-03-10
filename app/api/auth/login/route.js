@@ -8,7 +8,7 @@ import { runAutoMigration } from '@/lib/autoMigrate';
 export async function POST(request) {
   const { email, password } = await request.json();
 
-  // 이메일을 소문자로 정규화 (중복 방지)
+  // Normalize email to lowercase (prevent duplicates)
   const normalizedEmail = email?.toLowerCase().trim();
 
   const result = await query(
@@ -18,7 +18,7 @@ export async function POST(request) {
 
   if (result.rows.length === 0) {
     return new Response(
-      JSON.stringify({ error: '이메일이 존재하지 않습니다' }),
+      JSON.stringify({ error: 'Email does not exist.' }),
       {
         status: 401,
       }
@@ -27,20 +27,20 @@ export async function POST(request) {
 
   const user = result.rows[0];
 
-  // SSO 사용자는 일반 로그인 불가
+  // SSO users cannot use regular login
   if (user.auth_type === 'sso') {
     return new Response(
-      JSON.stringify({ error: 'SSO 계정입니다. Swing 로그인(/sso)을 이용해주세요.' }),
+      JSON.stringify({ error: 'This is an SSO account. Please use Swing login (/sso).' }),
       {
         status: 401,
       }
     );
   }
 
-  // password_hash가 없는 경우 (비정상 케이스)
+  // If password_hash is missing (abnormal case)
   if (!user.password_hash) {
     return new Response(
-      JSON.stringify({ error: '비밀번호가 설정되지 않은 계정입니다. 관리자에게 문의하세요.' }),
+      JSON.stringify({ error: 'Password is not set for this account. Please contact an administrator.' }),
       {
         status: 401,
       }
@@ -50,28 +50,28 @@ export async function POST(request) {
   const match = await bcryptjs.compare(password, user.password_hash);
   if (!match) {
     return new Response(
-      JSON.stringify({ error: '비밀번호가 올바르지 않습니다' }),
+      JSON.stringify({ error: 'Incorrect password.' }),
       {
         status: 401,
       }
     );
   }
 
-  // 마지막 접속시간 업데이트
+  // Update last login time
   await query(
     'UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1',
     [user.id]
   );
 
-  // admin 역할 로그인 시 초기 스키마 + 마이그레이션 자동 실행 (백그라운드, 로그인 응답 지연 없음)
+  // On admin login, automatically run initial schema + migration (background, no login response delay)
   if (user.role === 'admin') {
     runAutoMigration().catch((err) =>
-      console.warn('[AutoMigrate] 백그라운드 실패:', err.message)
+      console.warn('[AutoMigrate] Background task failed:', err.message)
     );
   }
 
 
-  // JWT 발급 (비밀키는 .env 에 보관) - 1시간 세션 (refresh token으로 자동 연장)
+  // Issue JWT (secret key is stored in .env) - 1-hour session (auto-extended via refresh token)
   const token = jwt.sign(
     {
       sub: user.id,
@@ -86,7 +86,7 @@ export async function POST(request) {
     { expiresIn: '1h' }
   );
 
-  // Refresh token 발급 (30일) → httpOnly cookie
+  // Issue refresh token (30 days) -> httpOnly cookie
   const refreshToken = crypto.randomBytes(32).toString('hex');
   const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -99,7 +99,7 @@ export async function POST(request) {
      VALUES ($1, $2, $3, $4, $5)`,
     [user.id, tokenHash, expiresAt, ipAddress, userAgent]
   ).catch((err) => {
-    console.warn('[Login] refresh token 저장 실패 (skip):', err.message);
+    console.warn('[Login] Failed to store refresh token (skip):', err.message);
   });
 
   const response = new Response(JSON.stringify({ token }), { status: 200 });

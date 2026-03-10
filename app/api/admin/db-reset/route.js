@@ -6,12 +6,12 @@ const pool = new Pool({ connectionString: process.env.POSTGRES_URI });
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 /**
- * DB 초기화 API
- * 관리자만 접근 가능
+ * DB reset API
+ * Admin-only access
  */
 export async function POST(req) {
   try {
-    // 인증 확인
+    // Check authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
@@ -25,7 +25,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid token.' }, { status: 401 });
     }
 
-    // 관리자 권한 확인
+    // Check admin privileges
     if (decoded.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin privileges required.' },
@@ -38,7 +38,7 @@ export async function POST(req) {
 
     if (!type) {
       return NextResponse.json(
-        { error: 'type이 필요합니다. (all, partial)' },
+        { error: 'type is required. (all, partial)' },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(req) {
       let message = '';
 
       if (type === 'all') {
-        // 전체 DB 초기화 (users 테이블 제외)
+        // Reset entire DB (excluding users table)
         const tablesToDelete = [
           'chat_history',
           'chat_rooms',
@@ -77,14 +77,14 @@ export async function POST(req) {
           deletedTables.push(table);
         }
 
-        message = '전체 DB가 초기화되었습니다. (users 테이블은 보존됨)';
+        message = 'Entire DB has been reset. (users table preserved)';
       } else if (type === 'partial') {
-        // 일부 테이블만 초기화
+        // Reset selected tables only
         if (!tables || !Array.isArray(tables) || tables.length === 0) {
-          throw new Error('초기화할 테이블을 선택해주세요.');
+          throw new Error('Please select tables to reset.');
         }
 
-        // 허용된 테이블만 초기화 (users, settings 등 핵심 테이블 제외)
+        // Reset only allowed tables (excluding core tables like users, settings)
         const allowedTables = [
           'chat_history',
           'chat_rooms',
@@ -106,15 +106,15 @@ export async function POST(req) {
 
         for (const table of tables) {
           if (!allowedTables.includes(table)) {
-            throw new Error(`허용되지 않은 테이블: ${table}`);
+            throw new Error(`Disallowed table: ${table}`);
           }
           await client.query(`DELETE FROM ${table}`);
           deletedTables.push(table);
         }
 
-        message = `선택한 테이블이 초기화되었습니다: ${deletedTables.join(', ')}`;
+        message = `Selected tables have been reset: ${deletedTables.join(', ')}`;
       } else {
-        throw new Error('유효하지 않은 type입니다. (all, partial)');
+        throw new Error('Invalid type. (all, partial)');
       }
 
       await client.query('COMMIT');
@@ -131,10 +131,10 @@ export async function POST(req) {
       client.release();
     }
   } catch (error) {
-    console.error('DB 초기화 실패:', error);
+    console.error('DB reset failed:', error);
     return NextResponse.json(
       {
-        error: error.message || 'DB 초기화 중 오류가 발생했습니다.',
+        error: error.message || 'An error occurred during DB reset.',
       },
       { status: 500 }
     );

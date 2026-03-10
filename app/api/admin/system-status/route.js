@@ -10,7 +10,7 @@ import {
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
 export async function GET(request) {
-  // 관리자 권한 확인
+  // Check admin privileges
   const authResult = verifyAdminWithResult(request);
   if (!authResult.valid) {
     return createAuthError(authResult.error);
@@ -32,7 +32,7 @@ export async function GET(request) {
       modelServerEndpoints: [],
     };
 
-    // 1. 데이터베이스 상태 확인
+    // 1. Check database status
     try {
       const dbStart = Date.now();
       await query('SELECT 1');
@@ -52,7 +52,7 @@ export async function GET(request) {
       };
     }
 
-    // 2. API 서버 상태 (현재 응답하고 있으므로 정상)
+    // 2. API server status (operational because it is currently responding)
     systemStatus.apiServer = {
       status: 'operational',
       message: 'Operational',
@@ -60,15 +60,15 @@ export async function GET(request) {
       timestamp: new Date().toISOString(),
     };
 
-    // 3. 등록된 모든 endpoint 상태 확인
+    // 3. Check status of all registered endpoints
     try {
-      // 등록된 모든 endpoint 가져오기
+      // Retrieve all registered endpoints
       const registeredEndpoints = await getAllEndpoints();
 
       let endpointsToCheck = [];
 
       if (registeredEndpoints.length === 0) {
-        // 등록된 endpoint가 없으면 기본값 사용 (개발 환경에서만)
+        // If no endpoints are registered, use default value (development only)
         const isDevelopment = process.env.NODE_ENV !== 'production';
         endpointsToCheck = isDevelopment
           ? [
@@ -76,7 +76,7 @@ export async function GET(request) {
                 url: 'http://localhost:11434',
                 host: 'localhost',
                 port: '11434',
-                name: '로컬 개발 서버',
+                name: 'Local Development Server',
                 provider: 'model-server',
               },
             ]
@@ -84,17 +84,17 @@ export async function GET(request) {
 
         if (!isDevelopment) {
           console.warn(
-            '[System Status] 등록된 모델서버가 없습니다. 관리자 설정에서 모델서버를 등록해주세요.'
+            '[System Status] No model servers are registered. Please register model servers in admin settings.'
           );
         }
       } else {
         endpointsToCheck = registeredEndpoints;
       }
 
-      // 각 endpoint의 상태를 병렬로 확인 (비활성화된 서버는 스킵)
+      // Check each endpoint status in parallel (skip inactive servers)
       const endpointStatuses = await Promise.all(
         endpointsToCheck.map(async (endpoint) => {
-          // 비활성화된 서버는 상태 조회 스킵
+          // Skip status check for inactive servers
           if (endpoint.isActive === false) {
             return {
               endpoint: endpoint.url,
@@ -102,7 +102,7 @@ export async function GET(request) {
               name: endpoint.name || endpoint.url,
               provider: endpoint.provider || 'model-server',
               status: 'inactive',
-              message: '비활성화됨',
+               message: 'Inactive',
               responseTime: null,
               modelsCount: 0,
               isActive: false,
@@ -110,7 +110,7 @@ export async function GET(request) {
           }
 
           try {
-            // URL 기반으로 provider 재확인 (이중 체크)
+            // Re-check provider based on URL (double-check)
             let provider = endpoint.provider;
             if (endpoint.url) {
               const url = endpoint.url.toLowerCase();
@@ -130,7 +130,7 @@ export async function GET(request) {
               result = await checkModelServerHealth({ ...endpoint, provider: provider || 'model-server' });
             }
 
-            // 상태를 UI에 맞게 변환
+            // Convert status for UI
             const status =
               result.status === 'healthy'
                 ? 'operational'
@@ -146,7 +146,7 @@ export async function GET(request) {
               status,
               message:
                 result.modelCount !== undefined
-                  ? `${result.modelCount}개 모델 로드됨`
+                  ? `${result.modelCount} models loaded`
                   : result.error || 'Unknown',
               responseTime: result.responseTime,
               modelsCount: result.modelCount || 0,
@@ -170,7 +170,7 @@ export async function GET(request) {
 
       systemStatus.modelServerEndpoints = endpointStatuses;
 
-      // 전체 요약 상태 계산
+      // Calculate overall summary status
       const operationalCount = endpointStatuses.filter(
         (ep) => ep.status === 'operational'
       ).length;
@@ -187,7 +187,7 @@ export async function GET(request) {
       ) {
         systemStatus.modelServers = {
           status: 'operational',
-          message: `모든 모델 서버 정상 (${operationalCount}개)`,
+           message: `All model servers are operational (${operationalCount})`,
           responseTime: Math.max(
             ...endpointStatuses
               .map((ep) => ep.responseTime)
@@ -197,13 +197,13 @@ export async function GET(request) {
       } else if (errorCount > 0) {
         systemStatus.modelServers = {
           status: 'error',
-          message: `${errorCount}개 모델 Server error`,
+           message: `${errorCount} model server errors`,
           responseTime: null,
         };
       } else if (warningCount > 0) {
         systemStatus.modelServers = {
           status: 'warning',
-          message: `${warningCount}개 모델 서버 경고`,
+           message: `${warningCount} model server warnings`,
           responseTime: null,
         };
       } else {
@@ -229,7 +229,7 @@ export async function GET(request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('시스템 상태 조회 실패:', error);
-    return createServerError(error, '시스템 상태 조회 실패');
+    console.error('Failed to retrieve system status:', error);
+    return createServerError(error, 'Failed to retrieve system status');
   }
 }

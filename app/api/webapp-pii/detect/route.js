@@ -31,7 +31,7 @@ export async function POST(request) {
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch {
-      return NextResponse.json({ success: false, error: '잘못된 토큰' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
     }
 
     const body = await request.json();
@@ -94,7 +94,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, enabled: true, result });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: error.message || 'PII 사전 검사 실패' },
+      { success: false, error: error.message || 'PII pre-check failed' },
       { status: 500 }
     );
   }

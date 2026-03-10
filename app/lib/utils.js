@@ -7,14 +7,14 @@ export function cn(...inputs) {
 }
 
 /**
- * UUID 생성 (PostgreSQL과 호환)
+ * Generate UUID (PostgreSQL compatible)
  */
 export function generateUUID() {
   return randomUUID();
 }
 
 /**
- * UUID 형식 검증
+ * Validate UUID format
  */
 export function isValidUUID(uuid) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

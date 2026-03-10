@@ -4,7 +4,7 @@ import { JWT_SECRET } from './config';
 import { createAuthError, createForbiddenError } from './errorHandler';
 import { query } from './postgres';
 /**
- * Authorization 헤더에서 Bearer 토큰 추출
+ * Extract Bearer token from Authorization header
  */
 export function extractBearerToken(request) {
   const authHeader = request.headers.get('Authorization') || 
@@ -16,11 +16,11 @@ export function extractBearerToken(request) {
 }
 
 /**
- * Authorization 헤더에 들어있는 Bearer 토큰을 검증하고,
- * 유효하면 payload(디코딩된 토큰) 를 반환, 아니면 null.
+ * Verify the Bearer token in the Authorization header,
+ * return payload (decoded token) if valid, otherwise null.
  * 
- * @param {Request} request - Next.js Request 객체
- * @returns {object|null} 디코딩된 토큰 payload 또는 null
+ * @param {Request} request - Next.js Request object
+ * @returns {object|null} Decoded token payload or null
  */
 export function verifyToken(request) {
   const token = extractBearerToken(request);
@@ -28,18 +28,18 @@ export function verifyToken(request) {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET || process.env.JWT_SECRET);
-    // JWT 표준에 따라 sub(subject)를 사용자 ID로 사용
-    // 하위 호환성을 위해 id도 제공하지만 sub 사용을 권장
+    // Use sub (subject) as user ID according to JWT standard
+    // id is also provided for backward compatibility, but sub is recommended
     return { ...payload, id: payload.sub, userId: payload.sub };
   } catch (error) {
-    console.error('JWT 토큰 검증 실패:', error.message);
+    console.error('JWT token verification failed:', error.message);
     return null;
   }
 }
 
 /**
- * 토큰 검증 결과 객체 반환 (일부 파일에서 사용하는 형식과 호환)
- * @param {Request} request - Next.js Request 객체
+ * Return token verification result object (compatible with format used in some files)
+ * @param {Request} request - Next.js Request object
  * @returns {{valid: boolean, user?: object, error?: string}}
  */
 export function verifyTokenWithResult(request) {
@@ -58,8 +58,8 @@ export function verifyTokenWithResult(request) {
 }
 
 /**
- * 관리자 권한 검증
- * @param {Request} request - Next.js Request 객체
+ * Verify admin privileges
+ * @param {Request} request - Next.js Request object
  * @returns {{valid: boolean, user?: object, error?: string}} | NextResponse
  */
 export function verifyAdminWithResult(request) {
@@ -81,9 +81,9 @@ export function verifyAdminWithResult(request) {
 }
 
 /**
- * 인증이 필요한 API 라우트를 위한 미들웨어
- * @param {Request} request - Next.js Request 객체
- * @returns {object|null} {user: object} 또는 null (인증 실패 시)
+ * Middleware for API routes that require authentication
+ * @param {Request} request - Next.js Request object
+ * @returns {object|null} {user: object} or null (when authentication fails)
  */
 export function requireAuth(request) {
   const payload = verifyToken(request);
@@ -94,9 +94,9 @@ export function requireAuth(request) {
 }
 
 /**
- * 관리자 권한이 필요한 API 라우트를 위한 미들웨어
- * @param {Request} request - Next.js Request 객체
- * @returns {object|null} {user: object} 또는 null (인증/권한 실패 시)
+ * Middleware for API routes that require admin privileges
+ * @param {Request} request - Next.js Request object
+ * @returns {object|null} {user: object} or null (when auth/permission fails)
  */
 export function requireAdmin(request) {
   const payload = verifyToken(request);
@@ -110,9 +110,9 @@ export function requireAdmin(request) {
 }
 
 /**
- * 마지막 활동 시각 업데이트 (10분 간격 throttle)
- * DB 쿼리: last_active_at < NOW() - 10분 일 때만 실제 업데이트 실행
- * @param {string} userId - 사용자 UUID
+ * Update last activity timestamp (10-minute throttle)
+ * DB query: perform actual update only when last_active_at < NOW() - 10 minutes
+ * @param {string} userId - User UUID
  */
 export async function updateLastActive(userId) {
   if (!userId) return;
@@ -124,6 +124,6 @@ export async function updateLastActive(userId) {
       [userId]
     );
   } catch (err) {
-    console.warn('[Auth] updateLastActive 실패:', err.message);
+    console.warn('[Auth] updateLastActive failed:', err.message);
   }
 }
