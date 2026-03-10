@@ -12,70 +12,18 @@ import {
   User,
   Mail,
   Bot,
-  Code,
-  FileText,
-  Sparkles,
   History,
   Presentation,
 } from 'lucide-react';
 import { ConfirmModal } from '@/components/ui/modal';
 import DirectMessageModal from '@/components/DirectMessageModal';
 
-// 에이전트별 사이드바 메뉴 설정
 const AGENT_SIDEBAR_MENUS = {
-  '1': {
-    title: 'AI 가상회의',
-    items: [
-      { id: 'meeting-history', label: '회의 히스토리', icon: History },
-      { id: 'persona-templates', label: '페르소나 템플릿', icon: Bot },
-      { id: 'topic-examples', label: '주제 예시', icon: Sparkles },
-    ],
-  },
-  '2': {
-    title: '코드 컨버터',
-    items: [
-      { id: 'convert-history', label: '변환 히스토리', icon: History },
-      { id: 'language-list', label: '지원 언어 목록', icon: Code },
-      { id: 'conversion-tips', label: '변환 팁', icon: Sparkles },
-    ],
-  },
-  '3': {
-    title: 'Text to SQL',
-    items: [
-      { id: 'query-history', label: '조회 히스토리', icon: History },
-      { id: 'uploaded-files', label: '업로드 파일 관리', icon: FileText },
-      { id: 'query-examples', label: '질문 예시', icon: Sparkles },
-    ],
-  },
-  '4': {
-    title: '텍스트 재작성',
-    items: [
-      { id: 'rewrite-history', label: '재작성 히스토리', icon: History },
-      { id: 'tone-templates', label: '톤/목적 템플릿', icon: FileText },
-      { id: 'writing-guide', label: '작성 가이드', icon: Sparkles },
-    ],
-  },
-  '5': {
-    title: '에러 해결 도우미',
-    items: [
-      { id: 'error-history', label: '해결 히스토리', icon: History },
-      { id: 'common-errors', label: '자주 발생하는 에러', icon: Code },
-      { id: 'debug-tips', label: '디버깅 팁', icon: Sparkles },
-    ],
-  },
-  '6': {
-    title: 'Solgit 리뷰어',
-    items: [
-      { id: 'review-history', label: '리뷰 히스토리', icon: History },
-      { id: 'project-list', label: '프로젝트 목록', icon: Code },
-      { id: 'review-guide', label: '리뷰 가이드', icon: Sparkles },
-    ],
-  },
   '7': {
-    title: 'PPT 에이전트',
+    title: 'PPT Maker',
     items: [
-      { id: 'ppt-compose', label: 'PPT 에이전트', icon: Presentation },
-      { id: 'ppt-history', label: '생성 히스토리', icon: History },
+      { id: 'ppt-compose', label: 'PPT Maker', icon: Presentation },
+      { id: 'ppt-history', label: 'Generation History', icon: History },
     ],
   },
 };
@@ -86,7 +34,7 @@ function AgentSidebar({
   agentId,
   agentName,
   agentDescription,
-  agentColor = 'text-blue-600 dark:text-blue-400',
+  agentColor = 'text-foreground',
   userEmail,
   userRole,
   handleLogout,
@@ -103,18 +51,16 @@ function AgentSidebar({
     message: '',
     type: 'warning',
     onConfirm: null,
-    confirmText: '확인',
-    cancelText: '취소',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
   });
 
-  // 쪽지 관련 상태
   const [unreadDmCount, setUnreadDmCount] = useState(0);
   const [showDmModal, setShowDmModal] = useState(false);
   const [showDmNotification, setShowDmNotification] = useState(false);
   const [newDmCount, setNewDmCount] = useState(0);
   const prevUnreadCountRef = useRef(0);
 
-  // 읽지 않은 쪽지 개수 조회
   const fetchUnreadDmCount = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -146,7 +92,7 @@ function AgentSidebar({
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.warn('읽지 않은 쪽지 개수 조회 실패:', error);
+        console.warn('Failed to fetch unread message count:', error);
       }
     }
   }, []);
@@ -167,7 +113,6 @@ function AgentSidebar({
 
   return (
     <>
-      {/* 접힌 사이드바 (아이콘만) */}
       <div
         className={`
           fixed left-0 top-0 h-full w-16 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-40
@@ -176,28 +121,25 @@ function AgentSidebar({
           ${sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
       >
-        {/* 메뉴 버튼 */}
         <button
           onClick={handleHamburgerClick}
           className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-4'
-          title='사이드바 열기'
+          title='Open sidebar'
         >
           <Menu className='h-5 w-5 text-gray-600 dark:text-gray-400' />
         </button>
 
-        {/* 에이전트 아이콘 */}
         <div className='p-3 mb-4'>
           <Bot className={`h-5 w-5 ${agentColor}`} />
         </div>
 
-        {/* 쪽지 */}
         <div className='relative'>
           <button
             onClick={() => !loading && setShowDmModal(true)}
             className={`relative p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
-            title='받은 쪽지'
+            title='Messages'
             disabled={loading}
           >
             <Mail className='h-5 w-5 text-gray-600 dark:text-gray-400' />
@@ -212,7 +154,7 @@ function AgentSidebar({
             <div className='absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 animate-bounce'>
               <div className='relative bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
                 <div className='absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-blue-600'></div>
-                새 쪽지 {newDmCount}개가 도착했습니다
+                {newDmCount} new message(s) received
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -227,32 +169,30 @@ function AgentSidebar({
           )}
         </div>
 
-        {/* 로그아웃 */}
         <button
           onClick={() => {
             if (!loading) {
               setConfirmModal({
                 isOpen: true,
-                title: '로그아웃 확인',
-                message: '로그아웃 하시겠습니까?',
+                title: 'Confirm Logout',
+                message: 'Are you sure you want to log out?',
                 type: 'warning',
                 onConfirm: () => {
                   handleLogout();
                 },
-                confirmText: '로그아웃',
-                cancelText: '취소',
+                confirmText: 'Log out',
+                cancelText: 'Cancel',
               });
             }
           }}
           className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-auto'
-          title='로그아웃'
+          title='Log out'
           disabled={loading}
         >
           <LogOut className='h-5 w-5 text-gray-600 dark:text-gray-400' />
         </button>
       </div>
 
-      {/* 펼쳐진 사이드바 */}
       <div
         className={`
           fixed left-0 top-0 h-full w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-50
@@ -261,7 +201,6 @@ function AgentSidebar({
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
-        {/* 사이드바 헤더 - 에이전트 정보 */}
         <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center gap-3'>
             <Bot className={`h-6 w-6 ${agentColor}`} />
@@ -279,13 +218,12 @@ function AgentSidebar({
           <button
             onClick={handleCloseClick}
             className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-            title='사이드바 닫기'
+            title='Close sidebar'
           >
             <X className='h-5 w-5 text-gray-600 dark:text-gray-400' />
           </button>
         </div>
 
-        {/* 에이전트별 메뉴 영역 */}
         <div className='flex-1 overflow-y-auto p-4'>
           {AGENT_SIDEBAR_MENUS[agentId] && (
             <div className='space-y-2'>
@@ -317,17 +255,14 @@ function AgentSidebar({
             </div>
           )}
 
-          {/* 에이전트 설명 */}
           <div className='mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'>
             <p className='text-sm text-gray-600 dark:text-gray-400'>
-              {agentDescription || '에이전트 기능을 사용할 수 있습니다.'}
+              {agentDescription || 'Agent features are available.'}
             </p>
           </div>
         </div>
 
-        {/* 메뉴 버튼들 */}
         <div className='p-4 space-y-2 border-t border-gray-200 dark:border-gray-700 flex-shrink-0'>
-          {/* 공지사항 */}
           <button
             onClick={() => !loading && router.push('/notice')}
             className={`w-full flex items-center gap-3 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors ${
@@ -336,7 +271,7 @@ function AgentSidebar({
             disabled={loading}
           >
             <Bell className='h-4 w-4' />
-            공지사항
+            Notices
           </button>
 
           {boardEnabled && (
@@ -348,11 +283,10 @@ function AgentSidebar({
               disabled={loading}
             >
               <MessageSquare className='h-4 w-4' />
-              자유게시판
+              Board
             </button>
           )}
 
-          {/* 프로필 수정 */}
           {profileEditEnabled && (
             <button
               onClick={() => !loading && router.push('/profile')}
@@ -362,11 +296,10 @@ function AgentSidebar({
               disabled={loading}
             >
               <User className='h-4 w-4' />
-              프로필 수정
+              Edit Profile
             </button>
           )}
 
-          {/* 관리자 패널 */}
           {userRole === 'admin' && (
             <button
               onClick={() => !loading && router.push('/admin')}
@@ -376,36 +309,34 @@ function AgentSidebar({
               disabled={loading}
             >
               <Shield className='h-4 w-4' />
-              관리자 페이지
+              Admin
             </button>
           )}
         </div>
 
-        {/* 하단 사용자 정보 */}
         <div className='p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0'>
           <div className='flex items-center justify-between'>
             <div className='min-w-0 flex-1'>
               <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                로그인 계정
+                Signed in as
               </p>
               <p className='text-xs text-gray-600 dark:text-gray-400 truncate'>
                 {userEmail}
               </p>
               {userRole === 'admin' && (
                 <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mt-1'>
-                  관리자
+                  Admin
                 </span>
               )}
             </div>
             <div className='flex items-center gap-1'>
-              {/* 쪽지 버튼 */}
               <div className='relative'>
                 <button
                   onClick={() => !loading && setShowDmModal(true)}
                   className={`relative p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
                     loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  title='받은 쪽지'
+                  title='Messages'
                   disabled={loading}
                 >
                   <Mail className='h-4 w-4 text-gray-600 dark:text-gray-400' />
@@ -419,7 +350,7 @@ function AgentSidebar({
                 {showDmNotification && (
                   <div className='absolute bottom-full mb-2 right-0 z-50 animate-bounce'>
                     <div className='relative bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
-                      새 쪽지 {newDmCount}개가 도착했습니다
+                      {newDmCount} new message(s) received
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -434,27 +365,26 @@ function AgentSidebar({
                   </div>
                 )}
               </div>
-              {/* 로그아웃 버튼 */}
               <button
                 onClick={() => {
                   if (!loading) {
                     setConfirmModal({
                       isOpen: true,
-                      title: '로그아웃 확인',
-                      message: '로그아웃 하시겠습니까?',
+                      title: 'Confirm Logout',
+                      message: 'Are you sure you want to log out?',
                       type: 'warning',
                       onConfirm: () => {
                         handleLogout();
                       },
-                      confirmText: '로그아웃',
-                      cancelText: '취소',
+                      confirmText: 'Log out',
+                      cancelText: 'Cancel',
                     });
                   }
                 }}
                 className={`p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
                   loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
-                title='로그아웃'
+                title='Log out'
                 disabled={loading}
               >
                 <LogOut className='h-4 w-4 text-gray-600 dark:text-gray-400' />
@@ -464,7 +394,6 @@ function AgentSidebar({
         </div>
       </div>
 
-      {/* 확인 모달 */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={() =>
@@ -474,19 +403,18 @@ function AgentSidebar({
             message: '',
             type: 'warning',
             onConfirm: null,
-            confirmText: '확인',
-            cancelText: '취소',
+            confirmText: 'Confirm',
+            cancelText: 'Cancel',
           })
         }
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
         message={confirmModal.message}
         type={confirmModal.type}
-        confirmText={confirmModal.confirmText || '확인'}
-        cancelText={confirmModal.cancelText || '취소'}
+        confirmText={confirmModal.confirmText || 'Confirm'}
+        cancelText={confirmModal.cancelText || 'Cancel'}
       />
 
-      {/* 쪽지 모달 */}
       <DirectMessageModal
         isOpen={showDmModal}
         onClose={() => setShowDmModal(false)}

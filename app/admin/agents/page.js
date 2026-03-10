@@ -26,57 +26,23 @@ const DEFAULT_AGENT_SETTINGS = {
   allowUserModelOverride: false,
 };
 
-// 권한 타입 라벨
 const PERMISSION_TYPE_LABELS = {
-  all: '전체',
-  role: '역할별',
-  department: '부서별',
-  user: '개별 사용자',
+  all: 'All',
+  role: 'By Role',
+  department: 'By Group',
+  user: 'Individual User',
 };
 
-// 역할 라벨
 const ROLE_LABELS = {
-  admin: '관리자',
-  user: '일반 사용자',
+  admin: 'Admin',
+  user: 'User',
 };
 
 const STATIC_AGENTS = [
   {
-    id: '1',
-    name: 'AI 가상회의',
-    description:
-      '인원수, 페르소나, 주제, 대화 개수를 설정하면 AI가 토론 결과를 제공합니다',
-  },
-  {
-    id: '2',
-    name: '코드 컨버터',
-    description: 'A언어에서 B언어로 코드를 변환해 드립니다',
-  },
-  {
-    id: '3',
-    name: 'Text to SQL',
-    description: '엑셀 업로드 후 자연어로 질문하면 데이터를 조회해 드립니다',
-  },
-  {
-    id: '4',
-    name: '텍스트 재작성 도구',
-    description:
-      '목적(메일, 쪽지, 보고서)과 톤(정중한, 공손한)에 맞게 텍스트를 재작성해 드립니다',
-  },
-  {
-    id: '5',
-    name: '에러 해결 도우미',
-    description: '코드와 에러 메시지를 입력하면 원인 파악을 도와드립니다',
-  },
-  {
-    id: '6',
-    name: 'Solgit 프로젝트 리뷰어',
-    description: 'Solgit 프로젝트를 지정하면 코드 파일들에 대한 LLM 리뷰를 제공합니다',
-  },
-  {
     id: '7',
-    name: 'PPT 에이전트',
-    description: '주제와 포맷을 입력하면 AI가 프레젠테이션을 생성해 드립니다',
+    name: 'PPT Maker',
+    description: 'Enter a topic and format, and AI generates a presentation',
   },
 ];
 
@@ -92,7 +58,6 @@ export default function AgentsManagePage() {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsForm, setSettingsForm] = useState(DEFAULT_AGENT_SETTINGS);
 
-  // 권한 추가 폼 상태
   const [newPermission, setNewPermission] = useState({
     permissionType: 'role',
     permissionValue: '',
@@ -100,7 +65,6 @@ export default function AgentsManagePage() {
   });
   const [userSearch, setUserSearch] = useState('');
 
-  // 데이터 로드
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -119,10 +83,10 @@ export default function AgentsManagePage() {
       ]);
 
       if (!agentsResponse.ok) {
-        throw new Error('데이터를 불러오는데 실패했습니다');
+        throw new Error('Failed to load data');
       }
       if (!settingsResponse.ok) {
-        throw new Error('에이전트 설정 데이터를 불러오는데 실패했습니다');
+        throw new Error('Failed to load agent settings');
       }
 
       const data = await agentsResponse.json();
@@ -161,7 +125,6 @@ export default function AgentsManagePage() {
       setDepartments(Array.isArray(data.departments) ? data.departments : []);
       setModelOptions(Array.isArray(settingsData.modelOptions) ? settingsData.modelOptions : []);
 
-      // 첫 번째 에이전트 선택
       if (mergedAgents.length > 0 && !selectedAgent) {
         setSelectedAgent(mergedAgents[0]);
         setSettingsForm({
@@ -169,7 +132,6 @@ export default function AgentsManagePage() {
           ...(mergedAgents[0].settings || {}),
         });
       } else if (selectedAgent) {
-        // 선택된 에이전트 업데이트
         const updated = mergedAgents.find((a) => a.id === selectedAgent.id);
         if (updated) {
           setSelectedAgent(updated);
@@ -180,7 +142,7 @@ export default function AgentsManagePage() {
         }
       }
     } catch (error) {
-      alert(error.message, 'error', '오류');
+      alert(error.message, 'error', 'Error');
     } finally {
       setLoading(false);
     }
@@ -198,12 +160,11 @@ export default function AgentsManagePage() {
     });
   }, [selectedAgent]);
 
-  // 권한 추가
   const handleAddPermission = async () => {
     if (!selectedAgent) return;
 
     if (newPermission.permissionType !== 'all' && !newPermission.permissionValue) {
-      alert('권한 대상을 선택해주세요', 'warning', '경고');
+      alert('Please select a permission target', 'warning', 'Warning');
       return;
     }
 
@@ -223,24 +184,23 @@ export default function AgentsManagePage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || '권한 추가에 실패했습니다');
+        throw new Error(error.error || 'Failed to add permission');
       }
 
-      alert('권한이 추가되었습니다', 'success', '성공');
+      alert('Permission added', 'success', 'Success');
       setShowAddModal(false);
       setNewPermission({ permissionType: 'role', permissionValue: '', isAllowed: true });
       setUserSearch('');
       fetchData();
     } catch (error) {
-      alert(error.message, 'error', '오류');
+      alert(error.message, 'error', 'Error');
     }
   };
 
-  // 권한 삭제
   const handleDeletePermission = async (permissionId) => {
     const confirmed = await confirm(
-      '이 권한 설정을 삭제하시겠습니까?',
-      '권한 삭제',
+      'Delete this permission setting?',
+      'Delete Permission',
       'warning'
     );
 
@@ -256,20 +216,19 @@ export default function AgentsManagePage() {
       });
 
       if (!response.ok) {
-        throw new Error('권한 삭제에 실패했습니다');
+        throw new Error('Failed to delete permission');
       }
 
-      alert('권한이 삭제되었습니다', 'success', '성공');
+      alert('Permission deleted', 'success', 'Success');
       fetchData();
     } catch (error) {
-      alert(error.message, 'error', '오류');
+      alert(error.message, 'error', 'Error');
     }
   };
 
-  // 권한 값 표시
   const getPermissionValueLabel = (permission) => {
     if (permission.permission_type === 'all') {
-      return '전체 사용자';
+      return 'All Users';
     }
     if (permission.permission_type === 'role') {
       return ROLE_LABELS[permission.permission_value] || permission.permission_value;
@@ -284,7 +243,6 @@ export default function AgentsManagePage() {
     return permission.permission_value;
   };
 
-  // 필터링된 사용자 목록
   const filteredUsers = (users || []).filter(user => {
     const searchLower = userSearch.toLowerCase();
     return (
@@ -314,13 +272,13 @@ export default function AgentsManagePage() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || '에이전트 설정 저장에 실패했습니다.');
+        throw new Error(data.error || 'Failed to save agent settings.');
       }
 
-      alert(data.message || '에이전트 설정이 저장되었습니다.', 'success', '성공');
+      alert(data.message || 'Agent settings saved.', 'success', 'Success');
       fetchData();
     } catch (error) {
-      alert(error.message, 'error', '오류');
+      alert(error.message, 'error', 'Error');
     } finally {
       setSettingsSaving(false);
     }
@@ -336,14 +294,13 @@ export default function AgentsManagePage() {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            에이전트 관리
+            Agent Management
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            에이전트별 접근 권한을 설정합니다
+            Configure access permissions per agent
           </p>
         </div>
         <button
@@ -351,16 +308,15 @@ export default function AgentsManagePage() {
           className="btn-secondary flex items-center gap-2"
         >
           <RefreshCw className="h-4 w-4" />
-          새로고침
+          Refresh
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 에이전트 목록 */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              에이전트 목록
+              Agents
             </h2>
           </div>
           <div className="p-2">
@@ -397,7 +353,7 @@ export default function AgentsManagePage() {
                       ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
                   }`}>
-                    {(agent.permissions?.length ?? 0) === 0 ? '전체 허용' : `${agent.permissions?.length ?? 0}개 규칙`}
+                    {(agent.permissions?.length ?? 0) === 0 ? 'Open' : `${agent.permissions?.length ?? 0} rule(s)`}
                   </span>
                 </div>
               </button>
@@ -405,14 +361,13 @@ export default function AgentsManagePage() {
           </div>
         </div>
 
-        {/* 권한 설정 */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow">
           {selectedAgent ? (
             <>
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedAgent.name} 권한 설정
+                    {selectedAgent.name} Permissions
                   </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {selectedAgent.description}
@@ -423,7 +378,7 @@ export default function AgentsManagePage() {
                   className="btn-primary flex items-center gap-2"
                 >
                   <Plus className="h-4 w-4" />
-                  권한 추가
+                  Add Permission
                 </button>
               </div>
 
@@ -431,10 +386,10 @@ export default function AgentsManagePage() {
                 {(selectedAgent.permissions?.length ?? 0) === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p className="font-medium">권한 제한 없음</p>
-                    <p className="text-sm">모든 사용자가 이 에이전트에 접근할 수 있습니다</p>
+                    <p className="font-medium">No restrictions</p>
+                    <p className="text-sm">All users can access this agent</p>
                     <p className="text-xs mt-2 text-gray-400">
-                      권한을 추가하면 해당 조건에 맞는 사용자만 접근 가능합니다
+                      Adding a permission will restrict access to matching users only
                     </p>
                   </div>
                 ) : (
@@ -465,15 +420,15 @@ export default function AgentsManagePage() {
                               : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                           }`}>
                             {permission.is_allowed ? (
-                              <><Check className="h-4 w-4" /> 허용</>
+                              <><Check className="h-4 w-4" /> Allow</>
                             ) : (
-                              <><X className="h-4 w-4" /> 차단</>
+                              <><X className="h-4 w-4" /> Block</>
                             )}
                           </span>
                           <button
                             onClick={() => handleDeletePermission(permission.id)}
                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                            title="삭제"
+                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -488,10 +443,10 @@ export default function AgentsManagePage() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                      {selectedAgent.name} 설정
+                      {selectedAgent.name} Settings
                     </h3>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      에이전트별 기본 동작과 모델 사용 정책을 관리합니다
+                      Manage default behavior and model policies per agent
                     </p>
                   </div>
                   <button
@@ -504,7 +459,7 @@ export default function AgentsManagePage() {
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
-                    설정 저장
+                    Save Settings
                   </button>
                 </div>
 
@@ -512,7 +467,7 @@ export default function AgentsManagePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        기본 모델 (/admin/models 등록 모델)
+                        Default Model (from /admin/models)
                       </label>
                       <select
                         value={settingsForm.selectedModelId || ''}
@@ -524,11 +479,11 @@ export default function AgentsManagePage() {
                         }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
-                        <option value="">선택 안 함 (기본 모델 사용)</option>
+                        <option value="">None (use default model)</option>
                         {settingsForm.selectedModelId &&
                         !modelOptions.some((model) => model.id === settingsForm.selectedModelId) ? (
                           <option value={settingsForm.selectedModelId}>
-                            현재 저장 모델 (비활성/삭제됨)
+                            Current saved model (disabled/deleted)
                           </option>
                         ) : null}
                         {modelOptions.map((model) => (
@@ -541,7 +496,7 @@ export default function AgentsManagePage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        기본 슬라이드 수
+                        Default Slide Count
                       </label>
                       <input
                         type="number"
@@ -560,7 +515,7 @@ export default function AgentsManagePage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        기본 테마
+                        Default Theme
                       </label>
                       <select
                         value={settingsForm.defaultTheme}
@@ -572,14 +527,14 @@ export default function AgentsManagePage() {
                         }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
-                        <option value="light">라이트</option>
-                        <option value="dark">다크</option>
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        기본 톤
+                        Default Tone
                       </label>
                       <select
                         value={settingsForm.defaultTone}
@@ -591,8 +546,8 @@ export default function AgentsManagePage() {
                         }
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
-                        <option value="business">비즈니스</option>
-                        <option value="casual">캐주얼</option>
+                        <option value="business">Business</option>
+                        <option value="casual">Casual</option>
                       </select>
                     </div>
 
@@ -613,13 +568,13 @@ export default function AgentsManagePage() {
                         htmlFor="allow-user-model-override"
                         className="text-sm text-gray-700 dark:text-gray-300"
                       >
-                        사용자 모델 직접 선택 허용
+                        Allow user to select model
                       </label>
                     </div>
                   </div>
                 ) : (
                   <div className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                    현재 선택한 에이전트는 추가 설정 항목이 없습니다. (PPT 메이커는 모델/기본값 설정 가능)
+                    No additional settings for this agent. (PPT Maker supports model/default configuration)
                   </div>
                 )}
               </div>
@@ -627,13 +582,12 @@ export default function AgentsManagePage() {
           ) : (
             <div className="p-8 text-center text-gray-500 dark:text-gray-400">
               <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>에이전트를 선택하세요</p>
+              <p>Select an agent</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* 권한 추가 모달 */}
       {showAddModal && selectedAgent && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
@@ -643,14 +597,13 @@ export default function AgentsManagePage() {
             />
             <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                {selectedAgent.name} 권한 추가
+                Add Permission for {selectedAgent.name}
               </h3>
 
               <div className="space-y-4">
-                {/* 권한 타입 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    권한 타입
+                    Permission Type
                   </label>
                   <select
                     value={newPermission.permissionType}
@@ -664,27 +617,26 @@ export default function AgentsManagePage() {
                     }}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
-                    <option value="role">역할별</option>
-                    <option value="department">부서별</option>
-                    <option value="user">개별 사용자</option>
-                    <option value="all">전체</option>
+                    <option value="role">By Role</option>
+                    <option value="department">By Group</option>
+                    <option value="user">Individual User</option>
+                    <option value="all">All</option>
                   </select>
                 </div>
 
-                {/* 권한 대상 */}
                 {newPermission.permissionType === 'role' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      역할 선택
+                      Select Role
                     </label>
                     <select
                       value={newPermission.permissionValue}
                       onChange={(e) => setNewPermission({ ...newPermission, permissionValue: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value="">선택하세요</option>
-                      <option value="admin">관리자</option>
-                      <option value="user">일반 사용자</option>
+                      <option value="">Select</option>
+                      <option value="admin">Admin</option>
+                      <option value="user">User</option>
                     </select>
                   </div>
                 )}
@@ -692,14 +644,14 @@ export default function AgentsManagePage() {
                 {newPermission.permissionType === 'department' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      부서 선택
+                      Select Group
                     </label>
                     <select
                       value={newPermission.permissionValue}
                       onChange={(e) => setNewPermission({ ...newPermission, permissionValue: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value="">선택하세요</option>
+                      <option value="">Select</option>
                       {departments.map((dept) => (
                         <option key={dept} value={dept}>{dept}</option>
                       ))}
@@ -710,13 +662,13 @@ export default function AgentsManagePage() {
                 {newPermission.permissionType === 'user' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      사용자 선택
+                      Select User
                     </label>
                     <div className="relative mb-2">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="이름, 이메일, 부서로 검색..."
+                        placeholder="Search by name, email, or group..."
                         value={userSearch}
                         onChange={(e) => setUserSearch(e.target.value)}
                         className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -734,9 +686,9 @@ export default function AgentsManagePage() {
                           }`}
                         >
                           <p className="font-medium text-gray-900 dark:text-white text-sm">
-                            {user.name || '(이름 없음)'}
+                            {user.name || '(No name)'}
                             {user.role === 'admin' && (
-                              <span className="ml-1 text-xs text-red-600">(관리자)</span>
+                              <span className="ml-1 text-xs text-red-600">(Admin)</span>
                             )}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -746,17 +698,16 @@ export default function AgentsManagePage() {
                       ))}
                       {filteredUsers.length > 50 && (
                         <p className="px-3 py-2 text-xs text-gray-500 text-center">
-                          검색어를 입력하여 더 찾아보세요...
+                          Type a search term to find more...
                         </p>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* 허용/차단 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    접근 권한
+                    Access
                   </label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -767,7 +718,7 @@ export default function AgentsManagePage() {
                         onChange={() => setNewPermission({ ...newPermission, isAllowed: true })}
                         className="text-blue-600"
                       />
-                      <span className="text-green-600 dark:text-green-400 font-medium">허용</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">Allow</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -777,7 +728,7 @@ export default function AgentsManagePage() {
                         onChange={() => setNewPermission({ ...newPermission, isAllowed: false })}
                         className="text-blue-600"
                       />
-                      <span className="text-red-600 dark:text-red-400 font-medium">차단</span>
+                      <span className="text-red-600 dark:text-red-400 font-medium">Block</span>
                     </label>
                   </div>
                 </div>
@@ -792,13 +743,13 @@ export default function AgentsManagePage() {
                   }}
                   className="btn-secondary"
                 >
-                  취소
+                  Cancel
                 </button>
                 <button
                   onClick={handleAddPermission}
                   className="btn-primary"
                 >
-                  추가
+                  Add
                 </button>
               </div>
             </div>

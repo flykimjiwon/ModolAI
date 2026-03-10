@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS = {
 
 const ALLOWED_THEMES = new Set(['light', 'dark']);
 const ALLOWED_TONES = new Set(['business', 'casual']);
-const VALID_AGENT_IDS = new Set(['1', '2', '3', '4', '5', '6', '7']);
+const VALID_AGENT_IDS = new Set(['7']);
 
 async function ensureAgentSettingsTable() {
   await query(`
@@ -83,13 +83,13 @@ function normalizeSettingsInput(settings) {
   const allowUserModelOverride = settings?.allowUserModelOverride === true;
 
   if (!Number.isInteger(defaultSlideCount) || defaultSlideCount < 1 || defaultSlideCount > 30) {
-    return { error: '기본 슬라이드 수는 1~30 사이의 정수여야 합니다.' };
+    return { error: 'Default slide count must be an integer between 1 and 30.' };
   }
   if (!ALLOWED_THEMES.has(defaultTheme)) {
-    return { error: '기본 테마는 light 또는 dark 이어야 합니다.' };
+    return { error: 'Default theme must be light or dark.' };
   }
   if (!ALLOWED_TONES.has(defaultTone)) {
-    return { error: '기본 톤은 business 또는 casual 이어야 합니다.' };
+    return { error: 'Default tone must be business or casual.' };
   }
 
   return {
@@ -107,7 +107,7 @@ export async function GET(request) {
   try {
     const authResult = await verifyAdminWithResult(request);
     if (!authResult.valid) {
-      const status = authResult.error?.includes('관리자') ? 403 : 401;
+      const status = authResult.error?.includes('Admin') ? 403 : 401;
       return NextResponse.json({ error: authResult.error }, { status });
     }
 
@@ -147,7 +147,7 @@ export async function POST(request) {
   try {
     const authResult = await verifyAdminWithResult(request);
     if (!authResult.valid) {
-      const status = authResult.error?.includes('관리자') ? 403 : 401;
+      const status = authResult.error?.includes('Admin') ? 403 : 401;
       return NextResponse.json({ error: authResult.error }, { status });
     }
 
@@ -158,16 +158,16 @@ export async function POST(request) {
     const settings = body?.settings;
 
     if (!agentId) {
-      return NextResponse.json({ error: 'agentId가 필요합니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'agentId is required.' }, { status: 400 });
     }
     if (!VALID_AGENT_IDS.has(agentId)) {
       return NextResponse.json(
-        { error: '유효하지 않은 agentId 입니다.' },
+        { error: 'Invalid agentId.' },
         { status: 400 }
       );
     }
     if (!settings || typeof settings !== 'object') {
-      return NextResponse.json({ error: 'settings 객체가 필요합니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'settings object is required.' }, { status: 400 });
     }
 
     const normalized = normalizeSettingsInput(settings);
@@ -186,7 +186,7 @@ export async function POST(request) {
       !modelDbIds.has(normalized.value.selectedModelId)
     ) {
       return NextResponse.json(
-        { error: '등록된 모델 중에서만 선택할 수 있습니다.' },
+        { error: 'Only registered models can be selected.' },
         { status: 400 }
       );
     }
@@ -231,7 +231,7 @@ export async function POST(request) {
 
     const row = result.rows[0];
     return NextResponse.json({
-      message: '에이전트 Settings saved.',
+      message: 'Agent settings saved.',
       settings: {
         selectedModelId: row.selected_model_id || '',
         defaultSlideCount: row.default_slide_count,

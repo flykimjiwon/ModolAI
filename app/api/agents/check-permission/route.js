@@ -3,7 +3,7 @@ import { query } from '@/lib/postgres';
 import { verifyTokenWithResult } from '@/lib/auth';
 import { createServerError } from '@/lib/errorHandler';
 
-// GET: 사용자의 특정 에이전트 접근 권한 확인
+// GET: Check user permission for a specific agent
 export async function GET(request) {
   try {
     const authResult = await verifyTokenWithResult(request);
@@ -15,13 +15,13 @@ export async function GET(request) {
     const agentId = searchParams.get('agentId');
 
     if (!agentId) {
-      return NextResponse.json({ error: 'agentId가 필요합니다' }, { status: 400 });
+      return NextResponse.json({ error: 'agentId is required' }, { status: 400 });
     }
 
     const user = authResult.user;
     const userId = user?.id || user?.sub || user?.userId;
 
-    // 해당 에이전트의 모든 권한 설정 조회
+    // Retrieve all permission settings for this agent
     const permissionsResult = await query(`
       SELECT * FROM agent_permissions
       WHERE agent_id = $1
@@ -29,13 +29,13 @@ export async function GET(request) {
 
     const permissions = permissionsResult.rows;
 
-    // 권한 설정이 없으면 기본적으로 모든 사용자 허용
+    // No restrictions = allow all users by default
     if (permissions.length === 0) {
       return NextResponse.json({ allowed: true, reason: 'no_restrictions' });
     }
 
-    // 권한 체크 로직
-    // 1. 전체 허용/차단 확인
+    // Permission check logic
+    // 1. Check all allow/block
     const allPermission = permissions.find(p => p.permission_type === 'all');
     if (allPermission) {
       return NextResponse.json({
@@ -44,7 +44,7 @@ export async function GET(request) {
       });
     }
 
-    // 2. 개별 사용자 권한 확인 (가장 높은 우선순위)
+    // 2. Check individual user permission (highest priority)
     const userPermission = permissions.find(
       (p) => p.permission_type === 'user' && p.permission_value === userId
     );
@@ -55,7 +55,7 @@ export async function GET(request) {
       });
     }
 
-    // 3. 역할 권한 확인
+    // 3. Check role permission
     const rolePermission = permissions.find(
       (p) => p.permission_type === 'role' && p.permission_value === user.role
     );
@@ -66,7 +66,7 @@ export async function GET(request) {
       });
     }
 
-    // 4. 부서 권한 확인
+    // 4. Check department permission
     const deptPermission = permissions.find(
       (p) => p.permission_type === 'department' && p.permission_value === user.department
     );
@@ -77,8 +77,8 @@ export async function GET(request) {
       });
     }
 
-    // 권한 설정이 있지만 해당 사용자에게 적용되는 규칙이 없으면 차단
-    // (명시적으로 허용된 대상만 접근 가능)
+    // Rules exist but none apply to this user = block
+    // (only explicitly allowed targets can access)
     return NextResponse.json({
       allowed: false,
       reason: 'not_in_allowed_list'
@@ -89,7 +89,7 @@ export async function GET(request) {
   }
 }
 
-// POST: 사용자의 모든 에이전트 접근 권한 확인
+// POST: Check user permission for all agents
 export async function POST(request) {
   try {
     const authResult = await verifyTokenWithResult(request);
@@ -100,7 +100,7 @@ export async function POST(request) {
     const user = authResult.user;
     const userId = user?.id || user?.sub || user?.userId;
 
-    // 모든 에이전트 권한 설정 조회
+    // Retrieve all agent permission settings
     const permissionsResult = await query(`
       SELECT * FROM agent_permissions
       ORDER BY agent_id
@@ -108,20 +108,20 @@ export async function POST(request) {
 
     const permissions = permissionsResult.rows;
 
-    // 에이전트 ID별로 그룹화
-    const agentIds = ['1', '2', '3', '4', '5', '6', '7'];
+    // Group by agent ID
+    const agentIds = ['7'];
     const result = {};
 
     for (const agentId of agentIds) {
       const agentPermissions = permissions.filter(p => p.agent_id === agentId);
 
-      // 권한 설정이 없으면 허용
+      // No restrictions = allow
       if (agentPermissions.length === 0) {
         result[agentId] = { allowed: true, reason: 'no_restrictions' };
         continue;
       }
 
-      // 전체 허용/차단
+      // All allow/block
       const allPermission = agentPermissions.find(p => p.permission_type === 'all');
       if (allPermission) {
         result[agentId] = {
@@ -131,7 +131,7 @@ export async function POST(request) {
         continue;
       }
 
-      // 개별 사용자 권한
+      // Individual user permission
       const userPermission = agentPermissions.find(
         (p) => p.permission_type === 'user' && p.permission_value === userId
       );
@@ -143,7 +143,7 @@ export async function POST(request) {
         continue;
       }
 
-      // 역할 권한
+      // Role permission
       const rolePermission = agentPermissions.find(
         (p) => p.permission_type === 'role' && p.permission_value === user.role
       );
@@ -155,7 +155,7 @@ export async function POST(request) {
         continue;
       }
 
-      // 부서 권한
+      // Department permission
       const deptPermission = agentPermissions.find(
         (p) => p.permission_type === 'department' && p.permission_value === user.department
       );
@@ -167,7 +167,7 @@ export async function POST(request) {
         continue;
       }
 
-      // 적용되는 규칙 없음 → 차단
+      // No matching rules = block
       result[agentId] = { allowed: false, reason: 'not_in_allowed_list' };
     }
 
