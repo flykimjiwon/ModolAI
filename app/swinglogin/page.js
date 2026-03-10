@@ -311,7 +311,7 @@ export default function SwingLoginPage() {
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                  SWING_URL
+                  OAUTH_URL
                 </label>
                 <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
                   API Gateway 기본 주소 (예: https://oauth.example.com)
