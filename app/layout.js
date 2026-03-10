@@ -142,35 +142,6 @@ export default function RootLayout({ children }) {
                   const chromeVersion = chromeMatch ? parseInt(chromeMatch[1], 10) : null;
                   const isChrome = !!chromeVersion && !isEdge;
                   const browserVersion = isEdge ? edgeVersion : chromeVersion;
-                  const isChromium = isChrome || isEdge;
-                  const isLegacyChromium = !!browserVersion && isChromium && browserVersion < 111;
-
-                  if (isLegacyChromium) {
-                    root.classList.add('legacy-browser');
-
-                    const syncLegacyPublicClass = function() {
-                      const path = window.location.pathname || '/';
-                      const isAdminPath = path === '/admin' || path.indexOf('/admin/') === 0;
-                      root.classList.toggle('legacy-public', !isAdminPath);
-                    };
-
-                    syncLegacyPublicClass();
-
-                    const wrapHistoryMethod = function(methodName) {
-                      const original = window.history[methodName];
-                      if (typeof original !== 'function') return;
-                      window.history[methodName] = function() {
-                        const result = original.apply(this, arguments);
-                        syncLegacyPublicClass();
-                        return result;
-                      };
-                    };
-
-                    wrapHistoryMethod('pushState');
-                    wrapHistoryMethod('replaceState');
-                    window.addEventListener('popstate', syncLegacyPublicClass);
-                  }
-
                   const theme = localStorage.getItem('theme');
                   if (theme === 'dark') {
                     root.classList.add('dark');
