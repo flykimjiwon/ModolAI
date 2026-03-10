@@ -1,27 +1,30 @@
 /**
- * 통합 데이터베이스 초기화 스크립트
+ * Integrated database initialization script
  *
- * 이 스크립트는 다음을 수행합니다:
- * 1. PostgreSQL 연결 대기 (Docker 환경 대응)
- * 2. 스키마 생성 (테이블이 없는 경우)
- * 3. 기본 데이터 생성 (설정, 공지사항, RAG 설정)
- * 4. 기본 관리자 계정 생성 (admin@modol.ai, 필요한 경우)
+ * This script performs the following:
+ * 1. Waits for PostgreSQL connection (Docker-compatible)
+ * 2. Creates schema (if tables do not exist)
+ * 3. Creates default data (settings, notices, RAG settings)
+ * 4. Creates default admin account (admin@modol.ai, if needed)
  *
- * 사용법:
+ * Usage:
  *   node scripts/create-postgres-schema.js
  */
 
-// stdout/stderr 버퍼링 비활성화 (Docker 환경에서 즉시 출력)
+// Disable stdout/stderr buffering (immediate output in Docker)
 if (process.stdout.isTTY === false) {
   process.stdout._handle?.setBlocking?.(true);
   process.stderr._handle?.setBlocking?.(true);
 }
 
-// Docker 환경에서는 .env.development 파일이 없을 수 있으므로 선택적으로 로드
+// In Docker, .env.development may not exist, so load it optionally
 try {
   require('dotenv').config({ path: '.env.development' });
 } catch (e) {
-  console.warn('[create-postgres-schema] .env.development 로드 실패:', e?.message);
+  console.warn(
+    '[create-postgres-schema] Failed to load .env.development:',
+    e?.message
+  );
 }
 
 const { Pool } = require('pg');
@@ -37,28 +40,28 @@ const {
 
 const POSTGRES_URI = process.env.POSTGRES_URI || process.env.DATABASE_URL;
 
-// 환경 변수가 필수입니다
+// Environment variable is required
 if (!POSTGRES_URI) {
   console.error(
-    '❌ POSTGRES_URI 또는 DATABASE_URL Environment variable not set.'
+    '❌ POSTGRES_URI or DATABASE_URL environment variable not set.'
   );
   console.error('');
-  console.error('💡 환경 변수를 설정하세요:');
+  console.error('💡 Set an environment variable:');
   console.error(
-    '   POSTGRES_URI=postgresql://사용자명:비밀번호@호스트:포트/데이터베이스명'
+    '   POSTGRES_URI=postgresql://username:password@host:port/database'
   );
-  console.error('   또는');
+  console.error('   or');
   console.error(
-    '   DATABASE_URL=postgresql://사용자명:비밀번호@호스트:포트/데이터베이스명'
+    '   DATABASE_URL=postgresql://username:password@host:port/database'
   );
   process.exit(1);
 }
 
-// db-utils의 createPool을 사용하여 연결 풀 생성
+// Create connection pool using db-utils createPool
 let pool = null;
 
 /**
- * 테이블 존재 여부 확인
+ * Check whether a table exists
  */
 async function tableExists(client, tableName) {
   const result = await client.query(
@@ -75,7 +78,7 @@ async function tableExists(client, tableName) {
 }
 
 /**
- * Node.js 스크립트 실행 헬퍼
+ * Node.js script execution helper
  */
 function runScript(scriptPath) {
   return new Promise((resolve, reject) => {
@@ -87,7 +90,7 @@ function runScript(scriptPath) {
     child.on('close', (code) => {
       if (code !== 0) {
         reject(
-          new Error(`스크립트 실행 실패: ${scriptPath} (exit code: ${code})`)
+            new Error(`Script execution failed: ${scriptPath} (exit code: ${code})`)
         );
       } else {
         resolve();
@@ -95,13 +98,13 @@ function runScript(scriptPath) {
     });
 
     child.on('error', (error) => {
-      reject(new Error(`스크립트 실행 오류: ${scriptPath} - ${error.message}`));
+      reject(new Error(`Script execution error: ${scriptPath} - ${error.message}`));
     });
   });
 }
 
 /**
- * 테이블 생성 (존재 여부 확인 후)
+ * Create table (after checking if it exists)
  */
 async function createTableIfNotExists(
   client,
@@ -110,48 +113,48 @@ async function createTableIfNotExists(
   description
 ) {
   try {
-    console.log(`  🔍 ${description} 확인 중...`);
+    console.log(`  🔍 Checking ${description}...`);
     const exists = await tableExists(client, tableName);
     if (exists) {
-      console.log(`  ⏭️  ${description} (이미 존재)`);
+      console.log(`  ⏭️  ${description} (already exists)`);
       return false;
     } else {
-      console.log(`  🔨 ${description} 생성 중...`);
+      console.log(`  🔨 Creating ${description}...`);
       await client.query(createQuery);
-      console.log(`  ✅ ${description} 생성 완료`);
+      console.log(`  ✅ ${description} created`);
       return true;
     }
   } catch (error) {
-    console.error(`  ❌ ${description} 생성 실패:`, error.message);
+    console.error(`  ❌ Failed to create ${description}:`, error.message);
     if (error.code) {
-      console.error(`     오류 코드: ${error.code}`);
+      console.error(`     Error code: ${error.code}`);
     }
     throw error;
   }
 }
 
 /**
- * PostgreSQL 스키마 생성
+ * Create PostgreSQL schema
  */
 async function createSchema() {
   const client = await pool.connect();
 
   try {
-    console.log('🔗 데이터베이스 클라이언트 연결 완료');
+    console.log('🔗 Database client connected');
 
-    // 트랜잭션 시작 - 모든 스키마 작업을 원자적으로 실행
-    console.log('🔄 트랜잭션 시작...');
+    // Start transaction - run all schema operations atomically
+    console.log('🔄 Starting transaction...');
     await client.query('BEGIN');
-    console.log('✅ 트랜잭션 시작 완료');
+    console.log('✅ Transaction started');
 
-    // UUID 확장 활성화
-    console.log('📦 UUID 확장 활성화 중...');
+    // Enable UUID extension
+    console.log('📦 Enabling UUID extension...');
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
-    console.log('✅ UUID 확장 활성화 완료');
+    console.log('✅ UUID extension enabled');
 
-    console.log('\n📋 테이블 생성 시작...\n');
+    console.log('\n📋 Starting table creation...\n');
 
-    // 1. users 테이블
+    // 1. users table
     await createTableIfNotExists(
       client,
       'users',
@@ -169,10 +172,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '1. users 테이블'
+      '1. users table'
     );
 
-    // 2. chat_rooms 테이블
+    // 2. chat_rooms table
     await createTableIfNotExists(
       client,
       'chat_rooms',
@@ -186,10 +189,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '2. chat_rooms 테이블'
+      '2. chat_rooms table'
     );
 
-    // 3. chat_history 테이블
+    // 3. chat_history table
     await createTableIfNotExists(
       client,
       'chat_history',
@@ -206,11 +209,11 @@ async function createSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '3. chat_history 테이블'
+      '3. chat_history table'
     );
 
-    // 4. messages 테이블 (관리자 로깅용)
-    // 정규화: email, name, department, cell 제거 (users 테이블에서 JOIN으로 조회)
+    // 4. messages table (for admin logging)
+    // Normalization: remove email, name, department, cell (query via JOIN from users table)
     await createTableIfNotExists(
       client,
       'messages',
@@ -228,10 +231,10 @@ async function createSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '4. messages 테이블 (관리자 로깅용)'
+      '4. messages table (for admin logging)'
     );
 
-    // 5. chat_files 테이블
+    // 5. chat_files table
     await createTableIfNotExists(
       client,
       'chat_files',
@@ -254,10 +257,10 @@ async function createSchema() {
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '5. chat_files 테이블'
+      '5. chat_files table'
     );
 
-    // chat_files 테이블에 누락된 컬럼들 추가 (기존 테이블이 있는 경우)
+    // Add missing columns to chat_files table (if existing table is present)
     await client.query(`
       DO $$ 
       BEGIN
@@ -276,7 +279,7 @@ async function createSchema() {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='chat_files' AND column_name='ocr_summary') THEN
           ALTER TABLE chat_files ADD COLUMN ocr_summary TEXT;
         END IF;
-        -- status 컬럼에 'failed' 값 추가 (기존 CHECK 제약 조건 수정)
+        -- Add 'failed' value to status column (update existing CHECK constraint)
         IF EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE table_name='chat_files' AND constraint_name LIKE 'chat_files_status_check%') THEN
           ALTER TABLE chat_files DROP CONSTRAINT IF EXISTS chat_files_status_check;
           ALTER TABLE chat_files ADD CONSTRAINT chat_files_status_check CHECK (status IN ('processing', 'completed', 'error', 'failed'));
@@ -284,7 +287,7 @@ async function createSchema() {
       END $$;
     `);
 
-    // 6. uploaded_files 테이블
+    // 6. uploaded_files table
     await createTableIfNotExists(
       client,
       'uploaded_files',
@@ -302,10 +305,10 @@ async function createSchema() {
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '6. uploaded_files 테이블'
+      '6. uploaded_files table'
     );
 
-    // 7. settings 테이블
+    // 7. settings table
     await createTableIfNotExists(
       client,
       'settings',
@@ -337,16 +340,16 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '7. settings 테이블'
+      '7. settings table'
     );
 
-    // 7-1. settings 테이블에 room_name_generation_model 컬럼 추가 (기존 DB 호환)
+    // 7-1. Add room_name_generation_model column to settings table (existing DB compatibility)
     await client.query(`
       ALTER TABLE settings 
       ADD COLUMN IF NOT EXISTS room_name_generation_model VARCHAR(255)
     `);
 
-    // 8. admin_settings 테이블
+    // 8. admin_settings table
     await createTableIfNotExists(
       client,
       'admin_settings',
@@ -359,10 +362,10 @@ async function createSchema() {
         settings JSONB
       )
     `,
-      '8. admin_settings 테이블'
+      '8. admin_settings table'
     );
 
-    // 9. model_config 테이블
+    // 9. model_config table
     await createTableIfNotExists(
       client,
       'model_config',
@@ -375,10 +378,10 @@ async function createSchema() {
         config JSONB
       )
     `,
-      '9. model_config 테이블'
+      '9. model_config table'
     );
 
-    // 9-1. model_categories 테이블 (모델 카테고리)
+    // 9-1. model_categories table (model categories)
     await createTableIfNotExists(
       client,
       'model_categories',
@@ -392,10 +395,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '9-1. model_categories 테이블 (모델 카테고리)'
+      '9-1. model_categories table (model categories)'
     );
 
-    // 9-2. models 테이블 (모델 정보)
+    // 9-2. models table (model information)
     await createTableIfNotExists(
       client,
       'models',
@@ -415,10 +418,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '9-2. models 테이블 (모델 정보)'
+      '9-2. models table (model information)'
     );
 
-    // models 테이블에 endpoint 컬럼 추가 (기존 테이블이 있는 경우)
+    // Add endpoint column to models table (if existing table is present)
     await client.query(`
       DO $$ 
       BEGIN
@@ -428,7 +431,7 @@ async function createSchema() {
       END $$;
     `);
 
-    // 10. prompt_config 테이블
+    // 10. prompt_config table
     await createTableIfNotExists(
       client,
       'prompt_config',
@@ -441,10 +444,10 @@ async function createSchema() {
         config JSONB
       )
     `,
-      '10. prompt_config 테이블'
+      '10. prompt_config table'
     );
 
-    // 11. model_logs 테이블
+    // 11. model_logs table
     await createTableIfNotExists(
       client,
       'model_logs',
@@ -477,10 +480,10 @@ async function createSchema() {
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '11. model_logs 테이블'
+      '11. model_logs table'
     );
 
-    // 12. model_server 테이블
+    // 12. model_server table
     await createTableIfNotExists(
       client,
       'model_server',
@@ -495,10 +498,10 @@ async function createSchema() {
         metadata JSONB
       )
     `,
-      '12. model_server 테이블'
+      '12. model_server table'
     );
 
-    // name UNIQUE 제약 조건 추가 (기존 테이블에 대해) - DO 블록으로 안전하게 처리
+    // Add name UNIQUE constraint (for existing table) - safely handled with DO block
     await client.query(`
       DO $$ 
       BEGIN
@@ -512,7 +515,7 @@ async function createSchema() {
       END $$;
     `);
 
-    // 13. model_server_error_history 테이블 (모델 Server error 이력)
+    // 13. model_server_error_history table (model server error history)
     await createTableIfNotExists(
       client,
       'model_server_error_history',
@@ -530,12 +533,12 @@ async function createSchema() {
         metadata JSONB
       )
     `,
-      '13. model_server_error_history 테이블 (모델 Server error 이력)'
+      '13. model_server_error_history table (model server error history)'
     );
 
-    // 인덱스는 아래 배치 처리로 이동
+    // Index creation moved to batch processing below
 
-    // 14. model_server_status 테이블
+    // 14. model_server_status table
     await createTableIfNotExists(
       client,
       'model_server_status',
@@ -557,10 +560,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '14. model_server_status 테이블'
+      '14. model_server_status table'
     );
 
-    // 14-1. external_api_prompts 테이블 (프롬프트/메시지 전체 데이터 저장)
+    // 14-1. external_api_prompts table (stores full prompt/message data)
     await createTableIfNotExists(
       client,
       'external_api_prompts',
@@ -572,11 +575,11 @@ async function createSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '14-1. external_api_prompts 테이블 (프롬프트/메시지 전체 데이터 저장)'
+      '14-1. external_api_prompts table (stores full prompt/message data)'
     );
 
-    // 14-2. external_api_logs 테이블
-    // 정규화: user_email, user_name, user_role, user_department, user_cell 제거 (users 테이블에서 JOIN으로 조회)
+    // 14-2. external_api_logs table
+    // Normalization: remove user_email, user_name, user_role, user_department, user_cell (query via JOIN from users table)
     await createTableIfNotExists(
       client,
       'external_api_logs',
@@ -635,10 +638,10 @@ async function createSchema() {
         source VARCHAR(50) DEFAULT 'external_api'
       )
     `,
-      '14-2. external_api_logs 테이블'
+      '14-2. external_api_logs table'
     );
 
-    // external_api_logs 테이블에 누락된 컬럼들 추가 (기존 테이블이 있는 경우) - 통합
+    // Add missing columns to external_api_logs table (if existing table is present) - consolidated
     await client.query(`
       DO $$ 
       BEGIN
@@ -663,7 +666,7 @@ async function createSchema() {
       END $$;
     `);
 
-    // 15. api_tokens 테이블
+    // 15. api_tokens table
     await createTableIfNotExists(
       client,
       'api_tokens',
@@ -682,10 +685,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '15. api_tokens 테이블'
+      '15. api_tokens table'
     );
 
-    // api_tokens 테이블에 누락된 필드 추가 (기존 테이블이 있는 경우)
+    // Add missing fields to api_tokens table (if existing table is present)
     await client.query(`
       DO $$ 
       BEGIN
@@ -707,7 +710,7 @@ async function createSchema() {
       END $$;
     `);
 
-    // 16. notices 테이블
+    // 16. notices table
     await createTableIfNotExists(
       client,
       'notices',
@@ -724,10 +727,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '16. notices 테이블'
+      '16. notices table'
     );
 
-    // 17. user_chats 테이블
+    // 17. user_chats table
     await createTableIfNotExists(
       client,
       'user_chats',
@@ -739,10 +742,10 @@ async function createSchema() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '17. user_chats 테이블'
+      '17. user_chats table'
     );
 
-    // 18. qa_logs 테이블
+    // 18. qa_logs table
     await createTableIfNotExists(
       client,
       'qa_logs',
@@ -753,10 +756,10 @@ async function createSchema() {
         log_data JSONB
       )
     `,
-      '18. qa_logs 테이블'
+      '18. qa_logs table'
     );
 
-    // 19. rag_documents 테이블
+    // 19. rag_documents table
     await createTableIfNotExists(
       client,
       'rag_documents',
@@ -793,10 +796,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '19. rag_documents 테이블'
+      '19. rag_documents table'
     );
 
-    // 20. rag_models 테이블
+    // 20. rag_models table
     await createTableIfNotExists(
       client,
       'rag_models',
@@ -822,10 +825,10 @@ async function createSchema() {
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL
       )
     `,
-      '20. rag_models 테이블'
+      '20. rag_models table'
     );
 
-    // 21. rag_settings 테이블
+    // 21. rag_settings table
     await createTableIfNotExists(
       client,
       'rag_settings',
@@ -849,10 +852,10 @@ async function createSchema() {
         updated_by UUID REFERENCES users(id) ON DELETE SET NULL
       )
     `,
-      '21. rag_settings 테이블'
+      '21. rag_settings table'
     );
 
-    // 22. direct_messages 테이블 (쪽지)
+    // 22. direct_messages table (notes)
     await createTableIfNotExists(
       client,
       'direct_messages',
@@ -870,10 +873,10 @@ async function createSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `,
-      '22. direct_messages 테이블 (쪽지)'
+      '22. direct_messages table (notes)'
     );
 
-    // 23. agent_permissions 테이블 (에이전트 접근 권한)
+    // 23. agent_permissions table (agent access permissions)
     await createTableIfNotExists(
       client,
       'agent_permissions',
@@ -890,10 +893,10 @@ async function createSchema() {
         UNIQUE(agent_id, permission_type, permission_value)
       )
     `,
-      '23. agent_permissions 테이블 (에이전트 접근 권한)'
+      '23. agent_permissions table (agent access permissions)'
     );
 
-    // model_logs 테이블에 누락된 컬럼들 추가 (기존 테이블이 있는 경우) - 통합
+    // Add missing columns to model_logs table (if existing table is present) - consolidated
     await client.query(`
       DO $$ 
       BEGIN

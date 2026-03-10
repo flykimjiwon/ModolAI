@@ -19,7 +19,7 @@ import { detectAndMaskPII } from '@/lib/piiFilter';
 
 export const runtime = 'nodejs';
 
-// 이 파일은 모델 검증 및 프롬프트 엔지니어링 없이 가장 기본적인 LLM 프록시 기능만 수행합니다.
+// This file only provides basic LLM proxy functionality without model validation or prompt engineering.
 
 function getValueByPath(source, path) {
   if (!source || !path) return undefined;
@@ -307,26 +307,26 @@ async function logImageAnalysisToMessages({
       ]
     );
   } catch (error) {
-    console.warn('[image-analysis] messages 로그 저장 실패:', error?.message || error);
+    console.warn('[image-analysis] Failed to save messages log:', error?.message || error);
   }
 }
 
 export async function POST(request) {
   try {
-    // 클라이언트 IP 및 사용자 정보 추출
+    // Extract client IP and user info
     const clientIP = getClientIP(request);
     const userAgent = request.headers.get('user-agent') || '';
 
-    // 요청 시작 로그
-    logInfo('AI 생성 요청 시작', {
+    // Request start log
+    logInfo('AI generation request started', {
       userAgent,
       ip: clientIP,
     });
 
-    // JWT 검증
+    // JWT validation
     const authHeader = request.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      logWarn('인증 실패: Bearer 토큰 없음');
+      logWarn('Authentication failed: missing Bearer token');
       return NextResponse.json(
         { error: 'Authentication required.' },
         { status: 401 }
@@ -337,18 +337,18 @@ export async function POST(request) {
     try {
       payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
-      console.warn('[Catch] 에러 발생:', error.message);
-      return NextResponse.json({ error: '잘못된 토큰' }, { status: 401 });
+      console.warn('[Catch] Error occurred:', error.message);
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // 마지막 활동 시각 기록 (10분 throttle)
+    // Record last active time (10-minute throttle)
     if (payload?.sub) updateLastActive(payload.sub);
 
-    // 클라이언트 페이로드
+    // Client payload
     const {
       roomId,
-      model, // 모델 UUID 또는 모델명
-      prompt: clientOriginalPrompt, // 'prompt' 변수 이름을 변경하여 충돌 방지
+      model, // Model UUID or model name
+      prompt: clientOriginalPrompt, // Rename 'prompt' variable to avoid conflicts
       question,
       multiturnHistory = [],
       images = [],
@@ -362,7 +362,7 @@ export async function POST(request) {
       : [];
     if (normalizedImages.length > 0) {
       console.log(
-        `[generate] 이미지 ${normalizedImages.length}개 수신`,
+        `[generate] Received ${normalizedImages.length} image(s)`,
         normalizedImages.map((image, index) => ({
           index: index + 1,
           name: image.name || 'unknown',
@@ -372,25 +372,25 @@ export async function POST(request) {
       );
     }
 
-    // 모델 UUID를 실제 모델명으로 변환
+    // Convert model UUID to actual model name
     const actualModelName = await resolveModelId(model);
     const matchedModel = await findModelRecord(actualModelName);
 
-    console.log('[generate] 모델 정보:', {
+    console.log('[generate] Model info:', {
       originalModel: model,
       actualModelName: actualModelName,
     });
 
-    // 최종 프롬프트 구성 (로깅용)
+    // Build final prompt (for logging)
     const finalPrompt = clientOriginalPrompt || question || '';
 
     console.log(
-      '[generate] 클라이언트에서 받은 원본 multiturnHistory:',
+      '[generate] Raw multiturnHistory received from client:',
       multiturnHistory
     );
-    console.log('[generate] 클라이언트에서 받은 원본 question:', question);
+    console.log('[generate] Raw question received from client:', question);
 
-    // PostgreSQL 클라이언트 연결
+    // PostgreSQL client connection
 
     const fileContent = '';
     const filteredMultiturnHistory = applyMultiturnLimit(
@@ -399,18 +399,18 @@ export async function POST(request) {
       matchedModel?.multiturnUnlimited
     );
 
-    // 모델별 시스템 프롬프트 및 모델 지정 모델서버 조회 (UUID 사용)
+    // Retrieve per-model system prompt and model-specific server (using UUID)
     let systemPrompt = null;
     let modelEndpointUrl = null;
     let modelApiConfig = null;
     let modelApiKey = null;
     let isManualEndpoint = false;
     try {
-      // 새 테이블 구조에서 모델 조회 (레거시 지원 포함)
+      // Query model in new table structure (including legacy support)
       const { getModelsFromTables } = await import('@/lib/modelTables');
       let categories = await getModelsFromTables();
 
-      // 새 테이블에 데이터가 없으면 레거시 model_config에서 조회
+      // If new tables are empty, query legacy model_config
       if (!categories) {
         const modelConfigResult = await query(
           'SELECT config FROM model_config WHERE config_type = $1',
@@ -422,13 +422,13 @@ export async function POST(request) {
       }
 
       if (categories) {
-        // 모든 카테고리에서 해당 모델 찾기 (UUID, modelName, label로 검색)
+        // Find matching model across all categories (search by UUID, modelName, label)
         for (const category of Object.values(categories)) {
           const foundModel = category.models?.find(
             (m) => m.id === model || m.modelName === model || m.label === model
           );
           if (foundModel) {
-            console.log('[DEBUG] foundModel 찾음:', {
+              console.log('[DEBUG] foundModel found:', {
               id: foundModel.id,
               modelName: foundModel.modelName,
               label: foundModel.label,
@@ -441,7 +441,7 @@ export async function POST(request) {
                 .filter((line) => line.trim() !== '')
                 .join('\n');
               console.log(
-                `[generate] 모델 ${model} (${actualModelName})의 시스템 프롬프트 적용: ${systemPrompt.length}자`
+                `[generate] Applied system prompt for model ${model} (${actualModelName}): ${systemPrompt.length} chars`
               );
             }
             if (
@@ -449,13 +449,13 @@ export async function POST(request) {
               typeof foundModel.endpoint === 'string'
             ) {
               modelEndpointUrl = foundModel.endpoint.trim();
-              console.log('[DEBUG] modelEndpointUrl 설정:', modelEndpointUrl);
+              console.log('[DEBUG] modelEndpointUrl set:', modelEndpointUrl);
             }
             if (modelEndpointUrl === 'manual') {
               isManualEndpoint = true;
               modelApiConfig = foundModel.apiConfig || null;
               modelApiKey = foundModel.apiKey || null;
-              console.log('[DEBUG] Manual endpoint 감지:', {
+              console.log('[DEBUG] Manual endpoint detected:', {
                 isManualEndpoint,
                 hasApiConfig: !!modelApiConfig,
                 hasApiKey: !!modelApiKey
@@ -467,7 +467,7 @@ export async function POST(request) {
       }
     } catch (systemPromptError) {
       console.warn(
-        '[generate] 시스템 프롬프트 조회 실패:',
+        '[generate] Failed to fetch system prompt:',
         systemPromptError.message
       );
     }
@@ -486,10 +486,10 @@ export async function POST(request) {
         maxUserQuestionLength = settingsRow.max_user_question_length;
       }
     } catch (error) {
-      console.warn('[generate] 질문 길이 설정 조회 실패:', error.message);
+      console.warn('[generate] Failed to fetch question length setting:', error.message);
     }
 
-    // 사용자 질문 검증 (길이 체크)
+    // Validate user question (length check)
     const { validateUserQuestion } = await import('@/lib/contextManager');
     const userValidation = validateUserQuestion(
       question,
@@ -508,10 +508,10 @@ export async function POST(request) {
       ? systemPrompt.replace(/\s+/g, ' ').slice(0, 120)
       : '';
     console.log(
-      `[generate] 질문 길이: ${question.length}자, 파일 내용: ${fileContent.length}자, 히스토리: ${filteredMultiturnHistory.length}개 메시지`
+      `[generate] Question length: ${question.length} chars, file content: ${fileContent.length} chars, history: ${filteredMultiturnHistory.length} messages`
     );
     console.log(
-      `[generate] systemPrompt 적용 여부: ${!!systemPrompt}, 길이: ${systemPrompt ? systemPrompt.length : 0}, 미리보기: "${systemPromptPreview}"`
+      `[generate] systemPrompt applied: ${!!systemPrompt}, length: ${systemPrompt ? systemPrompt.length : 0}, preview: "${systemPromptPreview}"`
     );
 
     let finalQuestion = question;
@@ -535,8 +535,8 @@ export async function POST(request) {
         jwtRole: payload?.role || null,
       });
       if (piiResult.detected) {
-        console.log(`[PII] 요청에서 ${piiResult.detectedCnt}개 PII 감지 → LLM 차단`);
-        const piiNotice = `⚠️ 개인정보가 탐지되었습니다. 필터링된 정보를 복사 후 재 질문 해주세요.\n\n마스킹된 내용:\n${piiResult.maskedText}`;
+        console.log(`[PII] Detected ${piiResult.detectedCnt} PII item(s) in request -> blocked LLM call`);
+        const piiNotice = `⚠️ Personal information was detected. Please copy the filtered content and ask again.\n\nMasked content:\n${piiResult.maskedText}`;
         const maskedStream = new ReadableStream({
           start(controller) {
             controller.enqueue(new TextEncoder().encode(JSON.stringify({ response: piiNotice }) + '\n'));
@@ -550,7 +550,7 @@ export async function POST(request) {
     const userText = fileContent ? `${fileContent}\n\n${finalQuestion}` : finalQuestion;
     const userContent = buildUserContent(userText, normalizedImages);
 
-    // 로깅용 전체 메시지 히스토리 구성 (multiturnHistory + 현재 질문)
+    // Build full message history for logging (multiturnHistory + current question)
     const fullMessagesForLogging = [
       ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
       ...filteredMultiturnHistory.map((msg) => ({
@@ -560,7 +560,7 @@ export async function POST(request) {
       { role: 'user', content: userContent },
     ];
 
-    // 모델서버 타입 조회 (DB → env fallback) 및 모델 지정 모델서버 우선 적용
+    // Resolve model server type (DB -> env fallback) and prioritize model-specific server
     let endpointType = 'llm';
     let openaiCompatBase = process.env.OPENAI_COMPAT_BASE || '';
     let openaiCompatApiKey = process.env.OPENAI_COMPAT_API_KEY || '';
@@ -589,7 +589,7 @@ export async function POST(request) {
           openaiCompatBase = settingsDoc.openaiCompatBase;
         if (settingsDoc.openaiCompatApiKey)
           openaiCompatApiKey = settingsDoc.openaiCompatApiKey;
-        // 모델이 endpoint를 명시한 경우 provider 기준으로 덮어쓰기
+        // If model specifies endpoint, override based on provider
         if (modelEndpointUrl) {
           const list = Array.isArray(settingsDoc.customEndpoints)
             ? settingsDoc.customEndpoints
@@ -604,15 +604,15 @@ export async function POST(request) {
         }
       }
     } catch (settingsError) {
-      console.warn('[generate] 설정 조회 실패:', settingsError.message);
+      console.warn('[generate] Failed to load settings:', settingsError.message);
     }
     if (isManualEndpoint) {
       endpointType = 'manual';
-      console.log('[DEBUG] endpointType을 manual로 설정');
+      console.log('[DEBUG] endpointType set to manual');
     }
-    console.log('[DEBUG] 최종 endpointType:', endpointType);
+    console.log('[DEBUG] Final endpointType:', endpointType);
 
-    // 요청 타입 분석
+    // Analyze request type
     const hasFiles = normalizedImages.length > 0;
     const requestType = hasFiles ? 'multimodal' : 'text';
     const apiTypeForLog = getApiTypeForLog(requestPurpose);
@@ -620,7 +620,7 @@ export async function POST(request) {
     if (endpointType === 'manual') {
       if (!modelApiConfig) {
         return NextResponse.json(
-          { error: '수동 API 설정이 없습니다.' },
+          { error: 'Manual API configuration is missing.' },
           { status: 400 }
         );
       }
@@ -633,7 +633,7 @@ export async function POST(request) {
             : modelApiConfig;
       } catch (error) {
         return NextResponse.json(
-          { error: '수동 API 설정 JSON 파싱에 실패했습니다.' },
+          { error: 'Failed to parse manual API configuration JSON.' },
           { status: 400 }
         );
       }
@@ -659,7 +659,7 @@ export async function POST(request) {
       const manualUrl = applyTemplate(manualConfig?.url, context);
       if (!manualUrl) {
         return NextResponse.json(
-          { error: '수동 API URL이 설정되지 않았습니다.' },
+          { error: 'Manual API URL is not configured.' },
           { status: 400 }
         );
       }
@@ -688,7 +688,7 @@ export async function POST(request) {
         body = { ...body, input: convertToResponsesInput(body.input) };
       }
 
-      console.log('[Manual API] 설정 확인:', {
+      console.log('[Manual API] Configuration check:', {
         hasStream: !!manualConfig?.stream,
         streamValue: manualConfig?.stream,
         manualStreamEnabled,
@@ -713,7 +713,7 @@ export async function POST(request) {
           typeof body === 'string' ? body : JSON.stringify(body);
       }
 
-      console.log('[Manual API] 요청 전송:', {
+      console.log('[Manual API] Sending request:', {
         url: manualUrl,
         method,
         bodyPreview: typeof requestOptions.body === 'string'
@@ -738,7 +738,7 @@ export async function POST(request) {
             responseTime: Date.now() - startAt,
             statusCode: manualRes.status,
             isStream: manualStreamEnabled,
-            error: `수동 API 요청 실패: HTTP ${manualRes.status}`,
+            error: `Manual API request failed: HTTP ${manualRes.status}`,
             clientIP,
             userAgent,
             roomId: roomId || null,
@@ -754,13 +754,13 @@ export async function POST(request) {
           });
         } catch (logErr) {
           console.warn(
-            '[manual] 외부 API 로깅 실패(무시):',
+              '[manual] External API logging failed (ignored):',
             logErr?.message || logErr
           );
         }
         return NextResponse.json(
           {
-            error: `수동 API 요청 실패: HTTP ${manualRes.status}`,
+            error: `Manual API request failed: HTTP ${manualRes.status}`,
             details: errorText,
           },
           { status: manualRes.status }
@@ -775,16 +775,16 @@ export async function POST(request) {
         return `${text.slice(0, limit)}…(${text.length} chars)`;
       };
 
-      console.log('[Manual API] 응답 수신:', {
+      console.log('[Manual API] Response received:', {
         status: manualRes.status,
         contentType: manualContentType,
         manualStreamEnabled,
         willUseStreaming: manualStreamEnabled,
       });
 
-      // stream: true가 설정되어 있으면 Content-Type에 관계없이 스트리밍으로 처리
+      // If stream: true is set, handle as streaming regardless of Content-Type
       if (manualStreamEnabled) {
-        console.log('[Manual API] 스트리밍 모드로 처리 시작');
+        console.log('[Manual API] Start processing in streaming mode');
         const encoder = new TextEncoder();
         const decoder = new TextDecoder('utf-8');
         let streamedResponseLength = 0;
@@ -860,12 +860,12 @@ export async function POST(request) {
               while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
-                  console.log('[Manual API] 스트림 종료, 총 청크:', chunkCount);
+                  console.log('[Manual API] Stream ended, total chunks:', chunkCount);
                   break;
                 }
                 chunkCount++;
                 if (!firstChunkLogged) {
-                  console.log('[Manual API] 첫 응답 청크 수신');
+                  console.log('[Manual API] First response chunk received');
                   firstChunkLogged = true;
                 }
                 buffer += decoder.decode(value, { stream: true });
@@ -891,7 +891,7 @@ export async function POST(request) {
                     });
                   }
                   if (data === '[DONE]') {
-                    console.log('[Manual API] [DONE] 수신');
+                    console.log('[Manual API] [DONE] received');
                     controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                     controller.close();
                     return;
@@ -901,7 +901,7 @@ export async function POST(request) {
                   try {
                     parsed = JSON.parse(data);
                   } catch (error) {
-    console.warn('[Loop] 항목 처리 실패 (건너뜀):', error.message);
+    console.warn('[Loop] Failed to process item (skipped):', error.message);
     continue;
   }
                   if (
@@ -913,7 +913,7 @@ export async function POST(request) {
                     streamErrorInfo = {
                       message:
                         errorInfo.message ||
-                        '요청 처리 중 오류가 발생했습니다.',
+                        'An error occurred while processing the request.',
                       type: errorInfo.type || 'error',
                       code: errorInfo.code || null,
                     };
@@ -961,10 +961,10 @@ export async function POST(request) {
                 }
               }
             } catch (streamError) {
-              console.error('[manual stream] 스트림 처리 오류:', streamError);
+              console.error('[manual stream] Stream processing error:', streamError);
               controller.error(streamError);
             } finally {
-              console.log('[Manual API] 스트림 응답 미리보기:', {
+              console.log('[Manual API] Stream response preview:', {
                 status: manualRes.status,
                 contentType: manualContentType,
                 sawDelta,
@@ -988,7 +988,7 @@ export async function POST(request) {
                   statusCode: streamErrorInfo ? 429 : manualRes.status,
                   isStream: true,
                   error: streamErrorInfo
-                    ? `수동 API 스트림 오류: ${streamErrorInfo.message}`
+                    ? `Manual API stream error: ${streamErrorInfo.message}`
                     : undefined,
                   clientIP,
                   userAgent,
@@ -1005,7 +1005,7 @@ export async function POST(request) {
                 });
               } catch (logErr) {
                 console.warn(
-                  '[manual] 외부 API 로깅 실패(무시):',
+                  '[manual] External API logging failed (ignored):',
                   logErr?.message || logErr
                 );
               }
@@ -1040,7 +1040,7 @@ export async function POST(request) {
       } catch (error) {
         responseText = await manualRes.text().catch(() => '');
       }
-      console.log('[Manual API] 비스트리밍 응답 미리보기:', {
+      console.log('[Manual API] Non-streaming response preview:', {
         status: manualRes.status,
         contentType: manualContentType,
         responseText: truncatePreview(responseText),
@@ -1098,7 +1098,7 @@ export async function POST(request) {
         });
       } catch (logErr) {
         console.warn(
-          '[manual] 외부 API 로깅 실패(무시):',
+          '[manual] External API logging failed (ignored):',
           logErr?.message || logErr
         );
       }

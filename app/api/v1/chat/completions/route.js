@@ -20,8 +20,8 @@ import {
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-// OpenAI 호환 Chat Completions API
-// Ollama 형식 응답을 OpenAI 형식으로 변환
+// OpenAI-compatible Chat Completions API
+// Convert Ollama-format responses to OpenAI format
 
 const createChatCompletionId = () =>
   `chatcmpl-${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
@@ -254,29 +254,29 @@ async function logOpenAIProxyRequest(data) {
       ]
     );
   } catch (error) {
-    console.error('로그 기록 실패:', error);
+    console.error('Failed to write log:', error);
   }
 }
 
-// API 토큰 검증 함수
+// API token verification function
 async function verifyApiToken(token) {
   try {
-    // JWT 토큰 검증
+    // Verify JWT token
     const tokenPayload = jwt.verify(token, JWT_SECRET);
 
-    // API 토큰인지 확인 (type이 'api_token'이어야 함)
+    // Check whether this is an API token (type must be 'api_token')
     if (tokenPayload.type !== 'api_token') {
       return { valid: false, error: 'Invalid token type. API token required.' };
     }
 
-    // 토큰 해시 생성
+    // Create token hash
     const tokenHash = crypto
       .createHash('sha256')
       .update(token)
       .digest('hex')
       .substring(0, 16);
 
-    // DB에서 토큰 정보 조회
+    // Retrieve token info from DB
     const { query } = await import('@/lib/postgres');
     const userId = tokenPayload.sub || tokenPayload.id;
 
@@ -300,22 +300,22 @@ async function verifyApiToken(token) {
       createdAt: tokenResult.rows[0].created_at,
     };
 
-    // 토큰 활성화 여부 확인
+    // Check whether token is active
     if (!apiToken.isActive) {
       return { valid: false, error: 'API token is inactive.' };
     }
 
-    // 토큰 만료 여부 확인
+    // Check whether token is expired
     if (apiToken.expiresAt && new Date(apiToken.expiresAt) < new Date()) {
       return { valid: false, error: 'API token has expired.' };
     }
 
-    // JWT 만료 여부 확인
+    // Check whether JWT is expired
     if (tokenPayload.exp && tokenPayload.exp < Math.floor(Date.now() / 1000)) {
       return { valid: false, error: 'API token has expired.' };
     }
 
-    // 토큰 사용 시간 업데이트
+    // Update token last-used time
     await query('UPDATE api_tokens SET last_used_at = $1 WHERE id = $2', [
       new Date(),
       apiToken._id,
@@ -350,7 +350,7 @@ async function verifyApiToken(token) {
     if (error.name === 'TokenExpiredError') {
       return { valid: false, error: 'API token has expired.' };
     }
-    console.error('[API Token Verification] 오류:', error);
+    console.error('[API Token Verification] Error:', error);
     return { valid: false, error: 'Token verification failed.' };
   }
 }
@@ -363,7 +363,7 @@ export async function POST(request) {
     request.headers.get('x-client-name') ||
     'unknown';
 
-  // API 토큰 검증 (필수)
+  // API token verification (required)
   let userInfo = null;
   let tokenHash = null;
   let tokenInfo = null;
@@ -401,7 +401,7 @@ export async function POST(request) {
   tokenInfo = verificationResult.tokenInfo;
   tokenHash = tokenInfo.tokenHash;
 
-  // X-User-Name 헤더가 없을 때 DB에서 실제 이름 조회
+  // If X-User-Name header is missing, fetch actual name from DB
   let actualUserName = request.headers.get('x-user-name');
   if (!actualUserName && userInfo?.userId) {
     try {
@@ -414,20 +414,20 @@ export async function POST(request) {
         actualUserName = userResult.rows[0].name;
       }
     } catch (error) {
-      console.error('[X-User-Name] DB 조회 실패:', error);
-      // 실패해도 계속 진행
+      console.error('[X-User-Name] DB query failed:', error);
+      // Continue even if lookup fails
     }
   }
 
-  // 외부 API 로깅을 위한 추가 헤더 정보 수집
+  // Collect additional header metadata for external API logging
   const identificationHeaders = {
-    // === 기본 프록시 정보 ===
+    // === Basic proxy information ===
     xForwardedFor: request.headers.get('x-forwarded-for'),
     xRealIP: request.headers.get('x-real-ip'),
     xForwardedProto: request.headers.get('x-forwarded-proto'),
     xForwardedHost: request.headers.get('x-forwarded-host'),
 
-    // === 클라이언트 정보 ===
+    // === Client information ===
     acceptLanguage: request.headers.get('accept-language'),
     acceptEncoding: request.headers.get('accept-encoding'),
     acceptCharset: request.headers.get('accept-charset'),
@@ -435,11 +435,11 @@ export async function POST(request) {
     origin: request.headers.get('origin'),
     contentType: request.headers.get('content-type'),
 
-    // === 보안 및 인증 ===
+    // === Security and authentication ===
     authorization: authHeader ? 'present' : 'absent',
     tokenHash: tokenHash || null,
 
-    // === JWT에서 추출한 사용자 정보 (있을 경우) ===
+    // === User info extracted from JWT (if available) ===
     ...(userInfo && {
       jwtUserId: userInfo.userId,
       jwtEmail: userInfo.email,
@@ -449,33 +449,33 @@ export async function POST(request) {
       jwtCell: userInfo.cell,
     }),
 
-    // === 토큰 메타데이터 ===
+    // === Token metadata ===
     ...(tokenInfo && {
       tokenIssuedAt: tokenInfo.issuedAt,
       tokenExpiresAt: tokenInfo.expiresAt,
       tokenIsExpired: tokenInfo.isExpired,
     }),
 
-    // === 커스텀 식별 헤더 (우선순위: 헤더 > DB 조회 > JWT) ===
-    // 사용자 식별
+    // === Custom identification headers (priority: header > DB lookup > JWT) ===
+    // User identification
     xUserId: request.headers.get('x-user-id') || userInfo?.userId || null,
     xUserName: actualUserName || null,
     xUserEmail: request.headers.get('x-user-email') || userInfo?.email || null,
 
-    // 조직/프로젝트 식별
+    // Organization/project identification
     xOrganizationId: request.headers.get('x-organization-id'),
     xProjectId: request.headers.get('x-project-id'),
     xEnvironment: request.headers.get('x-environment'), // 'dev', 'staging', 'prod'
 
-    // 클라이언트 정보
+    // Client information
     xRequestedWith: request.headers.get('x-requested-with'),
     xClientName: request.headers.get('x-client-name'),
     xClientVersion: request.headers.get('x-client-version'),
     xWorkspace: request.headers.get('x-workspace'),
     xSessionId: request.headers.get('x-session-id'),
-    xRequestId: request.headers.get('x-request-id'), // 요청 추적용 고유 ID
+    xRequestId: request.headers.get('x-request-id'), // Unique ID for request tracing
 
-    // === 타임존 정보 ===
+    // === Timezone information ===
     timezone:
       request.headers.get('x-timezone') ||
       request.headers.get('timezone') ||
@@ -490,17 +490,17 @@ export async function POST(request) {
   };
 
   try {
-    // 원본 요청 본문을 텍스트로 먼저 읽어서 보존 (잘못 직렬화된 객체 복구용)
+    // Read and preserve raw request body text first (for recovering improperly serialized objects)
     let rawBodyText = null;
     let body;
     try {
       rawBodyText = await request.text();
       body = JSON.parse(rawBodyText);
     } catch (jsonError) {
-      console.error('[OpenAI Chat Completions] JSON 파싱 오류:', jsonError);
+      console.error('[OpenAI Chat Completions] JSON parse error:', jsonError);
       if (rawBodyText) {
         console.error(
-          '[OpenAI Chat Completions] 파싱 실패한 원시 본문:',
+          '[OpenAI Chat Completions] Raw body that failed to parse:',
           rawBodyText.substring(0, 1000)
         );
       }
@@ -515,7 +515,7 @@ export async function POST(request) {
       );
     }
 
-    // OpenAI 형식 검증
+    // Validate OpenAI format
     if (!body.model || !body.messages || !Array.isArray(body.messages)) {
       return NextResponse.json(
         {
@@ -532,9 +532,9 @@ export async function POST(request) {
     tools = normalizeToolsPayload(tools);
     tool_choice = normalizeToolChoicePayload(tool_choice);
 
-    // messages 배열의 content 필드 검증 및 정규화
-    // content가 객체나 배열인 경우를 처리하고, 잘못 직렬화된 "[object Object]" 문자열을 감지
-    // 원본을 보존하기 위해 깊은 복사 생성
+    // Validate and normalize the content field in the messages array
+    // Handle cases where content is an object or array, and detect improperly serialized "[object Object]" strings
+    // Create a deep copy to preserve the original
     const originalMessages = JSON.parse(JSON.stringify(body.messages || []));
 
     for (let index = 0; index < messages.length; index++) {
@@ -542,7 +542,7 @@ export async function POST(request) {
 
       if (!msg || typeof msg !== 'object') {
         console.warn(
-          `[OpenAI Chat Completions] 잘못된 메시지 형식 (인덱스 ${index}):`,
+          `[OpenAI Chat Completions] Invalid message format (index ${index}):`,
           msg
         );
         continue;
@@ -550,23 +550,23 @@ export async function POST(request) {
 
       const { role, content } = msg;
 
-      // content가 "[object Object]"로 시작하는 잘못 직렬화된 문자열인 경우
+      // If content is an improperly serialized string starting with "[object Object]"
       if (typeof content === 'string' && content.includes('[object Object]')) {
         console.warn(
-          `[OpenAI Chat Completions] 잘못 직렬화된 content 감지 (인덱스 ${index}): "${content.substring(
+          `[OpenAI Chat Completions] Detected improperly serialized content (index ${index}): "${content.substring(
             0,
             100
           )}"`
         );
 
-        // 원본 body에서 해당 메시지의 content를 다시 확인
+        // Re-check this message's content in the original body
         const originalMsg = originalMessages[index];
         if (
           originalMsg &&
           originalMsg.content &&
           typeof originalMsg.content !== 'string'
         ) {
-          // 원본이 객체나 배열인 경우, 올바르게 사용
+          // If original is object/array, use it correctly
           messages[index] = {
             ...msg,
             content: originalMsg.content,
@@ -574,7 +574,7 @@ export async function POST(request) {
           continue;
         }
 
-        // 원본도 문자열이면, 원본 body의 원시 데이터 확인 시도
+        // If original is also a string, try checking raw data from original body
         const rawBodyMsg = body.messages && body.messages[index];
         if (
           rawBodyMsg &&
@@ -588,7 +588,7 @@ export async function POST(request) {
           continue;
         }
 
-        // 원본도 문자열이면, 원시 JSON 문자열에서 해당 메시지 부분 추출 시도
+        // If original is also a string, try extracting this message from raw JSON text
         if (rawBodyText) {
           try {
             const rawBodyParsed = JSON.parse(rawBodyText);
@@ -607,15 +607,15 @@ export async function POST(request) {
             }
           } catch (e) {
             console.warn(
-              '[OpenAI Chat Completions] rawBody 파싱 실패:',
+              '[OpenAI Chat Completions] Failed to parse rawBody:',
               e?.message || e
             );
           }
         }
 
-        // 원본도 문자열이면 에러 반환
+        // If original is also a string, return an error
         console.error(
-          `[OpenAI Chat Completions] 잘못 직렬화된 content 복구 불가 (인덱스 ${index})`
+          `[OpenAI Chat Completions] Unable to recover improperly serialized content (index ${index})`
         );
         return NextResponse.json(
           {
@@ -631,14 +631,14 @@ export async function POST(request) {
         );
       }
 
-      // content가 객체인 경우 (배열이 아닌 단일 객체) - OpenAI 멀티모달 형식이 아닐 수 있음
+      // If content is an object (single object, not array) - might not be OpenAI multimodal format
       if (content && typeof content === 'object' && !Array.isArray(content)) {
-        // OpenAI 멀티모달 형식인지 확인 (type 필드가 있는지)
+        // Check whether it is OpenAI multimodal format (has type field)
         if (!content.type) {
           console.warn(
-            `[OpenAI Chat Completions] content가 객체 형식이지만 멀티모달 형식이 아닙니다 (인덱스 ${index}). JSON 문자열로 변환합니다.`
+            `[OpenAI Chat Completions] content is object format but not multimodal format (index ${index}). Converting to JSON string.`
           );
-          // 객체를 JSON 문자열로 변환
+          // Convert object to JSON string
           try {
             messages[index] = {
               ...msg,
@@ -646,7 +646,7 @@ export async function POST(request) {
             };
           } catch (e) {
             console.error(
-              `[OpenAI Chat Completions] content 객체 직렬화 실패 (인덱스 ${index}):`,
+              `[OpenAI Chat Completions] Failed to serialize content object (index ${index}):`,
               e
             );
             return NextResponse.json(
@@ -663,19 +663,19 @@ export async function POST(request) {
       }
     }
 
-    // 모델 이름에서 서버 정보 파싱 (예: "spark-ollama-gemma3:27b")
+    // Parse server info from model name (e.g., "spark-ollama-gemma3:27b")
     let { serverName, modelName: parsedModelName } = parseModelName(model);
 
-    // 실제 모델 이름 결정 (서버 정보가 있으면 파싱된 모델 이름 사용, 없으면 원본 사용)
+    // Determine actual model name (use parsed model name if server info exists, otherwise use original)
     let actualModelName = serverName ? parsedModelName : model;
 
-    // 모델 이름을 실제 모델 ID로 변환 (표시 이름 지원)
+    // Convert model name to actual model ID (supports display names)
     const resolvedModel = await resolveModelId(actualModelName);
     if (resolvedModel !== actualModelName) {
       actualModelName = resolvedModel;
     }
 
-    // 최종 모델 이름 설정
+    // Set final model name
     model = actualModelName;
 
     const matchedModel =
@@ -695,7 +695,7 @@ export async function POST(request) {
         return NextResponse.json(
           {
             error: {
-              message: '수동 API 설정이 없습니다.',
+               message: 'Manual API configuration is missing.',
               type: 'invalid_request_error',
             },
           },
@@ -713,7 +713,7 @@ export async function POST(request) {
         return NextResponse.json(
           {
             error: {
-              message: 'Manual API 설정 JSON 파싱에 실패했습니다.',
+               message: 'Failed to parse Manual API configuration JSON.',
               type: 'invalid_request_error',
             },
           },
@@ -739,7 +739,7 @@ export async function POST(request) {
         return NextResponse.json(
           {
             error: {
-              message: 'Manual API URL이 설정되지 않았습니다.',
+               message: 'Manual API URL is not configured.',
               type: 'invalid_request_error',
             },
           },
