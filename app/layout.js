@@ -1,8 +1,10 @@
 import './globals.css';
 import ChatWidget from './components/ChatWidget';
 import { AlertProvider } from './contexts/AlertContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import SiteSettings from './components/SiteSettings';
 import ClientErrorReporter from './components/ClientErrorReporter';
+import GlobalControls from './components/GlobalControls';
 
 // className.split 에러 방지를 위한 전역 패치 (클라이언트에서만 실행)
 if (typeof window !== 'undefined') {
@@ -153,7 +155,10 @@ export default function RootLayout({ children }) {
                       root.classList.add('dark');
                     }
                   }
-                } catch (e) {}
+                  var lang = localStorage.getItem('modolai-lang');
+                  if (lang === 'ko' || lang === 'en') {
+                    root.lang = lang;
+                  }
               })();
             `,
           }}
@@ -162,10 +167,13 @@ export default function RootLayout({ children }) {
       <body className='h-full bg-background text-foreground font-sans'>
         <ClientErrorReporter />
         <SiteSettings />
-        <AlertProvider>
-          {children}
-          <ChatWidget />
-        </AlertProvider>
+        <LanguageProvider>
+          <AlertProvider>
+            <GlobalControls />
+            {children}
+            <ChatWidget />
+          </AlertProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

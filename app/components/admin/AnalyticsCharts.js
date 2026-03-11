@@ -18,12 +18,12 @@ import {
 } from 'recharts';
 import {
   BarChart3,
-  PieChart as PieChartIcon,
+  PieChartIcon,
   TrendingUp,
   Table,
   Coins,
   CircleHelp,
-} from 'lucide-react';
+} from '@/components/icons';
 
 const COLORS = [
   '#3B82F6',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, Search, Users, Building, Send, Check, Loader2 } from 'lucide-react';
+import { X, Search, Users, Building, Send, Check, Loader2 } from '@/components/icons';
 
 export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
   const [recipientType, setRecipientType] = useState('multiple');

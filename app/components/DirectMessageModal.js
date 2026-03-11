@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { X, Mail, MailOpen, Trash2, Clock, User, Loader2 } from 'lucide-react';
+import { X, Mail, MailOpen, Trash2, Clock, User, Loader2 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
 export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChange }) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
-import { MessageCircle, Check, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { MessageCircle, Check, Copy, ThumbsUp, ThumbsDown } from '@/components/icons';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import TypingAnimation from '../TypingAnimation';

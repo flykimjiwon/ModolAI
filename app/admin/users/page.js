@@ -13,7 +13,7 @@ import {
   Calendar,
   X,
   HelpCircle,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import UserDetailModal from './components/UserDetailModal';
 import { Badge } from '@/components/ui/badge';

@@ -10,7 +10,7 @@ import {
   User,
   Building,
   Briefcase,
-} from 'lucide-react';
+} from '@/components/icons';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

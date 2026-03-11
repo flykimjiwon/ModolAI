@@ -26,7 +26,7 @@ import {
   List,
   XCircle,
   BarChart3,
-} from 'lucide-react';
+} from '@/components/icons';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
 

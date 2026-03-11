@@ -10,7 +10,7 @@ import {
   ArrowLeft,
   Search,
   Eye,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { Button } from '@/components/ui/button';

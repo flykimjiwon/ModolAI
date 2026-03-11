@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { Button } from '@/components/ui/button';

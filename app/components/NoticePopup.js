@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Eye, Bell } from 'lucide-react';
+import { X, Eye, Bell } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
 export default function NoticePopup({ target = 'main', initialNotice = null }) {

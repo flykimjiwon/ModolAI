@@ -15,7 +15,7 @@ import {
   User,
   Key,
   Mail,
-} from 'lucide-react';
+} from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';

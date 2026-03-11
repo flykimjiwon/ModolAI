@@ -24,7 +24,7 @@ import {
   X,
   Copy,
   Hash,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 
 export default function ExternalApiLogsPage() {

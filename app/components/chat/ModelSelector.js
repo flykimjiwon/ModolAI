@@ -1,6 +1,6 @@
 'use client';
 import { useState, memo, useEffect, Fragment } from 'react';
-import { Zap, ChevronDown, Loader2 } from 'lucide-react';
+import { Zap, ChevronDown, Loader2 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {

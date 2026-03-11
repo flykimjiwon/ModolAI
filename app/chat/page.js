@@ -20,7 +20,7 @@ import ChatLayout from '@/components/chat/ChatLayout';
 import ChatInput from '@/components/chat/ChatInput';
 import NoticePopup from '@/components/NoticePopup';
 import { Button } from '@/components/ui/button';
-import { X, Loader2, ChevronDown } from 'lucide-react';
+import { X, Loader2, ChevronDown } from '@/components/icons';
 
 /* ---------- 메인 컴포넌트 ---------- */
 export default function Home() {

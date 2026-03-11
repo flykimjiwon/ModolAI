@@ -20,7 +20,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-} from 'lucide-react';
+} from '@/components/icons';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

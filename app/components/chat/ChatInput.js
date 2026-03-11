@@ -1,6 +1,6 @@
 'use client';
 import { memo, useRef, useState, useEffect, useCallback } from 'react';
-import { LucideImage, Send } from 'lucide-react';
+import { LucideImage, Send } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import ModelSelector from './ModelSelector';
 import { useAlert } from '@/contexts/AlertContext';

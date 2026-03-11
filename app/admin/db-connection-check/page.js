@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Database, RefreshCw, TriangleAlert } from 'lucide-react';
+import { CheckCircle2, Database, RefreshCw, TriangleAlert } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 
 function formatDateTime(value) {

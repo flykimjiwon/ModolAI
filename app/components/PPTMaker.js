@@ -13,7 +13,7 @@ import {
   Copy,
   GripVertical,
   CheckCircle2,
-} from 'lucide-react';
+} from '@/components/icons';
 import {
   DndContext,
   closestCenter,

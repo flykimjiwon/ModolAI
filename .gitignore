@@ -93,3 +93,6 @@ check_gpt4_config.sql
 # GitLab CI/CD 배포 설정 (운영 전용, 로컬 배포 안 함)
 .gitlab-ci.yml
 .gitlab/
+
+# Tesseract OCR trained data binaries
+*.traineddata

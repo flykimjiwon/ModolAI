@@ -10,7 +10,7 @@ import {
   Cpu,
   Database,
   Coins,
-} from 'lucide-react';
+} from '@/components/icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

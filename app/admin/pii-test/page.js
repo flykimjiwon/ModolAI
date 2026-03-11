@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Info, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, RefreshCw } from '@/components/icons';
 
 function prettyJson(value) {
   if (value === undefined) return 'undefined';

@@ -10,7 +10,7 @@ import {
   ChevronUp,
   XCircle,
   Clock,
-} from 'lucide-react';
+} from '@/components/icons';
 
 function parseAssistantMeta(messages) {
   if (!Array.isArray(messages)) return null;

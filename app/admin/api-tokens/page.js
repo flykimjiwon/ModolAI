@@ -16,7 +16,7 @@ import {
   Filter,
   Power,
   PowerOff,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 
 const TOKENS_PER_PAGE = 20;

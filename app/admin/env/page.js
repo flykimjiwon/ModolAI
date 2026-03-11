@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshCw, ShieldCheck, TriangleAlert } from 'lucide-react';
+import { RefreshCw, ShieldCheck, TriangleAlert } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

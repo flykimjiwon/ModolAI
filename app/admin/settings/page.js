@@ -2,18 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Upload,
-  Save,
-  RefreshCw,
-  Globe,
-  MessageCircle,
-  Lightbulb,
-  Trash2,
-  AlertTriangle,
-  Image as ImageIcon,
-  Code,
-} from 'lucide-react';
+import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, AlertTriangle, ImageIcon, Code } from '@/components/icons';
 import Image from 'next/image'; // Image 컴포넌트 임포트
 import { useAlert } from '@/contexts/AlertContext';
 import { Switch } from '@/components/ui/switch';

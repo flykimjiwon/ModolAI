@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
 function ScrollButtons({ show, containerRef }) {

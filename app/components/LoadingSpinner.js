@@ -2,7 +2,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2 } from '@/components/icons';
 
 /**
  * 응답 생성 중에 입력 영역만 비활성화하고 중단 버튼을 표시합니다.

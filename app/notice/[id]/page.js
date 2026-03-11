@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Calendar, User, Eye, Edit } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Eye, Edit } from '@/components/icons';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';

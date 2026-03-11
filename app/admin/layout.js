@@ -30,7 +30,7 @@ import {
   Mail,
   Bot,
   ChevronRight,
-} from 'lucide-react';
+} from '@/components/icons';
 import {
   DndContext,
   closestCenter,

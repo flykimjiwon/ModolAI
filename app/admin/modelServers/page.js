@@ -17,7 +17,7 @@ import {
   Trash2,
   Copy,
   Check,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 
 export default function ModelServersPage() {

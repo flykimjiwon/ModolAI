@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Save, ArrowLeft, Eye } from 'lucide-react';
+import { Save, ArrowLeft, Eye } from '@/components/icons';
 import dynamic from 'next/dynamic';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';

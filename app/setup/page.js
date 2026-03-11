@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, User, Mail, Lock, Loader2, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, User, Mail, Lock, Loader2, AlertTriangle } from '@/components/icons';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

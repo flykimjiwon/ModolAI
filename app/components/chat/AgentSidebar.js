@@ -14,7 +14,7 @@ import {
   Bot,
   History,
   Presentation,
-} from 'lucide-react';
+} from '@/components/icons';
 import { ConfirmModal } from '@/components/ui/modal';
 import DirectMessageModal from '@/components/DirectMessageModal';
 import { Button } from '@/components/ui/button';

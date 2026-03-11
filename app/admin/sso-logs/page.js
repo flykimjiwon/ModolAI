@@ -12,7 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
-} from 'lucide-react';
+} from '@/components/icons';
 
 export default function SSOLogsPage() {
   const [logs, setLogs] = useState([]);

@@ -17,7 +17,7 @@ import {
   Clock,
   User,
   Plus,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import SendMessageModal from './components/SendMessageModal';
 

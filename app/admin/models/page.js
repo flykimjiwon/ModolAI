@@ -12,7 +12,7 @@ import {
   GripVertical,
   Edit,
   RefreshCw,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import {
   DndContext,

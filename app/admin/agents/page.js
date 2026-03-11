@@ -15,7 +15,7 @@ import {
   RefreshCw,
   Search,
   Save,
-} from 'lucide-react';
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 
 const DEFAULT_AGENT_SETTINGS = {

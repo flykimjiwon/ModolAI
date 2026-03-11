@@ -12,7 +12,7 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-} from 'lucide-react';
+} from '@/components/icons';
 import { AlertModal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

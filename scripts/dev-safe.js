@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+try { require('dotenv').config(); } catch {}
+
 const { spawn } = require('node:child_process');
 const net = require('node:net');
 const fs = require('node:fs');

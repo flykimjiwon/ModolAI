@@ -4,8 +4,35 @@
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// global-error는 LanguageProvider 바깥에서 렌더링되므로
+// localStorage에서 직접 언어를 읽어야 합니다.
+function getTranslation() {
+  try {
+    const lang = typeof window !== 'undefined'
+      ? localStorage.getItem('modolai-lang') || 'ko'
+      : 'ko';
+    const translations = {
+      ko: {
+        title: '심각한 오류가 발생했습니다',
+        retry: '다시 시도',
+        home: '홈으로 이동',
+      },
+      en: {
+        title: 'A critical error occurred',
+        retry: 'Try Again',
+        home: 'Go Home',
+      },
+    };
+    return translations[lang] || translations.ko;
+  } catch {
+    return { title: '심각한 오류가 발생했습니다', retry: '다시 시도', home: '홈으로 이동' };
+  }
+}
+
 // Next.js 공식 예시 형태로 최소 구현
 export default function GlobalError({ reset }) {
+  const txt = getTranslation();
+
   return (
     <html lang='ko'>
       <body
@@ -19,7 +46,7 @@ export default function GlobalError({ reset }) {
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        <h2 style={{ margin: 0 }}>문제가 발생했습니다.</h2>
+        <h2 style={{ margin: 0 }}>{txt.title}</h2>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             type='button'
@@ -28,12 +55,12 @@ export default function GlobalError({ reset }) {
               padding: '10px 16px',
               borderRadius: '8px',
               border: 'none',
-              background: '#2563eb',
+              background: '#171717',
               color: '#fff',
               cursor: 'pointer',
             }}
           >
-            다시 시도
+            {txt.retry}
           </button>
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
@@ -46,7 +73,7 @@ export default function GlobalError({ reset }) {
               textDecoration: 'none',
             }}
           >
-            홈으로 이동
+            {txt.home}
           </a>
         </div>
       </body>

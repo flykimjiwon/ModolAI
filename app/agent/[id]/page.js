@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Bot, ShieldX, Loader2, Presentation } from 'lucide-react';
+import { Bot, ShieldX, Loader2, Presentation } from '@/components/icons';
 import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import AgentSidebar from '@/components/chat/AgentSidebar';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Download, Filter } from 'lucide-react';
+import { Download, Filter } from '@/components/icons';
 import {
   UserStatsChart,
   ModelStatsChart,

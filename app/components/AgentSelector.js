@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Bot } from 'lucide-react';
+import { Bot } from '@/components/icons';
 
 const AGENTS = [
   { id: 'chat', name: 'Chat', path: '/' },

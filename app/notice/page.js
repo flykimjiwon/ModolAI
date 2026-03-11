@@ -11,7 +11,7 @@ import {
   Calendar,
   User,
   ArrowLeft,
-} from 'lucide-react';
+} from '@/components/icons';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
