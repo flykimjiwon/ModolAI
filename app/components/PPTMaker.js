@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Loader2,
   Download,
@@ -44,65 +45,65 @@ const TEMPLATE_PRESETS = [
     id: 'light-casual-breeze',
     theme: 'light',
     tone: 'casual',
-    label: '라이트 + 캐주얼 Breeze',
-    caption: '가볍고 유연한 카드형',
-    description: '아이디어 제안, 워크숍, 내부 브리핑에 적합',
+    label: 'ppt_maker.template_light_casual_breeze_label',
+    caption: 'ppt_maker.template_light_casual_breeze_caption',
+    description: 'ppt_maker.template_light_casual_breeze_description',
   },
   {
     id: 'light-casual-coral',
     theme: 'light',
     tone: 'casual',
-    label: '라이트 + 캐주얼 Coral',
-    caption: '명도 높은 포인트형',
-    description: '교육, 온보딩, 캠페인 소개에 적합',
+    label: 'ppt_maker.template_light_casual_coral_label',
+    caption: 'ppt_maker.template_light_casual_coral_caption',
+    description: 'ppt_maker.template_light_casual_coral_description',
   },
   {
     id: 'light-business-classic',
     theme: 'light',
     tone: 'business',
-    label: '라이트 + 비즈니스 Classic',
-    caption: '정돈된 보고서형',
-    description: '경영 보고, 전략 제안서, 대외 PT에 적합',
+    label: 'ppt_maker.template_light_business_classic_label',
+    caption: 'ppt_maker.template_light_business_classic_caption',
+    description: 'ppt_maker.template_light_business_classic_description',
   },
   {
     id: 'light-business-mint',
     theme: 'light',
     tone: 'business',
-    label: '라이트 + 비즈니스 Mint',
-    caption: '청량한 데이터 브리프형',
-    description: '성과 공유, 운영 회의, 주간 리포트에 적합',
+    label: 'ppt_maker.template_light_business_mint_label',
+    caption: 'ppt_maker.template_light_business_mint_caption',
+    description: 'ppt_maker.template_light_business_mint_description',
   },
   {
     id: 'dark-casual-neon',
     theme: 'dark',
     tone: 'casual',
-    label: '다크 + 캐주얼 Neon',
-    caption: '강한 대비의 크리에이티브형',
-    description: '기술 소개, 데모데이, 실험적 컨셉에 적합',
+    label: 'ppt_maker.template_dark_casual_neon_label',
+    caption: 'ppt_maker.template_dark_casual_neon_caption',
+    description: 'ppt_maker.template_dark_casual_neon_description',
   },
   {
     id: 'dark-casual-aurora',
     theme: 'dark',
     tone: 'casual',
-    label: '다크 + 캐주얼 Aurora',
-    caption: '청록 하이라이트형',
-    description: '제품 쇼케이스, 프로젝트 리뷰, 팀 공유에 적합',
+    label: 'ppt_maker.template_dark_casual_aurora_label',
+    caption: 'ppt_maker.template_dark_casual_aurora_caption',
+    description: 'ppt_maker.template_dark_casual_aurora_description',
   },
   {
     id: 'dark-business-steel',
     theme: 'dark',
     tone: 'business',
-    label: '다크 + 비즈니스 Steel',
-    caption: '중후한 데이터 리포트형',
-    description: '금융/리스크/성과 중심 발표에 적합',
+    label: 'ppt_maker.template_dark_business_steel_label',
+    caption: 'ppt_maker.template_dark_business_steel_caption',
+    description: 'ppt_maker.template_dark_business_steel_description',
   },
   {
     id: 'dark-business-graphite',
     theme: 'dark',
     tone: 'business',
-    label: '다크 + 비즈니스 Graphite',
-    caption: '절제된 임원 보고형',
-    description: '운영 계획, 분기 전략, KPI 리뷰에 적합',
+    label: 'ppt_maker.template_dark_business_graphite_label',
+    caption: 'ppt_maker.template_dark_business_graphite_caption',
+    description: 'ppt_maker.template_dark_business_graphite_description',
   },
 ];
 
@@ -284,37 +285,38 @@ function pickPresetIdByThemeTone(theme = 'light', tone = 'business', preferredPr
 }
 
 const REWRITE_PRESET_OPTIONS = [
-  { value: 'none', label: '사용자 입력만', instruction: '' },
+  { value: 'none', label: 'ppt_maker.rewrite_user_input_only', instruction: '' },
   {
     value: 'shorten',
-    label: '길이 압축',
-    instruction: '현재 슬라이드의 핵심은 유지하고 분량을 약 35% 줄여 간결하게 작성하세요.',
+    label: 'ppt_maker.rewrite_shorten',
+    instruction: 'ppt_maker.rewrite_shorten_instruction',
   },
   {
     value: 'expand',
-    label: '길이 확장',
-    instruction: '현재 슬라이드의 근거와 예시를 보강해 분량을 약 35% 확장하세요.',
+    label: 'ppt_maker.rewrite_expand',
+    instruction: 'ppt_maker.rewrite_expand_instruction',
   },
   {
     value: 'formal',
-    label: '정중한 보고서 톤',
-    instruction: '문체를 정중하고 신뢰감 있는 보고서 톤으로 재작성하세요.',
+    label: 'ppt_maker.rewrite_formal',
+    instruction: 'ppt_maker.rewrite_formal_instruction',
   },
   {
     value: 'friendly',
-    label: '친근한 설명 톤',
-    instruction: '문체를 이해하기 쉬운 친근한 설명 톤으로 재작성하세요.',
+    label: 'ppt_maker.rewrite_friendly',
+    instruction: 'ppt_maker.rewrite_friendly_instruction',
   },
   {
     value: 'english',
-    label: '비즈니스 영어',
-    instruction: '슬라이드의 모든 텍스트를 자연스러운 비즈니스 영어로 바꿔주세요.',
+    label: 'ppt_maker.rewrite_english',
+    instruction: 'ppt_maker.rewrite_english_instruction',
   },
 ];
 
-function getRewritePresetInstruction(presetValue = 'none') {
+function getRewritePresetInstruction(presetValue = 'none', t) {
   const preset = REWRITE_PRESET_OPTIONS.find((item) => item.value === presetValue);
-  return preset?.instruction || '';
+  if (!preset?.instruction) return '';
+  return t ? t(preset.instruction) : preset.instruction;
 }
 
 function createSlideUid() {
@@ -463,7 +465,7 @@ function extractChartPointsFromRenderedSvg(contentHtml = '') {
     if (!Number.isFinite(parsed)) continue;
 
     points.push({
-      label: shortenChartLabel(labelText || `항목 ${index + 1}`, 18),
+      label: shortenChartLabel(labelText || `Item ${index + 1}`, 18),
       value: clampNumber(parsed, 0, 999999),
       unit: /%/.test(rawValueText) ? 'percent' : 'number',
     });
@@ -492,7 +494,7 @@ function extractChartPointsFromLines(lines = []) {
       if (!Number.isFinite(value)) continue;
       const bounded = isPercent ? clampNumber(value, 0, 100) : clampNumber(value, 0, 999999);
 
-      const labelBase = fallbackLabel || `지표 ${points.length + 1}`;
+      const labelBase = fallbackLabel || `Metric ${points.length + 1}`;
       const uniqueLabel = idx === 0 ? labelBase : `${labelBase} ${idx + 1}`;
       const dedupeKey = uniqueLabel.toLowerCase();
       if (usedLabels.has(dedupeKey)) continue;
@@ -581,7 +583,7 @@ function parseSlideSemantics(contentHtml = '') {
   const urlMatch = plainText.match(/(https?:\/\/\S+|www\.\S+)/i);
 
   const title = headings[0] || sentencePool[0] || bullets[0] || 'Presentation Overview';
-  const subtitle = headings[1] || paragraphs[0] || sentencePool[1] || '핵심 메시지를 요약합니다.';
+  const subtitle = headings[1] || paragraphs[0] || sentencePool[1] || 'Summarizes key messages.';
   const summary = paragraphs[1] || sentencePool.slice(2, 4).join(' ') || subtitle;
   const renderedChartPoints = extractChartPointsFromRenderedSvg(contentHtml);
   const inferredChartPoints = extractChartPointsFromLines([
@@ -651,7 +653,7 @@ function renderTemplateBarSvg(points = [], tokens) {
     const barHeight = Math.round((chartBaseY - chartTopY) * ratio);
     const x = Math.round(minX + index * slotWidth + (slotWidth - barWidth) / 2);
     const y = chartBaseY - barHeight;
-    const label = escapeHtml(shortenChartLabel(point.label, 12) || `항목 ${index + 1}`);
+    const label = escapeHtml(shortenChartLabel(point.label, 12) || `Item ${index + 1}`);
     const displayValue = Number.isFinite(point.value) ? `${Math.round(point.value)}${point.unit === 'percent' ? '%' : ''}` : '-';
     const delay = `${(index * 0.08).toFixed(2)}s`;
     return [
@@ -700,7 +702,7 @@ function renderTemplateLineSvg(points = [], tokens) {
     const y = Math.round(maxY - (maxY - minY) * clampNumber(normalized, 0, 1));
     return {
       x, y,
-      label: escapeHtml(shortenChartLabel(point.label, 10) || `시점 ${index + 1}`),
+      label: escapeHtml(shortenChartLabel(point.label, 10) || `Point ${index + 1}`),
       valueText: `${Math.round(toFiniteNumber(point.value, 0))}${point.unit === 'percent' ? '%' : ''}`,
       delay: `${(index * 0.06 + 0.7).toFixed(2)}s`,
     };
@@ -742,7 +744,7 @@ function renderTemplateDonutSvg(points = [], tokens) {
 
   const animId = `pda${Math.random().toString(36).slice(2, 7)}`;
   const normalized = safePoints.map((item) => ({
-    label: shortenChartLabel(item.label, 18) || '항목',
+    label: shortenChartLabel(item.label, 18) || 'Item',
     value: Math.max(0, toFiniteNumber(item.value, 0)),
   }));
   const total = normalized.reduce((acc, item) => acc + item.value, 0);
@@ -784,7 +786,7 @@ function renderTemplateDonutSvg(points = [], tokens) {
     animStyle,
     `<circle cx="320" cy="220" r="110" fill="none" stroke="${tokens.neutral}44" stroke-width="52" />`,
     slices,
-    '<text x="320" y="214" text-anchor="middle" class="ppt-data-label">주합</text>',
+    '<text x="320" y="214" text-anchor="middle" class="ppt-data-label">Total</text>',
     '<text x="320" y="246" text-anchor="middle" class="ppt-data-value">100%</text>',
     legends,
     '</svg>',
@@ -894,7 +896,7 @@ function buildPresetSlideHtml(
       `  <h1 class="ppt-title">${escapeHtml(slideData.title)} <span class="ppt-accent">${escapeHtml(slideData.subtitle)}</span></h1>`,
       `  <p class="ppt-subtitle">${escapeHtml(slideData.summary)}</p>`,
       '  <div class="ppt-cta-row">',
-      `    <span class="ppt-cta">${escapeHtml(slideData.bullets[0] || '프로젝트 시작')}</span>`,
+      `    <span class="ppt-cta">${escapeHtml(slideData.bullets[0] || 'Get Started')}</span>`,
       '  </div>',
       '</div>',
     ].join('\n');
@@ -1026,7 +1028,7 @@ function applyTemplatePresetToSlides(rawHtml, theme = 'light', tone = 'business'
   const totalSlides = chunks.length;
   const templated = chunks.map((chunk, index) => {
     const cleaned = sanitizeSlideMarkupContent(chunk);
-    const finalContent = cleaned || '<h2>슬라이드 내용을 생성하지 못했습니다.</h2><p>다시 생성해 주세요.</p>';
+    const finalContent = cleaned || '<h2>Failed to generate slide content.</h2><p>Please try again.</p>';
     return buildPresetSlideHtml(finalContent, theme, tone, index, totalSlides, null, presetId, '', createSlideUid());
   });
   return templated.join(`\n${SLIDE_BREAK}\n`);
@@ -1047,7 +1049,7 @@ function reapplyTemplatePresetOnSlides(slides = [], theme = 'light', tone = 'bus
   const seenUids = new Set();
   return slides.map((slide, index) => {
     const extractedContent = extractTemplateContent(slide);
-    const finalContent = extractedContent || '<h2>슬라이드 내용을 생성하지 못했습니다.</h2><p>다시 생성해 주세요.</p>';
+    const finalContent = extractedContent || '<h2>Failed to generate slide content.</h2><p>Please try again.</p>';
     const colorOverrides = extractSlideColorOverrides(slide, theme, tone, presetId);
     const chartModeOverride = extractSlideChartMode(slide);
     let slideUid = extractSlideUid(slide);
@@ -1210,8 +1212,8 @@ function splitSlidesLoosely(raw = '', expectedCount = 1) {
 }
 
 function buildOutlineFallbackSource(outline, index) {
-  const title = String(outline?.title || `슬라이드 ${index + 1}`).trim();
-  const description = String(outline?.description || '핵심 내용을 정리합니다.').trim();
+  const title = String(outline?.title || `Slide ${index + 1}`).trim();
+  const description = String(outline?.description || 'Organize key content.').trim();
   const keyPoints = Array.isArray(outline?.keyPoints) ? outline.keyPoints : [];
   const points = keyPoints.map((item) => String(item || '').trim()).filter(Boolean).slice(0, 5);
   const lines = [];
@@ -1229,7 +1231,7 @@ function normalizeOutlineSlides(rawSlides = [], count = 1) {
   const targetCount = Number.isInteger(count) && count > 0 ? count : 1;
   const normalized = Array.isArray(rawSlides)
     ? rawSlides.slice(0, targetCount).map((slide, idx) => {
-        const title = String(slide?.title || `슬라이드 ${idx + 1}`).trim();
+        const title = String(slide?.title || `Slide ${idx + 1}`).trim();
         const description = String(slide?.description || '').trim();
         const generationHint = String(slide?.generationHint || '').trim();
         const keyPoints = Array.isArray(slide?.keyPoints)
@@ -1244,8 +1246,8 @@ function normalizeOutlineSlides(rawSlides = [], count = 1) {
 
   while (normalized.length < targetCount) {
     normalized.push({
-      title: `슬라이드 ${normalized.length + 1}`,
-      description: '핵심 내용을 정리합니다.',
+      title: `Slide ${normalized.length + 1}`,
+      description: 'Organize key content.',
       generationHint: '',
       keyPoints: [],
       imagePrompt: '',
@@ -1400,6 +1402,7 @@ function applyEditableTextSegments(sourceHtml = '', textSegments = []) {
 }
 
 function SortableSlideThumbnail({ id, index, slide, theme, tone, isActive, onSelect }) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -1443,7 +1446,7 @@ function SortableSlideThumbnail({ id, index, slide, theme, tone, isActive, onSel
         </button>
         <button
           type="button"
-          aria-label={`슬라이드 ${index + 1} 순서 변경`}
+          aria-label={t('ppt_maker.reorder_slide_n', { n: index + 1 })}
           {...attributes}
           {...listeners}
           className="absolute top-1 right-1 p-1 rounded bg-black/60 text-white cursor-grab active:cursor-grabbing"
@@ -1458,13 +1461,14 @@ function SortableSlideThumbnail({ id, index, slide, theme, tone, isActive, onSel
           isActive ? 'text-primary font-semibold' : 'text-muted-foreground'
         }`}
       >
-        슬라이드 {index + 1}
+        {t('ppt_maker.slide_n', { n: index + 1 })}
       </button>
     </div>
   );
 }
 
 function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, totalSlides, onSave, onClose }) {
+  const { t } = useTranslation();
   const initialPoints = parseSlideSemantics(slideHtml).chartPoints || [];
   const [points, setPoints] = useState(initialPoints.map((p) => ({ ...p })));
   const [saving, setSaving] = useState(false);
@@ -1474,7 +1478,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
   };
 
   const addRow = () => {
-    setPoints((prev) => [...prev, { label: `항목 ${prev.length + 1}`, value: 50, unit: 'number' }]);
+    setPoints((prev) => [...prev, { label: t('ppt_maker.item_n', { n: prev.length + 1 }), value: 50, unit: 'number' }]);
   };
 
   const removeRow = (idx) => {
@@ -1502,15 +1506,15 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative bg-card border border-border rounded-xl shadow-xl w-full max-w-lg p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">차트 데이터 편집 — 슬라이드 {slideIndex + 1}</h3>
-        <p className="text-xs text-muted-foreground">레이블과 수치를 수정하면 차트가 자동으로 재계산됩니다.</p>
+        <h3 className="text-sm font-semibold text-foreground">{t('ppt_maker.chart_data_edit_title', { n: slideIndex + 1 })}</h3>
+        <p className="text-xs text-muted-foreground">{t('ppt_maker.chart_data_edit_description')}</p>
         <div className="overflow-auto max-h-64">
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr className="bg-muted">
-                <th className="text-left p-2 font-semibold text-foreground">레이블</th>
-                <th className="text-left p-2 font-semibold text-foreground">수치</th>
-                <th className="text-left p-2 font-semibold text-foreground">단위</th>
+                <th className="text-left p-2 font-semibold text-foreground">{t('ppt_maker.label')}</th>
+                <th className="text-left p-2 font-semibold text-foreground">{t('ppt_maker.value')}</th>
+                <th className="text-left p-2 font-semibold text-foreground">{t('ppt_maker.unit')}</th>
                 <th className="p-2" />
               </tr>
             </thead>
@@ -1538,7 +1542,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
                       value={pt.unit || 'number'}
                       onChange={(e) => updatePoint(i, 'unit', e.target.value)}
                     >
-                      <option value="number">숫자</option>
+                      <option value="number">{t('ppt_maker.number')}</option>
                       <option value="percent">%</option>
                     </select>
                   </td>
@@ -1561,7 +1565,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
           onClick={addRow}
           className="text-xs flex items-center gap-1 text-primary hover:underline"
         >
-          <Plus className="h-3 w-3" /> 항목 추가
+          <Plus className="h-3 w-3" /> {t('ppt_maker.add_item')}
         </button>
         <div className="flex justify-end gap-2 pt-1">
           <button
@@ -1569,7 +1573,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
             onClick={onClose}
             className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-accent"
           >
-            취소
+            {t('ppt_maker.cancel')}
           </button>
           <button
             type="button"
@@ -1577,7 +1581,7 @@ function ChartDataEditorModal({ slideIndex, slideHtml, theme, tone, templateId, 
             disabled={saving || points.filter((p) => Number.isFinite(p.value)).length < 2}
             className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            {saving ? '저장 중…' : '저장'}
+            {saving ? t('ppt_maker.saving') : t('ppt_maker.save')}
           </button>
         </div>
       </div>
@@ -1607,6 +1611,7 @@ function SortableDoneSlideCard({
   onOpenChartEditor,
   setCardRef,
 }) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -1636,7 +1641,7 @@ function SortableDoneSlideCard({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            aria-label={`슬라이드 ${index + 1} 순서 변경`}
+            aria-label={t('ppt_maker.reorder_slide_n', { n: index + 1 })}
             {...attributes}
             {...listeners}
             className="text-xs px-1.5 py-1 rounded border border-border text-muted-foreground bg-card/90 cursor-grab active:cursor-grabbing"
@@ -1650,25 +1655,25 @@ function SortableDoneSlideCard({
             onClick={onOpenSlideshow}
             className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:bg-accent flex items-center gap-1"
           >
-            ⛶ 전체화면
+            ⛶ {t('ppt_maker.fullscreen')}
           </button>
           <button
             onClick={onOpenWysiwyg}
             className="text-xs px-2 py-1 rounded border border-border text-muted-foreground hover:bg-accent flex items-center gap-1"
           >
-            <Pencil className="h-3 w-3" /> 편집
+            <Pencil className="h-3 w-3" /> {t('ppt_maker.edit')}
           </button>
           <button
             onClick={onDuplicate}
             className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1"
           >
-            <Copy className="h-3 w-3" /> 복제
+            <Copy className="h-3 w-3" /> {t('ppt_maker.duplicate')}
           </button>
           <button
             onClick={onDelete}
             className="text-xs px-2 py-1 rounded border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-1"
           >
-            <Trash2 className="h-3 w-3" /> 삭제
+            <Trash2 className="h-3 w-3" /> {t('ppt_maker.delete')}
           </button>
           {supportsChartControl ? (
             <select
@@ -1678,10 +1683,10 @@ function SortableDoneSlideCard({
               }}
               className="text-xs px-2 py-1 rounded border border-primary/30 text-primary bg-card/90"
             >
-              <option value="auto">차트 자동</option>
-              <option value="bar">막대</option>
-              <option value="line">꺾은선</option>
-              <option value="donut">원형</option>
+              <option value="auto">{t('ppt_maker.chart_auto')}</option>
+              <option value="bar">{t('ppt_maker.chart_bar')}</option>
+              <option value="line">{t('ppt_maker.chart_line')}</option>
+              <option value="donut">{t('ppt_maker.chart_donut')}</option>
             </select>
           ) : null}
           {supportsChartControl ? (
@@ -1690,7 +1695,7 @@ function SortableDoneSlideCard({
               onClick={() => { if (typeof onOpenChartEditor === 'function') onOpenChartEditor(); }}
               className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1"
             >
-              <Pencil className="h-3 w-3" /> 데이터 편집
+              <Pencil className="h-3 w-3" /> {t('ppt_maker.data_edit')}
             </button>
           ) : null}
           <button
@@ -1698,7 +1703,7 @@ function SortableDoneSlideCard({
             disabled={regenerating}
             className="text-xs px-2 py-1 rounded border border-primary/30 text-primary hover:bg-primary/10 flex items-center gap-1 disabled:opacity-60"
           >
-            <RefreshCw className={`h-3 w-3 ${regenerating ? 'animate-spin' : ''}`} /> 재생성
+            <RefreshCw className={`h-3 w-3 ${regenerating ? 'animate-spin' : ''}`} /> {t('ppt_maker.regenerate')}
           </button>
         </div>
       </div>
@@ -1724,6 +1729,7 @@ function SortableDoneSlideCard({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebarMenuChange = null }) {
+  const { t } = useTranslation();
   // ── Form state ──────────────────────────────────────────────────────────────
   const [topic, setTopic] = useState('');
   const [brief, setBrief] = useState('');
@@ -1830,7 +1836,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
   const updateOutlineSlide = (index, updater) => {
     setOutlineSlides((prev) => {
       const next = [...prev];
-      const current = next[index] || { title: `슬라이드 ${index + 1}`, description: '', keyPoints: [] };
+      const current = next[index] || { title: t('ppt_maker.slide_n', { n: index + 1 }), description: '', keyPoints: [] };
       next[index] = typeof updater === 'function' ? updater(current) : current;
       return next;
     });
@@ -1926,15 +1932,15 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data?.error || '개요 생성에 실패했습니다.');
+        throw new Error(data?.error || t('ppt_maker.error_outline_generation_failed'));
       }
       const data = await response.json();
       const fetchedSlides = normalizeOutlineSlides(data?.slides || [], slideCount);
-      if (fetchedSlides.length === 0) throw new Error('개요를 생성하지 못했습니다. 다시 시도해 주세요.');
+      if (fetchedSlides.length === 0) throw new Error(t('ppt_maker.error_outline_empty'));
       setOutlineSlides(fetchedSlides);
       setStep('outline');
     } catch (e) {
-      setError(e.message || '개요 생성 중 오류가 발생했습니다.');
+      setError(e.message || t('ppt_maker.error_outline_generation_error'));
     } finally {
       setOutlineLoading(false);
     }
@@ -1948,19 +1954,19 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
     const requestTimeout = setTimeout(() => requestController.abort(), perSlideTimeoutMs);
 
     const oneSlideBrief = [
-      brief ? `발표 추가 맥락: ${brief}` : '',
-      `전체 슬라이드 수: ${safeOutline.length}`,
-      `현재 생성 대상: ${index + 1} / ${safeOutline.length}`,
-      `현재 슬라이드 제목: ${outline.title}`,
-      `현재 슬라이드 설명: ${outline.description || '없음'}`,
-      `현재 슬라이드 핵심 포인트: ${(outline.keyPoints || []).join(', ') || '없음'}`,
-      outline.generationHint ? `이 슬라이드 추가 요구사항: ${outline.generationHint}` : '',
-      extraPrompt ? `재생성 추가 지시: ${extraPrompt}` : '',
-      '가능하면 본문에 항목명+수치를 함께 작성하세요. 예: <li>고객 만족도 82%</li>, <li>월간 활성 사용자 1200명</li>.',
+      brief ? `${t('ppt_maker.prompt_additional_context')}: ${brief}` : '',
+      `${t('ppt_maker.prompt_total_slides')}: ${safeOutline.length}`,
+      `${t('ppt_maker.prompt_current_target')}: ${index + 1} / ${safeOutline.length}`,
+      `${t('ppt_maker.prompt_current_title')}: ${outline.title}`,
+      `${t('ppt_maker.prompt_current_description')}: ${outline.description || t('ppt_maker.none')}`,
+      `${t('ppt_maker.prompt_current_key_points')}: ${(outline.keyPoints || []).join(', ') || t('ppt_maker.none')}`,
+      outline.generationHint ? `${t('ppt_maker.prompt_slide_additional_requirements')}: ${outline.generationHint}` : '',
+      extraPrompt ? `${t('ppt_maker.prompt_regenerate_additional')}: ${extraPrompt}` : '',
+      t('ppt_maker.prompt_include_metrics'),
       shouldRequestChart
-        ? '이 슬라이드는 데이터 중심입니다. 본문 마지막에 간단한 인라인 SVG 차트(<svg>...</svg>)를 포함해도 됩니다. 스크립트/스타일 태그는 절대 사용하지 마세요.'
+        ? t('ppt_maker.prompt_data_slide_chart')
         : '',
-      '중요: 현재 슬라이드 1장 분량의 본문 HTML만 생성하고, 다른 슬라이드 내용은 포함하지 마세요.',
+      t('ppt_maker.prompt_single_slide_only'),
     ].filter(Boolean).join('\n');
 
     try {
@@ -1972,7 +1978,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
         },
         signal: requestController.signal,
         body: JSON.stringify({
-          topic: `${topic} - 슬라이드 ${index + 1}`,
+          topic: `${topic} - ${t('ppt_maker.slide_n', { n: index + 1 })}`,
           brief: oneSlideBrief,
           slideCount: 1,
           theme,
@@ -1983,7 +1989,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data?.error || `슬라이드 ${index + 1} 생성에 실패했습니다.`);
+        throw new Error(data?.error || t('ppt_maker.error_slide_generation_failed', { n: index + 1 }));
       }
 
       const contentType = response.headers.get('content-type') || '';
@@ -1994,7 +2000,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
         accumulated = await response.text();
       } else {
         const reader = response.body?.getReader();
-        if (!reader) throw new Error(`슬라이드 ${index + 1} 응답 스트림을 읽을 수 없습니다.`);
+        if (!reader) throw new Error(t('ppt_maker.error_slide_stream_unreadable', { n: index + 1 }));
 
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
@@ -2090,8 +2096,8 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       const timeoutText = formatElapsedTime(120000);
       setError(
         e?.name === 'AbortError'
-          ? `PPT 생성 시간이 초과되었습니다. 모델 서버 상태를 확인한 뒤 다시 시도해 주세요. (경과 시간: ${elapsedText}, 페이지당 허용 시간: ${timeoutText})`
-          : (e.message || '슬라이드 생성 중 오류가 발생했습니다.')
+          ? t('ppt_maker.error_generation_timeout', { elapsed: elapsedText, timeout: timeoutText })
+          : (e.message || t('ppt_maker.error_slide_generation_error'))
       );
       if (builtSlides.length > 0) {
         saveCurrentRunToHistory(builtSlides, safeOutline);
@@ -2219,7 +2225,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
   const handleRegenerateSlide = async () => {
     if (regenerateIndex < 0) return;
     const index = regenerateIndex;
-    const presetInstruction = getRewritePresetInstruction(rewritePreset);
+    const presetInstruction = getRewritePresetInstruction(rewritePreset, t);
     const effectivePrompt = [presetInstruction, String(regeneratePrompt || '').trim()]
       .filter(Boolean)
       .join('\n');
@@ -2251,7 +2257,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
       setRegeneratePrompt('');
       setRewritePreset('none');
     } catch (e) {
-      setError(e.message || `슬라이드 ${index + 1} 재생성 중 오류가 발생했습니다.`);
+      setError(e.message || t('ppt_maker.error_slide_regeneration_error', { n: index + 1 }));
     } finally {
       setRegeneratingIndex(-1);
     }
@@ -2263,7 +2269,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
     if (!currentSlide) return;
 
     const extractedContent = extractTemplateContent(currentSlide) || sanitizeSlideMarkupContent(currentSlide);
-    const finalContent = extractedContent || '<h2>슬라이드 내용을 생성하지 못했습니다.</h2><p>다시 생성해 주세요.</p>';
+    const finalContent = extractedContent || '<h2>Failed to generate slide content.</h2><p>Please try again.</p>';
     const colorOverrides = extractSlideColorOverrides(currentSlide, theme, tone, selectedTemplateId);
     const chartModeOverride = normalizeChartMode(modeValue);
     const slideUid = extractSlideUid(currentSlide) || createSlideUid();
@@ -2337,14 +2343,14 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
   const handleDuplicateSlide = (index) => {
     if (slides.length >= 30) {
-      setError('슬라이드는 최대 30장까지 편집할 수 있습니다.');
+      setError(t('ppt_maker.error_max_slides'));
       return;
     }
     const baseSlide = slides[index];
     if (!baseSlide) return;
 
     const safeOutline = normalizeOutlineSlides(outlineSlides, slides.length || slideCount);
-    const sourceOutline = safeOutline[index] || { title: `슬라이드 ${index + 1}`, description: '', keyPoints: [] };
+    const sourceOutline = safeOutline[index] || { title: t('ppt_maker.slide_n', { n: index + 1 }), description: '', keyPoints: [] };
     const duplicatedOutline = {
       ...sourceOutline,
       keyPoints: [...(Array.isArray(sourceOutline.keyPoints) ? sourceOutline.keyPoints : [])],
@@ -2371,7 +2377,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
   const handleDeleteSlide = (index) => {
     if (slides.length <= 1) {
-      setError('슬라이드는 최소 1장 이상 유지되어야 합니다.');
+      setError(t('ppt_maker.error_min_slides'));
       return;
     }
 
@@ -2596,7 +2602,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ background: tokens.accentBg, height: '5px', width: '20px', borderRadius: '999px', flexShrink: 0 }} />
               <span style={{ color: tokens.subColor, fontSize: '8px', fontWeight: 600, letterSpacing: '0.05em' }}>
-                {preset.caption}
+                {t(preset.caption)}
               </span>
             </div>
             <div>
@@ -2627,10 +2633,10 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           }`}>
             {preset.tone === 'business' ? 'B' : 'C'}
           </span>
-          <span className="text-xs font-semibold">{preset.label}</span>
+          <span className="text-xs font-semibold">{t(preset.label)}</span>
         </div>
         <div className="text-[11px] mt-1 text-muted-foreground leading-snug">
-          {preset.description}
+          {t(preset.description)}
         </div>
       </button>
     );
@@ -2644,9 +2650,9 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
     <div className="flex-1 overflow-auto p-6 space-y-5">
       {isHistoryMenu ? (
         <div className="bg-card border border-border rounded-xl p-4">
-          <h2 className="text-base font-bold text-foreground mb-3">생성 히스토리</h2>
+          <h2 className="text-base font-bold text-foreground mb-3">{t('ppt_maker.generation_history')}</h2>
           {generationHistory.length === 0 ? (
-            <div className="text-sm text-muted-foreground">저장된 히스토리가 없습니다.</div>
+            <div className="text-sm text-muted-foreground">{t('ppt_maker.no_history')}</div>
           ) : (
             <div className="space-y-2">
               {generationHistory.map((item) => (
@@ -2655,9 +2661,9 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                   onClick={() => applyHistoryRun(item)}
                   className="w-full text-left rounded-lg border border-border px-3 py-2.5 hover:border-foreground/30"
                 >
-                  <div className="text-sm font-semibold text-foreground truncate">{item.topic || '제목 없음'}</div>
+                  <div className="text-sm font-semibold text-foreground truncate">{item.topic || t('ppt_maker.no_title')}</div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {new Date(item.createdAt).toLocaleString('ko-KR')} · {item.slides?.length || 0}장 · {getTemplatePreset(item.theme || 'light', item.tone || 'business', item.templatePresetId || '').label}
+                    {new Date(item.createdAt).toLocaleString('ko-KR')} · {item.slides?.length || 0}{t('ppt_maker.slides_unit')} · {t(getTemplatePreset(item.theme || 'light', item.tone || 'business', item.templatePresetId || '').label)}
                   </div>
                 </button>
               ))}
@@ -2673,31 +2679,31 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-muted-foreground mb-2">주제</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">{t('ppt_maker.topic')}</label>
               <textarea
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 rows={3}
-                placeholder="예: 2026 AI 전략"
+                placeholder={t('ppt_maker.topic_placeholder')}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-muted-foreground mb-2">
-                간단한 내용 <span className="text-muted-foreground font-normal">(옵션)</span>
+                {t('ppt_maker.brief')} <span className="text-muted-foreground font-normal">({t('ppt_maker.optional')})</span>
               </label>
               <textarea
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
                 rows={3}
-                placeholder="예: 고객 맞춤형 AI 상담, 내부 업무 자동화, 리스크 관리 고도화"
+                placeholder={t('ppt_maker.brief_placeholder')}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">슬라이드 수</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">{t('ppt_maker.slide_count')}</label>
               <input
                 type="number"
                 min={1}
@@ -2709,7 +2715,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">테마</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">{t('ppt_maker.theme')}</label>
               <select
                 value={theme}
                 onChange={(e) => {
@@ -2721,13 +2727,13 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 }}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
-                <option value="light">라이트</option>
-                <option value="dark">다크</option>
+                <option value="light">{t('ppt_maker.light')}</option>
+                <option value="dark">{t('ppt_maker.dark')}</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-2">톤</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-2">{t('ppt_maker.tone_label')}</label>
               <select
                 value={tone}
                 onChange={(e) => {
@@ -2739,20 +2745,20 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 }}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
-                <option value="business">비즈니스</option>
-                <option value="casual">캐주얼</option>
+                <option value="business">{t('ppt_maker.business')}</option>
+                <option value="casual">{t('ppt_maker.casual')}</option>
               </select>
             </div>
 
             {allowUserModelOverride && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-muted-foreground mb-2">모델 선택 (관리자 허용 시)</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">{t('ppt_maker.model_select')}</label>
                 <select
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
                 >
-                  <option value="">기본 모델 사용</option>
+                  <option value="">{t('ppt_maker.use_default_model')}</option>
                   {modelOptions.map((model) => (
                     <option key={model.id} value={model.id}>[{model.categoryLabel}] {model.label}</option>
                   ))}
@@ -2764,10 +2770,10 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             <div className="md:col-span-2">
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-muted-foreground">
-                  템플릿 미리보기 ({TEMPLATE_PRESETS.length}종)
+                  {t('ppt_maker.template_preview', { count: TEMPLATE_PRESETS.length })}
                 </label>
                 <div className="text-xs text-primary font-medium">
-                  선택됨: {selectedTemplate.label}
+                  {t('ppt_maker.selected')}: {t(selectedTemplate.label)}
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -2791,10 +2797,10 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               {outlineLoading
                 ? <Loader2 className="h-4 w-4 animate-spin" />
                 : <Sparkles className="h-4 w-4" />}
-              {outlineLoading ? '개요 생성 중...' : '생성'}
+              {outlineLoading ? t('ppt_maker.generating_outline') : t('ppt_maker.generate')}
             </button>
             <button onClick={loadSettings} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" /> 기본값 불러오기
+              <RefreshCw className="h-4 w-4" /> {t('ppt_maker.load_defaults')}
             </button>
           </div>
 
@@ -2812,12 +2818,12 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
-                <h2 className="text-lg font-bold text-foreground">슬라이드 개요 확인</h2>
+                <h2 className="text-lg font-bold text-foreground">{t('ppt_maker.outline_review')}</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  내용을 확인하고 필요하면 수정한 뒤 PPT를 생성하세요.
+                  {t('ppt_maker.outline_review_description')}
                 </p>
                 <div className="text-xs text-muted-foreground mt-1">
-                  주제: <strong className="text-muted-foreground">{topic}</strong> | {outlineSlides.length}장 | {selectedTemplate.label}
+                  {t('ppt_maker.topic_colon')}: <strong className="text-muted-foreground">{topic}</strong> | {outlineSlides.length}{t('ppt_maker.slides_unit_jang')} | {t(selectedTemplate.label)}
                 </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
@@ -2825,13 +2831,13 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                   onClick={() => { setStep('input'); setError(''); }}
                   className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1"
                 >
-                  <ChevronLeft className="h-4 w-4" /> 다시 설정
+                  <ChevronLeft className="h-4 w-4" /> {t('ppt_maker.back_to_settings')}
                 </button>
                 <button
                   onClick={handleGeneratePPT}
                   className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
                 >
-                  <Sparkles className="h-4 w-4" /> PPT 생성 진행
+                  <Sparkles className="h-4 w-4" /> {t('ppt_maker.proceed_generation')}
                 </button>
               </div>
             </div>
@@ -2859,7 +2865,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                     value={slide.title}
                     onChange={(e) => updateOutlineSlide(idx, (current) => ({ ...current, title: e.target.value }))}
                     className="flex-1 text-sm font-semibold text-foreground bg-transparent border-b border-transparent hover:border-border focus:border-ring focus:outline-none px-0.5 py-0.5 min-w-0"
-                    placeholder="슬라이드 제목"
+                    placeholder={t('ppt_maker.slide_title_placeholder')}
                   />
                 </div>
                 <div className="ml-7 mt-1.5 space-y-2">
@@ -2868,7 +2874,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                     onChange={(e) => updateOutlineSlide(idx, (current) => ({ ...current, description: e.target.value }))}
                     rows={2}
                     className="w-full text-xs text-muted-foreground bg-transparent border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:border-ring"
-                    placeholder="슬라이드 본문 요약(대본용)"
+                    placeholder={t('ppt_maker.slide_body_summary_placeholder')}
                   />
 
                   <textarea
@@ -2876,7 +2882,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                     onChange={(e) => updateOutlineSlide(idx, (current) => ({ ...current, generationHint: e.target.value }))}
                     rows={2}
                     className="w-full text-xs text-foreground bg-muted/70 border border-border rounded-lg px-2 py-1.5 focus:outline-none focus:border-ring"
-                    placeholder="이 슬라이드 추가 요구사항 (선택): 예) 숫자 지표를 표 형태로 강조"
+                    placeholder={t('ppt_maker.slide_generation_hint_placeholder')}
                   />
 
                   <div className="space-y-1.5">
@@ -2893,7 +2899,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                             })
                           }
                           className="flex-1 text-xs text-muted-foreground bg-transparent border border-border rounded-lg px-2 py-1 focus:outline-none focus:border-ring"
-                          placeholder={`핵심 포인트 ${pi + 1}`}
+                          placeholder={t('ppt_maker.key_point_n', { n: pi + 1 })}
                         />
                         <button
                           onClick={() =>
@@ -2917,7 +2923,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                       }
                       className="text-[11px] text-primary hover:text-primary flex items-center gap-1"
                     >
-                      <Plus className="h-3.5 w-3.5" /> 포인트 추가
+                      <Plus className="h-3.5 w-3.5" /> {t('ppt_maker.add_point')}
                     </button>
                   </div>
                 </div>
@@ -2927,7 +2933,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
           <div className="flex justify-end">
             <button onClick={handleGeneratePPT} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
-              <Sparkles className="h-4 w-4" /> PPT 생성 진행
+              <Sparkles className="h-4 w-4" /> {t('ppt_maker.proceed_generation')}
             </button>
           </div>
         </div>
@@ -2938,7 +2944,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
         <div className="space-y-4">
           {slides.length > 0 && (
             <div className="space-y-3">
-              <div className="text-sm text-muted-foreground font-medium">완성된 페이지 미리보기</div>
+              <div className="text-sm text-muted-foreground font-medium">{t('ppt_maker.completed_preview')}</div>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {slides.map((slide, idx) => {
                   const previewThemeClass = theme === 'dark'
@@ -2965,23 +2971,23 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           )}
 
           <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="text-base font-bold text-foreground mb-5">PPT 생성 중...</h2>
+            <h2 className="text-base font-bold text-foreground mb-5">{t('ppt_maker.generating_ppt')}</h2>
 
             {/* Progress steps */}
             <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <CheckCircle2 className="h-5 w-5 text-primary" />
-                <span className="text-sm text-primary font-medium whitespace-nowrap">개요 확인 완료</span>
+                <span className="text-sm text-primary font-medium whitespace-nowrap">{t('ppt_maker.outline_confirmed')}</span>
               </div>
               <div className="flex-1 h-px bg-muted min-w-4" />
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                <span className="text-sm text-primary font-medium whitespace-nowrap">슬라이드 생성 중</span>
+                <span className="text-sm text-primary font-medium whitespace-nowrap">{t('ppt_maker.generating_slides')}</span>
               </div>
               <div className="flex-1 h-px bg-muted min-w-4" />
               <div className="flex items-center gap-1.5 flex-shrink-0 opacity-35">
                 <div className="h-5 w-5 rounded-full border-2 border-border" />
-                <span className="text-sm text-muted-foreground whitespace-nowrap">완료</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{t('ppt_maker.complete')}</span>
               </div>
             </div>
 
@@ -2989,11 +2995,11 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">
                 {displayedCount > 0
-                  ? <><span className="font-semibold text-primary">{displayedCount}</span> / {slideCount}장 생성됨</>
-                  : '슬라이드를 생성하고 있습니다...'}
+                  ? <><span className="font-semibold text-primary">{displayedCount}</span> / {slideCount}{t('ppt_maker.slides_generated')}</>
+                  : t('ppt_maker.slides_being_generated')}
               </span>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>경과 {formatElapsedTime(elapsedMs)}</span>
+                <span>{t('ppt_maker.elapsed')} {formatElapsedTime(elapsedMs)}</span>
                 {displayedCount > 0 && (
                   <span>{Math.round((displayedCount / slideCount) * 100)}%</span>
                 )}
@@ -3017,25 +3023,25 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
                 <div className="font-semibold text-foreground">
-                  총 {slides.length}장 생성 완료
+                  {t('ppt_maker.total_slides_done', { count: slides.length })}
                 </div>
                 <div className="text-sm text-muted-foreground mt-0.5">
-                  {topic} | {selectedTemplate.label}
+                  {topic} | {t(selectedTemplate.label)}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button onClick={handleReset} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4" /> 다시 만들기
+                  <RefreshCw className="h-4 w-4" /> {t('ppt_maker.make_again')}
                 </button>
                 <button onClick={() => setPrintModalOpen(true)} disabled={slides.length === 0} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 disabled:opacity-60">
-                  <Download className="h-4 w-4" /> 인쇄 / PDF 저장
+                  <Download className="h-4 w-4" /> {t('ppt_maker.print_pdf_save')}
                 </button>
               </div>
             </div>
 
             {/* Compact template switcher */}
             <div className="mt-3 pt-3 border-t border-border">
-              <div className="text-xs text-muted-foreground mb-2">템플릿 변경</div>
+              <div className="text-xs text-muted-foreground mb-2">{t('ppt_maker.change_template')}</div>
               <div className="flex flex-wrap gap-2">
                 {TEMPLATE_PRESETS.map((preset) => {
                   const tokens = TEMPLATE_STYLE_TOKENS[preset.id];
@@ -3051,7 +3057,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                       }`}
                     >
                       <div style={{ background: tokens.accentBg, width: '8px', height: '8px', borderRadius: '999px' }} />
-                      {preset.label}
+                      {t(preset.label)}
                     </button>
                   );
                 })}
@@ -3067,8 +3073,8 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
-              <h3 className="text-sm font-semibold text-foreground">슬라이드 썸네일 네비게이션</h3>
-              <div className="text-xs text-muted-foreground">썸네일 드래그로 순서 변경</div>
+              <h3 className="text-sm font-semibold text-foreground">{t('ppt_maker.slide_thumbnail_nav')}</h3>
+              <div className="text-xs text-muted-foreground">{t('ppt_maker.drag_to_reorder')}</div>
             </div>
             <DndContext sensors={slideDndSensors} collisionDetection={closestCenter} onDragEnd={handleSlideDragEnd}>
               <SortableContext items={slideStableIds.map((id) => `slide-thumb-${id}`)} strategy={horizontalListSortingStrategy}>
@@ -3091,11 +3097,11 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           </div>
 
           <div className="bg-card border border-border rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-2">개요 / 발표 대본</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-2">{t('ppt_maker.outline_script')}</h3>
             <div className="space-y-2">
               {normalizeOutlineSlides(outlineSlides, slides.length || slideCount).map((outline, idx) => (
                 <div key={`script-${idx}`} className="rounded-lg border border-border px-3 py-2">
-                  <div className="text-xs font-semibold text-primary">{idx + 1}. {outline.title || `슬라이드 ${idx + 1}`}</div>
+                  <div className="text-xs font-semibold text-primary">{idx + 1}. {outline.title || t('ppt_maker.slide_n', { n: idx + 1 })}</div>
                   {outline.description ? (
                     <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{outline.description}</p>
                   ) : null}
@@ -3193,19 +3199,19 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             }}
           />
           <div className="relative bg-card border border-border rounded-xl shadow-xl w-full max-w-lg p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">슬라이드 {regenerateIndex + 1} 재생성</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('ppt_maker.regenerate_slide_n', { n: regenerateIndex + 1 })}</h3>
             <p className="text-xs text-muted-foreground">
-              이 슬라이드에만 추가 요구사항을 적용해 다시 생성합니다.
+              {t('ppt_maker.regenerate_slide_description')}
             </p>
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">AI 재작성 프리셋</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">{t('ppt_maker.ai_rewrite_preset')}</label>
               <select
                 value={rewritePreset}
                 onChange={(e) => setRewritePreset(e.target.value)}
                 className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground"
               >
                 {REWRITE_PRESET_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                  <option key={option.value} value={option.value}>{t(option.label)}</option>
                 ))}
               </select>
             </div>
@@ -3214,7 +3220,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               value={regeneratePrompt}
               onChange={(e) => setRegeneratePrompt(e.target.value)}
               className="w-full text-sm px-3 py-2 border border-border rounded-lg bg-background text-foreground"
-              placeholder="예: 핵심 숫자를 먼저 보여주고, 하단에는 간단한 액션 아이템 3개로 정리"
+              placeholder={t('ppt_maker.regenerate_placeholder')}
             />
             <div className="flex justify-end gap-2">
               <button
@@ -3226,7 +3232,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 }}
                 className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
               >
-                취소
+                {t('ppt_maker.cancel')}
               </button>
               <button
                 onClick={handleRegenerateSlide}
@@ -3234,7 +3240,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 disabled:opacity-60"
               >
                 {regeneratingIndex >= 0 ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                재생성 실행
+                {t('ppt_maker.execute_regenerate')}
               </button>
             </div>
           </div>
@@ -3246,7 +3252,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
         <div className="fixed inset-0 z-[55] bg-black flex flex-col">
           {/* Toolbar */}
           <div className="flex items-center gap-1.5 px-3 py-2 bg-card border-b border-border flex-shrink-0 flex-wrap">
-            <span className="text-white/50 text-xs font-medium mr-1 flex-shrink-0">슬라이드 {wysiwygIndex + 1} 편집</span>
+            <span className="text-white/50 text-xs font-medium mr-1 flex-shrink-0">{t('ppt_maker.edit_slide_n', { n: wysiwygIndex + 1 })}</span>
             <div className="w-px h-4 bg-border flex-shrink-0" />
             <button
               onMouseDown={(e) => { e.preventDefault(); applyWysiwygCommand('bold'); }}
@@ -3267,16 +3273,16 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               defaultValue="3"
               className="text-xs bg-background text-foreground/80 border border-border rounded px-1.5 py-1 flex-shrink-0"
             >
-              <option value="1">아주 작게</option>
-              <option value="2">작게</option>
-              <option value="3">보통</option>
-              <option value="4">크게</option>
-              <option value="5">아주 크게</option>
-              <option value="6">특대</option>
+              <option value="1">{t('ppt_maker.font_xs')}</option>
+              <option value="2">{t('ppt_maker.font_sm')}</option>
+              <option value="3">{t('ppt_maker.font_md')}</option>
+              <option value="4">{t('ppt_maker.font_lg')}</option>
+              <option value="5">{t('ppt_maker.font_xl')}</option>
+              <option value="6">{t('ppt_maker.font_xxl')}</option>
             </select>
             <div className="w-px h-4 bg-border flex-shrink-0" />
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
-              <span>글자색</span>
+              <span>{t('ppt_maker.text_color')}</span>
               <input
                 type="color"
                 defaultValue="#ffffff"
@@ -3285,7 +3291,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               />
             </label>
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
-              <span>하이라이트</span>
+              <span>{t('ppt_maker.highlight')}</span>
               <input
                 type="color"
                 defaultValue="#ffff00"
@@ -3295,7 +3301,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
           </label>
             <div className="w-px h-4 bg-border flex-shrink-0" />
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
-              <span>배경 시작</span>
+              <span>{t('ppt_maker.bg_start')}</span>
               <input
                 type="color"
                 value={normalizeHexColor(wysiwygColors.canvasStart, '#f5f5f5')}
@@ -3304,7 +3310,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               />
             </label>
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
-              <span>배경 끝</span>
+              <span>{t('ppt_maker.bg_end')}</span>
               <input
                 type="color"
                 value={normalizeHexColor(wysiwygColors.canvasEnd, '#d4d4d4')}
@@ -3313,7 +3319,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               />
             </label>
             <label className="flex items-center gap-1 text-xs text-white/70 cursor-pointer flex-shrink-0">
-              <span>강조색</span>
+              <span>{t('ppt_maker.accent_color')}</span>
               <input
                 type="color"
                 value={normalizeHexColor(wysiwygColors.accentBg, '#525252')}
@@ -3325,11 +3331,11 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             <button
               onClick={() => setWysiwygIndex(-1)}
               className="px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-foreground/40 text-xs transition-colors flex-shrink-0"
-            >취소</button>
+            >{t('ppt_maker.cancel')}</button>
             <button
               onClick={handleSaveWysiwyg}
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-xs flex-shrink-0"
-            >저장</button>
+            >{t('ppt_maker.save')}</button>
           </div>
           {/* Editor iframe */}
           <div className="flex-1 overflow-hidden flex items-center justify-center">
@@ -3359,13 +3365,13 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
                 onClick={() => { setSlideshowOpen(false); setActiveSlideIndex(slideshowIndex); handleOpenWysiwyg(slideshowIndex); }}
                 className="text-xs px-3 py-1.5 rounded-lg border border-white/20 text-white/70 hover:text-white hover:border-white/40 flex items-center gap-1 transition-colors"
               >
-                <Pencil className="h-3 w-3" /> 편집
+                <Pencil className="h-3 w-3" /> {t('ppt_maker.edit')}
               </button>
               <button
                 onClick={() => setSlideshowOpen(false)}
                 className="text-xs px-3 py-1.5 rounded-lg border border-white/20 text-white/70 hover:text-white hover:border-white/40 transition-colors"
               >
-                ✕ 닫기
+                ✕ {t('ppt_maker.close')}
               </button>
             </div>
           </div>
@@ -3426,16 +3432,16 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
             {/* Modal header */}
             <div className="p-4 border-b border-border flex items-center justify-between flex-shrink-0">
               <div>
-                <h3 className="font-semibold text-foreground">인쇄 / PDF 저장</h3>
+                <h3 className="font-semibold text-foreground">{t('ppt_maker.print_pdf_save')}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  전체 {slides.length}장의 슬라이드를 확인하고 인쇄하세요. PDF는 인쇄 대화상자에서 저장할 수 있습니다.
+                  {t('ppt_maker.print_pdf_description', { count: slides.length })}
                 </p>
               </div>
               <button
                 onClick={() => setPrintModalOpen(false)}
                 className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm flex-shrink-0"
               >
-                닫기
+                {t('ppt_maker.close')}
               </button>
             </div>
 
@@ -3444,7 +3450,7 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {slides.map((slide, idx) => (
                   <div key={idx} className="space-y-1">
-                    <div className="text-xs text-muted-foreground font-medium">슬라이드 {idx + 1}</div>
+                    <div className="text-xs text-muted-foreground font-medium">{t('ppt_maker.slide_n', { n: idx + 1 })}</div>
                     <div className="relative w-full pt-[56.25%] rounded-lg overflow-hidden border border-border shadow-sm">
                       <iframe
                         title={`print-preview-${idx + 1}`}
@@ -3460,12 +3466,12 @@ export default function PPTMaker({ sidebarMenu = 'ppt-compose', onRequestSidebar
 
             {/* Modal footer */}
             <div className="p-4 border-t border-border flex justify-end gap-2 flex-shrink-0">
-              <button onClick={() => setPrintModalOpen(false)} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none">취소</button>
+              <button onClick={() => setPrintModalOpen(false)} className="inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none">{t('ppt_maker.cancel')}</button>
               <button
                 onClick={() => { setPrintModalOpen(false); handlePrintAll(); }}
                 className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
               >
-                <Download className="h-4 w-4" /> 인쇄하기 (PDF 저장)
+                <Download className="h-4 w-4" /> {t('ppt_maker.print_pdf')}
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { LogIn, Mail, Lock, Loader2 } from '@/components/icons';
 import NoticePopup from '../components/NoticePopup';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const getSafeRedirect = useCallback(() => {
     const redirect = searchParams.get('redirect');
@@ -133,7 +135,7 @@ function LoginPageContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Login failed.');
+        throw new Error(data.error || t('auth.login_failed'));
       }
 
       localStorage.setItem('token', data.token);
@@ -159,14 +161,14 @@ function LoginPageContent() {
               data-testid='login-title'
               className='text-3xl font-bold text-foreground mb-2'
             >
-              ModolAI
+              {t('auth.login_title')}
             </h1>
             <p
               id='login-subtitle'
               data-testid='login-subtitle'
               className='text-muted-foreground'
             >
-              Sign in to your account
+              {t('auth.login_subtitle')}
             </p>
           </div>
 
@@ -208,7 +210,7 @@ function LoginPageContent() {
                     id='login-email-label'
                     data-testid='login-email-label'
                   >
-                    Email
+                    {t('auth.email')}
                   </Label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -220,7 +222,7 @@ function LoginPageContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className='pl-10'
-                      placeholder='Enter your email'
+                      placeholder={t('auth.email_placeholder')}
                       aria-describedby='login-email-label'
                     />
                   </div>
@@ -232,7 +234,7 @@ function LoginPageContent() {
                     id='login-password-label'
                     data-testid='login-password-label'
                   >
-                    Password
+                    {t('auth.password')}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -245,7 +247,7 @@ function LoginPageContent() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='Enter your password'
+                      placeholder={t('auth.password_placeholder')}
                       aria-describedby='login-password-label'
                     />
                   </div>
@@ -265,12 +267,12 @@ function LoginPageContent() {
                         data-testid='login-submit-loading'
                         className='h-5 w-5 animate-spin'
                       />
-                      Processing...
+                      {t('common.processing')}
                     </>
                   ) : (
                     <>
                       <LogIn className='h-5 w-5' />
-                      Sign In
+                      {t('auth.sign_in')}
                     </>
                   )}
                 </Button>
@@ -278,14 +280,14 @@ function LoginPageContent() {
 
               <CardFooter className='justify-center border-t border-border'>
                 <p className='text-sm text-muted-foreground'>
-                  Don&apos;t have an account?{' '}
+                  {t('auth.no_account')}{' '}
                   <a
                     id='login-signup-link'
                     data-testid='login-signup-link'
                     href='/signup'
                     className='text-primary hover:text-primary/80 font-medium'
                   >
-                    Sign Up
+                    {t('auth.sign_up')}
                   </a>
                 </p>
               </CardFooter>
@@ -296,15 +298,15 @@ function LoginPageContent() {
       {supportContactsEnabled && supportContacts.length > 0 && (
         <div className='fixed bottom-4 right-4 z-40'>
           <div className='bg-card/95 border border-border rounded-lg shadow-lg px-4 py-3 text-xs text-foreground min-w-[220px]'>
-            <div className='text-sm font-semibold mb-2'>Support Contacts</div>
+            <div className='text-sm font-semibold mb-2'>{t('auth.support_contacts')}</div>
             <div className='space-y-2'>
               {supportContacts.map((contact, index) => (
                 <div key={`support-${index}`}>
                   <div className='font-medium'>
-                    {contact.department?.replaceAll('부서', '그룹') || 'No group provided'}
+                    {contact.department?.replaceAll('부서', '그룹') || t('auth.no_group')}
                   </div>
                   <div className='text-muted-foreground'>
-                    {(contact.name || 'No name provided') +
+                    {(contact.name || t('auth.no_name')) +
                       (contact.phone ? ` · ${contact.phone}` : '')}
                   </div>
                 </div>
@@ -319,10 +321,11 @@ function LoginPageContent() {
 }
 
 function LoginPageFallback() {
+  const { t } = useTranslation();
   return (
     <div className='min-h-screen bg-background transition-colors duration-200 flex items-center justify-center'>
       <div className='text-sm text-muted-foreground'>
-        Loading login page...
+        {t('auth.loading_login')}
       </div>
     </div>
   );

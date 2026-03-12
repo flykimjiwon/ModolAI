@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function DbSchemaPage() {
+  const { t } = useTranslation();
   const { alert } = useAlert();
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +15,7 @@ export default function DbSchemaPage() {
   const [availableTargets, setAvailableTargets] = useState([
     {
       value: 'main',
-      label: '기본 DB (POSTGRES_URI)',
+      label: t('admin_db_schema.default_db'),
     },
   ]);
 
@@ -78,7 +80,7 @@ export default function DbSchemaPage() {
           }
         );
         if (!response.ok) {
-          let errorMessage = 'DB 스키마 조회 실패';
+          let errorMessage = t('admin_db_schema.fetch_failed');
           const errorText = await response.text();
           if (errorText) {
             try {
@@ -103,11 +105,11 @@ export default function DbSchemaPage() {
           setSelectedTarget(data.selectedTarget);
         }
       } catch (error) {
-        console.error('DB 스키마 조회 실패:', error);
+        console.error(t('admin_db_schema.fetch_failed'), error);
         alert(
-          error.message || 'DB 스키마 조회에 실패했습니다.',
+          error.message || t('admin_db_schema.fetch_failed_message'),
           'error',
-          '조회 실패'
+          t('admin_db_schema.fetch_failed_title')
         );
       } finally {
         setLoading(false);
@@ -123,15 +125,15 @@ export default function DbSchemaPage() {
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <h1 className='text-xl font-semibold text-foreground'>
-              DB 스키마
+              {t('admin_db_schema.title')}
             </h1>
             <p className='text-sm text-muted-foreground mt-2'>
-              선택한 데이터베이스의 테이블과 컬럼 구성을 표시합니다.
+              {t('admin_db_schema.subtitle')}
             </p>
           </div>
           <div className='flex items-end gap-2'>
             <label className='text-xs text-muted-foreground'>
-              DB 대상
+              {t('admin_db_schema.db_target')}
             </label>
             <select
               value={selectedTarget}
@@ -148,7 +150,7 @@ export default function DbSchemaPage() {
               href='/admin/settings'
               className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-1.5'
             >
-              설정으로 돌아가기
+              {t('admin_db_schema.back_to_settings')}
             </a>
           </div>
         </div>
@@ -158,10 +160,10 @@ export default function DbSchemaPage() {
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <h2 className='text-lg font-semibold text-foreground'>
-              폴더형 요약
+              {t('admin_db_schema.folder_summary')}
             </h2>
             <p className='text-sm text-muted-foreground mt-2'>
-              테이블을 폴더처럼 펼쳐서 컬럼, 타입, NULL 허용 여부를 확인합니다.
+              {t('admin_db_schema.folder_summary_desc')}
             </p>
           </div>
           <div className='flex items-center gap-2'>
@@ -170,14 +172,14 @@ export default function DbSchemaPage() {
               onClick={handleExpandAll}
               className='px-3 py-1.5 text-xs rounded bg-muted text-foreground'
             >
-              모두 펼치기
+              {t('admin_db_schema.expand_all')}
             </button>
             <button
               type='button'
               onClick={handleCollapseAll}
               className='px-3 py-1.5 text-xs rounded bg-muted text-foreground'
             >
-              모두 접기
+              {t('admin_db_schema.collapse_all')}
             </button>
           </div>
         </div>
@@ -186,19 +188,19 @@ export default function DbSchemaPage() {
             type='text'
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
-            placeholder='테이블/컬럼 검색'
+            placeholder={t('admin_db_schema.search_placeholder')}
             className='w-full px-3 py-2 text-sm border border-border rounded-md bg-card text-foreground'
           />
         </div>
         <div className='mt-4 space-y-2'>
           {loading && (
             <div className='text-sm text-muted-foreground'>
-              스키마를 불러오는 중...
+              {t('admin_db_schema.loading')}
             </div>
           )}
           {!loading && filteredTables.length === 0 && (
             <div className='text-sm text-muted-foreground'>
-              표시할 테이블이 없습니다.
+              {t('admin_db_schema.no_tables')}
             </div>
           )}
           {!loading &&

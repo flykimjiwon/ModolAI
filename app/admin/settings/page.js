@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, AlertTriangle, ImageIcon, Code } from '@/components/icons';
 import Image from 'next/image'; // Image 컴포넌트 임포트
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,9 +15,10 @@ const BRANDING_EVENT_NAME = 'modolai-site-branding-updated';
 
 export default function SettingsPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [tooltipMessage, setTooltipMessage] = useState(
-    '더 고성능의 모델도 사용할 수 있어요'
+    t('admin.tooltip_default')
   );
   const [chatWidgetEnabled, setChatWidgetEnabled] = useState(false);
   const [profileEditEnabled, setProfileEditEnabled] = useState(false);
@@ -32,7 +34,7 @@ export default function SettingsPage() {
   const [maxUserQuestionLength, setMaxUserQuestionLength] = useState(300000);
   const [imageAnalysisModel, setImageAnalysisModel] = useState('');
   const [imageAnalysisPrompt, setImageAnalysisPrompt] = useState(
-    '이 이미지를 설명해줘.'
+    t('chat.image_analysis_prompt')
   );
   const [endpoints, setEndpoints] = useState(''); // 콤마 구분 문자열
   const [endpointType, setEndpointType] = useState('ollama'); // 'ollama' | 'openai-compatible'
@@ -58,73 +60,73 @@ export default function SettingsPage() {
   const dbResetTableOptions = [
     {
       key: 'chat_history',
-      label: 'chat_history (개별 대화 기록)',
-      description: '메인 채팅 기록 (/)',
+      label: t('admin_settings.table_chat_history'),
+      description: t('admin_settings.table_chat_history_desc'),
     },
     {
       key: 'chat_rooms',
-      label: 'chat_rooms (채팅방)',
-      description: '메인 채팅 방 목록/이름 (/)',
+      label: t('admin_settings.table_chat_rooms'),
+      description: t('admin_settings.table_chat_rooms_desc'),
     },
     {
       key: 'messages',
-      label: 'messages (관리자 메시지 로그)',
-      description: '관리자 메시지 로그 (/admin/messages)',
+      label: t('admin_settings.table_messages'),
+      description: t('admin_settings.table_messages_desc'),
     },
     {
       key: 'chat_files',
-      label: 'chat_files (첨부 파일)',
-      description: '채팅 첨부 이미지/파일 메타',
+      label: t('admin_settings.table_chat_files'),
+      description: t('admin_settings.table_chat_files_desc'),
     },
     {
       key: 'model_logs',
-      label: 'model_logs (모델 로그)',
-      description: '모델 호출 로그/인스턴스 상태 (/admin/instances)',
+      label: t('admin_settings.table_model_logs'),
+      description: t('admin_settings.table_model_logs_desc'),
     },
     {
       key: 'model_server_error_history',
       label: 'model_server_error_history',
-      description: '모델 서버 오류 이력 (/admin/model-server-error-history)',
+      description: t('admin_settings.table_model_server_error_desc'),
     },
     {
       key: 'model_server_status',
       label: 'model_server_status',
-      description: '모델 서버 상태/헬스 (/admin/instances)',
+      description: t('admin_settings.table_model_server_status_desc'),
     },
     {
       key: 'external_api_prompts',
       label: 'external_api_prompts',
-      description: '외부 API 프롬프트 기록 (/admin/external-api-logs)',
+      description: t('admin_settings.table_external_api_prompts_desc'),
     },
     {
       key: 'external_api_logs',
       label: 'external_api_logs',
-      description: '외부 API 호출 로그/통계 (/admin/external-api-logs)',
+      description: t('admin_settings.table_external_api_logs_desc'),
     },
     {
       key: 'api_tokens',
       label: 'api_tokens',
-      description: 'API 키 관리 (/admin/api-keys, /my-api-keys)',
+      description: t('admin_settings.table_api_tokens_desc'),
     },
     {
       key: 'notices',
       label: 'notices',
-      description: '공지사항/팝업 (/notice, /admin/notice)',
+      description: t('admin_settings.table_notices_desc'),
     },
     {
       key: 'user_chats',
       label: 'user_chats',
-      description: '채팅 위젯 데이터 (화면 우측 위젯)',
+      description: t('admin_settings.table_user_chats_desc'),
     },
     {
       key: 'qa_logs',
       label: 'qa_logs',
-      description: '질의응답 로그 (내부 분석)',
+      description: t('admin_settings.table_qa_logs_desc'),
     },
     {
       key: 'app_error_logs',
       label: 'app_error_logs',
-      description: '앱 오류 로그 (/admin/app-error-logs)',
+      description: t('admin_settings.table_app_error_logs_desc'),
     },
   ];
 
@@ -189,13 +191,13 @@ export default function SettingsPage() {
         );
 
         setAvailableModels(groupedModels);
-        console.log('사용 가능한 모델 목록 (관리자 설정):', groupedModels);
+        console.log(t('admin_settings.log_models_loaded'), groupedModels);
       } else {
-        console.warn('모델 목록 로드 실패:', response.status);
+        console.warn(t('admin_settings.log_models_load_failed'), response.status);
         setAvailableModels([]);
       }
     } catch (error) {
-      console.error('모델 목록 로드 실패:', error);
+      console.error(t('admin_settings.log_models_load_failed'), error);
       setAvailableModels([]);
     } finally {
       setModelsLoading(false);
@@ -216,7 +218,7 @@ export default function SettingsPage() {
           data.tooltipEnabled !== undefined ? data.tooltipEnabled : true
         );
         setTooltipMessage(
-          data.tooltipMessage || '더 고성능의 모델도 사용할 수 있어요'
+          data.tooltipMessage || t('admin.tooltip_default')
         );
         setChatWidgetEnabled(
           data.chatWidgetEnabled !== undefined ? data.chatWidgetEnabled : false
@@ -241,7 +243,7 @@ export default function SettingsPage() {
           setMaxUserQuestionLength(data.maxUserQuestionLength || 300000);
           setImageAnalysisModel(data.imageAnalysisModel || '');
           setImageAnalysisPrompt(
-            data.imageAnalysisPrompt || '이 이미지를 설명해줘.'
+            data.imageAnalysisPrompt || t('chat.image_analysis_prompt')
           );
         setEndpoints(
           typeof data.endpoints === 'string'
@@ -257,7 +259,7 @@ export default function SettingsPage() {
         setApiCurlExample(data.apiCurlExample || '');
       } else {
         setTooltipEnabled(true);
-        setTooltipMessage('더 고성능의 모델도 사용할 수 있어요');
+        setTooltipMessage(t('admin.tooltip_default'));
         setChatWidgetEnabled(true);
         setBoardEnabled(true);
         setSupportContacts([]);
@@ -277,9 +279,9 @@ export default function SettingsPage() {
         setApiCurlExample('');
       }
     } catch (error) {
-      console.error('설정 로드 실패:', error);
+      console.error(t('admin_settings.log_settings_load_failed'), error);
       setTooltipEnabled(true);
-      setTooltipMessage('더 고성능의 모델도 사용할 수 있어요');
+      setTooltipMessage(t('admin.tooltip_default'));
       setChatWidgetEnabled(false);
       setProfileEditEnabled(false);
       setBoardEnabled(true);
@@ -314,15 +316,15 @@ export default function SettingsPage() {
       const data = await response.json();
       setMigrationStatus(data);
     } catch (error) {
-      console.warn('스키마 상태 조회 실패:', error);
+      console.warn(t('admin_settings.log_schema_check_failed'), error);
     }
   };
 
 
   const runModelMigration = async () => {
     const confirmed = await confirm(
-      '모델 스키마 마이그레이션을 실행할까요?',
-      'DB 스키마 보정'
+      t('admin_settings.confirm_migration'),
+      t('admin_settings.db_schema_fix')
     );
     if (!confirmed) return;
 
@@ -337,19 +339,19 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '마이그레이션 실패');
+        throw new Error(data.error || t('admin_settings.migration_failed_error'));
       }
 
       const data = await response.json();
       setMigrationResult(data);
       setMigrationStatus(data);
-      alert(data.message || '마이그레이션 완료', 'success', '완료');
+      alert(data.message || t('admin_settings.migration_complete'), 'success', t('common.complete'));
     } catch (error) {
-      console.error('마이그레이션 실패:', error);
+      console.error(t('admin_settings.log_migration_failed'), error);
       alert(
-        error.message || '마이그레이션 중 오류가 발생했습니다.',
+        error.message || t('admin_settings.migration_error'),
         'error',
-        '실패'
+        t('admin_settings.failed')
       );
     } finally {
       setSavingSection(null);
@@ -358,8 +360,8 @@ export default function SettingsPage() {
 
   const handleInitSchema = async () => {
     const confirmed = await confirm(
-      '현재 DB에 없는 테이블을 전부 생성합니다. 이미 있는 테이블은 건드리지 않습니다. 계속할까요?',
-      '초기 스키마 생성'
+      t('admin_settings.confirm_init_schema'),
+      t('admin_settings.init_schema')
     );
     if (!confirmed) return;
 
@@ -374,14 +376,14 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '스키마 생성 실패');
+        throw new Error(data.error || t('admin_settings.schema_create_failed'));
       }
 
       const data = await response.json();
       setInitSchemaResult(data);
-      alert(data.message || '스키마 생성 완료', 'success', '완료');
+      alert(data.message || t('admin_settings.schema_create_complete'), 'success', t('common.complete'));
     } catch (error) {
-      alert(error.message || '스키마 생성 중 오류가 발생했습니다.', 'error', '실패');
+      alert(error.message || t('admin_settings.schema_create_error'), 'error', t('admin_settings.failed'));
     } finally {
       setSavingSection(null);
     }
@@ -402,21 +404,21 @@ export default function SettingsPage() {
   const resetDatabase = async () => {
     const isAll = dbResetType === 'all';
     const warningText = isAll
-      ? '전체 초기화는 복구할 수 없습니다. users/settings 등 핵심 테이블은 보존되지만, 대화/로그 데이터는 삭제됩니다.'
-      : '선택한 테이블 데이터가 영구 삭제됩니다.';
+      ? t('admin_settings.warning_full_reset')
+      : t('admin_settings.warning_partial_reset');
     const confirmed = await confirm(
-      `정말 실행할까요?\n${warningText}`,
-      isAll ? '전체 DB 초기화' : '스키마별 초기화'
+      t('admin_settings.confirm_execute', { warning: warningText }),
+      isAll ? t('admin_settings.confirm_db_reset_all_title') : t('admin_settings.confirm_db_reset_partial_title')
     );
     if (!confirmed) return;
 
     if (dbResetConfirmText.trim().toUpperCase() !== 'RESET') {
-      alert('확인 문구가 올바르지 않습니다. RESET을 입력해주세요.', 'error', '확인 필요');
+      alert(t('admin_settings.confirm_text_invalid'), 'error', t('admin_settings.confirm_required'));
       return;
     }
 
     if (!isAll && dbResetTables.size === 0) {
-      alert('초기화할 테이블을 선택해주세요.', 'warning', '선택 필요');
+      alert(t('admin_settings.select_tables'), 'warning', t('admin_settings.select_required'));
       return;
     }
 
@@ -438,20 +440,20 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'DB 초기화 실패');
+        throw new Error(data.error || t('admin_settings.db_reset_failed_error'));
       }
 
       const data = await response.json();
       setDbResetResult(data);
-      alert(data.message || 'DB 초기화 완료', 'success', '완료');
+      alert(data.message || t('admin_settings.db_reset_complete'), 'success', t('common.complete'));
       setDbResetConfirmText('');
       setDbResetTables(new Set());
     } catch (error) {
-      console.error('DB 초기화 실패:', error);
+      console.error(t('admin_settings.log_db_reset_failed'), error);
       alert(
-        error.message || 'DB 초기화 중 오류가 발생했습니다.',
+        error.message || t('admin_settings.db_reset_error'),
         'error',
-        '실패'
+        t('admin_settings.failed')
       );
     } finally {
       setSavingSection(null);
@@ -488,22 +490,22 @@ export default function SettingsPage() {
             },
           })
         );
-        alert('사이트 브랜딩 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.branding_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn(t('admin_settings.log_catch_failed'), error.message);
   }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -528,22 +530,22 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('채팅 위젯 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.widget_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn(t('admin_settings.log_catch_failed'), error.message);
   }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -552,8 +554,8 @@ export default function SettingsPage() {
   // 채팅 위젯 이력 미노출 처리
   const deleteChatHistory = async () => {
     const confirmed = await confirm(
-      '모든 채팅 위젯 메시지를 사용자에게 미노출 처리하시겠습니까? 데이터는 데이터베이스에 보관되며, 사용자에게만 보이지 않습니다.',
-      '채팅 이력 미노출 확인'
+      t('admin_settings.confirm_hide_chat'),
+      t('admin_settings.confirm_hide_chat_title')
     );
     
     if (!confirmed) return;
@@ -572,27 +574,27 @@ export default function SettingsPage() {
       if (response.ok) {
         const data = await response.json();
         alert(
-          data.message || '채팅 위젯 이력이 미노출 처리되었습니다.',
+          data.message || t('admin_settings.chat_history_hidden'),
           'success',
-          '처리 완료'
+          t('admin_settings.process_complete')
         );
       } else {
-        let errorMessage = '이력 미노출 처리에 실패했습니다.';
+        let errorMessage = t('admin_settings.history_hide_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn(t('admin_settings.log_catch_failed'), error.message);
   }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('채팅 이력 미노출 처리 실패:', error);
+      console.error(t('admin_settings.log_chat_history_hide_failed'), error);
       alert(
-        error.message || '채팅 이력 미노출 처리에 실패했습니다.',
+        error.message || t('admin_settings.chat_history_hide_error'),
         'error',
-        '처리 실패'
+        t('admin_settings.process_failed')
       );
     } finally {
       setSavingSection(null);
@@ -616,22 +618,22 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('대화방명 생성 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.room_name_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn(t('admin_settings.log_catch_failed'), error.message);
   }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -656,21 +658,21 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('이미지 업로드 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.image_settings_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 작업 실패:', error.message);
+          console.warn(t('admin_settings.log_catch_failed'), error.message);
         }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -693,21 +695,21 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('질문 길이 제한이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.question_length_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 작업 실패:', error.message);
+          console.warn(t('admin_settings.log_catch_failed'), error.message);
         }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -731,22 +733,22 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('툴팁 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.tooltip_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn(t('admin_settings.log_catch_failed'), error.message);
   }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -769,21 +771,21 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('로그인 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.login_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 작업 실패:', error.message);
+          console.warn(t('admin_settings.log_catch_failed'), error.message);
         }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -807,21 +809,21 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('API 키 예시 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.api_examples_saved'), 'success', t('admin_settings.save_complete'));
         fetchSettings();
       } else {
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 작업 실패:', error.message);
+          console.warn(t('admin_settings.log_catch_failed'), error.message);
         }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -864,26 +866,26 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert('전체 설정이 저장되었습니다.', 'success', '저장 완료');
+        alert(t('admin_settings.all_settings_saved'), 'success', t('admin_settings.save_complete'));
         // 저장 후 키 입력 상태 초기화 및 재조회
         setOpenaiCompatApiKeyInput('');
         setClearOpenaiKey(false);
         fetchSettings();
       } else {
         // 에러 응답 본문 읽기
-        let errorMessage = '설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_settings.settings_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn(t('admin_settings.log_catch_error'), error.message);
           // JSON 파싱 실패 시 기본 메시지 사용
         }
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error('설정 저장 실패:', error);
-      alert(error.message || '설정 저장에 실패했습니다.', 'error', '저장 실패');
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSaving(false);
     }
@@ -910,14 +912,14 @@ export default function SettingsPage() {
       if (response.ok) {
         const data = await response.json();
         setFaviconUrl(data.faviconUrl);
-        alert('파비콘이 업로드되었습니다. 설정을 저장하세요.', 'success', '업로드 완료');
+        alert(t('admin_settings.favicon_uploaded'), 'success', t('admin_settings.upload_complete'));
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.error || '파비콘 업로드 실패');
+        throw new Error(errorData.error || t('admin_settings.favicon_upload_error'));
       }
     } catch (error) {
-      console.error('파비콘 업로드 실패:', error);
-      alert('파비콘 업로드에 실패했습니다: ' + error.message, 'error', '업로드 실패');
+      console.error(t('admin_settings.log_favicon_upload_failed'), error);
+      alert(t('admin_settings.favicon_upload_failed_detail', { message: error.message }), 'error', t('admin_settings.upload_failed'));
     } finally {
       setFaviconUploading(false);
     }
@@ -955,10 +957,10 @@ export default function SettingsPage() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-foreground'>
-            설정
+            {t('admin.settings')}
           </h1>
           <p className='text-muted-foreground mt-1'>
-            시스템 설정을 관리합니다. 각 섹션별로 개별 저장할 수 있습니다.
+            {t('admin_settings.page_description')}
           </p>
         </div>
       </div>
@@ -969,7 +971,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <Globe className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              사이트 브랜딩
+              {t('admin_settings.site_branding')}
             </h2>
           </div>
           <button
@@ -978,14 +980,14 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'branding' ? '저장 중...' : '저장'}
+            {savingSection === 'branding' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
         <div className='space-y-4'>
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              사이트 제목
+              {t('admin_settings.site_title_label')}
             </label>
             <input
               type='text'
@@ -997,13 +999,13 @@ export default function SettingsPage() {
               disabled={loading}
             />
             <p className='text-sm text-muted-foreground mt-1'>
-              {siteTitle.length}/50자 • 브라우저 탭에 표시되는 제목입니다.
+              {t('admin_settings.site_title_hint', { length: siteTitle.length })}
             </p>
           </div>
 
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              사이트 설명
+              {t('admin_settings.site_description_label')}
             </label>
             <textarea
               value={siteDescription}
@@ -1015,14 +1017,13 @@ export default function SettingsPage() {
               disabled={loading}
             />
             <p className='text-sm text-muted-foreground mt-1'>
-              {siteDescription.length}/200자 • 검색엔진과 브라우저에서 사용되는
-              설명입니다.
+              {t('admin_settings.site_description_hint', { length: siteDescription.length })}
             </p>
           </div>
 
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              파비콘 (사이트 아이콘)
+              {t('admin_settings.favicon_label')}
             </label>
             <div className='flex items-center gap-4'>
               {faviconUrl && (
@@ -1038,13 +1039,13 @@ export default function SettingsPage() {
                     }}
                   />
                   <span className='text-sm text-muted-foreground'>
-                    현재 파비콘
+                    {t('admin_settings.current_favicon')}
                   </span>
                 </div>
               )}
               <label className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 px-4 py-2 cursor-pointer disabled:opacity-50'>
                 <Upload className='h-4 w-4' />
-                {faviconUploading ? '업로드 중...' : '파비콘 업로드'}
+                {faviconUploading ? t('admin_settings.uploading') : t('admin_settings.favicon_upload_btn')}
                 <input
                   type='file'
                   accept='.ico,.png,.svg'
@@ -1055,13 +1056,13 @@ export default function SettingsPage() {
               </label>
             </div>
             <p className='text-sm text-muted-foreground mt-1'>
-              .ico, .png, .svg 파일을 지원합니다. (최대 1MB)
+              {t('admin_settings.favicon_hint')}
             </p>
           </div>
 
           <div className='border border-border rounded-lg p-4 bg-muted'>
             <h4 className='text-sm font-medium text-foreground mb-2'>
-              미리보기
+              {t('admin_settings.preview')}
             </h4>
             <div className='flex items-center gap-3 p-2 bg-background rounded border'>
               {faviconUrl ? (
@@ -1080,21 +1081,21 @@ export default function SettingsPage() {
               </span>
             </div>
             <p className='text-xs text-muted-foreground mt-1'>
-              브라우저 탭 미리보기
+              {t('admin_settings.browser_tab_preview')}
             </p>
           </div>
 
           <div className='border border-border rounded-lg p-4 bg-muted'>
             <h4 className='text-sm font-medium text-foreground mb-2'>
-              자유게시판
+              {t('admin_settings.free_board')}
             </h4>
             <div className='flex items-center justify-between'>
               <div>
                 <label className='block text-sm font-medium text-foreground mb-1'>
-                  자유게시판 사용
+                  {t('admin_settings.free_board_use')}
                 </label>
                 <p className='text-sm text-muted-foreground'>
-                  사이드바에 자유게시판 메뉴를 노출합니다.
+                  {t('admin_settings.free_board_desc')}
                 </p>
               </div>
               <button
@@ -1123,7 +1124,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <Globe className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              로그인 설정
+              {t('admin_settings.login_settings')}
             </h2>
           </div>
           <button
@@ -1132,14 +1133,14 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'loginType' ? '저장 중...' : '저장'}
+            {savingSection === 'loginType' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
         <div className='space-y-4'>
           <div>
             <label className='block text-sm font-medium text-foreground mb-3'>
-              기본 로그인 방식
+              {t('admin_settings.default_login_method')}
             </label>
             <div className='flex flex-wrap items-center gap-4'>
               <label className='inline-flex items-center gap-2 text-sm text-foreground cursor-pointer'>
@@ -1152,8 +1153,8 @@ export default function SettingsPage() {
                   className='accent-primary'
                   disabled={loading}
                 />
-                <span className='font-medium'>일반 로그인</span>
-                <span className='text-muted-foreground'>(이메일/비밀번호)</span>
+                <span className='font-medium'>{t('admin_settings.normal_login')}</span>
+                <span className='text-muted-foreground'>{t('admin_settings.normal_login_desc')}</span>
               </label>
               <label className='inline-flex items-center gap-2 text-sm text-foreground cursor-pointer'>
                 <input
@@ -1165,22 +1166,22 @@ export default function SettingsPage() {
                   className='accent-primary'
                   disabled={loading}
                 />
-                <span className='font-medium'>그룹사 로그인 (SSO)</span>
-                <span className='text-muted-foreground'>(사번/비밀번호)</span>
+                <span className='font-medium'>{t('admin_settings.sso_login')}</span>
+                <span className='text-muted-foreground'>{t('admin_settings.sso_login_desc')}</span>
               </label>
             </div>
             <p className='text-sm text-muted-foreground mt-2'>
-              비로그인 사용자가 접근할 때 기본으로 리다이렉트되는 로그인 페이지를 설정합니다.
+              {t('admin_settings.login_redirect_desc')}
             </p>
           </div>
 
           <div className='border border-border rounded-lg p-4 bg-muted'>
             <h4 className='text-sm font-medium text-foreground mb-2'>
-              로그인 페이지 URL
+              {t('admin_settings.login_page_url')}
             </h4>
             <ul className='text-sm text-muted-foreground space-y-1'>
-              <li>• 일반 로그인: <code className='bg-muted px-1 rounded'>/login</code></li>
-              <li>• 그룹사 로그인 (SSO): <code className='bg-muted px-1 rounded'>/sso</code></li>
+              <li>• {t('admin_settings.normal_login_url')} <code className='bg-muted px-1 rounded'>/login</code></li>
+              <li>• {t('admin_settings.sso_login_url')} <code className='bg-muted px-1 rounded'>/sso</code></li>
             </ul>
           </div>
         </div>
@@ -1192,7 +1193,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <MessageCircle className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              담당자 정보
+              {t('admin_settings.support_contacts')}
             </h2>
           </div>
           <button
@@ -1201,7 +1202,7 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {saving ? '저장 중...' : '저장'}
+            {saving ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
@@ -1209,10 +1210,10 @@ export default function SettingsPage() {
           <div className='flex items-center justify-between border border-border rounded-lg p-3 bg-muted'>
             <div>
               <p className='text-sm font-medium text-foreground'>
-                로그인 화면 표시
+                {t('admin_settings.login_display')}
               </p>
               <p className='text-xs text-muted-foreground'>
-                로그인 화면 우측 하단에 담당자 카드를 표시합니다.
+                {t('admin_settings.login_display_desc')}
               </p>
             </div>
             <button
@@ -1234,7 +1235,7 @@ export default function SettingsPage() {
           </div>
           {supportContacts.length === 0 ? (
             <p className='text-sm text-muted-foreground'>
-              등록된 담당자가 없습니다.
+              {t('admin_settings.no_contacts')}
             </p>
           ) : (
             supportContacts.map((contact, index) => (
@@ -1249,7 +1250,7 @@ export default function SettingsPage() {
                     updateSupportContact(index, 'department', e.target.value)
                   }
                   className='px-3 py-2 border border-input rounded-md bg-background text-foreground'
-                  placeholder='그룹'
+                  placeholder={t('admin_settings.group_placeholder')}
                 />
                 <input
                   type='text'
@@ -1258,7 +1259,7 @@ export default function SettingsPage() {
                     updateSupportContact(index, 'name', e.target.value)
                   }
                   className='px-3 py-2 border border-input rounded-md bg-background text-foreground'
-                  placeholder='이름'
+                  placeholder={t('admin_settings.name_placeholder')}
                 />
                 <input
                   type='text'
@@ -1267,13 +1268,13 @@ export default function SettingsPage() {
                     updateSupportContact(index, 'phone', e.target.value)
                   }
                   className='px-3 py-2 border border-input rounded-md bg-background text-foreground'
-                  placeholder='전화번호'
+                  placeholder={t('admin_settings.phone_placeholder')}
                 />
                 <button
                   onClick={() => removeSupportContact(index)}
                   className='inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-2'
                 >
-                  삭제
+                  {t('common.delete')}
                 </button>
               </div>
             ))
@@ -1283,7 +1284,7 @@ export default function SettingsPage() {
             onClick={addSupportContact}
             className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-2'
           >
-            담당자 추가
+            {t('admin_settings.add_contact')}
           </button>
         </div>
       </div>
@@ -1294,7 +1295,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <MessageCircle className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              채팅 위젯
+              {t('admin_settings.chat_widget_title')}
             </h2>
           </div>
           <button
@@ -1303,7 +1304,7 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'widget' ? '저장 중...' : '저장'}
+            {savingSection === 'widget' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
@@ -1311,11 +1312,10 @@ export default function SettingsPage() {
           <div className='flex items-center justify-between'>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                실시간 채팅 위젯 활성화
+                {t('admin_settings.chat_widget_enable')}
               </label>
               <p className='text-sm text-muted-foreground'>
-                사용자들이 실시간으로 소통할 수 있는 채팅 위젯을 화면 우측
-                하단에 표시합니다.
+                {t('admin_settings.chat_widget_desc')}
               </p>
             </div>
             <button
@@ -1338,10 +1338,10 @@ export default function SettingsPage() {
           <div className='flex items-center justify-between'>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                프로필 수정 메뉴 표시
+                {t('admin_settings.profile_edit_menu')}
               </label>
               <p className='text-sm text-muted-foreground'>
-                사이드바의 프로필 수정 메뉴를 노출합니다. SSO 환경에서는 끌 수 있습니다.
+                {t('admin_settings.profile_edit_desc')}
               </p>
             </div>
             <button
@@ -1363,25 +1363,25 @@ export default function SettingsPage() {
 
           <div className='border border-border rounded-lg p-4 bg-muted'>
             <h4 className='text-sm font-medium text-foreground mb-2'>
-              채팅 위젯 정보
+              {t('admin_settings.chat_widget_info')}
             </h4>
             <ul className='text-sm text-muted-foreground space-y-1'>
-              <li>• 로그인한 사용자만 채팅 참여 가능</li>
-              <li>• 실시간으로 메시지 동기화 (1초 간격)</li>
-              <li>• &apos;general&apos; 룸에서 모든 사용자가 대화 공유</li>
-              <li>• 비활성화 시 모든 사용자에게 채팅 위젯이 숨겨짐</li>
+              <li>• {t('admin_settings.chat_widget_info_1')}</li>
+              <li>• {t('admin_settings.chat_widget_info_2')}</li>
+              <li>• {t('admin_settings.chat_widget_info_3')}</li>
+              <li>• {t('admin_settings.chat_widget_info_4')}</li>
             </ul>
           </div>
 
           <div className='border border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-900/20'>
             <h4 className='text-sm font-medium text-red-900 dark:text-red-200 mb-2'>
-              위험 영역
+              {t('admin_settings.danger_zone')}
             </h4>
             <p className='text-sm text-red-600 dark:text-red-400 mb-3'>
-              채팅 위젯의 모든 메시지를 사용자에게 미노출 처리합니다. 데이터는 데이터베이스에 보관되며, 사용자에게만 보이지 않습니다.
+              {t('admin_settings.danger_zone_desc')}
             </p>
             <p className='text-xs text-red-500 dark:text-red-400 mb-3'>
-              ℹ️ 실제 데이터는 삭제되지 않으며, 관리자는 데이터베이스에서 확인할 수 있습니다.
+              {'ℹ️ '}{t('admin_settings.danger_zone_info')}
             </p>
             <button
               onClick={deleteChatHistory}
@@ -1389,7 +1389,7 @@ export default function SettingsPage() {
               className='inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
             >
               <Trash2 className='h-3.5 w-3.5' />
-              {savingSection === 'widget-delete' ? '처리 중...' : '채팅 이력 미노출'}
+              {savingSection === 'widget-delete' ? t('common.processing') : t('admin_settings.hide_chat_history')}
             </button>
           </div>
         </div>
@@ -1400,7 +1400,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <MessageCircle className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              대화방명 생성 설정
+              {t('admin_settings.room_name_settings')}
             </h2>
           </div>
           <button
@@ -1409,7 +1409,7 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'roomName' ? '저장 중...' : '저장'}
+            {savingSection === 'roomName' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
@@ -1417,20 +1417,20 @@ export default function SettingsPage() {
           <div>
             <div className='flex items-center justify-between mb-2'>
               <label className='block text-sm font-medium text-foreground'>
-                대화방명 생성 모델
+                {t('admin_settings.room_name_model')}
               </label>
               <button
                 onClick={fetchAvailableModels}
                 disabled={modelsLoading}
                 className='flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50'
-                title='로컬 모델 목록 새로고침'
+                title={t('admin_settings.refresh_models_title')}
               >
                 <RefreshCw
                   className={`h-3 w-3 ${
                     modelsLoading ? 'animate-spin' : ''
                   }`}
                 />
-                새로고침
+                {t('admin_settings.refresh')}
               </button>
             </div>
             <select
@@ -1440,9 +1440,9 @@ export default function SettingsPage() {
               disabled={loading || modelsLoading}
             >
               {modelsLoading ? (
-                <option value=''>모델 목록 로드 중...</option>
+                <option value=''>{t('admin_settings.models_loading')}</option>
               ) : availableModels.length === 0 ? (
-                <option value='gemma3:4b'>Gemma 3 4B (기본값)</option>
+                <option value='gemma3:4b'>{t('admin_settings.default_model')}</option>
               ) : (
                 <>
                   {availableModels.map((server) => (
@@ -1453,7 +1453,7 @@ export default function SettingsPage() {
                       {server.models.map((model) => (
                         <option key={model.label} value={model.label}>
                           {model.label}{' '}
-                          {model.isMultimodal ? '(멀티모달)' : '(텍스트)'}
+                          {model.isMultimodal ? t('admin_settings.multimodal') : t('admin_settings.text_only')}
                           {model.tooltip ? ` - ${model.tooltip}` : ''}
                         </option>
                       ))}
@@ -1463,8 +1463,7 @@ export default function SettingsPage() {
               )}
             </select>
             <p className='text-sm text-muted-foreground mt-1'>
-              새 대화방 생성 시 대화 내용을 바탕으로 방 이름을 자동 생성하는 데 사용되는 모델입니다.
-              가벼운 텍스트 모델을 사용하는 것을 권장합니다.
+              {t('admin_settings.room_name_model_desc')}
             </p>
           </div>
         </div>
@@ -1476,7 +1475,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <MessageCircle className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              질문 길이 제한
+              {t('admin_settings.question_length_title')}
             </h2>
           </div>
           <button
@@ -1485,13 +1484,13 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'questionLength' ? '저장 중...' : '저장'}
+            {savingSection === 'questionLength' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
         <div className='space-y-2'>
           <label className='block text-sm font-medium text-foreground'>
-            최대 질문 길이 (자)
+            {t('admin_settings.max_question_length')}
           </label>
           <input
             type='number'
@@ -1506,7 +1505,7 @@ export default function SettingsPage() {
             className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground'
           />
           <p className='text-sm text-muted-foreground'>
-            길이 제한이 없거나 비정상적으로 큰 입력을 방지하기 위한 설정입니다.
+            {t('admin_settings.question_length_desc')}
           </p>
         </div>
       </div>
@@ -1517,7 +1516,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <ImageIcon className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              이미지 업로드 설정
+              {t('admin_settings.image_upload_settings')}
             </h2>
           </div>
           <button
@@ -1526,14 +1525,14 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'image' ? '저장 중...' : '저장'}
+            {savingSection === 'image' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
         <div className='space-y-4'>
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              메시지당 최대 이미지 개수
+              {t('admin_settings.max_images_label')}
             </label>
             <input
               type='number'
@@ -1545,27 +1544,27 @@ export default function SettingsPage() {
               disabled={loading}
             />
             <p className='text-sm text-muted-foreground mt-1'>
-              한 번에 업로드할 수 있는 최대 이미지 개수입니다. (1~20)
+              {t('admin_settings.max_images_hint')}
             </p>
           </div>
 
           <div>
             <div className='flex items-center justify-between mb-2'>
               <label className='block text-sm font-medium text-foreground'>
-                이미지 분석 모델
+                {t('admin_settings.image_analysis_model')}
               </label>
               <button
                 onClick={fetchAvailableModels}
                 disabled={modelsLoading}
                 className='flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50'
-                title='로컬 모델 목록 새로고침'
+                title={t('admin_settings.refresh_models_title')}
               >
                 <RefreshCw
                   className={`h-3 w-3 ${
                     modelsLoading ? 'animate-spin' : ''
                   }`}
                 />
-                새로고침
+                {t('admin_settings.refresh')}
               </button>
             </div>
             <select
@@ -1574,11 +1573,11 @@ export default function SettingsPage() {
               className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground'
               disabled={loading || modelsLoading}
             >
-              <option value=''>선택 안 함</option>
+              <option value=''>{t('admin_settings.no_selection')}</option>
               {modelsLoading ? (
-                <option value=''>모델 목록 로드 중...</option>
+                <option value=''>{t('admin_settings.models_loading')}</option>
               ) : availableModels.length === 0 ? (
-                <option value=''>모델 없음</option>
+                <option value=''>{t('admin_settings.no_models')}</option>
               ) : (
                 <>
                   {availableModels.map((server) => (
@@ -1589,7 +1588,7 @@ export default function SettingsPage() {
                       {server.models.map((model) => (
                         <option key={model.label} value={model.label}>
                           {model.label}{' '}
-                          {model.isMultimodal ? '(멀티모달)' : '(텍스트)'}
+                          {model.isMultimodal ? t('admin_settings.multimodal') : t('admin_settings.text_only')}
                           {model.tooltip ? ` - ${model.tooltip}` : ''}
                         </option>
                       ))}
@@ -1599,24 +1598,23 @@ export default function SettingsPage() {
               )}
             </select>
             <p className='text-sm text-muted-foreground mt-1'>
-              이미지를 분석할 때 사용할 Vision 모델을 선택합니다.
-              이미지 업로드 시 이 모델이 사용됩니다.
+              {t('admin_settings.image_analysis_model_desc')}
             </p>
           </div>
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              이미지 분석 기본 질문
+              {t('admin_settings.image_analysis_prompt_label')}
             </label>
             <textarea
               value={imageAnalysisPrompt}
               onChange={(e) => setImageAnalysisPrompt(e.target.value)}
               className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground'
               rows='2'
-              placeholder='예: 이 이미지를 설명해줘.'
+              placeholder={t('admin_settings.image_analysis_prompt_placeholder')}
               disabled={loading}
             />
             <p className='text-sm text-muted-foreground mt-1'>
-              텍스트 없이 이미지 전송 시 이 문구가 자동으로 사용됩니다.
+              {t('admin_settings.image_analysis_prompt_desc')}
             </p>
           </div>
         </div>
@@ -1628,7 +1626,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <Lightbulb className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              사용자 안내 툴팁
+              {t('admin_settings.tooltip_settings')}
             </h2>
           </div>
           <button
@@ -1637,7 +1635,7 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'tooltip' ? '저장 중...' : '저장'}
+            {savingSection === 'tooltip' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
@@ -1645,11 +1643,10 @@ export default function SettingsPage() {
           <div className='flex items-center justify-between'>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                모델 선택 안내 툴팁 활성화
+                {t('admin_settings.tooltip_enable')}
               </label>
               <p className='text-sm text-muted-foreground'>
-                사용자가 페이지에 접속할 때마다 보여지는 둥둥 떠다니는 안내
-                메시지 (X 클릭시 해당 세션에서만 숨김)
+                {t('admin_settings.tooltip_enable_desc')}
               </p>
             </div>
             <button
@@ -1670,20 +1667,19 @@ export default function SettingsPage() {
           {tooltipEnabled && (
             <div>
               <label className='block text-sm font-medium text-foreground mb-2'>
-                툴팁 메시지
+                {t('admin_settings.tooltip_message_label')}
               </label>
               <input
                 type='text'
                 value={tooltipMessage}
                 onChange={(e) => setTooltipMessage(e.target.value)}
                 className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground'
-                placeholder='더 고성능의 모델도 사용할 수 있어요'
+                placeholder={t('admin.tooltip_default')}
                 maxLength={100}
                 disabled={loading}
               />
               <p className='text-sm text-muted-foreground mt-1'>
-                {tooltipMessage.length}/100자 • 페이지 접속시마다 표시되며, X
-                클릭시 해당 세션에서만 숨겨집니다.
+                {t('admin_settings.tooltip_message_hint', { length: tooltipMessage.length })}
               </p>
             </div>
           )}
@@ -1691,11 +1687,11 @@ export default function SettingsPage() {
           {/* 툴팁 미리보기 */}
           <div className='border border-border rounded-lg p-4 bg-muted'>
             <h4 className='text-sm font-medium text-foreground mb-2'>
-              미리보기
+              {t('admin_settings.preview')}
             </h4>
             <div className='relative inline-block'>
               <div className='flex items-center gap-2 px-3 py-2 bg-muted rounded-lg text-xs'>
-                모델 선택
+                {t('admin_settings.model_select')}
               </div>
               {tooltipEnabled && (
                 <div className='absolute -top-14 left-1/2 transform -translate-x-1/2 z-10'>
@@ -1717,7 +1713,7 @@ export default function SettingsPage() {
           <div className='flex items-center gap-3'>
             <Code className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              API 키 페이지 예시 설정
+              {t('admin_settings.api_key_examples_title')}
             </h2>
           </div>
           <button
@@ -1726,25 +1722,24 @@ export default function SettingsPage() {
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Save className='h-3.5 w-3.5' />
-            {savingSection === 'apiTokenExamples' ? '저장 중...' : '저장'}
+            {savingSection === 'apiTokenExamples' ? t('common.saving') : t('common.save')}
           </button>
         </div>
 
         <p className='text-sm text-muted-foreground mb-4'>
-          /my-api-keys 페이지에 표시되는 config 예시와 curl 예시를 관리합니다.
-          환경에 맞게 직접 수정하세요.
+          {t('admin_settings.api_key_examples_desc')}
         </p>
 
         <div className='space-y-4'>
           <div className='bg-primary/10 border border-primary/30 rounded-lg p-3 mb-4'>
             <p className='text-sm text-primary'>
-              <strong>플레이스홀더 안내:</strong> <code className='bg-primary/20 px-1 rounded'>{'{{KEY}}'}</code> → 사용자가 선택한 API 키로 자동 치환됩니다.
+              <strong>{t('admin_settings.placeholder_info')}</strong> <code className='bg-primary/20 px-1 rounded'>{'{{KEY}}'}</code> {t('admin_settings.placeholder_info_desc')}
             </p>
           </div>
 
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              VSCode Continue config 예시 (YAML)
+              {t('admin_settings.vscode_config_label')}
             </label>
             <textarea
               value={apiConfigExample}
@@ -1763,13 +1758,13 @@ models:
               disabled={loading}
             />
             <p className='text-sm text-muted-foreground mt-1'>
-              사용자가 모델과 키를 선택하면 플레이스홀더가 실제 값으로 치환됩니다. 비워두면 기본 예시가 표시됩니다.
+              {t('admin_settings.vscode_config_hint')}
             </p>
           </div>
 
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              curl 테스트 예시 (Windows 기본)
+              {t('admin_settings.curl_example_label')}
             </label>
             <textarea
               value={apiCurlExample}
@@ -1783,7 +1778,7 @@ models:
               disabled={loading}
             />
             <p className='text-sm text-muted-foreground mt-1'>
-              Windows 형식 기준으로 작성하세요. 비워두면 기본 예시가 표시됩니다.
+              {t('admin_settings.curl_example_hint')}
             </p>
           </div>
         </div>
@@ -1795,7 +1790,7 @@ models:
           <div className='flex items-center gap-3'>
             <RefreshCw className='h-5 w-5 text-muted-foreground' />
             <h2 className='text-lg font-semibold text-foreground'>
-              DB 스키마 보정
+              {t('admin_settings.db_schema_fix')}
             </h2>
           </div>
           <div className='flex items-center gap-2'>
@@ -1805,7 +1800,7 @@ models:
               className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
             >
               <RefreshCw className='h-3.5 w-3.5' />
-              상태 확인
+              {t('admin_settings.check_status')}
             </button>
             <button
               onClick={runModelMigration}
@@ -1818,33 +1813,32 @@ models:
                 }`}
               />
               {savingSection === 'db-migration'
-                ? '실행 중...'
-                : '마이그레이션 실행'}
+                ? t('admin_settings.running')
+                : t('admin_settings.run_migration')}
             </button>
           </div>
         </div>
         <p className='text-sm text-muted-foreground'>
-          프론트만 배포하는 환경에서 models 테이블 컬럼을 최신 스키마로
-          보정합니다. (예: api_config, api_key, app_error_logs)
+          {t('admin_settings.db_schema_fix_desc')}
         </p>
         {migrationStatus && (
           <div className='mt-3 text-xs text-muted-foreground'>
-            상태: {migrationStatus.isUpToDate ? '최신' : '보정 필요'}
+            {t('admin_settings.status_label')} {migrationStatus.isUpToDate ? t('admin_settings.up_to_date') : t('admin_settings.needs_fix')}
             {migrationStatus.missing?.length > 0 && (
               <span className='ml-2'>
-                누락 컬럼: {migrationStatus.missing.map((c) => c.name).join(', ')}
+                {t('admin_settings.missing_columns')} {migrationStatus.missing.map((c) => c.name).join(', ')}
               </span>
             )}
             {migrationStatus.missingTables?.length > 0 && (
               <span className='ml-2'>
-                누락 테이블: {migrationStatus.missingTables.join(', ')}
+                {t('admin_settings.missing_tables')} {migrationStatus.missingTables.join(', ')}
               </span>
             )}
           </div>
         )}
         {migrationResult?.columns && (
           <div className='mt-3 text-xs text-muted-foreground'>
-            현재 컬럼 수: {migrationResult.columns.length}
+            {t('admin_settings.current_column_count')} {migrationResult.columns.length}
           </div>
         )}
       </div>
@@ -1855,7 +1849,7 @@ models:
           <div className='flex items-center gap-3'>
             <RefreshCw className='h-5 w-5 text-muted-foreground' />
             <h2 className='text-lg font-semibold text-foreground'>
-              초기 스키마 생성
+              {t('admin_settings.init_schema')}
             </h2>
           </div>
           <button
@@ -1868,23 +1862,23 @@ models:
                 savingSection === 'init-schema' ? 'animate-spin' : ''
               }`}
             />
-            {savingSection === 'init-schema' ? '생성 중...' : '스키마 생성 실행'}
+            {savingSection === 'init-schema' ? t('admin_settings.creating') : t('admin_settings.run_schema_create')}
           </button>
         </div>
         <p className='text-sm text-muted-foreground'>
-          새 DB(예: modol_dev)에 전체 테이블을 한 번에 생성합니다. 이미 존재하는 테이블은 건드리지 않으며, 없는 테이블만 생성합니다.
+          {t('admin_settings.init_schema_desc')}
         </p>
         {initSchemaResult && (
           <div className='mt-3 space-y-1 text-xs text-muted-foreground'>
             <div>{initSchemaResult.message}</div>
             {initSchemaResult.created?.length > 0 && (
               <div className='text-primary'>
-                생성됨: {initSchemaResult.created.join(', ')}
+                {t('admin_settings.created_label')} {initSchemaResult.created.join(', ')}
               </div>
             )}
             {initSchemaResult.skipped?.length > 0 && (
               <div className='text-muted-foreground'>
-                이미 존재: {initSchemaResult.skipped.join(', ')}
+                {t('admin_settings.already_exists')} {initSchemaResult.skipped.join(', ')}
               </div>
             )}
           </div>
@@ -1897,7 +1891,7 @@ models:
           <div className='flex items-center gap-3'>
             <AlertTriangle className='h-5 w-5 text-red-600' />
             <h2 className='text-lg font-semibold text-red-900 dark:text-red-200'>
-              DB 초기화 (위험)
+              {t('admin_settings.db_reset_title')}
             </h2>
           </div>
           <button
@@ -1906,12 +1900,12 @@ models:
             className='inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
             <Trash2 className='h-3.5 w-3.5' />
-            {savingSection === 'db-reset' ? '처리 중...' : '초기화 실행'}
+            {savingSection === 'db-reset' ? t('common.processing') : t('admin_settings.run_reset')}
           </button>
         </div>
 
         <p className='text-sm text-red-700 dark:text-red-300'>
-          실수 방지를 위해 반드시 확인 모달이 뜨며, 확인 문구(RESET)를 입력해야 실행됩니다.
+          {t('admin_settings.db_reset_info')}
         </p>
 
         <div className='mt-4 space-y-4'>
@@ -1926,7 +1920,7 @@ models:
                 className='accent-red-600'
                 disabled={loading}
               />
-              스키마별 초기화
+              {t('admin_settings.partial_reset')}
             </label>
             <label className='inline-flex items-center gap-2 text-sm text-foreground'>
               <input
@@ -1938,7 +1932,7 @@ models:
                 className='accent-red-600'
                 disabled={loading}
               />
-              전체 초기화 (users/settings 등 핵심 테이블 보존)
+              {t('admin_settings.full_reset')}
             </label>
           </div>
 
@@ -1969,7 +1963,7 @@ models:
 
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              확인 문구 입력 (RESET)
+              {t('admin_settings.confirm_text_label')}
             </label>
             <input
               type='text'
@@ -1983,7 +1977,7 @@ models:
 
           {dbResetResult?.deletedTables?.length > 0 && (
             <div className='text-xs text-foreground'>
-              마지막 처리: {dbResetResult.deletedTables.join(', ')}
+              {t('admin_settings.last_processed')} {dbResetResult.deletedTables.join(', ')}
             </div>
           )}
         </div>
@@ -1994,18 +1988,18 @@ models:
           <div className='flex items-center gap-3'>
             <Globe className='h-5 w-5 text-muted-foreground' />
             <h2 className='text-lg font-semibold text-foreground'>
-              DB 스키마 보기
+              {t('admin_settings.view_db_schema')}
             </h2>
           </div>
           <Link
             href='/admin/db-schema'
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-1.5'
           >
-            이동
+            {t('admin_settings.go')}
           </Link>
         </div>
         <p className='text-sm text-muted-foreground'>
-          현재 데이터베이스 테이블/컬럼 구조를 확인합니다.
+          {t('admin_settings.view_db_schema_desc')}
         </p>
       </div>
 

@@ -6,6 +6,7 @@ import { LogIn, User, Lock, Loader2, AlertCircle, X } from '@/components/icons';
 import NoticePopup from '../components/NoticePopup';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -84,18 +85,19 @@ function checkLocalStorageAvailable() {
 }
 
 function ErrorPopup({ error, onClose }) {
+  const { t } = useTranslation();
   if (!error) return null;
 
   const getErrorTitle = (errorCode) => {
     switch (errorCode) {
-      case 'VALIDATION_ERROR': return 'Input Error';
-      case 'AUTH_FAILED': return 'Authentication Failed';
-      case 'LOGIN_DENIED': return 'Login Denied';
-      case 'SSO_SYSTEM_ERROR': return 'SSO System Error';
-      case 'SSO_SERVER_ERROR': return 'SSO Server Error';
-      case 'SSO_CONNECTION_ERROR': return 'SSO Connection Error';
-      case 'CLIENT_STORAGE_ERROR': return 'Browser Storage Error';
-      default: return 'Login Error';
+      case 'VALIDATION_ERROR': return t('sso.error_validation');
+      case 'AUTH_FAILED': return t('sso.error_auth_failed');
+      case 'LOGIN_DENIED': return t('sso.error_login_denied');
+      case 'SSO_SYSTEM_ERROR': return t('sso.error_system');
+      case 'SSO_SERVER_ERROR': return t('sso.error_server');
+      case 'SSO_CONNECTION_ERROR': return t('sso.error_connection');
+      case 'CLIENT_STORAGE_ERROR': return t('sso.error_storage');
+      default: return t('sso.error_login');
     }
   };
 
@@ -115,19 +117,19 @@ function ErrorPopup({ error, onClose }) {
           <p className="text-foreground mb-3">{error.message}</p>
           {error.errorCode && (
             <p className="text-xs text-muted-foreground mb-2">
-              Error code: {error.errorCode}
+              {t('sso.error_code_label')}: {error.errorCode}
             </p>
           )}
           {error.detail && (
             <p className="text-xs text-muted-foreground bg-muted p-2 rounded">
-              Details: {error.detail}
+              {t('sso.error_details_label')}: {error.detail}
             </p>
           )}
           <Button
             onClick={onClose}
             className="mt-4 w-full"
           >
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </div>
@@ -137,6 +139,7 @@ function ErrorPopup({ error, onClose }) {
 
 export default function SSOLoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [employeeNo, setEmployeeNo] = useState('');
   const [password, setPassword] = useState('');
@@ -269,16 +272,16 @@ export default function SSOLoginPage() {
 
       if (!res.ok) {
           setErrorPopup({
-            message: data.error || 'SSO login failed.',
+            message: data.error || t('sso.login_failed'),
             errorCode: data.errorCode,
             detail: data.detail,
           });
-        setError(data.error || 'SSO login failed.');
+        setError(data.error || t('sso.login_failed'));
         return;
       }
 
       if (!checkLocalStorageAvailable()) {
-        const errorMsg = 'Browser storage is unavailable. Disable private mode or check browser storage settings.';
+        const errorMsg = t('sso.storage_unavailable');
         await logClientError(employeeNo, 'LOCAL_STORAGE_UNAVAILABLE', errorMsg);
         setErrorPopup({
           message: errorMsg,
@@ -308,7 +311,7 @@ export default function SSOLoginPage() {
         console.error('[SSO] localStorage write failed:', storageError);
         await logClientError(employeeNo, 'LOCAL_STORAGE_WRITE_ERROR', storageError.message);
         setErrorPopup({
-          message: 'Failed to save login data. Please check available browser storage.',
+          message: t('sso.storage_save_failed'),
           errorCode: 'CLIENT_STORAGE_ERROR',
           detail: storageError.message,
         });
@@ -321,7 +324,7 @@ export default function SSOLoginPage() {
     } catch (err) {
       await logClientError(employeeNo, 'NETWORK_ERROR', err.message);
       setErrorPopup({
-        message: 'A network error occurred. Please check your internet connection.',
+        message: t('sso.network_error'),
         errorCode: 'NETWORK_ERROR',
         detail: err.message,
       });
@@ -341,11 +344,11 @@ export default function SSOLoginPage() {
           {/* Logo/Title */}
           <div className='text-center mb-8'>
             <h1 className='text-3xl font-bold text-foreground mb-2'>
-              ModolAI
+              {t('auth.login_title')}
             </h1>
             <div className='flex items-center justify-center gap-3 mt-4'>
               <span className='text-3xl font-bold text-foreground'>
-                SSO Login
+                {t('sso.title')}
               </span>
             </div>
           </div>
@@ -376,7 +379,7 @@ export default function SSOLoginPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='sso-employee-no'>
-                    Employee ID
+                    {t('sso.employee_id')}
                   </Label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -387,7 +390,7 @@ export default function SSOLoginPage() {
                       value={employeeNo}
                       onChange={(e) => setEmployeeNo(e.target.value)}
                       className='pl-10'
-                      placeholder='Enter your employee ID'
+                      placeholder={t('sso.employee_id_placeholder')}
                       autoComplete='username'
                     />
                   </div>
@@ -395,7 +398,7 @@ export default function SSOLoginPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='sso-password'>
-                    Password
+                    {t('auth.password')}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -406,7 +409,7 @@ export default function SSOLoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='Enter your password'
+                      placeholder={t('auth.password_placeholder')}
                       autoComplete='current-password'
                     />
                   </div>
@@ -421,12 +424,12 @@ export default function SSOLoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className='h-5 w-5 animate-spin' />
-                      Authenticating...
+                      {t('sso.authenticating')}
                     </>
                   ) : (
                     <>
                       <LogIn className='h-5 w-5' />
-                      SSO Login
+                      {t('sso.title')}
                     </>
                   )}
                 </Button>
@@ -434,7 +437,7 @@ export default function SSOLoginPage() {
 
               <CardFooter className='justify-center border-t border-border'>
                 <p className='text-sm text-muted-foreground'>
-                  This page is for SSO login only.
+                  {t('sso.sso_only_notice')}
                 </p>
               </CardFooter>
             </form>
@@ -446,15 +449,15 @@ export default function SSOLoginPage() {
       {supportContactsEnabled && supportContacts.length > 0 && (
         <div className='fixed bottom-4 right-4 z-40'>
           <div className='bg-card/95 border border-border rounded-lg shadow-lg px-4 py-3 text-xs text-foreground min-w-[220px]'>
-            <div className='text-sm font-semibold mb-2'>Support Contacts</div>
+            <div className='text-sm font-semibold mb-2'>{t('auth.support_contacts')}</div>
             <div className='space-y-2'>
               {supportContacts.map((contact, index) => (
                 <div key={`support-${index}`}>
                   <div className='font-medium'>
-                    {contact.department?.replaceAll('부서', '그룹') || 'No group provided'}
+                    {contact.department?.replaceAll('부서', '그룹') || t('auth.no_group')}
                   </div>
                   <div className='text-muted-foreground'>
-                    {(contact.name || 'No name provided') +
+                    {(contact.name || t('auth.no_name')) +
                       (contact.phone ? ` · ${contact.phone}` : '')}
                   </div>
                 </div>

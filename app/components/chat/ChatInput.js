@@ -4,6 +4,7 @@ import { LucideImage, Send } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import ModelSelector from './ModelSelector';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 let _imgIdCounter = 0;
 
@@ -29,6 +30,7 @@ const ChatInput = memo(function ChatInput({
   maxImagesPerMessage = 5,
 }) {
   const { alert } = useAlert();
+  const { t } = useTranslation();
   const imageInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isGlobalDragging, setIsGlobalDragging] = useState(false);
@@ -90,9 +92,9 @@ const ChatInput = memo(function ChatInput({
     const availableSlots = Math.max(0, maxImages - currentImageCount);
     if (availableSlots <= 0) {
       alert(
-        `이미지는 최대 ${maxImages}장까지 첨부할 수 있습니다.`,
+        t('chat.image_max_count', { max: maxImages }),
         'warning',
-        '업로드 제한'
+        t('chat.upload_limit')
       );
       return;
     }
@@ -108,18 +110,18 @@ const ChatInput = memo(function ChatInput({
 
     const validFiles = files.filter((file) => {
       if (!allowedTypes.has(file.type)) {
-        errors.push(`${file.name}: 지원하지 않는 파일 형식입니다.`);
+        errors.push(t('chat.image_unsupported', { name: file.name }));
         return false;
       }
       if (file.size > maxSizeBytes) {
-        errors.push(`${file.name}: 10MB를 초과했습니다.`);
+        errors.push(t('chat.image_max_size', { name: file.name }));
         return false;
       }
       return true;
     });
 
     if (validFiles.length > availableSlots) {
-      errors.push(`최대 ${maxImages}장까지 첨부할 수 있습니다.`);
+      errors.push(t('chat.image_max_count_short', { max: maxImages }));
     }
 
     const filesToRead = validFiles.slice(0, availableSlots);
@@ -147,9 +149,9 @@ const ChatInput = memo(function ChatInput({
     } catch (error) {
       console.error('이미지 읽기 실패:', error);
       alert(
-        '이미지 파일을 읽는 중 문제가 발생했습니다.',
+        t('chat.image_read_error'),
         'error',
-        '업로드 실패'
+        t('chat.upload_failed')
       );
     } finally {
       if (imageInputRef.current) {
@@ -158,7 +160,7 @@ const ChatInput = memo(function ChatInput({
     }
 
     if (errors.length > 0) {
-      alert(errors.join('\n'), 'warning', '업로드 제한');
+      alert(errors.join('\n'), 'warning', t('chat.upload_limit'));
     }
   };
 
@@ -281,7 +283,7 @@ const ChatInput = memo(function ChatInput({
         <div className='fixed inset-0 z-50 flex items-center justify-center pointer-events-none'>
           <div className='absolute inset-0 bg-primary/10' />
           <div className='relative px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground shadow-lg'>
-            이미지를 놓으면 업로드됩니다
+            {t('chat.image_drop_hint')}
           </div>
         </div>
       )}
@@ -302,8 +304,8 @@ const ChatInput = memo(function ChatInput({
                   type='button'
                   onClick={() => handleRemoveImage(image.id)}
                   className='absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-black/80'
-                  aria-label='이미지 제거'
-                  title='이미지 제거'
+                  aria-label={t('chat.image_remove')}
+                  title={t('chat.image_remove')}
                 >
                   ×
                 </button>
@@ -323,8 +325,8 @@ const ChatInput = memo(function ChatInput({
           }`}
           placeholder={
             modelsLoading
-              ? '모델 로딩 중...'
-              : '질문을 입력하세요… (Enter 전송, Shift/Ctrl/Cmd+Enter 줄바꿈, 이미지 드래그/붙여넣기)'
+              ? t('chat.model_loading')
+              : t('chat.input_placeholder')
           }
           value={input}
           onChange={(e) => {
@@ -342,7 +344,7 @@ const ChatInput = memo(function ChatInput({
         {isDragging && (
           <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
             <div className='px-3 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground shadow'>
-              이미지를 놓으면 업로드됩니다
+              {t('chat.image_drop_hint')}
             </div>
           </div>
         )}
@@ -353,8 +355,8 @@ const ChatInput = memo(function ChatInput({
             variant='ghost'
             size='icon-sm'
             className='text-muted-foreground hover:text-foreground cursor-pointer'
-            aria-label='이미지 업로드'
-            title={`이미지 업로드 (${currentImageCount}/${maxImages})`}
+            aria-label={t('chat.image_upload')}
+            title={t('chat.image_upload_count', { current: currentImageCount, max: maxImages })}
             onClick={() => imageInputRef.current?.click()}
           >
             <LucideImage className='h-4 w-4' />
@@ -411,7 +413,7 @@ const ChatInput = memo(function ChatInput({
               modelsLoading ||
               (input.trim().length === 0 && !hasImages)
             }
-            aria-label='메시지 전송'
+            aria-label={t('chat.send')}
           >
             <Send className='h-4 w-4' />
           </Button>

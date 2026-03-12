@@ -5,6 +5,7 @@ import {
   getEnvironment,
 } from '@/lib/modelServers';
 import { query } from '@/lib/postgres';
+import { verifyToken } from '@/lib/auth';
 import { getModelsFromTables, saveModelsToTables } from '@/lib/modelTables';
 
 function normalizeCategories(categories) {
@@ -42,6 +43,14 @@ function normalizeCategories(categories) {
 
 export async function GET(request) {
   try {
+    const payload = verifyToken(request);
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'Authentication required.' },
+        { status: 401 }
+      );
+    }
+
     // Try querying from the new table structure
     let categories = await getModelsFromTables();
 
@@ -72,15 +81,9 @@ export async function GET(request) {
         categories = normalizedCategories;
       }
 
-      // Filter adminOnly models for non-admin users
-      const userRole = request.headers.get('X-User-Role') || 'user';
+      // Use role from JWT token (not client header)
+      const userRole = payload.role || 'user';
       const isAdmin = userRole === 'admin';
-      console.log(
-        '[/api/models] User role:',
-        userRole,
-        'Is admin:',
-        isAdmin
-      );
 
       // Create a copy for filtering
       const filteredCategories = { ...categories };

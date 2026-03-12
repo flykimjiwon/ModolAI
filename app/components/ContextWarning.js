@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { AlertModal } from './ui/modal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ContextWarning({ warning, onDismiss }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClose = useCallback(() => {
@@ -30,7 +32,7 @@ export default function ContextWarning({ warning, onDismiss }) {
     <AlertModal
       isOpen={isOpen}
       onClose={handleClose}
-      title="컨텍스트 제한 알림"
+      title={t('chat.context_warning_title')}
       message={warning}
       type="warning"
     />

@@ -11,10 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function BoardWritePage() {
   const router = useRouter();
   const { alert } = useAlert();
+  const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
@@ -52,7 +54,7 @@ export default function BoardWritePage() {
 
   const submitPost = async () => {
     if (!title.trim() || !content.trim()) {
-      alert('제목과 내용을 입력해주세요.', 'warning', '입력 필요');
+      alert(t('common.title_content_required'), 'warning', t('common.input_required'));
       return;
     }
 
@@ -74,14 +76,14 @@ export default function BoardWritePage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '글쓰기 실패');
+        throw new Error(data.error || t('board.post_create_error'));
       }
 
-      alert('게시글이 등록되었습니다.', 'success', '완료');
+      alert(t('board.post_created'), 'success', t('common.complete'));
       router.push('/board');
     } catch (error) {
       console.error('게시글 등록 실패:', error);
-      alert(error.message || '게시글 등록에 실패했습니다.', 'error', '오류');
+      alert(error.message || t('board.post_create_failed'), 'error', t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -96,17 +98,17 @@ export default function BoardWritePage() {
               onClick={() => router.push('/board')}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <h1 className='text-2xl font-bold text-foreground'>
-              자유게시판
+              {t('board.title')}
             </h1>
           </div>
           <Card>
             <CardContent className='p-6 text-center text-sm text-muted-foreground'>
-              자유게시판이 비활성화되어 있습니다.
+              {t('board.disabled')}
             </CardContent>
           </Card>
         </div>
@@ -123,12 +125,12 @@ export default function BoardWritePage() {
               onClick={() => router.push('/board')}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <h1 className='text-2xl font-bold text-foreground'>
-              글쓰기
+              {t('board.write_title')}
             </h1>
           </div>
           <Button
@@ -136,7 +138,7 @@ export default function BoardWritePage() {
             disabled={saving}
           >
             <Save className='h-4 w-4' />
-            {saving ? '저장 중...' : '등록'}
+            {saving ? t('common.saving') : t('common.submit')}
           </Button>
         </div>
 
@@ -144,7 +146,7 @@ export default function BoardWritePage() {
           <CardContent className='p-6 space-y-4'>
             <div>
               <Label className='mb-2'>
-                제목
+                {t('common.title_label')}
               </Label>
               <Input
                 type='text'
@@ -153,13 +155,13 @@ export default function BoardWritePage() {
                 maxLength={200}
               />
               <p className='text-xs text-muted-foreground mt-1'>
-                {title.length}/200자
+                {t('common.char_count', { current: title.length, max: 200 })}
               </p>
             </div>
 
             <div>
               <Label className='mb-2'>
-                내용
+                {t('common.content_label')}
               </Label>
               <Textarea
                 value={content}
@@ -168,7 +170,7 @@ export default function BoardWritePage() {
                 maxLength={10000}
               />
               <p className='text-xs text-muted-foreground mt-1'>
-                {content.length}/10,000자
+                {t('common.char_count', { current: content.length, max: '10,000' })}
               </p>
             </div>
 
@@ -176,10 +178,10 @@ export default function BoardWritePage() {
               <div className='flex items-center justify-between border border-border rounded-lg p-4 bg-muted'>
                 <div>
                   <p className='text-sm font-medium text-foreground'>
-                    공지 등록
+                    {t('board.notice_register')}
                   </p>
                   <p className='text-xs text-muted-foreground'>
-                    공지로 등록하면 목록 상단에 고정됩니다.
+                    {t('board.notice_register_desc')}
                   </p>
                 </div>
                 <Switch

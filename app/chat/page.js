@@ -8,6 +8,7 @@ import { useChatSender } from '@/hooks/useChatSender';
 import { detectClientIP } from '@/lib/clientIP';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import { TokenManager } from '@/lib/tokenManager';
 import { loadRoomModel } from '@/hooks/useModelManager';
 
@@ -26,6 +27,7 @@ import { X, Loader2, ChevronDown } from '@/components/icons';
 export default function Home() {
   const router = useRouter();
   const { alert } = useAlert();
+  const { t } = useTranslation();
 
   // ---------- Core Hooks ----------
   const {
@@ -47,7 +49,7 @@ export default function Home() {
     try {
       await originalRenameRoom(roomId, newName);
     } catch (error) {
-      alert(error.message, 'error', '채팅방 이름 변경 실패');
+      alert(error.message, 'error', t('sidebar.room_rename_failed'));
     }
   };
 
@@ -72,7 +74,7 @@ export default function Home() {
       alert(
         error.message,
         errorType,
-        errorType === 'warning' ? '경고' : '오류'
+        errorType === 'warning' ? t('common.warning') : t('errors.title')
       );
       return false;
     }
@@ -96,7 +98,7 @@ export default function Home() {
   const [maxImagesPerMessage, setMaxImagesPerMessage] = useState(5);
   const [imageAnalysisModel, setImageAnalysisModel] = useState('');
   const [imageAnalysisPrompt, setImageAnalysisPrompt] = useState(
-    '이 이미지를 설명해줘.'
+    t('chat.image_analysis_prompt')
   );
   const [imageHistoryByRoom, setImageHistoryByRoom] = useState({});
   const [profileEditEnabled, setProfileEditEnabled] = useState(false);
@@ -267,7 +269,7 @@ export default function Home() {
         setMaxImagesPerMessage(data.maxImagesPerMessage || 5);
         setImageAnalysisModel(data.imageAnalysisModel || '');
         setImageAnalysisPrompt(
-          data.imageAnalysisPrompt || '이 이미지를 설명해줘.'
+          data.imageAnalysisPrompt || t('chat.image_analysis_prompt')
         );
         setMaxUserQuestionLength(data.maxUserQuestionLength || 300000);
         setProfileEditEnabled(
@@ -356,10 +358,10 @@ export default function Home() {
               variant='outline'
               onClick={scrollToBottom}
               className='absolute -top-12 rounded-full shadow-lg'
-              aria-label='맨 아래로 스크롤'
+              aria-label={t('chat.scroll_to_bottom')}
             >
               <ChevronDown className='h-4 w-4' />
-              <span>새 메시지</span>
+              <span>{t('chat.new_message')}</span>
             </Button>
           </div>
         )}
@@ -381,7 +383,7 @@ export default function Home() {
                     data-testid='chat-loading-text'
                     className='text-muted-foreground text-sm'
                   >
-                    응답 생성 중...
+                    {t('chat.generating')}
                   </span>
                 </div>
                 <Button
@@ -392,7 +394,7 @@ export default function Home() {
                   onClick={stopStreaming}
                 >
                   <X className='h-3 w-3' />
-                  중단
+                  {t('chat.stop')}
                 </Button>
               </div>
             </div>

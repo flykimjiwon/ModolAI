@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TokenManager } from '@/lib/tokenManager';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export const useChat = () => {
   const [rooms, setRooms] = useState([]);
@@ -7,6 +8,7 @@ export const useChat = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const createRoomRef = useRef(null);
+  const { t } = useTranslation();
 
   // API 헬퍼 함수 - useCallback으로 메모이제이션하여 불필요한 재생성 방지
   const apiCall = useCallback(async (url, options = {}) => {
@@ -36,7 +38,7 @@ export const useChat = () => {
         }
       } catch (e) {
         console.error('JSON 파싱 오류:', e);
-        errorData = { error: `HTTP ${response.status} - 서버 오류` };
+        errorData = { error: t('chat_hook.http_server_error', { status: response.status }) };
       }
 
       // 401 인증 에러 또는 403에서 shouldLogout 플래그가 있는 경우 자동 로그아웃
@@ -45,13 +47,13 @@ export const useChat = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         // alert는 컴포넌트에서 처리하도록 에러로 전달
-        const authError = new Error(errorData.message || '인증이 만료되었습니다. 다시 로그인해주세요.');
+        const authError = new Error(errorData.message || t('chat_hook.auth_expired'));
         authError.isAuthError = true;
         throw authError;
       }
 
       // 상태 코드를 오류 메시지에 포함
-      const errorMessage = errorData.error || errorData.message || `HTTP ${response.status} 오류`;
+      const errorMessage = errorData.error || errorData.message || t('errors.http_error', { status: response.status });
       const error = new Error(errorMessage);
       error.status = response.status;
       error.errorData = errorData; // 원본 에러 데이터도 포함
@@ -64,7 +66,7 @@ export const useChat = () => {
       console.error('JSON 응답 파싱 오류:', e);
       return {};
     }
-  }, []);
+  }, [t]);
 
   const redirectToLogin = useCallback(async () => {
     if (typeof window === 'undefined') return;
@@ -246,14 +248,14 @@ export const useChat = () => {
       }
       
       // 에러를 throw하여 컴포넌트에서 처리하도록 함
-      throw new Error(`채팅방 이름 변경 실패: ${error.message}`);
+      throw new Error(t('chat_hook.rename_room_failed', { message: error.message }));
     }
-  }, [apiCall, redirectToLogin]);
+  }, [apiCall, redirectToLogin, t]);
 
   // 채팅방 삭제 (DB 중심)
   const deleteRoom = useCallback(async (roomId) => {
     if (rooms.length <= 1) {
-      const error = new Error('최소 하나의 채팅방은 유지해야 합니다.');
+      const error = new Error(t('chat_hook.min_room_required'));
       error.type = 'warning';
       throw error;
     }
@@ -261,7 +263,7 @@ export const useChat = () => {
     // 기본 유효성 검사
     if (!roomId) {
       console.error('삭제할 방 ID가 비어있음');
-      const error = new Error('삭제할 방을 선택해주세요.');
+      const error = new Error(t('chat_hook.select_room_to_delete'));
       error.type = 'warning';
       throw error;
     }
@@ -347,16 +349,16 @@ export const useChat = () => {
       }
       
       // 사용자에게 상세 오류 정보 제공
-      let errorMessage = '채팅방 삭제 실패: ';
       const errorStatus = error?.status;
-      const errorMsg = error?.message || '알 수 없는 오류';
+      const errorMsg = error?.message || t('chat_hook.unknown_error');
+      let errorMessage;
       
       if (errorStatus === 400 || errorMsg.includes('400')) {
-        errorMessage += '잘못된 방 ID입니다.';
+        errorMessage = t('chat_hook.delete_room_failed_reason', { reason: t('chat_hook.invalid_room_id') });
       } else if (errorStatus === 500 || errorMsg.includes('500')) {
-        errorMessage += '서버 오류가 발생했습니다.';
+        errorMessage = t('chat_hook.delete_room_failed_reason', { reason: t('chat_hook.server_error_occurred') });
       } else {
-        errorMessage += errorMsg;
+        errorMessage = t('chat_hook.delete_room_failed_reason', { reason: errorMsg });
       }
       
       // 에러를 throw하여 컴포넌트에서 처리하도록 함
@@ -364,7 +366,7 @@ export const useChat = () => {
       deleteError.type = 'error';
       throw deleteError;
     }
-  }, [apiCall, rooms, currentRoom, loadChatHistory, createRoom, redirectToLogin]);
+  }, [apiCall, rooms, currentRoom, loadChatHistory, createRoom, redirectToLogin, t]);
 
   // 메시지 추가 (DB 전용)
   const addMessage = useCallback(async (role, text, model = null) => {

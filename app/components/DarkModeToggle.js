@@ -2,10 +2,12 @@
 
 import { Moon, Sun } from '@/components/icons';
 import { useDarkMode } from '@/hooks/useDarkMode';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
 
 export default function DarkModeToggle() {
   const { isDark, toggle, mounted } = useDarkMode();
+  const { t } = useTranslation();
 
   // 클라이언트 렌더링 전에는 아무것도 표시하지 않음 (hydration mismatch 방지)
   if (!mounted) {
@@ -21,8 +23,8 @@ export default function DarkModeToggle() {
       variant='ghost'
       size='icon'
       onClick={toggle}
-      title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-      aria-label={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
+      title={isDark ? t('dark_mode.to_light') : t('dark_mode.to_dark')}
+      aria-label={isDark ? t('dark_mode.to_light') : t('dark_mode.to_dark')}
     >
       {isDark ? (
         <Sun className='h-5 w-5 text-amber-500' />

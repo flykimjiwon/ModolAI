@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { fetchDirectModels } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // 클라이언트에서 사용할 기본 모델 (서버 사이드 모듈 import 방지)
 function getDefaultModel() {
@@ -40,6 +41,8 @@ export function loadRoomModel(roomId) {
 }
 
 export function useModelManager(userRole) {
+  const { t } = useTranslation();
+
   const [modelOptions, setModelOptions] = useState([]);
   const [modelConfig, setModelConfig] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
@@ -103,7 +106,7 @@ export function useModelManager(userRole) {
             allModels.find((m) => m.isDefault)?.id || allModels[0]?.id;
           setSelectedModel(defaultModel);
         } else {
-          throw new Error('사용 가능한 모델이 없습니다.');
+          throw new Error(t('model_manager.no_models_available'));
         }
       } catch (error) {
         logger.warn(
@@ -113,7 +116,7 @@ export function useModelManager(userRole) {
         const fallbackDefault = getDefaultModel();
         const fallbackConfig = {
           models: {
-            label: '모델목록',
+            label: t('model_manager.model_list_label'),
             models: [
               { id: 'gemma3:1b', label: 'Gemma 3 1B' },
               { id: 'gpt-oss:20b', label: 'GPT-OSS 20B' },
@@ -133,7 +136,7 @@ export function useModelManager(userRole) {
       }
     }
     loadModelOptions();
-  }, [userRole]);
+  }, [userRole, t]);
 
   // 방별 모델 복원 함수 (UUID 기반 복원)
   const restoreRoomModel = useCallback((roomId, availableModelIds) => {

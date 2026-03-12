@@ -24,6 +24,7 @@ import {
   Coins,
   CircleHelp,
 } from '@/components/icons';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const COLORS = [
   '#3B82F6',
@@ -40,6 +41,8 @@ const COLORS = [
 
 // 차트 타입 토글 컴포넌트
 const ChartTypeToggle = ({ currentType, onTypeChange, availableTypes }) => {
+  const { t } = useTranslation();
+
   const typeIcons = {
     table: Table,
     bar: BarChart3,
@@ -48,10 +51,10 @@ const ChartTypeToggle = ({ currentType, onTypeChange, availableTypes }) => {
   };
 
   const typeLabels = {
-    table: '표',
-    bar: '막대',
-    pie: '원형',
-    line: '선형',
+    table: t('analytics_charts.chart_type_table'),
+    bar: t('analytics_charts.chart_type_bar'),
+    pie: t('analytics_charts.chart_type_pie'),
+    line: t('analytics_charts.chart_type_line'),
   };
 
   return (
@@ -96,6 +99,7 @@ const TitleWithTooltip = ({ title, tooltip }) => {
 
 // 사용자별 사용량 차트
 export const UserStatsChart = ({ data, title, tooltip }) => {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('table');
 
   const chartData =
@@ -125,8 +129,8 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
               />
               <YAxis />
               <Tooltip
-                formatter={(value, name) => [value + '회', '메시지 수']}
-                labelFormatter={(label) => `사용자: ${label}`}
+                formatter={(value, name) => [t('analytics_charts.count_suffix', { count: value }), t('analytics_charts.message_count')]}
+                labelFormatter={(label) => t('analytics_charts.user_label', { label })}
               />
               <Bar dataKey='count' fill='#3B82F6' />
             </BarChart>
@@ -156,7 +160,7 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value + '회', '메시지 수']} />
+              <Tooltip formatter={(value) => [t('analytics_charts.count_suffix', { count: value }), t('analytics_charts.message_count')]} />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -176,8 +180,8 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
               />
               <YAxis />
               <Tooltip
-                formatter={(value, name) => [value + '회', '메시지 수']}
-                labelFormatter={(label) => `사용자: ${label}`}
+                formatter={(value, name) => [t('analytics_charts.count_suffix', { count: value }), t('analytics_charts.message_count')]}
+                labelFormatter={(label) => t('analytics_charts.user_label', { label })}
               />
               <Line
                 type='monotone'
@@ -212,10 +216,10 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
                 <div className='flex items-center'>
                   <div className='text-right mr-4'>
                     <p className='text-sm font-medium text-gray-900 dark:text-white'>
-                      {user.messageCount}회
+                      {t('analytics_charts.count_suffix', { count: user.messageCount })}
                     </p>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      {user.avgPerDay != null ? Number(user.avgPerDay).toFixed(1) : '0.0'}회/일
+                      {t('analytics_charts.per_day_suffix', { count: user.avgPerDay != null ? Number(user.avgPerDay).toFixed(1) : '0.0' })}
                     </p>
                   </div>
                   <div className='w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
@@ -250,7 +254,7 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
       </div>
       {!data || data.length === 0 ? (
         <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
-          데이터가 없습니다
+          {t('analytics_charts.no_data')}
         </p>
       ) : (
         renderChart()
@@ -261,11 +265,12 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
 
 // 모델별 사용량 차트
 export const ModelStatsChart = ({ data, title }) => {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('table');
 
   const chartData =
     data?.map((model) => ({
-      name: model.label || model._id || '알 수 없음',
+      name: model.label || model._id || t('analytics_charts.unknown'),
       count: model.count,
       percentage: (
         (model.count / (data?.reduce((sum, m) => sum + m.count, 0) || 1)) *
@@ -290,8 +295,8 @@ export const ModelStatsChart = ({ data, title }) => {
               />
               <YAxis />
               <Tooltip
-                formatter={(value, name) => [value + '회', '사용 횟수']}
-                labelFormatter={(label) => `모델: ${label}`}
+                formatter={(value, name) => [t('analytics_charts.count_suffix', { count: value }), t('analytics_charts.usage_count')]}
+                labelFormatter={(label) => t('analytics_charts.model_label', { label })}
               />
               <Bar dataKey='count' fill='#10B981' />
             </BarChart>
@@ -319,7 +324,7 @@ export const ModelStatsChart = ({ data, title }) => {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value + '회', '사용 횟수']} />
+              <Tooltip formatter={(value) => [t('analytics_charts.count_suffix', { count: value }), t('analytics_charts.usage_count')]} />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -339,8 +344,8 @@ export const ModelStatsChart = ({ data, title }) => {
               />
               <YAxis />
               <Tooltip
-                formatter={(value, name) => [value + '회', '사용 횟수']}
-                labelFormatter={(label) => `모델: ${label}`}
+                formatter={(value, name) => [t('analytics_charts.count_suffix', { count: value }), t('analytics_charts.usage_count')]}
+                labelFormatter={(label) => t('analytics_charts.model_label', { label })}
               />
               <Line
                 type='monotone'
@@ -376,13 +381,13 @@ export const ModelStatsChart = ({ data, title }) => {
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
                     <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
-                      {model.label || model._id || '알 수 없음'}
+                      {model.label || model._id || t('analytics_charts.unknown')}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
                   <span className='text-sm font-medium text-gray-900 dark:text-white mr-2'>
-                    {model.count}회
+                    {t('analytics_charts.count_suffix', { count: model.count })}
                   </span>
                   <span className='text-xs text-gray-500 dark:text-gray-400'>
                     (
@@ -415,7 +420,7 @@ export const ModelStatsChart = ({ data, title }) => {
       </div>
       {!data || data.length === 0 ? (
         <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
-          데이터가 없습니다
+          {t('analytics_charts.no_data')}
         </p>
       ) : (
         renderChart()
@@ -426,11 +431,12 @@ export const ModelStatsChart = ({ data, title }) => {
 
 // 부서별 사용량 차트
 export const DepartmentStatsChart = ({ data, title, tooltip }) => {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('table');
 
   const chartData =
     data?.map((dept) => ({
-      name: dept._id || '기타',
+      name: dept._id || t('analytics_charts.other'),
       userCount: dept.userCount,
       messageCount: dept.messageCount,
     })) || [];
@@ -453,8 +459,8 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey='userCount' fill='#8B5CF6' name='사용자 수' />
-              <Bar dataKey='messageCount' fill='#F59E0B' name='메시지 수' />
+              <Bar dataKey='userCount' fill='#8B5CF6' name={t('analytics_charts.user_count_label')} />
+              <Bar dataKey='messageCount' fill='#F59E0B' name={t('analytics_charts.message_count')} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -468,7 +474,7 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
                 cx='50%'
                 cy='50%'
                 labelLine={false}
-                label={({ name, userCount }) => `${name} ${userCount}명`}
+                label={({ name, userCount }) => `${name} ${t('analytics_charts.user_count_suffix', { count: userCount })}`}
                 outerRadius={80}
                 fill='#8884d8'
                 dataKey='userCount'
@@ -480,7 +486,7 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value + '명', '사용자 수']} />
+              <Tooltip formatter={(value) => [t('analytics_charts.user_count_suffix', { count: value }), t('analytics_charts.user_count_label')]} />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -506,14 +512,14 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
                 dataKey='userCount'
                 stroke='#8B5CF6'
                 strokeWidth={2}
-                name='사용자 수'
+                name={t('analytics_charts.user_count_label')}
               />
               <Line
                 type='monotone'
                 dataKey='messageCount'
                 stroke='#F59E0B'
                 strokeWidth={2}
-                name='메시지 수'
+                name={t('analytics_charts.message_count')}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -542,16 +548,16 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
                     <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
-                      {dept._id || '기타'}
+                      {dept._id || t('analytics_charts.other')}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
                   <span className='text-sm font-medium text-gray-900 dark:text-white mr-2'>
-                    {dept.userCount}명
+                    {t('analytics_charts.user_count_suffix', { count: dept.userCount })}
                   </span>
                   <span className='text-xs text-gray-500 dark:text-gray-400'>
-                    ({dept.messageCount}회)
+                    ({t('analytics_charts.count_suffix_parens', { count: dept.messageCount })})
                   </span>
                 </div>
               </div>
@@ -573,7 +579,7 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
       </div>
       {!data || data.length === 0 ? (
         <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
-          데이터가 없습니다
+          {t('analytics_charts.no_data')}
         </p>
       ) : (
         renderChart()
@@ -595,6 +601,7 @@ const formatTokenCount = (count) => {
 
 // 사용자별 토큰 사용량 차트
 export const TokenUsageChart = ({ data, title }) => {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('table');
 
   const chartData =
@@ -628,20 +635,20 @@ export const TokenUsageChart = ({ data, title }) => {
               <Tooltip
                 formatter={(value, name) => {
                   const labels = {
-                    totalTokens: '총 토큰',
-                    promptTokens: '입력 토큰',
-                    responseTokens: '출력 토큰',
+                    totalTokens: t('analytics_charts.total_tokens'),
+                    promptTokens: t('analytics_charts.prompt_tokens'),
+                    responseTokens: t('analytics_charts.response_tokens'),
                   };
                   return [value.toLocaleString(), labels[name] || name];
                 }}
-                labelFormatter={(label) => `사용자: ${label}`}
+                labelFormatter={(label) => t('analytics_charts.user_label', { label })}
               />
               <Legend
                 formatter={(value) => {
                   const labels = {
-                    totalTokens: '총 토큰',
-                    promptTokens: '입력',
-                    responseTokens: '출력',
+                    totalTokens: t('analytics_charts.total_tokens'),
+                    promptTokens: t('analytics_charts.prompt_short'),
+                    responseTokens: t('analytics_charts.response_short'),
                   };
                   return labels[value] || value;
                 }}
@@ -676,7 +683,7 @@ export const TokenUsageChart = ({ data, title }) => {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => [value.toLocaleString(), '토큰']}
+                formatter={(value) => [value.toLocaleString(), t('analytics_charts.token_label')]}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -697,8 +704,8 @@ export const TokenUsageChart = ({ data, title }) => {
               />
               <YAxis tickFormatter={(v) => formatTokenCount(v)} />
               <Tooltip
-                formatter={(value) => [value.toLocaleString(), '토큰']}
-                labelFormatter={(label) => `사용자: ${label}`}
+                formatter={(value) => [value.toLocaleString(), t('analytics_charts.token_label')]}
+                labelFormatter={(label) => t('analytics_charts.user_label', { label })}
               />
               <Line
                 type='monotone'
@@ -733,10 +740,10 @@ export const TokenUsageChart = ({ data, title }) => {
                 <div className='flex items-center'>
                   <div className='text-right mr-4'>
                     <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                      총합 {user.totalTokens?.toLocaleString() || 0}
+                      {t('analytics_charts.total_sum', { count: user.totalTokens?.toLocaleString() || 0 })}
                     </p>
                     <p className='text-xs text-gray-700 dark:text-gray-300'>
-                      입력 {formatTokenCount(user.promptTokens || 0)} / 출력 {formatTokenCount(user.responseTokens || 0)}
+                      {t('analytics_charts.input_output', { input: formatTokenCount(user.promptTokens || 0), output: formatTokenCount(user.responseTokens || 0) })}
                     </p>
                   </div>
                   <div className='w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
@@ -776,7 +783,7 @@ export const TokenUsageChart = ({ data, title }) => {
       </div>
       {!data || data.length === 0 ? (
         <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
-          토큰 사용 데이터가 없습니다
+          {t('analytics_charts.no_token_data')}
         </p>
       ) : (
         renderChart()
@@ -787,11 +794,12 @@ export const TokenUsageChart = ({ data, title }) => {
 
 // 부서별 토큰 사용량 차트
 export const DepartmentTokenUsageChart = ({ data, title }) => {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('table');
 
   const chartData =
     data?.map((dept) => ({
-      name: dept._id || '기타',
+      name: dept._id || t('analytics_charts.other'),
       totalTokens: dept.totalTokens,
       promptTokens: dept.promptTokens,
       responseTokens: dept.responseTokens,
@@ -818,9 +826,9 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
               <Tooltip
                 formatter={(value, name) => {
                   const labels = {
-                    totalTokens: '총 토큰',
-                    promptTokens: '입력 토큰',
-                    responseTokens: '출력 토큰',
+                    totalTokens: t('analytics_charts.total_tokens'),
+                    promptTokens: t('analytics_charts.prompt_tokens'),
+                    responseTokens: t('analytics_charts.response_tokens'),
                   };
                   return [value.toLocaleString(), labels[name] || name];
                 }}
@@ -828,8 +836,8 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
               <Legend
                 formatter={(value) => {
                   const labels = {
-                    promptTokens: '입력',
-                    responseTokens: '출력',
+                    promptTokens: t('analytics_charts.prompt_short'),
+                    responseTokens: t('analytics_charts.response_short'),
                   };
                   return labels[value] || value;
                 }}
@@ -864,7 +872,7 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => [value.toLocaleString(), '토큰']}
+                formatter={(value) => [value.toLocaleString(), t('analytics_charts.token_label')]}
               />
             </PieChart>
           </ResponsiveContainer>
@@ -885,7 +893,7 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
               />
               <YAxis tickFormatter={(v) => formatTokenCount(v)} />
               <Tooltip
-                formatter={(value) => [value.toLocaleString(), '토큰']}
+                formatter={(value) => [value.toLocaleString(), t('analytics_charts.token_label')]}
               />
               <Line
                 type='monotone'
@@ -920,20 +928,20 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
                     <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
-                      {dept._id || '기타'}
+                      {dept._id || t('analytics_charts.other')}
                     </p>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      {dept.userCount}명 • {dept.requestCount}회 요청
+                      {t('analytics_charts.user_count_dot_request', { userCount: dept.userCount, requestCount: dept.requestCount })}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
                   <div className='text-right mr-2'>
                     <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                      총합 {dept.totalTokens?.toLocaleString() || 0}
+                      {t('analytics_charts.total_sum', { count: dept.totalTokens?.toLocaleString() || 0 })}
                     </p>
                     <p className='text-xs text-gray-700 dark:text-gray-300'>
-                      입력 {formatTokenCount(dept.promptTokens || 0)} / 출력 {formatTokenCount(dept.responseTokens || 0)}
+                      {t('analytics_charts.input_output', { input: formatTokenCount(dept.promptTokens || 0), output: formatTokenCount(dept.responseTokens || 0) })}
                     </p>
                   </div>
                 </div>
@@ -961,7 +969,7 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
       </div>
       {!data || data.length === 0 ? (
         <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
-          토큰 사용 데이터가 없습니다
+          {t('analytics_charts.no_token_data')}
         </p>
       ) : (
         renderChart()
@@ -972,6 +980,7 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
 
 // 일별 활동량 차트
 export const DailyActivityChart = ({ data, title, tooltip }) => {
+  const { t } = useTranslation();
   const [chartType, setChartType] = useState('table');
 
   const chartData =
@@ -997,8 +1006,8 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey='messageCount' fill='#10B981' name='메시지 수' />
-              <Bar dataKey='userCount' fill='#3B82F6' name='활동 사용자' />
+              <Bar dataKey='messageCount' fill='#10B981' name={t('analytics_charts.message_count')} />
+              <Bar dataKey='userCount' fill='#3B82F6' name={t('analytics_charts.active_users')} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -1012,7 +1021,7 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
                 cx='50%'
                 cy='50%'
                 labelLine={false}
-                label={({ date, messageCount }) => `${date} ${messageCount}개`}
+                label={({ date, messageCount }) => `${date} ${t('analytics_charts.piece_suffix', { count: messageCount })}`}
                 outerRadius={80}
                 fill='#8884d8'
                 dataKey='messageCount'
@@ -1024,7 +1033,7 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
                   />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => [value + '개', '메시지 수']} />
+              <Tooltip formatter={(value) => [t('analytics_charts.piece_suffix', { count: value }), t('analytics_charts.message_count')]} />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -1043,14 +1052,14 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
                 dataKey='messageCount'
                 stroke='#10B981'
                 strokeWidth={2}
-                name='메시지 수'
+                name={t('analytics_charts.message_count')}
               />
               <Line
                 type='monotone'
                 dataKey='userCount'
                 stroke='#3B82F6'
                 strokeWidth={2}
-                name='활동 사용자'
+                name={t('analytics_charts.active_users')}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -1076,10 +1085,10 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
                 <div className='flex items-center'>
                   <div className='text-right mr-3'>
                     <p className='text-sm font-medium text-gray-900 dark:text-white'>
-                      {day.messageCount}개
+                      {t('analytics_charts.piece_suffix', { count: day.messageCount })}
                     </p>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      {day.userCount}명 활동
+                      {t('analytics_charts.user_count_active', { count: day.userCount })}
                     </p>
                   </div>
                   <div className='w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
@@ -1118,7 +1127,7 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
       </div>
       {!data || data.length === 0 ? (
         <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
-          데이터가 없습니다
+          {t('analytics_charts.no_data')}
         </p>
       ) : (
         renderChart()

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Search, Users, Building, Send, Check, Loader2 } from '@/components/icons';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const [recipientType, setRecipientType] = useState('multiple');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -48,11 +50,11 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
         setDepartments(Array.from(deptSet).sort());
       }
     } catch (error) {
-      console.error('사용자 목록 조회 실패:', error);
+      console.error(t('admin_send_dm.fetch_users_error'), error);
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, departmentFilter]);
+  }, [searchTerm, departmentFilter, t]);
 
   useEffect(() => {
     if (isOpen) {
@@ -119,20 +121,20 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
     setError('');
 
     if (!title.trim()) {
-      setError('제목을 입력해주세요.');
+      setError(t('admin_send_dm.title_required'));
       return;
     }
     if (!content.trim()) {
-      setError('내용을 입력해주세요.');
+      setError(t('admin_send_dm.content_required'));
       return;
     }
 
     if (recipientType === 'multiple' && selectedUsers.length === 0) {
-      setError('수신자를 선택해주세요.');
+      setError(t('admin_send_dm.recipient_required'));
       return;
     }
     if (recipientType === 'department' && !selectedDepartment) {
-      setError('그룹을 선택해주세요.');
+      setError(t('admin_send_dm.group_required'));
       return;
     }
 
@@ -162,7 +164,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '쪽지 보내기 실패');
+        throw new Error(data.error || t('admin_send_dm.send_error'));
       }
 
       onSuccess?.(data.message);
@@ -195,7 +197,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
-            새 쪽지 보내기
+            {t('admin_send_dm.title')}
           </h3>
           <button
             onClick={onClose}
@@ -210,7 +212,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
           {/* 발송 대상 선택 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-3">
-              발송 대상
+              {t('admin_send_dm.target')}
             </label>
             <div className="flex flex-wrap gap-3">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -223,7 +225,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                   className="w-4 h-4 text-primary"
                 />
                 <span className="text-sm text-foreground">
-                  개별 선택
+                  {t('admin_send_dm.individual')}
                 </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -236,7 +238,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                   className="w-4 h-4 text-primary"
                 />
                 <span className="text-sm text-foreground">
-                  그룹별
+                  {t('admin_send_dm.by_group')}
                 </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
@@ -249,7 +251,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                   className="w-4 h-4 text-primary"
                 />
                 <span className="text-sm text-foreground">
-                  전체
+                  {t('admin_send_dm.all')}
                 </span>
               </label>
             </div>
@@ -261,14 +263,14 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
               <div className="flex flex-wrap gap-3">
                 <div className="flex-1 min-w-[200px]">
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    그룹 필터
+                    {t('admin_send_dm.group_filter')}
                   </label>
                   <select
                     value={departmentFilter}
                     onChange={(e) => setDepartmentFilter(e.target.value)}
                     className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground"
                   >
-                    <option value="">전체 그룹</option>
+                    <option value="">{t('admin_send_dm.all_groups')}</option>
                     {departments.map((dept) => (
                       <option key={dept} value={dept}>
                         {dept.replaceAll('부서', '그룹')}
@@ -278,13 +280,13 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                 </div>
                 <div className="flex-1 min-w-[200px]">
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    검색
+                    {t('admin_send_dm.search')}
                   </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
                       type="text"
-                      placeholder="이름 또는 이메일 검색..."
+                      placeholder={t('admin_send_dm.search_placeholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground"
@@ -301,7 +303,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                   </div>
                 ) : filteredUsers.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    사용자가 없습니다.
+                    {t('admin_send_dm.no_users')}
                   </div>
                 ) : (
                   <>
@@ -314,7 +316,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                           className="w-4 h-4 text-primary rounded"
                         />
                         <span className="text-sm font-medium text-foreground">
-                          전체 선택 ({filteredUsers.length}명)
+                          {t('admin_send_dm.select_all', { count: filteredUsers.length })}
                         </span>
                       </label>
                     </div>
@@ -331,7 +333,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">
-                            {user.name || '이름 없음'}
+                            {user.name || t('admin_send_dm.no_name')}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
                             {user.email}
@@ -345,7 +347,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
               </div>
 
               <p className="text-sm text-muted-foreground">
-                선택됨: <span className="font-medium text-primary">{selectedUsers.length}</span>명
+                {t('admin_send_dm.selected_count')} <span className="font-medium text-primary">{selectedUsers.length}</span>{t('admin_send_dm.count_suffix')}
               </p>
             </div>
           )}
@@ -355,14 +357,14 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
                 <Building className="inline h-4 w-4 mr-1" />
-                그룹 선택
+                {t('admin_send_dm.select_group')}
               </label>
               <select
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground"
               >
-                <option value="">그룹을 선택하세요</option>
+                <option value="">{t('admin_send_dm.select_group_placeholder')}</option>
                 {departments.map((dept) => (
                   <option key={dept} value={dept}>
                     {dept.replaceAll('부서', '그룹')}
@@ -378,7 +380,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
               <div className="flex items-center gap-2 text-foreground">
                 <Users className="h-5 w-5" />
                 <p className="text-sm font-medium">
-                  모든 사용자({users.length}명)에게 쪽지를 보냅니다.
+                  {t('admin_send_dm.all_users_notice', { count: users.length })}
                 </p>
               </div>
             </div>
@@ -387,13 +389,13 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
           {/* 제목 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              제목 <span className="text-destructive">*</span>
+              {t('admin_send_dm.label_title')} <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="쪽지 제목을 입력하세요"
+              placeholder={t('admin_send_dm.title_placeholder')}
               className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground"
               maxLength={255}
             />
@@ -402,12 +404,12 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
           {/* 내용 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              내용 <span className="text-destructive">*</span>
+              {t('admin_send_dm.label_content')} <span className="text-destructive">*</span>
             </label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="쪽지 내용을 입력하세요"
+              placeholder={t('admin_send_dm.content_placeholder')}
               rows={5}
               className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground resize-none"
             />
@@ -428,7 +430,7 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
             disabled={sending}
             className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
           >
-            취소
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -438,12 +440,12 @@ export default function SendMessageModal({ isOpen, onClose, onSuccess }) {
             {sending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                보내는 중...
+                {t('admin_send_dm.sending')}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                보내기
+                {t('admin_send_dm.send')}
               </>
             )}
           </button>

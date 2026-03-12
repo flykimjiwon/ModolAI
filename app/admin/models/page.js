@@ -14,6 +14,7 @@ import {
   RefreshCw,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   DndContext,
   closestCenter,
@@ -73,6 +74,20 @@ function SortableModelItem({ id, children }) {
 }
 
 const normalizeLabel = (label = '') => label.trim().toLowerCase();
+
+// PII 개인정보 유형 정의 (로컬 탐지 엔진 연동)
+const PII_TYPES = {
+  'resident-number': { label: 'admin_models.pii_resident_number' },
+  'alien-registration': { label: 'admin_models.pii_alien_registration' },
+  'phone': { label: 'admin_models.pii_phone' },
+  'email': { label: 'admin_models.pii_email' },
+  'credit-card': { label: 'admin_models.pii_credit_card' },
+  'passport': { label: 'admin_models.pii_passport' },
+  'driver-license': { label: 'admin_models.pii_driver_license' },
+  'bank-account': { label: 'admin_models.pii_bank_account' },
+  'health-insurance': { label: 'admin_models.pii_health_insurance' },
+  'ip-address': { label: 'admin_models.pii_ip_address' },
+};
 
 // model_name을 기반으로 라벨 자동 생성
 const generateLabelFromModelId = (modelId = '') => {
@@ -155,6 +170,7 @@ const buildLabelRoundRobinMap = (categories = {}) => {
 
 export default function ModelsPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [modelConfig, setModelConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -188,10 +204,7 @@ export default function ModelsPage() {
     multiturnUnlimited: true,
     piiFilterRequest: false,
     piiFilterResponse: false,
-    piiRequestMxtVrf: true,
-    piiRequestMaskOpt: true,
-    piiResponseMxtVrf: true,
-    piiResponseMaskOpt: true,
+    piiEnabledTypes: null,
   });
   const [editForm, setEditForm] = useState({
     id: '',
@@ -209,10 +222,7 @@ export default function ModelsPage() {
     multiturnUnlimited: true,
     piiFilterRequest: false,
     piiFilterResponse: false,
-    piiRequestMxtVrf: true,
-    piiRequestMaskOpt: true,
-    piiResponseMxtVrf: true,
-    piiResponseMaskOpt: true,
+    piiEnabledTypes: null,
   });
   const [availableModels, setAvailableModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(false);
@@ -316,7 +326,7 @@ export default function ModelsPage() {
     try {
       return JSON.stringify(value, null, 2);
     } catch (error) {
-      console.warn('API 설정 문자열 변환 실패:', error);
+      console.warn(t('admin_models.console_api_config_convert_failed'), error);
       return String(value);
     }
   };
@@ -379,7 +389,7 @@ export default function ModelsPage() {
           setRoundRobinInfo(data);
         }
       } catch (error) {
-        console.error('라운드로빈 상태 확인 실패:', error);
+        console.error(t('admin_models.console_rr_check_failed'), error);
       } finally {
         setCheckingRoundRobin(false);
       }
@@ -408,7 +418,7 @@ export default function ModelsPage() {
           setNewModelRoundRobinInfo(data);
         }
       } catch (error) {
-        console.error('라운드로빈 상태 확인 실패:', error);
+        console.error(t('admin_models.console_rr_check_failed'), error);
       } finally {
         setCheckingNewModelRoundRobin(false);
       }
@@ -636,7 +646,7 @@ export default function ModelsPage() {
         }
       }
     } catch (e) {
-      console.warn('모델서버 목록 조회 실패(무시):', e.message);
+      console.warn(t('admin_models.console_server_list_failed'), e.message);
     }
   }, [selectedEndpoint]);
 
@@ -653,14 +663,14 @@ export default function ModelsPage() {
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || '설정 저장에 실패했습니다.');
+        throw new Error(errorData.error || t('admin_models.settings_save_failed'));
       }
-      alert('프리셋 URL 설정이 저장되었습니다.', 'success', '저장 완료');
+      alert(t('admin_models.preset_url_saved'), 'success', t('admin_models.save_complete'));
     } catch (error) {
       alert(
-        error.message || '프리셋 URL 설정 저장에 실패했습니다.',
+        error.message || t('admin_models.preset_url_save_failed'),
         'error',
-        '저장 실패'
+        t('admin_models.save_failed_title')
       );
     } finally {
       setSavingPresetSettings(false);
@@ -674,8 +684,8 @@ export default function ModelsPage() {
 
       // response 객체 유효성 검사
       if (!response) {
-        const errorMsg = '응답 객체를 받지 못했습니다.';
-        console.error('모델 설정 조회 실패:', {
+        const errorMsg = t('admin_models.no_response_object');
+        console.error(t('admin_models.console_config_query_failed'), {
           error: errorMsg,
           responseType: typeof response,
           responseValue: response,
@@ -684,7 +694,7 @@ export default function ModelsPage() {
       }
 
       if (response.status === 401) {
-        alert('인증이 만료되었습니다.', 'warning', '인증 오류');
+        alert(t('admin_models.auth_expired'), 'warning', t('admin_models.auth_error'));
         return;
       }
 
@@ -695,7 +705,7 @@ export default function ModelsPage() {
         const statusText = response.statusText;
 
         // 에러 응답 본문 읽기
-        let errorMessage = '모델 설정을 불러오는데 실패했습니다.';
+        let errorMessage = t('admin_models.model_config_load_failed');
         let responseText = '';
 
         try {
@@ -712,7 +722,7 @@ export default function ModelsPage() {
           }
         } catch (textError) {
           // 응답 본문 읽기 실패 시 기본 메시지 사용
-          console.warn('응답 본문 읽기 실패:', textError);
+          console.warn(t('admin_models.console_response_read_failed'), textError);
         }
 
         // 상세한 에러 정보 로깅 (모든 값이 확실히 설정되도록)
@@ -720,13 +730,13 @@ export default function ModelsPage() {
         const errorInfo = {
           status: status ?? 'unknown',
           statusText: statusText ?? 'unknown',
-          errorMessage: errorMessage || '에러 메시지를 가져올 수 없습니다.',
+          errorMessage: errorMessage || t('admin_models.cannot_get_error_message'),
           url: '/api/admin/models',
           responseTextLength: responseText ? responseText.length : 0,
         };
 
         // 디버깅을 위한 상세 로그 (객체를 직접 출력하여 모든 속성 확인)
-        console.error('모델 설정 조회 실패:', {
+        console.error(t('admin_models.console_config_query_failed'), {
           status: String(errorInfo.status),
           statusText: String(errorInfo.statusText),
           errorMessage: String(errorInfo.errorMessage),
@@ -760,7 +770,7 @@ export default function ModelsPage() {
               return { modelId: model.id, data: rrData };
             }
           } catch (error) {
-            console.error(`모델 ${model.id} 라운드로빈 확인 실패:`, error);
+            console.error(t('admin_models.console_model_rr_check_failed', { modelId: model.id }), error);
           }
           return { modelId: model.id, data: null };
         });
@@ -775,8 +785,8 @@ export default function ModelsPage() {
         setModelRoundRobinMap(roundRobinMap);
       }
     } catch (error) {
-      console.error('모델 설정 로드 실패:', error);
-      alert(error.message, 'error', '로드 실패');
+      console.error(t('admin_models.console_config_load_error'), error);
+      alert(error.message, 'error', t('admin_models.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -790,7 +800,7 @@ export default function ModelsPage() {
 
       // endpoint가 없거나 빈 문자열이면 요청하지 않음
       if (!ep || !ep.trim()) {
-        console.warn('endpoint가 선택되지 않았습니다.');
+        console.warn(t('admin_models.console_no_endpoint'));
         setAvailableModels([]);
         return;
       }
@@ -802,7 +812,7 @@ export default function ModelsPage() {
 
       // endpoint가 유효하지 않으면 요청하지 않음
       if (!ep.startsWith('http://') && !ep.startsWith('https://')) {
-        console.warn('유효하지 않은 endpoint:', ep);
+        console.warn(t('admin_models.console_invalid_endpoint'), ep);
         setAvailableModels([]);
         return;
       }
@@ -815,7 +825,7 @@ export default function ModelsPage() {
             urlObj.port ? `:${urlObj.port}` : ''
           }${urlObj.pathname.replace(/\/+$/, '')}`;
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn('[Catch]', error.message);
           return url.trim().toLowerCase().replace(/\/+$/, '');
         }
       };
@@ -833,7 +843,7 @@ export default function ModelsPage() {
 
       // Ollama가 아닌 경우 모델 목록 조회하지 않음
       if (provider !== 'ollama' && provider !== 'model-server') {
-        console.log(`${provider} provider는 모델 목록 조회를 하지 않습니다.`);
+        console.log(`${provider} provider - skip model list query`);
         setAvailableModels([]);
         return;
       }
@@ -848,7 +858,7 @@ export default function ModelsPage() {
         setAvailableModels(data.models || []);
       } else {
         // 에러 응답 본문 읽기
-        let errorMessage = '모델 목록 조회 실패';
+        let errorMessage = t('admin_models.model_list_load_failed_title');
         let errorType = null;
         let errorDetails = null;
 
@@ -871,10 +881,10 @@ export default function ModelsPage() {
           }
         } catch (readError) {
           // 응답 본문 읽기 실패 시 기본 메시지 사용
-          console.warn('에러 응답 본문 읽기 실패:', readError);
+          console.warn(t('admin_models.console_error_response_read_failed'), readError);
         }
 
-        console.error('모델 목록 조회 실패:', {
+        console.error(t('admin_models.console_model_list_failed'), {
           status: response.status,
           statusText: response.statusText,
           errorMessage,
@@ -892,28 +902,28 @@ export default function ModelsPage() {
           if (errorType === 'connection') {
             displayMessage =
               errorMessage ||
-              '모델 서버에 연결할 수 없습니다. 모델 서버 주소와 포트를 확인하세요.';
+              t('admin_models.server_connection_failed');
           } else if (errorType === 'timeout') {
             displayMessage =
               errorMessage ||
-              '모델 서버 연결 타임아웃입니다. 모델 서버가 실행 중인지 확인하세요.';
+              t('admin_models.server_connection_timeout');
           } else if (errorType === 'http_error') {
             displayMessage =
-              errorMessage || '모델 서버에서 오류가 발생했습니다.';
+              errorMessage || t('admin_models.server_error');
           }
 
           alert(
             displayMessage ||
-              '모델서버 설정이 올바르지 않습니다. 설정 페이지에서 확인해주세요.',
+              t('admin_models.invalid_server_settings'),
             alertType,
-            '모델 목록 조회 실패'
+            t('admin_models.model_list_load_failed_title')
           );
         }
       }
     } catch (error) {
-      console.error('모델 목록 조회 실패:', error);
+      console.error(t('admin_models.console_model_list_failed'), error);
       setAvailableModels([]);
-      alert('모델 목록을 불러오는 중 오류가 발생했습니다.', 'error', '오류');
+      alert(t('admin_models.model_list_load_error'), 'error', t('common.error'));
     } finally {
       setModelsLoading(false);
     }
@@ -940,7 +950,7 @@ export default function ModelsPage() {
       setErrorLogs(data.logs || []);
       setErrorLogsTotal(data.total || 0);
     } catch (error) {
-      console.warn('오류 로그 조회 실패:', error);
+      console.warn(t('admin_models.console_error_log_failed'), error);
     } finally {
       setErrorLogsLoading(false);
     }
@@ -1059,30 +1069,30 @@ export default function ModelsPage() {
       });
 
       if (!response.ok) {
-        let errorMessage = '모델 설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_models.model_config_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn('[Catch]', error.message);
   }
-        console.error('모델 설정 저장 실패:', response.status, errorMessage);
+        console.error(t('admin_models.console_config_save_failed'), response.status, errorMessage);
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       alert(
-        data.message || 'LLM 모델 설정이 저장되었습니다.',
+        data.message || t('admin_models.llm_config_saved'),
         'success',
-        '저장 완료'
+        t('admin_models.save_complete')
       );
     } catch (error) {
-      console.error('모델 설정 저장 실패:', error);
+      console.error(t('admin_models.console_config_save_failed'), error);
       alert(
-        error.message || '모델 설정 저장 중 오류가 발생했습니다.',
+        error.message || t('admin_models.model_config_save_error'),
         'error',
-        '저장 실패'
+        t('admin_models.save_failed_title')
       );
     } finally {
       setSavingSection(null);
@@ -1099,30 +1109,30 @@ export default function ModelsPage() {
       });
 
       if (!response.ok) {
-        let errorMessage = '모델 순서 저장에 실패했습니다.';
+        let errorMessage = t('admin_models.model_order_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn('[Catch]', error.message);
   }
-        console.error('모델 순서 저장 실패:', response.status, errorMessage);
+        console.error(t('admin_models.console_order_save_failed'), response.status, errorMessage);
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       alert(
-        `${modelConfig.categories[categoryKey].label} 모델 순서가 저장되었습니다.`,
+        t('admin_models.category_order_saved', { category: modelConfig.categories[categoryKey].label }),
         'success',
-        '저장 완료'
+        t('admin_models.save_complete')
       );
     } catch (error) {
-      console.error('모델 순서 저장 실패:', error);
+      console.error(t('admin_models.console_order_save_failed'), error);
       alert(
-        error.message || '모델 순서 저장 중 오류가 발생했습니다.',
+        error.message || t('admin_models.model_order_save_error'),
         'error',
-        '저장 실패'
+        t('admin_models.save_failed_title')
       );
     } finally {
       setSavingCategory(null);
@@ -1139,30 +1149,30 @@ export default function ModelsPage() {
 
       if (!response.ok) {
         // 에러 응답 본문 읽기
-        let errorMessage = '모델 설정 저장에 실패했습니다.';
+        let errorMessage = t('admin_models.model_config_save_failed');
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (error) {
-          console.warn('[Catch] 에러 발생:', error.message);
+          console.warn('[Catch]', error.message);
           // JSON 파싱 실패 시 기본 메시지 사용
         }
-        console.error('모델 설정 저장 실패:', response.status, errorMessage);
+        console.error(t('admin_models.console_config_save_failed'), response.status, errorMessage);
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
       alert(
-        data.message || '전체 모델 설정이 저장되었습니다.',
+        data.message || t('admin_models.all_config_saved'),
         'success',
-        '저장 완료'
+        t('admin_models.save_complete')
       );
     } catch (error) {
-      console.error('모델 설정 저장 실패:', error);
+      console.error(t('admin_models.console_config_save_failed'), error);
       alert(
-        error.message || '모델 설정 저장 중 오류가 발생했습니다.',
+        error.message || t('admin_models.model_config_save_error'),
         'error',
-        '저장 실패'
+        t('admin_models.save_failed_title')
       );
     } finally {
       setSaving(false);
@@ -1204,7 +1214,7 @@ export default function ModelsPage() {
 
   const addModel = (category) => {
     if (!newModel.id) {
-      alert('모델명을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_models.enter_model_name'), 'warning', t('admin_models.input_error'));
       return;
     }
 
@@ -1212,11 +1222,11 @@ export default function ModelsPage() {
     const label =
       newModel.label?.trim() || generateLabelFromModelId(newModel.id);
     if (!label) {
-      alert('모델명을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_models.enter_model_name'), 'warning', t('admin_models.input_error'));
       return;
     }
     if (!newModel.endpoint) {
-      alert('모델서버를 선택해주세요.', 'warning', '선택 오류');
+      alert(t('admin_models.select_model_server'), 'warning', t('admin_models.select_error'));
       return;
     }
     const updatedConfig = { ...modelConfig };
@@ -1312,10 +1322,7 @@ export default function ModelsPage() {
       multiturnUnlimited: true,
       piiFilterRequest: false,
       piiFilterResponse: false,
-      piiRequestMxtVrf: true,
-      piiRequestMaskOpt: true,
-      piiResponseMxtVrf: true,
-      piiResponseMaskOpt: true,
+      piiEnabledTypes: null,
     });
 
     // 모델 추가 후 자동 저장
@@ -1328,30 +1335,30 @@ export default function ModelsPage() {
         });
 
         if (!response.ok) {
-          let errorMessage = '모델 설정 저장에 실패했습니다.';
+          let errorMessage = t('admin_models.model_config_save_failed');
           try {
             const errorData = await response.json();
             errorMessage = errorData.error || errorMessage;
           } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn('[Catch]', error.message);
   }
-          console.error('모델 설정 저장 실패:', response.status, errorMessage);
-          alert(errorMessage, 'error', '저장 실패');
+          console.error(t('admin_models.console_config_save_failed'), response.status, errorMessage);
+          alert(errorMessage, 'error', t('admin_models.save_failed_title'));
         } else {
           const data = await response.json();
           alert(
-            data.message || '모델이 추가되고 저장되었습니다.',
+            data.message || t('admin_models.model_added_saved'),
             'success',
-            '저장 완료'
+            t('admin_models.save_complete')
           );
         }
       } catch (error) {
-        console.error('모델 설정 저장 실패:', error);
+        console.error(t('admin_models.console_config_save_failed'), error);
         alert(
-          error.message || '모델 설정 저장 중 오류가 발생했습니다.',
+          error.message || t('admin_models.model_config_save_error'),
           'error',
-          '저장 실패'
+          t('admin_models.save_failed_title')
         );
       } finally {
         setSavingSection(null);
@@ -1385,17 +1392,14 @@ export default function ModelsPage() {
         model.multiturnLimit === '',
       piiFilterRequest: model.piiFilterRequest === true,
       piiFilterResponse: model.piiFilterResponse === true,
-      piiRequestMxtVrf: model.piiRequestMxtVrf !== false,
-      piiRequestMaskOpt: model.piiRequestMaskOpt !== false,
-      piiResponseMxtVrf: model.piiResponseMxtVrf !== false,
-      piiResponseMaskOpt: model.piiResponseMaskOpt !== false,
+      piiEnabledTypes: model.piiEnabledTypes || null,
     });
     setEditingModel({ category, index: modelIndex });
   };
 
   const saveEdit = async () => {
     if (!editForm.id) {
-      alert('모델명을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_models.enter_model_name'), 'warning', t('admin_models.input_error'));
       return;
     }
 
@@ -1403,11 +1407,11 @@ export default function ModelsPage() {
     const label =
       editForm.label?.trim() || generateLabelFromModelId(editForm.id);
     if (!label) {
-      alert('모델명을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_models.enter_model_name'), 'warning', t('admin_models.input_error'));
       return;
     }
     if (!editForm.endpoint) {
-      alert('모델서버를 선택해주세요.', 'warning', '선택 오류');
+      alert(t('admin_models.select_model_server'), 'warning', t('admin_models.select_error'));
       return;
     }
     const updatedConfig = { ...modelConfig };
@@ -1432,18 +1436,18 @@ export default function ModelsPage() {
 
           if (roomNameModel === originalLabel || imageModel === originalLabel) {
             const usageInfo = [];
-            if (roomNameModel === originalLabel) usageInfo.push('대화방명 생성');
-            if (imageModel === originalLabel) usageInfo.push('이미지 분석');
+            if (roomNameModel === originalLabel) usageInfo.push(t('admin_models.usage_room_name'));
+            if (imageModel === originalLabel) usageInfo.push(t('admin_models.usage_image_analysis'));
 
             const confirmChange = await confirm(
-              `이 모델의 라벨은 현재 "${usageInfo.join(', ')}"에 사용 중입니다.\n\n라벨을 변경하면 해당 기능에서 이 모델을 찾지 못할 수 있습니다.\n\n그래도 변경하시겠습니까?`,
-              '라벨 변경 경고'
+              t('admin_models.label_in_use_confirm', { usageInfo: usageInfo.join(', ') }),
+              t('admin_models.label_change_warning')
             );
             if (!confirmChange) return;
           }
         }
       } catch (error) {
-        console.error('설정 확인 중 오류:', error);
+        console.error(t('admin_models.console_settings_check_error'), error);
       }
     }
     if (editForm.isDefault) {
@@ -1528,10 +1532,7 @@ export default function ModelsPage() {
       multiturnUnlimited: true,
       piiFilterRequest: false,
       piiFilterResponse: false,
-      piiRequestMxtVrf: true,
-      piiRequestMaskOpt: true,
-      piiResponseMxtVrf: true,
-      piiResponseMaskOpt: true,
+      piiEnabledTypes: null,
     });
 
     // 모델 편집 후 자동 저장
@@ -1544,30 +1545,30 @@ export default function ModelsPage() {
         });
 
         if (!response.ok) {
-          let errorMessage = '모델 설정 저장에 실패했습니다.';
+          let errorMessage = t('admin_models.model_config_save_failed');
           try {
             const errorData = await response.json();
             errorMessage = errorData.error || errorMessage;
           } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn('[Catch]', error.message);
   }
-          console.error('모델 설정 저장 실패:', response.status, errorMessage);
-          alert(errorMessage, 'error', '저장 실패');
+          console.error(t('admin_models.console_config_save_failed'), response.status, errorMessage);
+          alert(errorMessage, 'error', t('admin_models.save_failed_title'));
         } else {
           const data = await response.json();
           alert(
-            data.message || '모델이 수정되고 저장되었습니다.',
+            data.message || t('admin_models.model_edited_saved'),
             'success',
-            '저장 완료'
+            t('admin_models.save_complete')
           );
         }
       } catch (error) {
-        console.error('모델 설정 저장 실패:', error);
+        console.error(t('admin_models.console_config_save_failed'), error);
         alert(
-          error.message || '모델 설정 저장 중 오류가 발생했습니다.',
+          error.message || t('admin_models.model_config_save_error'),
           'error',
-          '저장 실패'
+          t('admin_models.save_failed_title')
         );
       } finally {
         setSavingSection(null);
@@ -1594,9 +1595,9 @@ export default function ModelsPage() {
         // 대화방명 생성 모델로 사용 중인지 확인 (label로 비교)
         if (roomNameModel === modelLabel) {
           alert(
-            `이 모델은 대화방명 생성에 사용 중입니다.\n\n먼저 "설정" 페이지에서 다른 모델을 선택한 후 삭제해주세요.`,
+            t('admin_models.model_used_for_room_name'),
             'error',
-            '삭제 불가'
+            t('admin_models.cannot_delete')
           );
           return;
         }
@@ -1604,26 +1605,26 @@ export default function ModelsPage() {
         // 이미지 분석 모델로 사용 중인지 확인 (label로 비교)
         if (imageModel === modelLabel) {
           alert(
-            `이 모델은 이미지 분석에 사용 중입니다.\n\n먼저 "설정" 페이지에서 다른 모델을 선택한 후 삭제해주세요.`,
+            t('admin_models.model_used_for_image_analysis'),
             'error',
-            '삭제 불가'
+            t('admin_models.cannot_delete')
           );
           return;
         }
       }
     } catch (error) {
-      console.error('설정 확인 중 오류:', error);
+      console.error(t('admin_models.console_settings_check_error'), error);
       // 설정 확인 실패 시에도 삭제 진행 여부 확인
       const confirmDelete = await confirm(
-        '설정 확인에 실패했습니다. 그래도 삭제하시겠습니까?',
-        '경고'
+        t('admin_models.settings_check_failed_confirm'),
+        t('common.warning')
       );
       if (!confirmDelete) return;
     }
 
     const confirmDelete = await confirm(
-      '정말 이 모델을 삭제하시겠습니까?',
-      '모델 삭제 확인'
+      t('admin_models.confirm_delete_model'),
+      t('admin_models.model_delete_confirm_title')
     );
     if (!confirmDelete) return;
 
@@ -1650,30 +1651,30 @@ export default function ModelsPage() {
         });
 
         if (!response.ok) {
-          let errorMessage = '모델 설정 저장에 실패했습니다.';
+          let errorMessage = t('admin_models.model_config_save_failed');
           try {
             const errorData = await response.json();
             errorMessage = errorData.error || errorMessage;
           } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn('[Catch]', error.message);
   }
-          console.error('모델 설정 저장 실패:', response.status, errorMessage);
-          alert(errorMessage, 'error', '저장 실패');
+          console.error(t('admin_models.console_config_save_failed'), response.status, errorMessage);
+          alert(errorMessage, 'error', t('admin_models.save_failed_title'));
         } else {
           const data = await response.json();
           alert(
-            data.message || '모델이 삭제되고 저장되었습니다.',
+            data.message || t('admin_models.model_deleted_saved'),
             'success',
-            '저장 완료'
+            t('admin_models.save_complete')
           );
         }
       } catch (error) {
-        console.error('모델 설정 저장 실패:', error);
+        console.error(t('admin_models.console_config_save_failed'), error);
         alert(
-          error.message || '모델 설정 저장 중 오류가 발생했습니다.',
+          error.message || t('admin_models.model_config_save_error'),
           'error',
-          '저장 실패'
+          t('admin_models.save_failed_title')
         );
       } finally {
         setSavingSection(null);
@@ -1686,7 +1687,7 @@ export default function ModelsPage() {
     if (!source) return;
 
     const baseModelName = source.modelName || source.id || '';
-    const baseLabel = source.label || baseModelName || '모델';
+    const baseLabel = source.label || baseModelName || t('admin_models.model');
     const uniqueSuffix =
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID().slice(0, 8)
@@ -1698,7 +1699,7 @@ export default function ModelsPage() {
       dbId: undefined, // 새 모델이므로 dbId 제거
       id: newId, // UI에서 사용할 고유 ID
       modelName: baseModelName, // 올라마 모델명은 정확히 유지 (예: "gemma3:4b")
-      label: `${baseLabel} (복사)`, // label만 변경하여 구분
+      label: t('admin_models.model_copy_label', { label: baseLabel }), // label만 변경하여 구분
       isDefault: false,
     };
 
@@ -1719,30 +1720,30 @@ export default function ModelsPage() {
         });
 
         if (!response.ok) {
-          let errorMessage = '모델 설정 저장에 실패했습니다.';
+          let errorMessage = t('admin_models.model_config_save_failed');
           try {
             const errorData = await response.json();
             errorMessage = errorData.error || errorMessage;
           } catch (error) {
     // 에러 발생 시 무시 (선택적 작업)
-    console.warn('[Catch] 작업 실패:', error.message);
+    console.warn('[Catch]', error.message);
   }
-          console.error('모델 설정 저장 실패:', response.status, errorMessage);
-          alert(errorMessage, 'error', '저장 실패');
+          console.error(t('admin_models.console_config_save_failed'), response.status, errorMessage);
+          alert(errorMessage, 'error', t('admin_models.save_failed_title'));
         } else {
           const data = await response.json();
           alert(
-            data.message || '모델이 복사되어 저장되었습니다.',
+            data.message || t('admin_models.model_copied_saved'),
             'success',
-            '저장 완료'
+            t('admin_models.save_complete')
           );
         }
       } catch (error) {
-        console.error('모델 설정 저장 실패:', error);
+        console.error(t('admin_models.console_config_save_failed'), error);
         alert(
-          error.message || '모델 설정 저장 중 오류가 발생했습니다.',
+          error.message || t('admin_models.model_config_save_error'),
           'error',
-          '저장 실패'
+          t('admin_models.save_failed_title')
         );
       } finally {
         setSavingSection(null);
@@ -1761,17 +1762,17 @@ export default function ModelsPage() {
   const getStatusText = (status) => {
     switch (status) {
       case 'vectorized':
-        return '벡터화 완료';
+        return t('admin_models.status_vectorized');
       case 'vectorizing':
-        return '벡터화 중';
+        return t('admin_models.status_vectorizing');
       case 'processing':
-        return '처리 중';
+        return t('admin_models.status_processing');
       case 'uploaded':
-        return '업로드됨';
+        return t('admin_models.status_uploaded');
       case 'error':
-        return '오류';
+        return t('admin_models.status_error');
       default:
-        return '알 수 없음';
+        return t('admin_models.status_unknown');
     }
   };
 
@@ -1860,7 +1861,7 @@ export default function ModelsPage() {
   if (!modelConfig)
     return (
       <div className='text-center text-muted-foreground'>
-        모델 설정을 불러올 수 없습니다.
+        {t('admin_models.cannot_load_config')}
       </div>
     );
 
@@ -1869,10 +1870,10 @@ export default function ModelsPage() {
       {/* 페이지 헤더 */}
       <div>
         <h1 className='text-2xl font-bold text-foreground'>
-          모델 관리
+          {t('admin.models')}
         </h1>
         <p className='text-muted-foreground mt-1'>
-          AI 모델 설정을 관리합니다. 각 섹션별로 개별 저장할 수 있습니다.
+          {t('admin_models.page_description')}
         </p>
       </div>
 
@@ -1881,10 +1882,10 @@ export default function ModelsPage() {
         <div className='flex items-center justify-between mb-4'>
           <div>
             <h2 className='text-xl font-semibold text-foreground'>
-              수동 프리셋 URL 설정
+              {t('admin_models.manual_preset_url_settings')}
             </h2>
             <p className='text-sm text-muted-foreground mt-1'>
-              수동 추가 프리셋(OpenAI Compatible/Responses)에 적용됩니다.
+              {t('admin_models.manual_preset_description')}
             </p>
           </div>
           <button
@@ -1893,7 +1894,7 @@ export default function ModelsPage() {
             disabled={savingPresetSettings}
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
           >
-            {savingPresetSettings ? '저장 중...' : '저장'}
+            {savingPresetSettings ? t('common.saving') : t('common.save')}
           </button>
         </div>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -1930,11 +1931,10 @@ export default function ModelsPage() {
           <div className='flex items-center justify-between mb-4'>
             <div>
               <h2 className='text-xl font-semibold text-foreground'>
-                LLM 모델 설정
+                {t('admin_models.llm_model_settings')}
               </h2>
               <p className='text-sm text-muted-foreground mt-1'>
-                드래그하여 순서를 변경할 수 있습니다. 각 카테고리별로 순서 저장
-                버튼을 클릭하세요.
+                {t('admin_models.drag_to_reorder')}
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -1946,7 +1946,7 @@ export default function ModelsPage() {
                 <RefreshCw
                   className={`h-4 w-4 ${modelsLoading ? 'animate-spin' : ''}`}
                 />
-                {modelsLoading ? '로드 중...' : '새로고침'}
+                {modelsLoading ? t('admin_models.loading') : t('admin_models.refresh')}
               </button>
             </div>
           </div>
@@ -1985,7 +1985,7 @@ export default function ModelsPage() {
                         <button
                           onClick={() => setEditingCategory(categoryKey)}
                           className='p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors'
-                          title='카테고리명 수정'
+                          title={t('admin_models.edit_category_name')}
                         >
                           <Edit size={14} />
                         </button>
@@ -1996,12 +1996,12 @@ export default function ModelsPage() {
                         onClick={() => saveCategoryOrder(categoryKey)}
                         disabled={savingCategory === categoryKey}
                         className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5'
-                        title='모델 순서 저장'
+                        title={t('admin_models.save_model_order')}
                       >
                         <Save className='h-3.5 w-3.5' />
                         {savingCategory === categoryKey
-                          ? '저장 중...'
-                          : '순서 저장'}
+                          ? t('common.saving')
+                          : t('admin_models.save_order')}
                       </button>
                       <button
                         onClick={() =>
@@ -2010,7 +2010,7 @@ export default function ModelsPage() {
                         className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1.5'
                       >
                         <Plus className='h-3.5 w-3.5' />
-                        모델 추가
+                        {t('admin_models.add_model')}
                       </button>
                     </div>
                   </div>
@@ -2048,7 +2048,7 @@ export default function ModelsPage() {
                                 <div className='space-y-3'>
                                   <div>
                                     <label className='block text-xs font-medium text-foreground mb-1'>
-                                      모델서버
+                                      {t('admin_models.model_server')}
                                     </label>
                                     <select
                                       className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
@@ -2070,7 +2070,7 @@ export default function ModelsPage() {
                                       }}
                                       required
                                     >
-                                      <option value="manual">[수동 추가] Custom API</option>
+                                      <option value="manual">{t('admin_models.manual_add_custom_api')}</option>
                                       {endpoints.map((ep) => {
                                         const providerBadge =
                                           ep.provider === 'openai-compatible' ? '[OpenAI]' :
@@ -2101,8 +2101,8 @@ export default function ModelsPage() {
                                                 ? `${ep.name} (${ep.url})`
                                                 : editForm.endpoint;
                                             })()}{' '}
-                                            {availableModels.length}개 모델
-                                            로드됨
+                                            {t('admin_models.models_count', { count: availableModels.length })}
+                                            {t('admin_models.loaded')}
                                           </span>
                                         </div>
                                       )}
@@ -2112,7 +2112,7 @@ export default function ModelsPage() {
                                         <div className='mt-3 p-4 bg-muted rounded-lg border border-border'>
                                           <div className='mb-4'>
                                             <p className='text-xs font-medium text-foreground mb-2'>
-                                              프리셋 적용
+                                              {t('admin_models.apply_preset')}
                                             </p>
                                             <div className='flex flex-wrap gap-2'>
                                               <button
@@ -2144,7 +2144,7 @@ export default function ModelsPage() {
                                           {/* API 키 입력 */}
                                           <div className='mb-4'>
                                             <label className='block text-sm font-medium text-foreground mb-2'>
-                                              🔑 API 키
+                                              {t('admin_models.api_key_label')}
                                           </label>
                                           <input
                                             type='text'
@@ -2155,19 +2155,19 @@ export default function ModelsPage() {
                                                 apiKey: e.target.value
                                               });
                                             }}
-                                            placeholder='API 키를 입력하세요'
+                                            placeholder={t('admin_models.placeholder_api_key')}
                                             className='w-full px-3 py-2 text-sm bg-card border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent'
                                           />
                                           <p className='text-xs text-muted-foreground mt-1'>
-                                            API 호출 시 사용할 키입니다. 템플릿의 {'{{OPENAI_API_KEY}}'} 변수로 대체됩니다.
+                                            {t('admin_models.api_key_description')}
                                           </p>
                                         </div>
 
                                         <label className='block text-sm font-medium text-foreground mb-2'>
-                                          🔧 API 요청 설정 (JSON)
+                                          {t('admin_models.api_request_settings_json')}
                                         </label>
                                         <p className='text-xs text-muted-foreground mb-2'>
-                                          백엔드에서 실행할 API 요청을 JSON 형태로 작성하세요. 변수: {'{{OPENAI_API_KEY}}'}, {'{{messages}}'}, {'{{message}}'}
+                                          {t('admin_models.api_request_description')}
                                         </p>
                                         <textarea
                                           value={editForm.apiConfig || ''}
@@ -2207,19 +2207,19 @@ export default function ModelsPage() {
                                         />
                                         <div className='mt-2 text-xs space-y-2'>
                                           <div className='p-3 bg-destructive/10 border border-destructive/20 rounded'>
-                                            <p className='font-semibold text-destructive mb-2'>⚠️ 수정이 필요한 필드:</p>
+                                            <p className='font-semibold text-destructive mb-2'>⚠️ {t('admin_models.fields_need_modification')}</p>
                                             <ul className='list-disc ml-5 text-destructive space-y-1'>
-                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;url&quot;</code> - API 엔드포인트 주소</li>
-                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;model&quot;</code> - 모델명 (gpt-4, claude-3 등)</li>
-                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - 응답 경로</li>
+                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;url&quot;</code> - {t('admin_models.api_endpoint_address')}</li>
+                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;model&quot;</code> - {t('admin_models.model_name_examples')}</li>
+                                              <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - {t('admin_models.response_path')}</li>
                                             </ul>
                                           </div>
                                           <div className='text-muted-foreground'>
-                                            <p><strong>사용 가능한 변수:</strong></p>
+                                            <p><strong>{t('admin_models.available_variables')}</strong></p>
                                             <ul className='list-disc ml-5 mt-1'>
-                                              <li><code className='bg-muted px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - 환경변수에서 API 키 가져오기</li>
-                                              <li><code className='bg-muted px-1 rounded'>{'{{messages}}'}</code> - 전체 대화 내역 (배열)</li>
-                                              <li><code className='bg-muted px-1 rounded'>{'{{message}}'}</code> - 사용자의 최신 메시지 (문자열)</li>
+                                              <li><code className='bg-muted px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - {t('admin_models.var_api_key_desc')}</li>
+                                              <li><code className='bg-muted px-1 rounded'>{'{{messages}}'}</code> - {t('admin_models.var_messages_desc')}</li>
+                                              <li><code className='bg-muted px-1 rounded'>{'{{message}}'}</code> - {t('admin_models.var_message_desc')}</li>
                                             </ul>
                                           </div>
                                         </div>
@@ -2229,7 +2229,7 @@ export default function ModelsPage() {
                                   <div className='grid grid-cols-2 gap-3'>
                                     <div>
                                       <label className='block text-xs font-medium text-foreground mb-1'>
-                                        모델명
+                                        {t('admin_models.model_name')}
                                       </label>
                                       <div className='relative'>
                                         {(() => {
@@ -2247,7 +2247,7 @@ export default function ModelsPage() {
                                                 urlObj.port ? `:${urlObj.port}` : ''
                                               }${urlObj.pathname.replace(/\/+$/, '')}`;
                                             } catch (error) {
-                                              console.warn('[Catch] 에러 발생:', error.message);
+                                              console.warn('[Catch]', error.message);
                                               return url.trim().toLowerCase().replace(/\/+$/, '');
                                             }
                                           };
@@ -2282,12 +2282,12 @@ export default function ModelsPage() {
                                                   }}
                                                   placeholder={
                                                     isManual
-                                                      ? 'my-custom-model (API 설정에 사용할 식별자)'
+                                                      ? t('admin_models.placeholder_custom_model')
                                                       : provider === 'openai-compatible'
-                                                      ? 'gpt-4, gpt-3.5-turbo 등'
+                                                      ? t('admin_models.placeholder_openai_model')
                                                       : provider === 'gemini'
-                                                      ? 'gemini-pro, gemini-1.5-flash 등'
-                                                      : '모델명 입력'
+                                                      ? t('admin_models.placeholder_gemini_model')
+                                                      : t('admin_models.placeholder_model_name')
                                                   }
                                                   className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                                 />
@@ -2305,12 +2305,12 @@ export default function ModelsPage() {
                                                 )}
                                                 <p className='text-xs text-muted-foreground mt-1'>
                                                   {isManual
-                                                    ? '커스텀 API 모델의 식별자를 입력하세요'
+                                                    ? t('admin_models.hint_custom_model')
                                                     : provider === 'openai-compatible'
-                                                    ? 'OpenAI Compatible API 모델명을 직접 입력하세요'
+                                                    ? t('admin_models.hint_openai_model')
                                                     : provider === 'gemini'
-                                                    ? 'Google Gemini 모델명을 직접 입력하세요'
-                                                    : '모델명을 직접 입력하세요'}
+                                                    ? t('admin_models.hint_gemini_model')
+                                                    : t('admin_models.hint_enter_model')}
                                                 </p>
                                               </>
                                             );
@@ -2347,8 +2347,8 @@ export default function ModelsPage() {
                                               >
                                                 <option value=''>
                                                   {modelsLoading
-                                                    ? '모델 목록 조회중...'
-                                                    : 'LLM 모델 선택'}
+                                                    ? t('admin_models.loading_model_list')
+                                                    : t('admin_models.select_llm_model')}
                                                 </option>
                                                 {/* 기존에 설정된 모델명이 있으면 표시 (모델 목록에 없어도) */}
                                                 {(editForm.modelName ||
@@ -2409,11 +2409,11 @@ export default function ModelsPage() {
                                     </div>
                                     <div>
                                       <label className='block text-xs font-medium text-foreground mb-1 flex items-center gap-2'>
-                                        <span>라벨</span>
+                                        <span>{t('admin_models.label')}</span>
                                         {labelRoundRobinInfo && (
                                           <span className='px-1.5 py-0.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-[10px] rounded font-medium'>
-                                            라운드로빈{' '}
-                                            {labelRoundRobinInfo.count}개
+                                            {t('admin_models.round_robin')}{' '}
+                                            {t('admin_models.count_suffix', { count: labelRoundRobinInfo.count })}
                                           </span>
                                         )}
                                       </label>
@@ -2458,7 +2458,7 @@ export default function ModelsPage() {
                                         <div className='mt-2 p-2 rounded bg-muted border border-border dark:border-border'>
                                           <div className='text-xs text-muted-foreground'>
                                             <span className='font-medium'>
-                                              동일 라벨 모델:
+                                              {t('admin_models.same_label_models')}
                                             </span>{' '}
                                             <span className='font-mono'>
                                               {editForm.id}
@@ -2485,11 +2485,7 @@ export default function ModelsPage() {
                                             {labelRoundRobinInfo.endpointCount >
                                               1 && (
                                               <span className='ml-2 text-muted-foreground dark:text-muted-foreground'>
-                                                (
-                                                {
-                                                  labelRoundRobinInfo.endpointCount
-                                                }
-                                                개 서버)
+                                                ({t('admin_models.servers_count', { count: labelRoundRobinInfo.endpointCount })})
                                               </span>
                                             )}
                                           </div>
@@ -2499,7 +2495,7 @@ export default function ModelsPage() {
                                   </div>
                                   <div>
                                     <label className='block text-xs font-medium text-foreground mb-1'>
-                                      툴팁 설명
+                                      {t('admin_models.tooltip_description')}
                                     </label>
                                     <textarea
                                       value={editForm.tooltip || ''}
@@ -2511,12 +2507,12 @@ export default function ModelsPage() {
                                       }
                                       className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                                       rows='2'
-                                      placeholder='모델에 대한 설명을 입력하세요'
+                                      placeholder={t('admin_models.placeholder_tooltip')}
                                     />
                                   </div>
                                   <div>
                                     <label className='block text-xs font-medium text-foreground mb-1'>
-                                      멀티턴 제한
+                                      {t('admin_models.multiturn_limit')}
                                     </label>
                                     <div className='flex items-center gap-3'>
                                       <input
@@ -2549,11 +2545,11 @@ export default function ModelsPage() {
                                           className='h-4 w-4'
                                           disabled={loading}
                                         />
-                                        제한 없음
+                                        {t('admin_models.no_limit')}
                                       </label>
                                     </div>
                                     <p className='text-xs text-muted-foreground mt-1'>
-                                      모델별 멀티턴 기억 개수입니다.
+                                      {t('admin_models.multiturn_memory_desc')}
                                     </p>
                                   </div>
                                   <div>
@@ -2575,13 +2571,13 @@ export default function ModelsPage() {
                                       return (
                                         <>
                                           <label className='block text-xs font-medium text-foreground mb-1'>
-                                            시스템 프롬프트
+                                            {t('admin_models.system_prompt')}
                                             <span className='text-xs text-muted-foreground'>
-                                              (줄바꿈으로 구분)
+                                              {t('admin_models.newline_separated')}
                                             </span>
                                             {isNotFirstInRoundRobin && (
                                               <span className='ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] rounded font-medium'>
-                                                공유됨
+                                                {t('admin_models.shared')}
                                               </span>
                                             )}
                                           </label>
@@ -2596,21 +2592,20 @@ export default function ModelsPage() {
                                                 disabled
                                                 className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
                                                 rows='6'
-                                                placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
+                                                placeholder={t('admin_models.system_prompt_placeholder')}
                                               />
                                               <div className='p-2 rounded bg-muted border border-border'>
                                                 <p className='text-xs text-muted-foreground'>
                                                   <span className='font-medium'>
-                                                    라운드로빈 모델:
+                                                    {t('admin_models.round_robin_model')}
                                                   </span>{' '}
-                                                  시스템 프롬프트는 첫 번째
-                                                  모델(
+                                                  {t('admin_models.system_prompt_shared_with_model')}
                                                   <span className='font-mono'>
                                                     {firstModelInfo.model?.id}
                                                   </span>
-                                                  )과 공유됩니다. 시스템
-                                                  프롬프트를 수정하려면 첫 번째
-                                                  모델을 편집해주세요.
+                                                  {t('admin_models.system_prompt_shared_suffix')}
+                                                  
+                                                  
                                                 </p>
                                               </div>
                                             </div>
@@ -2635,7 +2630,7 @@ export default function ModelsPage() {
                                               }
                                               className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                                               rows='6'
-                                              placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
+                                              placeholder={t('admin_models.system_prompt_placeholder')}
                                             />
                                           )}
                                         </>
@@ -2657,7 +2652,7 @@ export default function ModelsPage() {
                                           className='w-4 h-4 text-primary bg-muted border-border rounded focus:ring-ring'
                                         />
                                         <span className='text-sm text-foreground'>
-                                          기본 모델
+                                          {t('admin_models.default_model')}
                                         </span>
                                       </label>
                                       <label className='flex items-center gap-2 cursor-pointer'>
@@ -2673,7 +2668,7 @@ export default function ModelsPage() {
                                           className='w-4 h-4 text-destructive bg-muted border-border rounded focus:ring-ring'
                                         />
                                         <span className='text-sm text-foreground'>
-                                          관리자 전용
+                                          {t('admin_models.admin_only')}
                                         </span>
                                       </label>
                                       <label className='flex items-center gap-2 cursor-pointer'>
@@ -2689,7 +2684,7 @@ export default function ModelsPage() {
                                           className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                         />
                                         <span className='text-sm text-foreground'>
-                                          메인 화면 표시
+                                          {t('admin_models.show_on_main')}
                                         </span>
                                       </label>
                                       <label className='flex items-center gap-2 cursor-pointer'>
@@ -2705,7 +2700,7 @@ export default function ModelsPage() {
                                           className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                         />
                                         <span className='text-sm text-foreground'>
-                                          요청 PII 필터
+                                          {t('admin_models.pii_filter_request')}
                                         </span>
                                       </label>
                                       {/* [출력 PII 임시 비활성화]
@@ -2722,7 +2717,7 @@ export default function ModelsPage() {
                                           className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                         />
                                         <span className='text-sm text-foreground'>
-                                          응답 PII 필터
+                                          {t('admin_models.pii_filter_response')}
                                         </span>
                                       </label>
                                       */}
@@ -2732,97 +2727,39 @@ export default function ModelsPage() {
                                         onClick={saveEdit}
                                         className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1'
                                       >
-                                        <Save className='h-3.5 w-3.5' /> 저장
+                                        <Save className='h-3.5 w-3.5' /> {t('common.save')}
                                       </button>
                                       <button
                                         onClick={() => setEditingModel(null)}
                                         className='px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-accent dark:bg-muted dark:hover:bg-accent text-foreground transition-colors flex items-center gap-1'
                                       >
-                                        <X className='h-3.5 w-3.5' /> 취소
+                                        <X className='h-3.5 w-3.5' /> {t('common.cancel')}
                                       </button>
                                     </div>
-                                    {(editForm.piiFilterRequest /* || editForm.piiFilterResponse [출력 PII 임시 비활성화] */) && (
+                                    {editForm.piiFilterRequest && (
                                       <div className='w-full text-xs text-muted-foreground space-y-1'>
-                                        {editForm.piiFilterRequest && (
-                                          <div className='flex items-center gap-2 flex-wrap'>
-                                            <span className='font-medium'>요청 옵션</span>
-                                            <button
-                                              type='button'
-                                              onClick={() =>
-                                                setEditForm((prev) => ({
-                                                  ...prev,
-                                                  piiRequestMxtVrf:
-                                                    !prev.piiRequestMxtVrf,
-                                                }))
-                                              }
-                                              className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                                editForm.piiRequestMxtVrf
-                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
-                                                  : 'bg-muted border-border text-muted-foreground'
-                                              }`}
-                                            >
-                                              mxt_vrf {editForm.piiRequestMxtVrf ? 'ON' : 'OFF'}
-                                            </button>
-                                            <button
-                                              type='button'
-                                              onClick={() =>
-                                                setEditForm((prev) => ({
-                                                  ...prev,
-                                                  piiRequestMaskOpt:
-                                                    !prev.piiRequestMaskOpt,
-                                                }))
-                                              }
-                                              className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                                editForm.piiRequestMaskOpt
-                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
-                                                  : 'bg-muted border-border text-muted-foreground'
-                                              }`}
-                                            >
-                                              mask_opt {editForm.piiRequestMaskOpt ? 'ON' : 'OFF'}
-                                            </button>
-                                          </div>
-                                        )}
-                                        {/* [출력 PII 임시 비활성화]
-                                        {editForm.piiFilterResponse && (
-                                          <div className='flex items-center gap-2 flex-wrap'>
-                                            <span className='font-medium'>응답 옵션</span>
-                                            <button
-                                              type='button'
-                                              onClick={() =>
-                                                setEditForm((prev) => ({
-                                                  ...prev,
-                                                  piiResponseMxtVrf:
-                                                    !prev.piiResponseMxtVrf,
-                                                }))
-                                              }
-                                              className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                                editForm.piiResponseMxtVrf
-                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
-                                                  : 'bg-muted border-border text-muted-foreground'
-                                              }`}
-                                            >
-                                              mxt_vrf {editForm.piiResponseMxtVrf ? 'ON' : 'OFF'}
-                                            </button>
-                                            <button
-                                              type='button'
-                                              onClick={() =>
-                                                setEditForm((prev) => ({
-                                                  ...prev,
-                                                  piiResponseMaskOpt:
-                                                    !prev.piiResponseMaskOpt,
-                                                }))
-                                              }
-                                              className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                                editForm.piiResponseMaskOpt
-                                                  ? 'bg-muted dark:bg-muted border-border dark:border-border text-foreground dark:text-foreground'
-                                                  : 'bg-muted border-border text-muted-foreground'
-                                              }`}
-                                            >
-                                              mask_opt {editForm.piiResponseMaskOpt ? 'ON' : 'OFF'}
-                                            </button>
-                                          </div>
-                                        )}
-                                        */}
+                                        <span className='font-medium'>{t('admin_models.detection_type')}</span>
+                                        <div className='flex flex-wrap gap-x-3 gap-y-1'>
+                                          {Object.entries(PII_TYPES).map(([key, { label }]) => (
+                                            <label key={key} className='flex items-center gap-1 cursor-pointer'>
+                                              <input
+                                                type='checkbox'
+                                                className='w-3 h-3'
+                                                checked={!editForm.piiEnabledTypes || editForm.piiEnabledTypes.includes(key)}
+                                                onChange={(e) => {
+                                                  const current = editForm.piiEnabledTypes || Object.keys(PII_TYPES);
+                                                  setEditForm({
+                                                    ...editForm,
+                                                    piiEnabledTypes: e.target.checked
+                                                      ? [...new Set([...current, key])]
+                                                      : current.filter((piiType) => piiType !== key),
+                                                  });
+                                                }}
+                                              />
+                                              {label}
+                                            </label>
+                                          ))}
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -2835,8 +2772,7 @@ export default function ModelsPage() {
                                       <div className='flex items-center gap-2 flex-wrap'>
                                         {isLabelRoundRobin && (
                                           <span className='px-2 py-0.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-[10px] rounded font-medium'>
-                                            라운드로빈 {labelInfoForModel.count}
-                                            개
+                                            {t('admin_models.round_robin_count', { count: labelInfoForModel.count })}
                                           </span>
                                         )}
                                         <h3 className='font-semibold text-sm text-foreground'>
@@ -2844,17 +2780,17 @@ export default function ModelsPage() {
                                         </h3>
                                         {model.isDefault && (
                                           <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] rounded font-medium'>
-                                            기본
+                                            {t('admin_models.badge_default')}
                                           </span>
                                         )}
                                         {model.adminOnly === true && (
                                           <span className='px-1.5 py-0.5 bg-destructive/10 text-destructive text-[10px] rounded font-medium'>
-                                            관리자 전용
+                                            {t('admin_models.admin_only')}
                                           </span>
                                         )}
                                         {model.visible === false && (
                                           <span className='px-1.5 py-0.5 bg-muted text-foreground text-[10px] rounded font-medium'>
-                                            숨김
+                                            {t('admin_models.badge_hidden')}
                                           </span>
                                         )}
                                       </div>
@@ -2866,7 +2802,7 @@ export default function ModelsPage() {
                                         {model.name && (
                                           <span className='text-xs text-muted-foreground'>
                                             <span className='font-medium'>
-                                              모델명:
+                                              {t('admin_models.model_name_label')}
                                             </span>{' '}
                                             <span className='font-mono text-foreground'>
                                               {model.name}
@@ -2875,7 +2811,7 @@ export default function ModelsPage() {
                                         )}
                                         <span className='text-xs text-muted-foreground'>
                                           <span className='font-medium'>
-                                            기본 ID:
+                                            {t('admin_models.base_id_label')}
                                           </span>{' '}
                                           <span className='font-mono text-foreground'>
                                             {model.id}
@@ -2884,7 +2820,7 @@ export default function ModelsPage() {
                                         {modelRoundRobinMap[model.id]
                                           ?.isRoundRobin && (
                                           <span className='px-1.5 py-0.5 bg-muted dark:bg-muted text-foreground dark:text-foreground text-[10px] rounded font-medium'>
-                                            서버 RR{' '}
+                                            {t('admin_models.server_rr')}{' '}
                                             {
                                               modelRoundRobinMap[model.id]
                                                 .serverCount
@@ -2917,11 +2853,10 @@ export default function ModelsPage() {
                                         <div className='text-xs'>
                                           <div className='flex items-center gap-1.5 mb-1'>
                                             <span className='font-medium text-muted-foreground dark:text-muted-foreground'>
-                                              동일 라벨 모델:
+                                              {t('admin_models.same_label_models')}
                                             </span>
                                             <span className='text-muted-foreground dark:text-muted-foreground'>
-                                              {labelInfoForModel.endpointCount}
-                                              개 서버
+                                              {t('admin_models.servers_count', { count: labelInfoForModel.endpointCount })}
                                             </span>
                                           </div>
                                           <div className='flex flex-wrap items-center gap-1.5'>
@@ -2950,7 +2885,7 @@ export default function ModelsPage() {
                                         <div className='pt-2 border-t border-border'>
                                           <div className='text-xs text-muted-foreground'>
                                             <span className='font-medium'>
-                                              서버 라운드로빈:
+                                              {t('admin_models.server_round_robin')}
                                             </span>{' '}
                                             <span className='font-mono'>
                                               {
@@ -2959,12 +2894,7 @@ export default function ModelsPage() {
                                               }
                                             </span>
                                             <span className='ml-1 text-muted-foreground'>
-                                              (
-                                              {
-                                                modelRoundRobinMap[model.id]
-                                                  .serverCount
-                                              }
-                                              개)
+                                              {t('admin_models.count_suffix_paren', { count: modelRoundRobinMap[model.id].serverCount })}
                                             </span>
                                           </div>
                                         </div>
@@ -2976,10 +2906,10 @@ export default function ModelsPage() {
                                         <div className='pt-2 border-t border-border'>
                                           <div className='flex items-center gap-1.5 mb-1'>
                                             <span className='px-1.5 py-0.5 bg-primary/10 text-primary text-[10px] rounded font-medium'>
-                                              시스템 프롬프트
+                                              {t('admin_models.system_prompt')}
                                             </span>
                                             <span className='text-xs text-muted-foreground'>
-                                              {model.systemPrompt.length}줄
+                                              {t('admin_models.lines_count', { count: model.systemPrompt.length })}
                                             </span>
                                           </div>
                                           <p className='text-xs text-muted-foreground line-clamp-2 leading-relaxed'>
@@ -3005,9 +2935,9 @@ export default function ModelsPage() {
                                           )
                                         }
                                         className='px-2 py-1 text-xs font-medium rounded-md text-primary hover:bg-primary/10 dark:hover:bg-primary/10 transition-colors'
-                                        title='기본 모델로 설정'
+                                        title={t('admin_models.set_default_model')}
                                       >
-                                        기본설정
+                                        {t('admin_models.set_default')}
                                       </button>
                                     )}
                                     <button
@@ -3015,7 +2945,7 @@ export default function ModelsPage() {
                                         startEditing(categoryKey, modelIndex)
                                       }
                                       className='p-1.5 rounded-md text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-accent transition-colors'
-                                      title='편집'
+                                      title={t('common.edit')}
                                     >
                                       <Edit2 className='h-3.5 w-3.5' />
                                     </button>
@@ -3024,7 +2954,7 @@ export default function ModelsPage() {
                                         copyModel(categoryKey, modelIndex)
                                       }
                                       className='p-1.5 rounded-md text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-accent transition-colors'
-                                      title='설정 복사'
+                                      title={t('admin_models.copy_settings')}
                                     >
                                       <Copy className='h-3.5 w-3.5' />
                                     </button>
@@ -3033,7 +2963,7 @@ export default function ModelsPage() {
                                         deleteModel(categoryKey, modelIndex)
                                       }
                                       className='p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/10 transition-colors'
-                                      title='삭제'
+                                      title={t('common.delete')}
                                     >
                                       <Trash2 className='h-3.5 w-3.5' />
                                     </button>
@@ -3048,11 +2978,10 @@ export default function ModelsPage() {
                         <div className='text-center py-10 text-muted-foreground'>
                           <div className='text-4xl mb-2'>📦</div>
                           <p className='text-sm font-medium'>
-                            등록된 모델이 없습니다.
+                            {t('admin_models.no_models_registered')}
                           </p>
                           <p className='text-xs mt-1'>
-                            위의 &quot;모델 추가&quot; 버튼을 클릭하여 모델을
-                            등록하세요.
+                            {t('admin_models.click_add_model_button')}
                           </p>
                         </div>
                       )}
@@ -3064,17 +2993,17 @@ export default function ModelsPage() {
                       <div className='flex items-center gap-2 mb-4'>
                         <Plus className='h-4 w-4 text-primary' />
                         <h4 className='font-semibold text-foreground text-sm'>
-                          새 모델 추가
+                          {t('admin_models.add_new_model')}
                         </h4>
                       </div>
                       <div className='space-y-3'>
                         {/* 라벨 먼저 입력 */}
                         <div>
                           <label className='block text-xs font-medium text-foreground mb-1 flex items-center gap-2'>
-                            <span>라벨 *</span>
+                            <span>{t('admin_models.label')} *</span>
                             {newModelLabelRoundRobinInfo && (
                               <span className='px-1.5 py-0.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-[10px] rounded font-medium'>
-                                라운드로빈 {newModelLabelRoundRobinInfo.count}개
+                                {t('admin_models.round_robin_count', { count: newModelLabelRoundRobinInfo.count })}
                               </span>
                             )}
                           </label>
@@ -3207,7 +3136,7 @@ export default function ModelsPage() {
 
                         <div>
                           <label className='block text-xs font-medium text-foreground mb-1'>
-                            모델서버
+                            {t('admin_models.model_server')}
                           </label>
                           <select
                             className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
@@ -3229,7 +3158,7 @@ export default function ModelsPage() {
                             }}
                             required
                           >
-                            <option value="manual">[수동 추가] Custom API</option>
+                            <option value="manual">{t('admin_models.manual_add_custom_api')}</option>
                             {endpoints.map((ep) => {
                               const providerBadge =
                                 ep.provider === 'openai-compatible' ? '[OpenAI]' :
@@ -3259,7 +3188,7 @@ export default function ModelsPage() {
                                     ? `${ep.name} (${ep.url})`
                                     : newModel.endpoint;
                                 })()}{' '}
-                                {availableModels.length}개 모델 로드됨
+                                {t('admin_models.models_loaded', { count: availableModels.length })}
                               </span>
                             </div>
                           )}
@@ -3269,7 +3198,7 @@ export default function ModelsPage() {
                             <div className='mt-3 p-4 bg-muted rounded-lg border border-border'>
                               <div className='mb-4'>
                                 <p className='text-xs font-medium text-foreground mb-2'>
-                                  프리셋 적용
+                                  {t('admin_models.apply_preset')}
                                 </p>
                                 <div className='flex flex-wrap gap-2'>
                                   <button
@@ -3301,7 +3230,7 @@ export default function ModelsPage() {
                               {/* API 키 입력 */}
                               <div className='mb-4'>
                                 <label className='block text-sm font-medium text-foreground mb-2'>
-                                  🔑 API 키
+                                  {t('admin_models.api_key_label')}
                                 </label>
                                 <input
                                   type='text'
@@ -3312,19 +3241,19 @@ export default function ModelsPage() {
                                       apiKey: e.target.value
                                     });
                                   }}
-                                  placeholder='API 키를 입력하세요'
+                                  placeholder={t('admin_models.placeholder_api_key')}
                                   className='w-full px-3 py-2 text-sm bg-card border border-border rounded-md focus:ring-2 focus:ring-ring focus:border-transparent'
                                 />
                                 <p className='text-xs text-muted-foreground mt-1'>
-                                  API 호출 시 사용할 키입니다. 템플릿의 {'{{OPENAI_API_KEY}}'} 변수로 대체됩니다.
+                                  {t('admin_models.api_key_description')}
                                 </p>
                               </div>
 
                               <label className='block text-sm font-medium text-foreground mb-2'>
-                                🔧 API 요청 설정 (JSON)
+                                {t('admin_models.api_request_settings_json')}
                               </label>
                               <p className='text-xs text-muted-foreground mb-2'>
-                                백엔드에서 실행할 API 요청을 JSON 형태로 작성하세요. 변수: {'{{OPENAI_API_KEY}}'}, {'{{messages}}'}, {'{{message}}'}
+                                {t('admin_models.api_request_description')}
                               </p>
                               <textarea
                                 value={newModel.apiConfig || ''}
@@ -3364,19 +3293,19 @@ export default function ModelsPage() {
                               />
                               <div className='mt-2 text-xs space-y-2'>
                                 <div className='p-3 bg-destructive/10 border border-destructive/20 rounded'>
-                                  <p className='font-semibold text-destructive mb-2'>⚠️ 수정이 필요한 필드:</p>
+                                  <p className='font-semibold text-destructive mb-2'>⚠️ {t('admin_models.fields_need_modification')}</p>
                                   <ul className='list-disc ml-5 text-destructive space-y-1'>
-                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;url&quot;</code> - API 엔드포인트 주소</li>
-                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;model&quot;</code> - 모델명 (gpt-4, claude-3 등)</li>
-                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - 응답 경로</li>
+                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;url&quot;</code> - {t('admin_models.api_endpoint_address')}</li>
+                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;model&quot;</code> - {t('admin_models.model_name_examples')}</li>
+                                    <li><code className='bg-destructive/10/40 px-1 rounded'>&quot;responseMapping.path&quot;</code> - {t('admin_models.response_path')}</li>
                                   </ul>
                                 </div>
                                 <div className='text-muted-foreground'>
-                                  <p><strong>사용 가능한 변수:</strong></p>
+                                  <p><strong>{t('admin_models.available_variables')}</strong></p>
                                   <ul className='list-disc ml-5 mt-1'>
-                                    <li><code className='bg-muted px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - 환경변수에서 API 키 가져오기</li>
-                                    <li><code className='bg-muted px-1 rounded'>{'{{messages}}'}</code> - 전체 대화 내역 (배열)</li>
-                                    <li><code className='bg-muted px-1 rounded'>{'{{message}}'}</code> - 사용자의 최신 메시지 (문자열)</li>
+                                    <li><code className='bg-muted px-1 rounded'>{'{{OPENAI_API_KEY}}'}</code> - {t('admin_models.var_api_key_desc')}</li>
+                                    <li><code className='bg-muted px-1 rounded'>{'{{messages}}'}</code> - {t('admin_models.var_messages_desc')}</li>
+                                    <li><code className='bg-muted px-1 rounded'>{'{{message}}'}</code> - {t('admin_models.var_message_desc')}</li>
                                   </ul>
                                 </div>
                               </div>
@@ -3386,7 +3315,7 @@ export default function ModelsPage() {
                         <div className='grid grid-cols-2 gap-3'>
                           <div>
                             <label className='block text-xs font-medium text-foreground mb-1'>
-                              모델명 *
+                              {t('admin_models.model_name_required')}
                             </label>
                             <div className='relative'>
                               {(() => {
@@ -3403,7 +3332,7 @@ export default function ModelsPage() {
                                       urlObj.port ? `:${urlObj.port}` : ''
                                     }${urlObj.pathname.replace(/\/+$/, '')}`;
                                   } catch (error) {
-                                    console.warn('[Catch] 에러 발생:', error.message);
+                                    console.warn('[Catch]', error.message);
                                     return url.trim().toLowerCase().replace(/\/+$/, '');
                                   }
                                 };
@@ -3438,12 +3367,12 @@ export default function ModelsPage() {
                                         }}
                                         placeholder={
                                           isManual
-                                            ? 'my-custom-model (API 설정에 사용할 식별자)'
+                                            ? t('admin_models.placeholder_custom_model')
                                             : provider === 'openai-compatible'
-                                            ? 'gpt-4, gpt-3.5-turbo 등'
+                                            ? t('admin_models.placeholder_openai_model')
                                             : provider === 'gemini'
-                                            ? 'gemini-pro, gemini-1.5-flash 등'
-                                            : '모델명 입력'
+                                            ? t('admin_models.placeholder_gemini_model')
+                                            : t('admin_models.placeholder_model_name')
                                         }
                                         className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm'
                                       />
@@ -3461,12 +3390,12 @@ export default function ModelsPage() {
                                       )}
                                       <p className='text-xs text-muted-foreground mt-1'>
                                         {isManual
-                                          ? '커스텀 API 모델의 식별자를 입력하세요'
+                                          ? t('admin_models.hint_custom_model')
                                           : provider === 'openai-compatible'
-                                          ? 'OpenAI Compatible API 모델명을 직접 입력하세요'
+                                          ? t('admin_models.hint_openai_model')
                                           : provider === 'gemini'
-                                          ? 'Google Gemini 모델명을 직접 입력하세요'
-                                          : '모델명을 직접 입력하세요'}
+                                          ? t('admin_models.hint_gemini_model')
+                                          : t('admin_models.hint_enter_model')}
                                       </p>
                                     </>
                                   );
@@ -3497,8 +3426,8 @@ export default function ModelsPage() {
                                     >
                                       <option value=''>
                                         {modelsLoading
-                                          ? '모델 목록 조회중...'
-                                          : 'LLM 모델 선택'}
+                                          ? t('admin_models.loading_model_list')
+                                          : t('admin_models.select_llm_model')}
                                       </option>
                                       {/* 기존에 설정된 모델명이 있으면 표시 (모델 목록에 없어도) */}
                                       {(newModel.modelName || newModel.id) &&
@@ -3550,7 +3479,7 @@ export default function ModelsPage() {
                                     )}
                                     {availableModels.length > 0 && (
                                       <p className='text-xs text-primary mt-1'>
-                                        {availableModels.length}개 LLM 모델 사용 가능
+                                        {t('admin_models.available_models_count', { count: availableModels.length })}
                                       </p>
                                     )}
                                   </>
@@ -3563,7 +3492,7 @@ export default function ModelsPage() {
                           <div className='mt-2 p-2 rounded bg-muted border border-border dark:border-border'>
                             <div className='text-xs text-muted-foreground'>
                               <span className='font-medium'>
-                                동일 라벨 모델:
+                                {t('admin_models.same_label_models')}
                               </span>{' '}
                               <span className='font-mono'>{newModel.id}</span>
                               {newModelLabelRoundRobinInfo.models.length >
@@ -3588,8 +3517,7 @@ export default function ModelsPage() {
                               {newModelLabelRoundRobinInfo.endpointCount >
                                 1 && (
                                 <span className='ml-2 text-muted-foreground dark:text-muted-foreground'>
-                                  ({newModelLabelRoundRobinInfo.endpointCount}개
-                                  서버)
+                                  ({t('admin_models.servers_count', { count: newModelLabelRoundRobinInfo.endpointCount })})
                                 </span>
                               )}
                             </div>
@@ -3597,7 +3525,7 @@ export default function ModelsPage() {
                         )}
                         <div>
                           <label className='block text-xs font-medium text-foreground mb-1'>
-                            툴팁 설명
+                            {t('admin_models.tooltip_description')}
                           </label>
                           <textarea
                             value={newModel.tooltip || ''}
@@ -3609,12 +3537,12 @@ export default function ModelsPage() {
                             }
                             className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                             rows='2'
-                            placeholder='모델에 대한 설명을 입력하세요'
+                            placeholder={t('admin_models.placeholder_tooltip')}
                           />
                         </div>
                         <div>
                           <label className='block text-xs font-medium text-foreground mb-1'>
-                            멀티턴 제한
+                            {t('admin_models.multiturn_limit')}
                           </label>
                           <div className='flex items-center gap-3'>
                             <input
@@ -3646,11 +3574,11 @@ export default function ModelsPage() {
                                 className='h-4 w-4'
                                 disabled={loading}
                               />
-                              제한 없음
+                              {t('admin_models.no_limit')}
                             </label>
                           </div>
                           <p className='text-xs text-muted-foreground mt-1'>
-                            모델별 멀티턴 기억 개수입니다.
+                            {t('admin_models.multiturn_memory_desc')}
                           </p>
                         </div>
                         <div>
@@ -3704,13 +3632,13 @@ export default function ModelsPage() {
                             return (
                               <>
                                 <label className='block text-xs font-medium text-foreground mb-1'>
-                                  시스템 프롬프트
+                                  {t('admin_models.system_prompt')}
                                   <span className='text-xs text-muted-foreground'>
-                                    (줄바꿈으로 구분)
+                                    {t('admin_models.newline_separated')}
                                   </span>
                                   {isNotFirstInRoundRobin && (
                                     <span className='ml-2 px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] rounded font-medium'>
-                                      공유됨
+                                      {t('admin_models.shared')}
                                     </span>
                                   )}
                                 </label>
@@ -3724,19 +3652,18 @@ export default function ModelsPage() {
                                       disabled
                                       className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none bg-muted opacity-75 cursor-not-allowed'
                                       rows='6'
-                                      placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
+                                      placeholder={t('admin_models.system_prompt_placeholder')}
                                     />
                                     <div className='p-2 rounded bg-muted border border-border'>
                                       <p className='text-xs text-muted-foreground'>
                                         <span className='font-medium'>
-                                          라운드로빈 모델:
+                                          {t('admin_models.round_robin_model')}
                                         </span>{' '}
-                                        시스템 프롬프트는 첫 번째 모델(
+                                        {t('admin_models.system_prompt_shared_prefix')}
                                         <span className='font-mono'>
                                           {firstModelInfo.model?.id}
                                         </span>
-                                        )과 공유됩니다. 시스템 프롬프트를
-                                        수정하려면 첫 번째 모델을 편집해주세요.
+                                        {t('admin_models.edit_first_model_prompt')}
                                       </p>
                                     </div>
                                   </div>
@@ -3761,7 +3688,7 @@ export default function ModelsPage() {
                                     }
                                     className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 text-sm resize-none'
                                     rows='6'
-                                    placeholder='당신은 Tech그룹를 위한 AI 어시스턴트입니다.&#10;가능한 경우 모든 답변을 한국어로 설명해 주세요.'
+                                    placeholder={t('admin_models.system_prompt_placeholder')}
                                   />
                                 )}
                               </>
@@ -3783,7 +3710,7 @@ export default function ModelsPage() {
                                 className='w-4 h-4 text-primary bg-muted border-border rounded focus:ring-ring'
                               />
                               <span className='text-sm text-foreground'>
-                                기본 모델
+                                {t('admin_models.default_model')}
                               </span>
                             </label>
                             <label className='flex items-center gap-2 cursor-pointer'>
@@ -3799,7 +3726,7 @@ export default function ModelsPage() {
                                 className='w-4 h-4 text-destructive bg-muted border-border rounded focus:ring-ring'
                               />
                               <span className='text-sm text-foreground'>
-                                관리자 전용
+                                {t('admin_models.admin_only')}
                               </span>
                             </label>
                             <label className='flex items-center gap-2 cursor-pointer'>
@@ -3815,7 +3742,7 @@ export default function ModelsPage() {
                                 className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                               />
                               <span className='text-sm text-foreground'>
-                                메인 화면 표시
+                                {t('admin_models.show_on_main')}
                               </span>
                             </label>
                             <label className='flex items-center gap-2 cursor-pointer'>
@@ -3831,7 +3758,7 @@ export default function ModelsPage() {
                                 className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                               />
                               <span className='text-sm text-foreground'>
-                                요청 PII 필터
+                                {t('admin_models.pii_filter_request')}
                               </span>
                             </label>
                              {/* [출력 PII 임시 비활성화]
@@ -3848,7 +3775,7 @@ export default function ModelsPage() {
                                  className='w-4 h-4 text-muted-foreground bg-muted border-border rounded focus:ring-ring'
                                />
                                <span className='text-sm text-foreground'>
-                                 응답 PII 필터
+                                 {t('admin_models.pii_filter_response')}
                                </span>
                              </label>
                              */}
@@ -3858,7 +3785,7 @@ export default function ModelsPage() {
                               onClick={() => addModel(categoryKey)}
                               className='px-3 py-1.5 text-xs font-medium rounded-lg bg-primary hover:bg-primary/90 text-white transition-colors flex items-center gap-1'
                             >
-                              <Plus className='h-3.5 w-3.5' /> 추가
+                              <Plus className='h-3.5 w-3.5' /> {t('admin_models.add')}
                             </button>
                             <button
                               onClick={() => {
@@ -3874,97 +3801,38 @@ export default function ModelsPage() {
                                   endpoint: '',
                                   piiFilterRequest: false,
                                   piiFilterResponse: false,
-                                  piiRequestMxtVrf: true,
-                                  piiRequestMaskOpt: true,
-                                  piiResponseMxtVrf: true,
-                                  piiResponseMaskOpt: true,
+                                  piiEnabledTypes: null,
                                 });
                               }}
                               className='px-3 py-1.5 text-xs font-medium rounded-lg bg-muted hover:bg-accent dark:bg-muted dark:hover:bg-accent text-foreground transition-colors flex items-center gap-1'
                             >
-                              <X className='h-3.5 w-3.5' /> 취소
+                              <X className='h-3.5 w-3.5' /> {t('common.cancel')}
                             </button>
                           </div>
-                          {(newModel.piiFilterRequest /* || newModel.piiFilterResponse [출력 PII 임시 비활성화] */) && (
+                          {newModel.piiFilterRequest && (
                             <div className='w-full text-xs text-muted-foreground space-y-1'>
-                              {newModel.piiFilterRequest && (
-                                <div className='flex items-center gap-2 flex-wrap'>
-                                  <span className='font-medium'>요청 옵션</span>
-                                  <button
-                                    type='button'
-                                    onClick={() =>
-                                      setNewModel((prev) => ({
-                                        ...prev,
-                                        piiRequestMxtVrf: !prev.piiRequestMxtVrf,
-                                      }))
-                                    }
-                                    className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                      newModel.piiRequestMxtVrf
-                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
-                                        : 'bg-muted border-border text-muted-foreground'
-                                    }`}
-                                  >
-                                    mxt_vrf {newModel.piiRequestMxtVrf ? 'ON' : 'OFF'}
-                                  </button>
-                                  <button
-                                    type='button'
-                                    onClick={() =>
-                                      setNewModel((prev) => ({
-                                        ...prev,
-                                        piiRequestMaskOpt: !prev.piiRequestMaskOpt,
-                                      }))
-                                    }
-                                    className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                      newModel.piiRequestMaskOpt
-                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
-                                        : 'bg-muted border-border text-muted-foreground'
-                                    }`}
-                                  >
-                                    mask_opt {newModel.piiRequestMaskOpt ? 'ON' : 'OFF'}
-                                  </button>
-                                </div>
-                              )}
-                              {/* [출력 PII 임시 비활성화]
-                              {newModel.piiFilterResponse && (
-                                <div className='flex items-center gap-2 flex-wrap'>
-                                  <span className='font-medium'>응답 옵션</span>
-                                  <button
-                                    type='button'
-                                    onClick={() =>
-                                      setNewModel((prev) => ({
-                                        ...prev,
-                                        piiResponseMxtVrf:
-                                          !prev.piiResponseMxtVrf,
-                                      }))
-                                    }
-                                    className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                      newModel.piiResponseMxtVrf
-                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
-                                        : 'bg-muted border-border text-muted-foreground'
-                                    }`}
-                                  >
-                                    mxt_vrf {newModel.piiResponseMxtVrf ? 'ON' : 'OFF'}
-                                  </button>
-                                  <button
-                                    type='button'
-                                    onClick={() =>
-                                      setNewModel((prev) => ({
-                                        ...prev,
-                                        piiResponseMaskOpt:
-                                          !prev.piiResponseMaskOpt,
-                                      }))
-                                    }
-                                    className={`font-mono px-2 py-0.5 rounded border transition-colors ${
-                                      newModel.piiResponseMaskOpt
-                                        ? 'bg-primary/10 border-primary/30 dark:border-border text-primary dark:text-primary'
-                                        : 'bg-muted border-border text-muted-foreground'
-                                    }`}
-                                  >
-                                    mask_opt {newModel.piiResponseMaskOpt ? 'ON' : 'OFF'}
-                                  </button>
-                                </div>
-                              )}
-                              */}
+                              <span className='font-medium'>{t('admin_models.detection_type')}</span>
+                              <div className='flex flex-wrap gap-x-3 gap-y-1'>
+                                {Object.entries(PII_TYPES).map(([key, { label }]) => (
+                                  <label key={key} className='flex items-center gap-1 cursor-pointer'>
+                                    <input
+                                      type='checkbox'
+                                      className='w-3 h-3'
+                                      checked={!newModel.piiEnabledTypes || newModel.piiEnabledTypes.includes(key)}
+                                      onChange={(e) => {
+                                        const current = newModel.piiEnabledTypes || Object.keys(PII_TYPES);
+                                        setNewModel({
+                                          ...newModel,
+                                          piiEnabledTypes: e.target.checked
+                                            ? [...new Set([...current, key])]
+                                            : current.filter((piiType) => piiType !== key),
+                                        });
+                                      }}
+                                    />
+                                    {label}
+                                  </label>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -3984,7 +3852,7 @@ export default function ModelsPage() {
           <div className='flex-shrink-0 text-2xl'>💡</div>
           <div className='flex-1'>
             <h3 className='text-sm font-semibold text-foreground mb-3'>
-              사용법 안내
+              {t('admin_models.usage_guide')}
             </h3>
             <ul className='text-sm text-primary space-y-2'>
               <li className='flex items-start gap-2'>
@@ -3992,8 +3860,8 @@ export default function ModelsPage() {
                   •
                 </span>
                 <span>
-                  <strong>LLM 모델:</strong> 일반적인 AI 대화에 사용되는
-                  모델입니다. 드래그하여 순서를 변경할 수 있습니다.
+                  <strong>{t('admin_models.guide_llm_title')}</strong> {t('admin_models.guide_llm_desc_1')}
+                  
                 </span>
               </li>
               <li className='flex items-start gap-2'>
@@ -4001,9 +3869,9 @@ export default function ModelsPage() {
                   •
                 </span>
                 <span>
-                  <strong>표시 이름 라운드로빈:</strong> 동일한 표시 이름을 가진
-                  여러 모델을 등록하면 요청이 자동으로 분산됩니다. 부하 분산과
-                  고가용성을 위해 사용하세요.
+                  <strong>{t('admin_models.guide_rr_title')}</strong> {t('admin_models.guide_rr_desc_1')}
+                  
+                  
                 </span>
               </li>
               <li className='flex items-start gap-2'>
@@ -4011,8 +3879,8 @@ export default function ModelsPage() {
                   •
                 </span>
                 <span>
-                  각 카테고리당 하나의 기본 모델을 설정할 수 있으며, 설정 변경
-                  후 반드시 저장 버튼을 클릭하세요.
+                  {t('admin_models.guide_save_hint')}
+                  
                 </span>
               </li>
             </ul>
@@ -4026,7 +3894,7 @@ export default function ModelsPage() {
           <div className='flex items-center gap-3'>
             <RefreshCw className='h-5 w-5 text-muted-foreground' />
             <h2 className='text-lg font-semibold text-foreground'>
-              오류 로그
+              {t('admin_models.error_logs')}
             </h2>
           </div>
           <button
@@ -4039,12 +3907,12 @@ export default function ModelsPage() {
                 errorLogsLoading ? 'animate-spin' : ''
               }`}
             />
-            {errorLogsLoading ? '불러오는 중...' : '새로고침'}
+            {errorLogsLoading ? t('admin_models.fetching') : t('admin_models.refresh')}
           </button>
         </div>
 
         <div className='flex flex-wrap items-center gap-2 text-sm mb-3'>
-          <span className='text-muted-foreground'>소스</span>
+          <span className='text-muted-foreground'>{t('admin_models.source')}</span>
           {['all', 'server', 'api', 'client'].map((source) => (
             <button
               key={source}
@@ -4056,15 +3924,15 @@ export default function ModelsPage() {
               }`}
             >
               {source === 'all'
-                ? '전체'
+                ? t('admin_models.filter_all')
                 : source === 'server'
-                ? '서버'
+                ? t('admin_models.filter_server')
                 : source === 'api'
                 ? 'API'
-                : '클라이언트'}
+                : t('admin_models.filter_client')}
             </button>
           ))}
-          <span className='ml-2 text-muted-foreground'>레벨</span>
+          <span className='ml-2 text-muted-foreground'>{t('admin_models.level')}</span>
           {['all', 'error', 'warn'].map((level) => (
             <button
               key={level}
@@ -4075,18 +3943,18 @@ export default function ModelsPage() {
                   : 'bg-card text-foreground border-border'
               }`}
             >
-              {level === 'all' ? '전체' : level.toUpperCase()}
+              {level === 'all' ? t('admin_models.filter_all') : level.toUpperCase()}
             </button>
           ))}
           <span className='ml-auto text-xs text-muted-foreground'>
-            총 {errorLogsTotal}건
+            {t('admin_models.total_count', { count: errorLogsTotal })}
           </span>
         </div>
 
         <div className='border border-border rounded-lg overflow-hidden'>
           {errorLogs.length === 0 ? (
             <div className='p-4 text-sm text-muted-foreground'>
-              표시할 로그가 없습니다.
+              {t('admin_models.no_logs_to_display')}
             </div>
           ) : (
             <div className='divide-y divide-border'>

@@ -62,18 +62,11 @@ export async function POST(request) {
       });
     }
 
+    const enabledTypes = matchedModel?.piiEnabledTypes || null; // null = all types
+
     const result = await detectAndMaskPII(
       text,
-      {
-        mxtVrf:
-          direction === 'request'
-            ? matchedModel?.piiRequestMxtVrf !== false
-            : matchedModel?.piiResponseMxtVrf !== false,
-        maskOpt:
-          direction === 'request'
-            ? matchedModel?.piiRequestMaskOpt !== false
-            : matchedModel?.piiResponseMaskOpt !== false,
-      },
+      { enabledTypes },
       {
         model: actualModelName,
         roomId: body?.roomId || null,

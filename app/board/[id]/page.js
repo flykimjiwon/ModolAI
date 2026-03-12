@@ -11,11 +11,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function BoardDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function BoardDetailPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '게시글 조회 실패');
+        throw new Error(data.error || t('board.post_fetch_error'));
       }
 
       const data = await response.json();
@@ -80,11 +82,11 @@ export default function BoardDetailPage() {
       setComments(data.comments || []);
     } catch (error) {
       console.error('게시글 조회 실패:', error);
-      alert('게시글을 불러오는데 실패했습니다.', 'error', '오류');
+      alert(t('board.post_fetch_failed'), 'error', t('common.error'));
     } finally {
       setLoading(false);
     }
-  }, [alert, params.id, router]);
+  }, [alert, params.id, router, t]);
 
   useEffect(() => {
     if (boardEnabled) {
@@ -110,8 +112,8 @@ export default function BoardDetailPage() {
   const deletePost = async () => {
     if (!post) return;
     const confirmed = await confirm(
-      `'${post.title}' 글을 삭제하시겠습니까?`,
-      '게시글 삭제 확인'
+      t('board.delete_post_confirm', { title: post.title }),
+      t('board.delete_post_confirm_title')
     );
     if (!confirmed) return;
 
@@ -124,20 +126,20 @@ export default function BoardDetailPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '게시글 삭제 실패');
+        throw new Error(data.error || t('board.post_delete_error'));
       }
 
-      alert('게시글이 삭제되었습니다.', 'success', '삭제 완료');
+      alert(t('board.post_deleted'), 'success', t('common.delete_complete'));
       router.push('/board');
     } catch (error) {
       console.error('게시글 삭제 실패:', error);
-      alert('게시글 삭제에 실패했습니다.', 'error', '삭제 실패');
+      alert(t('board.post_delete_failed'), 'error', t('common.delete_failed'));
     }
   };
 
   const submitComment = async () => {
     if (!commentInput.trim()) {
-      alert('댓글 내용을 입력해주세요.', 'warning', '입력 필요');
+      alert(t('board.comment_empty'), 'warning', t('common.input_required'));
       return;
     }
 
@@ -158,21 +160,21 @@ export default function BoardDetailPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '댓글 등록 실패');
+        throw new Error(data.error || t('board.comment_submit_error'));
       }
 
       setCommentInput('');
       fetchPost();
     } catch (error) {
       console.error('댓글 등록 실패:', error);
-      alert('댓글 등록에 실패했습니다.', 'error', '오류');
+      alert(t('board.comment_submit_failed'), 'error', t('common.error'));
     } finally {
       setSavingComment(false);
     }
   };
 
   const deleteComment = async (comment) => {
-    const confirmed = await confirm('댓글을 삭제하시겠습니까?', '댓글 삭제');
+    const confirmed = await confirm(t('board.comment_delete_confirm'), t('board.comment_delete_title'));
     if (!confirmed) return;
 
     try {
@@ -184,12 +186,12 @@ export default function BoardDetailPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '댓글 삭제 실패');
+        throw new Error(data.error || t('board.comment_delete_error'));
       }
       fetchPost();
     } catch (error) {
       console.error('댓글 삭제 실패:', error);
-      alert('댓글 삭제에 실패했습니다.', 'error', '오류');
+      alert(t('board.comment_delete_failed'), 'error', t('common.error'));
     }
   };
 
@@ -205,7 +207,7 @@ export default function BoardDetailPage() {
 
   const saveEditComment = async (comment) => {
     if (!editingCommentText.trim()) {
-      alert('댓글 내용을 입력해주세요.', 'warning', '입력 필요');
+      alert(t('board.comment_empty'), 'warning', t('common.input_required'));
       return;
     }
 
@@ -222,14 +224,14 @@ export default function BoardDetailPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '댓글 수정 실패');
+        throw new Error(data.error || t('board.comment_edit_error'));
       }
 
       cancelEditComment();
       fetchPost();
     } catch (error) {
       console.error('댓글 수정 실패:', error);
-      alert('댓글 수정에 실패했습니다.', 'error', '오류');
+      alert(t('board.comment_edit_failed'), 'error', t('common.error'));
     }
   };
 
@@ -242,17 +244,17 @@ export default function BoardDetailPage() {
               onClick={() => router.push('/board')}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <h1 className='text-2xl font-bold text-foreground'>
-              자유게시판
+              {t('board.title')}
             </h1>
           </div>
           <Card>
             <CardContent className='p-6 text-center text-sm text-muted-foreground'>
-              자유게시판이 비활성화되어 있습니다.
+              {t('board.disabled')}
             </CardContent>
           </Card>
         </div>
@@ -269,7 +271,7 @@ export default function BoardDetailPage() {
             variant='ghost'
           >
             <ArrowLeft className='h-5 w-5' />
-            목록으로
+            {t('common.back_to_list')}
           </Button>
           {canManagePost && (
             <div className='flex items-center gap-2'>
@@ -279,7 +281,7 @@ export default function BoardDetailPage() {
                 size='sm'
               >
                 <Edit className='h-4 w-4' />
-                수정
+                {t('common.modify')}
               </Button>
               <Button
                 onClick={deletePost}
@@ -287,7 +289,7 @@ export default function BoardDetailPage() {
                 size='sm'
               >
                 <Trash2 className='h-4 w-4' />
-                삭제
+                {t('common.delete')}
               </Button>
             </div>
           )}
@@ -307,12 +309,12 @@ export default function BoardDetailPage() {
                   </h1>
                   {post.isNotice && (
                     <Badge variant='destructive'>
-                      공지
+                      {t('common.notice_badge')}
                     </Badge>
                   )}
                 </div>
                 <div className='text-xs text-muted-foreground mb-4 flex flex-wrap gap-3'>
-                  <span>{post.author?.name || '익명'}</span>
+                  <span>{post.author?.name || t('common.anonymous')}</span>
                   {post.author?.department && (
                       <span>{post.author.department.replaceAll('부서', '그룹')}</span>
                   )}
@@ -337,13 +339,13 @@ export default function BoardDetailPage() {
         <Card>
           <CardContent className='p-6 space-y-4'>
             <h2 className='text-lg font-semibold text-foreground'>
-              댓글 {comments.length}
+              {t('board.comments_title', { count: comments.length })}
             </h2>
 
             <div className='space-y-3'>
               {comments.length === 0 ? (
                 <p className='text-sm text-muted-foreground'>
-                  아직 댓글이 없습니다.
+                  {t('board.no_comments')}
                 </p>
               ) : (
                 comments.map((comment) => {
@@ -357,7 +359,7 @@ export default function BoardDetailPage() {
                       <div className='flex items-start justify-between'>
                         <div>
                           <div className='text-sm font-medium text-foreground'>
-                            {comment.author?.name || '익명'}
+                            {comment.author?.name || t('common.anonymous')}
                           </div>
                           <div className='text-xs text-muted-foreground'>
                             {formatDate(comment.createdAt)}
@@ -371,7 +373,7 @@ export default function BoardDetailPage() {
                               size='xs'
                               className='text-primary'
                             >
-                              수정
+                              {t('common.modify')}
                             </Button>
                             <Button
                               onClick={() => deleteComment(comment)}
@@ -379,7 +381,7 @@ export default function BoardDetailPage() {
                               size='xs'
                               className='text-destructive'
                             >
-                              삭제
+                              {t('common.delete')}
                             </Button>
                           </div>
                         )}
@@ -397,14 +399,14 @@ export default function BoardDetailPage() {
                               onClick={() => saveEditComment(comment)}
                               size='xs'
                             >
-                              저장
+                              {t('common.save')}
                             </Button>
                             <Button
                               onClick={cancelEditComment}
                               variant='outline'
                               size='xs'
                             >
-                              취소
+                              {t('common.cancel')}
                             </Button>
                           </div>
                         </div>
@@ -426,18 +428,18 @@ export default function BoardDetailPage() {
                 value={commentInput}
                 onChange={(e) => setCommentInput(e.target.value)}
                 className='min-h-[90px]'
-                placeholder='댓글을 입력하세요.'
+                placeholder={t('board.comment_placeholder')}
                 maxLength={2000}
               />
               <div className='flex items-center justify-between text-xs text-muted-foreground'>
-                <span>{commentInput.length}/2,000자</span>
+                <span>{t('common.char_count', { current: commentInput.length, max: '2,000' })}</span>
                 <Button
                   onClick={submitComment}
                   disabled={savingComment}
                   size='sm'
                 >
                   <Send className='h-4 w-4' />
-                  {savingComment ? '등록 중...' : '댓글 등록'}
+                  {savingComment ? t('board.comment_submitting') : t('board.submit_comment')}
                 </Button>
               </div>
             </div>

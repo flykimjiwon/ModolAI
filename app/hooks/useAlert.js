@@ -2,12 +2,15 @@
 
 import { useState, useCallback } from 'react';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * 전역 alert 모달을 관리하는 훅
  * alert() 대신 사용할 수 있는 모달 시스템
  */
 export function useAlert() {
+  const { t } = useTranslation();
+
   const [alertModal, setAlertModal] = useState({
     isOpen: false,
     title: '',
@@ -21,8 +24,8 @@ export function useAlert() {
     message: '',
     type: 'warning',
     onConfirm: null,
-    confirmText: '확인',
-    cancelText: '취소',
+    confirmText: '',
+    cancelText: '',
   });
 
   const alert = useCallback((message, type = 'info', title = null) => {
@@ -31,30 +34,30 @@ export function useAlert() {
       title:
         title ||
         (type === 'error'
-          ? '오류'
+          ? t('common.error')
           : type === 'warning'
-          ? '경고'
+          ? t('common.warning')
           : type === 'success'
-          ? '성공'
-          : '알림'),
+          ? t('common.success')
+          : t('common.info')),
       message: String(message),
       type,
     });
-  }, []);
+  }, [t]);
 
-  const confirm = useCallback((message, title = '확인', type = 'warning') => {
+  const confirm = useCallback((message, title, type = 'warning') => {
     return new Promise((resolve) => {
       setConfirmModal({
         isOpen: true,
-        title,
+        title: title || t('common.confirm'),
         message: String(message),
         type,
         onConfirm: () => resolve(true),
-        confirmText: '확인',
-        cancelText: '취소',
+        confirmText: t('common.confirm'),
+        cancelText: t('common.cancel'),
       });
     });
-  }, []);
+  }, [t]);
 
   const closeAlert = useCallback(() => {
     setAlertModal((prev) => ({ ...prev, isOpen: false }));

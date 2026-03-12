@@ -11,6 +11,7 @@ import {
   XCircle,
   Clock,
 } from '@/components/icons';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function parseAssistantMeta(messages) {
   if (!Array.isArray(messages)) return null;
@@ -61,29 +62,29 @@ function getOriginalText(log) {
   return '';
 }
 
-function StatusBadge({ meta }) {
+function StatusBadge({ meta, t }) {
   if (meta.skipped || meta.reason) {
     return (
       <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/10 text-destructive'>
-        <XCircle className='w-3 h-3' /> 실패
+        <XCircle className='w-3 h-3' /> {t('admin_pii_logs.status_failed')}
       </span>
     );
   }
   if (meta.detected) {
     return (
       <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground'>
-        <ShieldAlert className='w-3 h-3' /> PII 검출
+        <ShieldAlert className='w-3 h-3' /> {t('admin_pii_logs.status_detected')}
       </span>
     );
   }
   return (
     <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-      <ShieldCheck className='w-3 h-3' /> 정상
+      <ShieldCheck className='w-3 h-3' /> {t('admin_pii_logs.status_clean')}
     </span>
   );
 }
 
-function LogDetail({ log, meta }) {
+function LogDetail({ log, meta, t }) {
   const originalText = getOriginalText(log);
   const isFailed = meta.skipped || !!meta.reason;
 
@@ -91,7 +92,7 @@ function LogDetail({ log, meta }) {
     <div className='px-4 py-4 bg-muted border-t border-border space-y-4'>
       <div>
         <div className='text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2'>
-          입력 (Request)
+          {t('admin_pii_logs.input_request')}
         </div>
         <div className='flex gap-4 mb-2 text-xs'>
           <div className='flex gap-1.5'>
@@ -109,14 +110,14 @@ function LogDetail({ log, meta }) {
         </div>
         <div className='text-xs text-muted-foreground mb-1'>original_text</div>
         <pre className='text-xs bg-card border border-border rounded-lg p-3 whitespace-pre-wrap break-all text-foreground max-h-40 overflow-y-auto'>
-          {originalText || '(없음)'}
+          {originalText || t('admin_pii_logs.none')}
         </pre>
       </div>
 
       {!isFailed && (
         <div>
           <div className='text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2'>
-            응답 (Response)
+            {t('admin_pii_logs.output_response')}
           </div>
           <div className='flex gap-4 mb-2 text-xs'>
             <div className='flex gap-1.5'>
@@ -147,7 +148,7 @@ function LogDetail({ log, meta }) {
           {meta.detectedList.length > 0 && (
             <div>
               <div className='text-xs text-muted-foreground mb-1'>
-                detected_list ({meta.detectedList.length}건)
+                {t('admin_pii_logs.detected_list_count', { count: meta.detectedList.length })}
               </div>
               <div className='space-y-1'>
                 {meta.detectedList.map((item, i) => (
@@ -169,7 +170,7 @@ function LogDetail({ log, meta }) {
 
           {!meta.detected && meta.detectedCnt === 0 && !meta.maskedText && (
             <div className='text-xs text-muted-foreground italic'>
-              PII가 탐지되지 않았습니다.
+              {t('admin_pii_logs.no_pii_detected')}
             </div>
           )}
         </div>
@@ -178,7 +179,7 @@ function LogDetail({ log, meta }) {
       {isFailed && (
         <div>
           <div className='text-xs font-semibold text-destructive uppercase tracking-wide mb-2'>
-            오류 (Error)
+            {t('admin_pii_logs.error_label')}
           </div>
           <div className='bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-1.5 text-xs'>
             {meta.reason && (
@@ -208,7 +209,7 @@ function LogDetail({ log, meta }) {
           </div>
           {log.responseBody && (
             <div className='mt-2'>
-              <div className='text-xs text-muted-foreground mb-1'>응답 body</div>
+              <div className='text-xs text-muted-foreground mb-1'>{t('admin_pii_logs.response_body')}</div>
               <pre className='text-xs bg-card border border-border rounded-lg p-3 whitespace-pre-wrap break-all text-foreground max-h-32 overflow-y-auto'>
                 {typeof log.responseBody === 'string'
                   ? log.responseBody
@@ -223,6 +224,7 @@ function LogDetail({ log, meta }) {
 }
 
 export default function AdminPiiLogsPage() {
+  const { t } = useTranslation();
   const { alert } = useAlert();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -243,7 +245,7 @@ export default function AdminPiiLogsPage() {
         if (showLoading) setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) {
-          alert('관리자 인증 토큰이 없습니다.', 'error', '인증 오류');
+          alert(t('admin_pii_logs.no_auth_token'), 'error', t('admin_pii_logs.auth_error'));
           return;
         }
         const params = new URLSearchParams({
@@ -260,14 +262,14 @@ export default function AdminPiiLogsPage() {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.success) {
-          throw new Error(data.error || `조회 실패 (${response.status})`);
+          throw new Error(data.error || t('admin_pii_logs.fetch_failed_status', { status: response.status }));
         }
         setLogs(Array.isArray(data?.data?.logs) ? data.data.logs : []);
         setPagination(
           data?.data?.pagination || { page: filters.page, totalPages: 1 }
         );
       } catch (error) {
-        alert(`PII 로그 조회 실패: ${error.message}`, 'error', '조회 실패');
+        alert(t('admin_pii_logs.fetch_error', { message: error.message }), 'error', t('admin_pii_logs.fetch_failed_title'));
       } finally {
         if (showLoading) setLoading(false);
       }
@@ -317,10 +319,10 @@ export default function AdminPiiLogsPage() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-foreground'>
-            PII 로그
+            {t('admin_pii_logs.title')}
           </h1>
           <p className='text-sm text-muted-foreground mt-1'>
-            PII API 호출 이력 — 입력/출력값 및 성공/실패 상세 확인
+            {t('admin_pii_logs.subtitle')}
           </p>
         </div>
         <button
@@ -328,20 +330,20 @@ export default function AdminPiiLogsPage() {
           className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none px-4 py-2 rounded-lg inline-flex items-center gap-2'
         >
           <RefreshCw className='w-4 h-4' />
-          새로고침
+          {t('admin_pii_logs.refresh')}
         </button>
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-3'>
         <div className='p-4 rounded-xl border border-border bg-card'>
-          <div className='text-xs text-muted-foreground'>총 로그</div>
+          <div className='text-xs text-muted-foreground'>{t('admin_pii_logs.total_logs')}</div>
           <div className='text-2xl font-semibold text-foreground'>
             {summary.total}
           </div>
         </div>
         <div className='p-4 rounded-xl border border-border bg-card'>
           <div className='text-xs text-muted-foreground inline-flex items-center gap-1'>
-            <ShieldAlert className='w-4 h-4 text-muted-foreground' /> PII 검출
+            <ShieldAlert className='w-4 h-4 text-muted-foreground' /> {t('admin_pii_logs.pii_detected')}
           </div>
           <div className='text-2xl font-semibold text-muted-foreground'>
             {summary.detected}
@@ -349,7 +351,7 @@ export default function AdminPiiLogsPage() {
         </div>
         <div className='p-4 rounded-xl border border-destructive/30 bg-card'>
           <div className='text-xs text-muted-foreground inline-flex items-center gap-1'>
-            <XCircle className='w-4 h-4 text-destructive' /> 실패/스킵
+            <XCircle className='w-4 h-4 text-destructive' /> {t('admin_pii_logs.failed_skipped')}
           </div>
           <div className='text-2xl font-semibold text-destructive'>
             {summary.failed}
@@ -365,17 +367,17 @@ export default function AdminPiiLogsPage() {
           }
           className='px-3 py-2 rounded-lg border border-border bg-background'
         >
-          <option value='1h'>최근 1시간</option>
-          <option value='24h'>최근 24시간</option>
-          <option value='7d'>최근 7일</option>
-          <option value='30d'>최근 30일</option>
+          <option value='1h'>{t('admin_pii_logs.time_1h')}</option>
+          <option value='24h'>{t('admin_pii_logs.time_24h')}</option>
+          <option value='7d'>{t('admin_pii_logs.time_7d')}</option>
+          <option value='30d'>{t('admin_pii_logs.time_30d')}</option>
         </select>
         <input
           value={filters.endpoint}
           onChange={(e) =>
             setFilters((p) => ({ ...p, endpoint: e.target.value, page: 1 }))
           }
-          placeholder='endpoint 필터'
+          placeholder={t('admin_pii_logs.endpoint_filter')}
           className='px-3 py-2 rounded-lg border border-border bg-background'
         />
         <input
@@ -383,7 +385,7 @@ export default function AdminPiiLogsPage() {
           onChange={(e) =>
             setFilters((p) => ({ ...p, model: e.target.value, page: 1 }))
           }
-          placeholder='model 필터'
+          placeholder={t('admin_pii_logs.model_filter')}
           className='px-3 py-2 rounded-lg border border-border bg-background'
         />
         <select
@@ -393,24 +395,24 @@ export default function AdminPiiLogsPage() {
           }
           className='px-3 py-2 rounded-lg border border-border bg-background'
         >
-          <option value=''>검출 상태 전체</option>
-          <option value='detected'>PII 검출</option>
-          <option value='clean'>정상 (미검출)</option>
-          <option value='failed'>실패/스킵</option>
+          <option value=''>{t('admin_pii_logs.all_status')}</option>
+          <option value='detected'>{t('admin_pii_logs.status_detected')}</option>
+          <option value='clean'>{t('admin_pii_logs.status_clean_option')}</option>
+          <option value='failed'>{t('admin_pii_logs.status_failed_option')}</option>
         </select>
         <button
           onClick={() => fetchLogs(true)}
           className='px-3 py-2 rounded-lg bg-foreground text-background'
         >
-          조회
+          {t('admin_pii_logs.search')}
         </button>
       </div>
 
       {loading ? (
-        <div className='py-16 text-center text-muted-foreground'>로딩 중...</div>
+        <div className='py-16 text-center text-muted-foreground'>{t('common.loading')}</div>
       ) : filteredLogs.length === 0 ? (
         <div className='py-16 text-center text-muted-foreground'>
-          조회 결과가 없습니다.
+          {t('admin_pii_logs.no_results')}
         </div>
       ) : (
         <div className='rounded-xl border border-border overflow-hidden divide-y divide-border bg-card'>
@@ -432,11 +434,11 @@ export default function AdminPiiLogsPage() {
                       {new Date(log.timestamp).toLocaleString('ko-KR')}
                     </span>
 
-                    <StatusBadge meta={meta} />
+                    <StatusBadge meta={meta} t={t} />
 
                     {meta.detected && (
                       <span className='text-xs font-medium text-muted-foreground'>
-                        {meta.detectedCnt}건
+                        {t('admin_pii_logs.count_items', { count: meta.detectedCnt })}
                       </span>
                     )}
 
@@ -475,7 +477,7 @@ export default function AdminPiiLogsPage() {
                   </div>
                 </button>
 
-                {isExpanded && <LogDetail log={log} meta={meta} />}
+                {isExpanded && <LogDetail log={log} meta={meta} t={t} />}
               </div>
             );
           })}
@@ -484,7 +486,7 @@ export default function AdminPiiLogsPage() {
 
       <div className='flex items-center justify-between text-sm'>
         <span className='text-muted-foreground'>
-          페이지 {pagination.page || 1} / {pagination.totalPages || 1}
+          {t('admin_pii_logs.page_info', { page: pagination.page || 1, totalPages: pagination.totalPages || 1 })}
         </span>
         <div className='flex gap-2'>
           <button
@@ -497,7 +499,7 @@ export default function AdminPiiLogsPage() {
             }
             className='px-3 py-1.5 rounded border border-border disabled:opacity-50'
           >
-            이전
+            {t('common.previous')}
           </button>
           <button
             disabled={(pagination.page || 1) >= (pagination.totalPages || 1)}
@@ -509,7 +511,7 @@ export default function AdminPiiLogsPage() {
             }
             className='px-3 py-1.5 rounded border border-border disabled:opacity-50'
           >
-            다음
+            {t('common.next')}
           </button>
         </div>
       </div>

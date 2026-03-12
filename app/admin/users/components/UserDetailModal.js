@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Dialog,
   DialogContent,
@@ -8,8 +10,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UserDetailModal({ user, onClose }) {
+    const { t } = useTranslation();
     if (!user) return null;
 
     const formatDate = (dateString) => {
@@ -55,9 +59,9 @@ export default function UserDetailModal({ user, onClose }) {
                 {/* 헤더 */}
                 <DialogHeader className='p-4 border-b border-border'>
                     <DialogTitle className='flex items-center gap-3'>
-                        사용자 상세 정보
+                        {t('admin_user_detail.title')}
                         <Badge variant={user.authType === 'sso' ? 'default' : 'secondary'}>
-                            {user.authType === 'sso' ? 'SSO 계정' : '일반 계정'}
+                            {user.authType === 'sso' ? t('admin_user_detail.sso_account') : t('admin_user_detail.local_account')}
                         </Badge>
                     </DialogTitle>
                 </DialogHeader>
@@ -65,68 +69,68 @@ export default function UserDetailModal({ user, onClose }) {
                 {/* 본문 (스크롤 가능) */}
                 <div className='flex-1 overflow-y-auto p-6'>
                     {/* 기본 정보 */}
-                    <InfoGroup title='기본 프로필'>
+                    <InfoGroup title={t('admin_user_detail.basic_profile')}>
                         <InfoItem
-                            label='이름'
+                            label={t('admin_user_detail.name')}
                             value={
                                 user.authType === 'sso' && user.employeeNo
                                     ? `${user.name} (${user.employeeNo})`
                                     : user.name
                             }
                         />
-                        <InfoItem label='이메일 (회사)' value={user.email} />
-                        <InfoItem label='역할' value={user.role === 'admin' ? '관리자' : '일반 사용자'} />
-                        <InfoItem label='계정 유형' value={user.authType === 'sso' ? 'SSO' : '일반'} />
+                        <InfoItem label={t('admin_user_detail.email_company')} value={user.email} />
+                        <InfoItem label={t('admin_user_detail.role')} value={user.role === 'admin' ? t('admin_user_detail.role_admin') : t('admin_user_detail.role_user')} />
+                        <InfoItem label={t('admin_user_detail.account_type')} value={user.authType === 'sso' ? 'SSO' : t('admin_user_detail.account_local')} />
                     </InfoGroup>
 
                     {/* 조직 정보 */}
-                    <InfoGroup title='조직 정보'>
-                        <InfoItem label='회사명' value={user.companyName} />
-                        <InfoItem label='회사 코드' value={user.companyCode} />
-                        <InfoItem label='그룹사 ID' value={user.companyId} />
-              <InfoItem label='그룹명' value={user.department} />
-              <InfoItem label='그룹 ID' value={user.departmentId} />
-              <InfoItem label='그룹 점 번호' value={user.departmentNo} />
-              <InfoItem label='그룹 경로' value={user.departmentLocation} fullWidth />
+                    <InfoGroup title={t('admin_user_detail.org_info')}>
+                        <InfoItem label={t('admin_user_detail.company_name')} value={user.companyName} />
+                        <InfoItem label={t('admin_user_detail.company_code')} value={user.companyCode} />
+                        <InfoItem label={t('admin_user_detail.group_company_id')} value={user.companyId} />
+              <InfoItem label={t('admin_user_detail.group_name')} value={user.department} />
+              <InfoItem label={t('admin_user_detail.group_id')} value={user.departmentId} />
+              <InfoItem label={t('admin_user_detail.group_branch_no')} value={user.departmentNo} />
+              <InfoItem label={t('admin_user_detail.group_path')} value={user.departmentLocation} fullWidth />
                     </InfoGroup>
 
                     {/* 사원 정보 */}
-                    <InfoGroup title='사원 정보'>
-                        <InfoItem label='사번' value={user.employeeNo} />
-                        <InfoItem label='사원 ID' value={user.employeeId} />
-                        <InfoItem label='SSO 사용자 ID' value={user.ssoUserId} />
-                        <InfoItem label='직급' value={user.employeePositionName} />
+                    <InfoGroup title={t('admin_user_detail.employee_info')}>
+                        <InfoItem label={t('admin_user_detail.employee_no')} value={user.employeeNo} />
+                        <InfoItem label={t('admin_user_detail.employee_id')} value={user.employeeId} />
+                        <InfoItem label={t('admin_user_detail.sso_user_id')} value={user.ssoUserId} />
+                        <InfoItem label={t('admin_user_detail.position')} value={user.employeePositionName} />
                         <InfoItem
-                            label='직원 유형'
+                            label={t('admin_user_detail.employee_type')}
                             value={
-                                user.employeeClass === 'NORMAL' ? '정직원' :
-                                user.employeeClass === 'EXECUTIVE' ? '임원' :
-                                user.employeeClass === 'OUTSOURCE_TEMP' ? '외주임시' :
-                                user.employeeClass === 'OUTSOURCE_RESIDENT' ? '외주상주' :
+                                user.employeeClass === 'NORMAL' ? t('admin_user_detail.type_normal') :
+                                user.employeeClass === 'EXECUTIVE' ? t('admin_user_detail.type_executive') :
+                                user.employeeClass === 'OUTSOURCE_TEMP' ? t('admin_user_detail.type_outsource_temp') :
+                                user.employeeClass === 'OUTSOURCE_RESIDENT' ? t('admin_user_detail.type_outsource_resident') :
                                 user.employeeClass
                             }
                         />
-                        <InfoItem label='보안 등급' value={user.employeeSecurityLevel} />
-                        <InfoItem label='언어 설정' value={user.lang} />
+                        <InfoItem label={t('admin_user_detail.security_level')} value={user.employeeSecurityLevel} />
+                        <InfoItem label={t('admin_user_detail.lang_setting')} value={user.lang} />
                     </InfoGroup>
 
                     {/* 시스템 정보 */}
-                    <InfoGroup title='시스템 정보'>
-                        <InfoItem label='가입일시' value={formatDate(user.createdAt)} />
-                        <InfoItem label='정보 수정일시' value={formatDate(user.updatedAt)} />
-                        <InfoItem label='마지막 로그인' value={formatDate(user.lastLoginAt)} />
-                        <InfoItem label='마지막 활동' value={formatDate(user.lastActiveAt)} />
-                        <InfoItem label='로그인 차단 여부' value={user.loginDenyYn === 'Y' ? '차단됨' : '정상'} />
-                        <InfoItem label='마지막 SSO 응답' value={formatDate(user.ssoResponseDatetime)} />
-                        <InfoItem label='인증 이벤트 ID' value={user.authEventId} />
-                        <InfoItem label='시스템 ID (UUID)' value={user.id} fullWidth className='font-mono text-xs' />
+                    <InfoGroup title={t('admin_user_detail.system_info')}>
+                        <InfoItem label={t('admin_user_detail.created_at')} value={formatDate(user.createdAt)} />
+                        <InfoItem label={t('admin_user_detail.updated_at')} value={formatDate(user.updatedAt)} />
+                        <InfoItem label={t('admin_user_detail.last_login')} value={formatDate(user.lastLoginAt)} />
+                        <InfoItem label={t('admin_user_detail.last_activity')} value={formatDate(user.lastActiveAt)} />
+                        <InfoItem label={t('admin_user_detail.login_blocked')} value={user.loginDenyYn === 'Y' ? t('admin_user_detail.blocked') : t('admin_user_detail.normal_status')} />
+                        <InfoItem label={t('admin_user_detail.last_sso_response')} value={formatDate(user.ssoResponseDatetime)} />
+                        <InfoItem label={t('admin_user_detail.auth_event_id')} value={user.authEventId} />
+                        <InfoItem label={t('admin_user_detail.system_id')} value={user.id} fullWidth className='font-mono text-xs' />
                     </InfoGroup>
                 </div>
 
                 {/* 푸터 */}
                 <DialogFooter className='p-4 border-t border-border bg-muted/50'>
                     <Button onClick={onClose}>
-                        확인
+                        {t('common.confirm')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

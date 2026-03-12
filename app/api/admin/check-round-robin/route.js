@@ -6,11 +6,9 @@ import { parseModelName, getModelServerEndpointsByName } from '@/lib/modelServer
  * Parse server info from model name and check round-robin status
  */
 export async function GET(request) {
-  // Check admin privileges (can be changed to allow regular users)
   const authResult = verifyAdmin(request);
   if (!authResult.success) {
-    // Allow read access even for non-admins (optional)
-    // return authResult;
+    return authResult;
   }
 
   try {

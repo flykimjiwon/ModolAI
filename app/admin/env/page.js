@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function formatMatchedFiles(files) {
   if (!Array.isArray(files) || files.length === 0) {
@@ -36,6 +37,7 @@ function EnvValueCard({ label, value }) {
 }
 
 export default function AdminEnvPage() {
+  const { t } = useTranslation();
   const { alert } = useAlert();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,16 +48,16 @@ export default function AdminEnvPage() {
       return {
         variant: 'destructive',
         icon: <TriangleAlert className='w-4 h-4' />,
-        text: '환경 점검 실패',
+        text: t('admin_env.check_failed'),
       };
     }
 
     return {
       variant: 'default',
       icon: <ShieldCheck className='w-4 h-4' />,
-      text: '환경 점검 성공',
+      text: t('admin_env.check_success'),
     };
-  }, [result]);
+  }, [result, t]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -75,22 +77,22 @@ export default function AdminEnvPage() {
       try {
         data = raw ? JSON.parse(raw) : {};
       } catch {
-        throw new Error(`응답 파싱 실패 (${response.status})`);
+        throw new Error(t('admin_env.parse_failed', { status: response.status }));
       }
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || `환경 변수 점검 실패 (${response.status})`);
+        throw new Error(data.error || t('admin_env.env_check_failed', { status: response.status }));
       }
 
       setResult(data);
     } catch (fetchError) {
-      const message = fetchError.message || '환경 변수 점검 실패';
+      const message = fetchError.message || t('admin_env.env_check_failed_generic');
       setError(message);
-      alert(message, 'error', '조회 실패');
+      alert(message, 'error', t('admin_env.fetch_failed_title'));
     } finally {
       setLoading(false);
     }
-  }, [alert]);
+  }, [alert, t]);
 
   useEffect(() => {
     loadData();
@@ -103,12 +105,10 @@ export default function AdminEnvPage() {
           <div className='flex flex-wrap items-start justify-between gap-4'>
             <div>
               <h1 className='text-xl font-semibold text-foreground'>
-                ENV 변수 확인
+                {t('admin_env.title')}
               </h1>
               <p className='text-sm text-muted-foreground mt-2'>
-                현재 런타임에서 사용 중인 <code>POSTGRES_URI</code>와{' '}
-                <code>NODE_ENV</code>, 그리고 값이 일치하는 <code>.env*</code>
-                파일 후보를 확인합니다.
+                {t('admin_env.subtitle')}
               </p>
             </div>
 
@@ -118,7 +118,7 @@ export default function AdminEnvPage() {
               size='sm'
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              새로고침
+              {t('admin_env.refresh')}
             </Button>
           </div>
         </CardContent>
@@ -152,17 +152,17 @@ export default function AdminEnvPage() {
 
               <div className='rounded-lg border border-border overflow-hidden'>
                 <div className='px-4 py-2 bg-muted text-sm font-semibold text-foreground'>
-                  일치 파일 후보
+                  {t('admin_env.matched_files')}
                 </div>
                 <div className='p-4 space-y-2 text-sm'>
                   <div>
-                    <span className='text-muted-foreground'>NODE_ENV 후보</span>
+                    <span className='text-muted-foreground'>{t('admin_env.node_env_candidates')}</span>
                     <div className='text-foreground break-all'>
                       {formatMatchedFiles(result.envFiles?.nodeEnvMatchedFiles)}
                     </div>
                   </div>
                   <div>
-                    <span className='text-muted-foreground'>POSTGRES_URI 후보</span>
+                    <span className='text-muted-foreground'>{t('admin_env.postgres_uri_candidates')}</span>
                     <div className='text-foreground break-all'>
                       {formatMatchedFiles(result.envFiles?.postgresUriMatchedFiles)}
                     </div>
@@ -175,12 +175,12 @@ export default function AdminEnvPage() {
 
               <div className='rounded-lg border border-border overflow-hidden'>
                 <div className='px-4 py-2 bg-muted text-sm font-semibold text-foreground'>
-                  점검한 .env 파일
+                  {t('admin_env.checked_env_files')}
                 </div>
 
                 <div className='p-4 space-y-3 text-sm'>
                   <div className='rounded-md border border-border px-3 py-2 bg-background'>
-                    <div className='text-xs text-muted-foreground'>프로젝트 루트</div>
+                    <div className='text-xs text-muted-foreground'>{t('admin_env.project_root')}</div>
                     <div className='mt-1 font-medium text-foreground break-all'>
                       {result.envFiles?.projectRoot || '-'}
                     </div>
@@ -190,8 +190,8 @@ export default function AdminEnvPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className='px-3 py-2'>파일명</TableHead>
-                          <TableHead className='px-3 py-2'>존재</TableHead>
+                          <TableHead className='px-3 py-2'>{t('admin_env.col_filename')}</TableHead>
+                          <TableHead className='px-3 py-2'>{t('admin_env.col_exists')}</TableHead>
                           <TableHead className='px-3 py-2'>NODE_ENV</TableHead>
                           <TableHead className='px-3 py-2'>POSTGRES_URI</TableHead>
                         </TableRow>

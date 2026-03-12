@@ -71,7 +71,7 @@ export async function GET(request, { params }) {
       isPopup: row.is_popup,
       isPopupLogin: row.is_popup_login,
       isActive: row.is_active,
-      authorId: row.author_id,
+      // authorId omitted for security (not exposed in public GET)
       authorName: row.author_name,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

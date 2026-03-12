@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import DarkModeToggle from './DarkModeToggle';
 import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const MESSAGE_LIMIT = 20;
 
@@ -19,25 +19,26 @@ const decodeToken = (token) => {
 };
 
 // 시간 포맷 함수
-const formatTime = (dateString) => {
+const formatTime = (dateString, t, lang) => {
   const date = new Date(dateString);
   const now = new Date();
   const diff = now - date;
   
   // 1분 미만
   if (diff < 60000) {
-    return '방금 전';
+    return t('chat_widget.just_now');
   }
   // 1시간 미만
   if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}분 전`;
+    return t('chat_widget.minutes_ago', { minutes: Math.floor(diff / 60000) });
   }
   // 24시간 미만
   if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}시간 전`;
+    return t('chat_widget.hours_ago', { hours: Math.floor(diff / 3600000) });
   }
   // 24시간 이상
-  return date.toLocaleDateString('ko-KR', { 
+  const locale = lang === 'en' ? 'en-US' : 'ko-KR';
+  return date.toLocaleDateString(locale, { 
     month: 'short', 
     day: 'numeric',
     hour: '2-digit',
@@ -46,6 +47,8 @@ const formatTime = (dateString) => {
 };
 
 export default function ChatWidget() {
+  const { t, lang } = useTranslation();
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -250,7 +253,7 @@ export default function ChatWidget() {
       _id: `temp-${Date.now()}`,
       userId: myId,
       email: myEmail,
-      name: myName || myEmail?.split('@')[0] || '나',
+      name: myName || myEmail?.split('@')[0] || t('chat_widget.me'),
       text: messageText,
       roomId: 'general',
       createdAt: new Date().toISOString(),
@@ -288,13 +291,13 @@ export default function ChatWidget() {
         // 전송 실패 시 낙관적 메시지 제거
         setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
         console.error('메시지 전송 실패:', res.statusText);
-        alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+        alert(t('chat_widget.send_failed'));
       }
     } catch (error) {
       // 에러 발생 시 낙관적 메시지 제거
       setMessages(prev => prev.filter(msg => msg._id !== optimisticMessage._id));
       console.error('Error sending message:', error);
-      alert('메시지 전송 중 오류가 발생했습니다.');
+      alert(t('chat_widget.send_error'));
     } finally {
       setSending(false);
     }
@@ -308,19 +311,12 @@ export default function ChatWidget() {
 
   return (
     <>
-      <div className="fixed top-5 right-5 z-50">
-        <div className="flex items-center justify-center w-16 h-16 rounded-full border border-border bg-background shadow-lg">
-          <div className="scale-125">
-            <DarkModeToggle />
-          </div>
-        </div>
-      </div>
       {showChatWidget && (
         <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-4">
           {isOpen && (
             <Card className="w-80 h-[768px] py-0 gap-0 overflow-hidden shadow-xl">
               <CardHeader className="flex flex-row items-center justify-between bg-primary text-primary-foreground p-3 rounded-t-xl gap-2">
-                <CardTitle className="text-lg text-primary-foreground">실시간 채팅</CardTitle>
+                <CardTitle className="text-lg text-primary-foreground">{t('chat_widget.title')}</CardTitle>
                 <label className="flex items-center text-xs cursor-pointer">
                   <input
                     type="checkbox"
@@ -328,14 +324,14 @@ export default function ChatWidget() {
                     onChange={(e) => setAutoScroll(e.target.checked)}
                     className="mr-1 h-4 w-4 rounded accent-primary"
                   />
-                  자동 스크롤
+                  {t('chat_widget.auto_scroll')}
                 </label>
               </CardHeader>
               <CardContent className="flex-1 p-4 overflow-y-auto bg-muted space-y-4">
                 {hasMore && (
                   <div className="text-center">
                     <Button variant="link" onClick={loadMoreMessages} disabled={isLoadingMore} className="text-sm">
-                      {isLoadingMore ? '로딩 중...' : '이전 대화 보기'}
+                      {isLoadingMore ? t('common.loading') : t('chat_widget.load_older')}
                     </Button>
                   </div>
                 )}
@@ -345,7 +341,7 @@ export default function ChatWidget() {
                     msg.name ||
                     (isMyMessage ? myName : null) ||
                     msg.email?.split('@')[0] ||
-                    '사용자';
+                    t('chat_widget.anonymous_user');
                   const isOptimistic = msg.isOptimistic || false;
                   
                   return (
@@ -356,7 +352,7 @@ export default function ChatWidget() {
                             {displayName}
                           </p>
                           <span className="text-[10px] text-muted-foreground">
-                            {formatTime(msg.createdAt)}
+                            {formatTime(msg.createdAt, t, lang)}
                           </span>
                         </div>
                         <div className={`px-4 py-2 rounded-lg inline-block break-words ${isMyMessage ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
@@ -379,7 +375,7 @@ export default function ChatWidget() {
                       handleSendMessage(e);
                     }
                   }}
-                  placeholder={sending ? "전송 중..." : "메시지를 입력하세요... (Enter: 전송)"}
+                  placeholder={sending ? t('chat_widget.sending') : t('chat_widget.input_placeholder')}
                   className={`flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-foreground bg-background ${sending ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={sending}
                   autoComplete="off"
@@ -389,7 +385,7 @@ export default function ChatWidget() {
                   size="icon"
                   className="ml-2 rounded-full"
                   disabled={sending}
-                  title="메시지 전송 (Enter)"
+                  title={t('chat_widget.send_button_title')}
                 >
                   <Send size={18} className={sending ? 'animate-pulse' : ''} />
                 </Button>
@@ -400,7 +396,7 @@ export default function ChatWidget() {
             onClick={() => setIsOpen(!isOpen)} 
             size="icon"
             className="mt-4 ml-auto size-16 rounded-full shadow-lg"
-            aria-label={isOpen ? '채팅창 닫기' : '채팅창 열기'}
+            aria-label={isOpen ? t('chat_widget.close_chat') : t('chat_widget.open_chat')}
           >
             {isOpen ? <X size={30} /> : <MessageCircle size={30} />}
           </Button>

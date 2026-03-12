@@ -26,9 +26,11 @@ import {
   Hash,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ExternalApiLogsPage() {
   const { alert } = useAlert();
+  const { t } = useTranslation();
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -110,33 +112,33 @@ export default function ExternalApiLogsPage() {
         } else if (response.status === 401) {
           console.error('인증 실패');
           alert(
-            '인증이 필요합니다. 다시 로그인해주세요.',
+            t('admin_api_logs.auth_required'),
             'error',
-            '인증 실패'
+            t('admin_api_logs.auth_failed')
           );
         } else {
           const errorData = await response.json().catch(() => ({}));
           const errorMessage =
-            errorData.error || `서버 오류 (${response.status})`;
+            errorData.error || t('admin_api_logs.server_error', { status: response.status });
           console.error('로그 조회 실패:', response.status, errorMessage);
           alert(
-            `로그 조회에 실패했습니다: ${errorMessage}`,
+            t('admin_api_logs.log_fetch_failed', { error: errorMessage }),
             'error',
-            '조회 실패'
+            t('admin_api_logs.fetch_failed_title')
           );
         }
       } catch (error) {
         console.error('로그 조회 오류:', error);
         alert(
-          `로그 조회 중 오류가 발생했습니다: ${error.message}`,
+          t('admin_api_logs.log_fetch_error', { error: error.message }),
           'error',
-          '오류 발생'
+          t('admin_api_logs.error_occurred')
         );
       } finally {
         if (showLoading) setLoading(false);
       }
     },
-    [filters, customStartDate, customEndDate, alert]
+    [filters, customStartDate, customEndDate, alert, t]
   );
 
   useEffect(() => {
@@ -236,8 +238,8 @@ export default function ExternalApiLogsPage() {
   };
 
   const getSourceLabel = (source) => {
-    if (source === 'external') return '외부';
-    return '내부';
+    if (source === 'external') return t('admin_api_logs.source_external');
+    return t('admin_api_logs.source_internal');
   };
 
   // 응답 시간 색상
@@ -275,7 +277,7 @@ export default function ExternalApiLogsPage() {
       await navigator.clipboard.writeText(
         typeof prompt === 'string' ? prompt : JSON.stringify(prompt, null, 2)
       );
-      alert('프롬프트가 클립보드에 복사되었습니다.', 'success', '복사 완료');
+      alert(t('admin_api_logs.prompt_copied'), 'success', t('admin_api_logs.copy_complete'));
     } catch (error) {
       console.error('복사 실패:', error);
     }
@@ -338,7 +340,7 @@ export default function ExternalApiLogsPage() {
   const copyJson = async (data) => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-      alert('JSON 데이터가 클립보드에 복사되었습니다.', 'success', '복사 완료');
+      alert(t('admin_api_logs.json_copied'), 'success', t('admin_api_logs.copy_complete'));
     } catch (error) {
       console.error('복사 실패:', error);
     }
@@ -384,10 +386,10 @@ export default function ExternalApiLogsPage() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-foreground'>
-            API 로깅
+            {t('admin_api_logs.title')}
           </h1>
           <p className='text-muted-foreground mt-1'>
-            내부/외부 API 호출 기록을 한 곳에서 모니터링합니다
+            {t('admin_api_logs.subtitle')}
           </p>
         </div>
         <button
@@ -396,7 +398,7 @@ export default function ExternalApiLogsPage() {
           className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          새로고침
+          {t('admin_api_logs.refresh')}
         </button>
       </div>
 
@@ -407,7 +409,7 @@ export default function ExternalApiLogsPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
-                  총 요청
+                  {t('admin_api_logs.total_requests')}
                 </p>
                 <p className='text-2xl font-bold text-foreground'>
                   {stats.overall.totalRequests?.toLocaleString() || 0}
@@ -421,7 +423,7 @@ export default function ExternalApiLogsPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
-                  총 토큰
+                  {t('admin_api_logs.total_tokens')}
                 </p>
                 <p className='text-2xl font-bold text-foreground'>
                   {formatTokens(stats.overall.totalTokens)}
@@ -435,13 +437,13 @@ export default function ExternalApiLogsPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
-                  평균 최초 응답시간
+                  {t('admin_api_logs.avg_first_response')}
                 </p>
                 <p className='text-2xl font-bold text-foreground'>
                   {Math.round(stats.overall.avgFirstResponseTime || 0)}ms
                 </p>
                 <p className='text-xs text-muted-foreground mt-1'>
-                  최초 응답 기준
+                  {t('admin_api_logs.first_response_basis')}
                 </p>
               </div>
               <Clock className='h-8 w-8 text-primary' />
@@ -452,7 +454,7 @@ export default function ExternalApiLogsPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
-                  평균 최종 응답시간
+                  {t('admin_api_logs.avg_final_response')}
                 </p>
                 <p className='text-2xl font-bold text-foreground'>
                   {Math.round(stats.overall.avgFinalResponseTime || 0)}ms
@@ -466,7 +468,7 @@ export default function ExternalApiLogsPage() {
             <div className='flex items-center justify-between'>
               <div>
                 <p className='text-sm text-muted-foreground'>
-                  성공률
+                  {t('admin_api_logs.success_rate')}
                 </p>
                 <p className='text-2xl font-bold text-foreground'>
                   {stats.overall.totalRequests > 0
@@ -492,7 +494,7 @@ export default function ExternalApiLogsPage() {
           className='w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-accent rounded-lg transition-colors'
         >
           <span className='text-sm font-medium text-foreground'>
-            상세 통계 {showDetailedStats ? '숨기기' : '보기'}
+            {showDetailedStats ? t('admin_api_logs.detailed_stats_hide') : t('admin_api_logs.detailed_stats_show')}
           </span>
           {showDetailedStats ? (
             <ChevronUp className='h-4 w-4 text-muted-foreground' />
@@ -509,10 +511,10 @@ export default function ExternalApiLogsPage() {
           <div className='bg-card border border-border rounded-xl shadow-sm p-4'>
             <div className='flex items-center justify-between mb-3'>
               <h3 className='font-medium text-foreground'>
-                엔드포인트별 통계
+                {t('admin_api_logs.endpoint_stats')}
               </h3>
               <span className='text-xs text-muted-foreground'>
-                총 {stats.byEndpoint.length}개 중 상위 8개
+                {t('admin_api_logs.top_n_of_total', { total: stats.byEndpoint.length, top: 8 })}
               </span>
             </div>
             <div className='space-y-2'>
@@ -528,13 +530,13 @@ export default function ExternalApiLogsPage() {
                   </div>
                   <div className='flex items-center gap-4 text-muted-foreground'>
                     <span>
-                      건수:{' '}
+                      {t('admin_api_logs.count_label')}{' '}
                       <strong className='text-foreground'>
                         {ep.count}
                       </strong>
                     </span>
                     <span>
-                      평균(최초/최종):{' '}
+                      {t('admin_api_logs.avg_first_final')}{' '}
                       <strong className='text-foreground'>
                         {Math.round(ep.avgFirstResponseTime || 0)}ms /{' '}
                         {Math.round(ep.avgFinalResponseTime || 0)}ms
@@ -553,7 +555,7 @@ export default function ExternalApiLogsPage() {
           <div className='flex items-center gap-3'>
             <Filter className='h-5 w-5 text-primary' />
             <h3 className='font-semibold text-foreground'>
-              필터
+              {t('admin_api_logs.filter')}
             </h3>
           </div>
           <div className='flex items-center gap-2'>
@@ -561,7 +563,7 @@ export default function ExternalApiLogsPage() {
               onClick={handleResetFilters}
               className='px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors'
             >
-              초기화
+              {t('admin_api_logs.reset')}
             </button>
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -570,12 +572,12 @@ export default function ExternalApiLogsPage() {
               {showFilters ? (
                 <>
                   <ChevronUp className='h-4 w-4' />
-                  숨기기
+                  {t('admin_api_logs.hide')}
                 </>
               ) : (
                 <>
                   <ChevronDown className='h-4 w-4' />
-                  펼치기
+                  {t('admin_api_logs.expand')}
                 </>
               )}
             </button>
@@ -589,7 +591,7 @@ export default function ExternalApiLogsPage() {
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4'>
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1.5'>
-                    시간 범위
+                    {t('admin_api_logs.time_range')}
                   </label>
                   <select
                     value={filters.timeRange}
@@ -598,18 +600,18 @@ export default function ExternalApiLogsPage() {
                     }
                     className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
-                    <option value='1h'>최근 1시간</option>
-                    <option value='6h'>최근 6시간</option>
-                    <option value='24h'>최근 24시간</option>
-                    <option value='7d'>최근 7일</option>
-                    <option value='30d'>최근 30일</option>
-                    <option value='custom'>기간 지정</option>
+                    <option value='1h'>{t('admin_api_logs.last_1h')}</option>
+                    <option value='6h'>{t('admin_api_logs.last_6h')}</option>
+                    <option value='24h'>{t('admin_api_logs.last_24h')}</option>
+                    <option value='7d'>{t('admin_api_logs.last_7d')}</option>
+                    <option value='30d'>{t('admin_api_logs.last_30d')}</option>
+                    <option value='custom'>{t('admin_api_logs.custom_range')}</option>
                   </select>
                 </div>
                 {filters.timeRange === 'custom' && (
                   <div className='md:col-span-2 lg:col-span-5'>
                     <label className='block text-sm font-medium text-foreground mb-1.5'>
-                      기간 지정
+                      {t('admin_api_logs.custom_range')}
                     </label>
                     <div className='flex items-center gap-3 flex-wrap'>
                       <input
@@ -618,7 +620,7 @@ export default function ExternalApiLogsPage() {
                         onChange={(e) => setCustomStartDate(e.target.value)}
                         onClick={(e) => e.currentTarget.showPicker?.()}
                         className='px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent min-w-[140px]'
-                        placeholder='시작 날짜'
+                        placeholder={t('admin_api_logs.start_date')}
                       />
                       <span className='text-sm text-muted-foreground'>~</span>
                       <input
@@ -627,13 +629,13 @@ export default function ExternalApiLogsPage() {
                         onChange={(e) => setCustomEndDate(e.target.value)}
                         onClick={(e) => e.currentTarget.showPicker?.()}
                         className='px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent min-w-[140px]'
-                        placeholder='종료 날짜'
+                        placeholder={t('admin_api_logs.end_date')}
                       />
                       <button
                         onClick={() => fetchLogs(true)}
                         className='px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium'
                       >
-                        조회
+                        {t('admin_api_logs.search')}
                       </button>
                     </div>
                   </div>
@@ -641,7 +643,7 @@ export default function ExternalApiLogsPage() {
 
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1.5'>
-                    카테고리
+                    {t('admin_api_logs.category')}
                   </label>
                   <select
                     value={filters.source}
@@ -650,15 +652,15 @@ export default function ExternalApiLogsPage() {
                     }
                     className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
-                    <option value=''>전체</option>
-                    <option value='external'>외부 API</option>
-                    <option value='internal'>내부 API</option>
+                    <option value=''>{t('admin_api_logs.all')}</option>
+                    <option value='external'>{t('admin_api_logs.external_api')}</option>
+                    <option value='internal'>{t('admin_api_logs.internal_api')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1.5'>
-                    API 타입
+                    {t('admin_api_logs.api_type')}
                   </label>
                   <select
                     value={filters.apiType}
@@ -667,7 +669,7 @@ export default function ExternalApiLogsPage() {
                     }
                     className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
-                    <option value=''>전체</option>
+                    <option value=''>{t('admin_api_logs.all')}</option>
                     <option value='generate'>Generate</option>
                     <option value='chat'>Chat</option>
                     <option value='image-analysis'>Image Analysis</option>
@@ -686,7 +688,7 @@ export default function ExternalApiLogsPage() {
                     className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option key='all-provider' value=''>
-                      전체
+                      {t('admin_api_logs.all')}
                     </option>
                     {(stats.byProvider || [])
                       .filter((p) => p._id)
@@ -700,7 +702,7 @@ export default function ExternalApiLogsPage() {
 
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1.5'>
-                    클라이언트 도구
+                    {t('admin_api_logs.client_tool')}
                   </label>
                   <select
                     value={filters.clientTool}
@@ -710,7 +712,7 @@ export default function ExternalApiLogsPage() {
                     className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent'
                   >
                     <option key='all' value=''>
-                      전체
+                      {t('admin_api_logs.all')}
                     </option>
                     {stats.byClientTool?.map((tool, index) => (
                       <option
@@ -727,11 +729,11 @@ export default function ExternalApiLogsPage() {
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1.5'>
-                    모델 검색
+                    {t('admin_api_logs.model_search')}
                   </label>
                   <input
                     type='text'
-                    placeholder='모델명으로 검색...'
+                    placeholder={t('admin_api_logs.model_search_placeholder')}
                     value={filters.model}
                     onChange={(e) => handleFilterChange('model', e.target.value)}
                     className='w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-ring focus:border-transparent placeholder:text-muted-foreground'
@@ -752,7 +754,7 @@ export default function ExternalApiLogsPage() {
                       className='w-4 h-4 text-primary border-border rounded focus:ring-ring'
                     />
                     <span className='text-sm font-medium text-foreground'>
-                      대화 세션별로 그룹화
+                      {t('admin_api_logs.group_by_conversation')}
                     </span>
                   </label>
                 </div>
@@ -770,7 +772,7 @@ export default function ExternalApiLogsPage() {
                 ) : (
                   <ChevronDown className='h-4 w-4' />
                 )}
-                고급 필터 (디버깅용)
+                {t('admin_api_logs.advanced_filters')}
               </button>
 
               {showAdvancedFilters && (
@@ -778,11 +780,11 @@ export default function ExternalApiLogsPage() {
                   <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                     <div>
                       <label className='block text-sm font-medium text-foreground mb-1.5'>
-                        IP 주소
+                        {t('admin_api_logs.ip_address')}
                       </label>
                       <input
                         type='text'
-                        placeholder='IP 주소 검색...'
+                        placeholder={t('admin_api_logs.ip_placeholder')}
                         value={filters.clientIP}
                         onChange={(e) =>
                           handleFilterChange('clientIP', e.target.value)
@@ -797,7 +799,7 @@ export default function ExternalApiLogsPage() {
                       </label>
                       <input
                         type='text'
-                        placeholder='세션 해시...'
+                        placeholder={t('admin_api_logs.session_hash_placeholder')}
                         value={filters.sessionHash}
                         onChange={(e) =>
                           handleFilterChange('sessionHash', e.target.value)
@@ -812,7 +814,7 @@ export default function ExternalApiLogsPage() {
                       </label>
                       <input
                         type='text'
-                        placeholder='사용자 ID...'
+                        placeholder={t('admin_api_logs.user_id_placeholder')}
                         value={filters.userId}
                         onChange={(e) =>
                           handleFilterChange('userId', e.target.value)
@@ -823,7 +825,7 @@ export default function ExternalApiLogsPage() {
                   </div>
                   
                   <p className='text-xs text-muted-foreground italic'>
-                    💡 고급 필터는 기술적인 디버깅 목적으로만 사용됩니다.
+                    {t('admin_api_logs.advanced_filters_note')}
                   </p>
                 </div>
               )}
@@ -836,10 +838,10 @@ export default function ExternalApiLogsPage() {
       <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='font-medium text-foreground'>
-            로그 기록 ({pagination.totalCount?.toLocaleString() || 0})
+            {t('admin_api_logs.log_records', { count: pagination.totalCount?.toLocaleString() || 0 })}
             {pagination.totalPages > 1 && (
               <span className='ml-2 text-sm text-muted-foreground font-normal'>
-                {pagination.page} / {pagination.totalPages} 페이지
+                {t('admin_api_logs.page_info', { page: pagination.page, totalPages: pagination.totalPages })}
               </span>
             )}
           </h3>
@@ -851,7 +853,7 @@ export default function ExternalApiLogsPage() {
           </div>
         ) : logs.length === 0 ? (
           <div className='text-center py-8 text-muted-foreground'>
-            로그가 없습니다
+            {t('admin_api_logs.no_logs')}
           </div>
         ) : filters.groupByConversation ? (
           // 그룹화된 뷰
@@ -903,10 +905,10 @@ export default function ExternalApiLogsPage() {
                           </span>
                         </div>
                         <span className='text-xs text-muted-foreground'>
-                          {conversation.totalRequests}개 요청
+                          {t('admin_api_logs.requests_count', { count: conversation.totalRequests })}
                         </span>
                         <span className='text-xs text-muted-foreground'>
-                          {formatTokens(conversation.totalTokens)} 토큰
+                          {formatTokens(conversation.totalTokens)} {t('admin_api_logs.tokens_label')}
                         </span>
                       </div>
                       <div className='text-right text-xs text-muted-foreground'>
@@ -1005,7 +1007,7 @@ export default function ExternalApiLogsPage() {
                                     {/* 클라이언트 정보 */}
                                     <div>
                                       <div className='text-xs font-semibold text-muted-foreground mb-2'>
-                                        클라이언트
+                                        {t('admin_api_logs.client_label')}
                                       </div>
                                       <div className='flex items-center gap-2 mb-1'>
                                         {getClientToolIcon(
@@ -1023,16 +1025,16 @@ export default function ExternalApiLogsPage() {
                                     {/* 사용자 & 설정 정보 */}
                                     <div>
                                       <div className='text-xs font-semibold text-muted-foreground mb-2'>
-                                        사용자 & 설정
+                                        {t('admin_api_logs.user_settings')}
                                       </div>
                                       <div className='text-sm space-y-1'>
                                         {log.userName || log.userEmail ? (
                                           <div className='text-foreground'>
-                                            {log.userName || '이름 없음'} (
-                                            {log.userEmail || '이메일 없음'})
+                                            {log.userName || t('admin_api_logs.no_name')} (
+                                            {log.userEmail || t('admin_api_logs.no_email')})
                                             {log.userDepartment && (
                                               <span className='ml-2 text-xs text-muted-foreground'>
-                            [{log.userDepartment.replaceAll('부서', '그룹')}]
+                                                [{log.userDepartment.replaceAll('부서', '그룹')}]
                                               </span>
                                             )}
                                           </div>
@@ -1040,17 +1042,17 @@ export default function ExternalApiLogsPage() {
                                         <div className='text-xs text-muted-foreground space-y-1'>
                                           {log.tokenName && (
                                             <div>
-                                              <strong>토큰:</strong>{' '}
+                                              <strong>{t('admin_api_logs.token_colon')}</strong>{' '}
                                               {log.tokenName}
                                             </div>
                                           )}
                                           <div>
-                                            <strong>모델:</strong>{' '}
+                                            <strong>{t('admin_api_logs.model_colon')}</strong>{' '}
                                             {log.modelLabel || log.model}
                                           </div>
                                           {log.sessionHash && (
                                             <div className='flex items-center gap-2'>
-                                              <strong>세션:</strong>
+                                              <strong>{t('admin_api_logs.session_colon')}</strong>
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -1072,7 +1074,7 @@ export default function ExternalApiLogsPage() {
                                                   );
                                                 }}
                                                 className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
-                                                title='이 세션의 모든 요청 보기'
+                                                title={t('admin_api_logs.view_session_requests')}
                                               >
                                                 <Hash className='h-3 w-3' />
                                                 {log.sessionHash.substring(
@@ -1085,7 +1087,7 @@ export default function ExternalApiLogsPage() {
                                           )}
                                           {log.userId && (
                                             <div className='flex items-center gap-2'>
-                                              <strong>사용자:</strong>
+                                              <strong>{t('admin_api_logs.user_colon')}</strong>
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -1103,7 +1105,7 @@ export default function ExternalApiLogsPage() {
                                                   );
                                                 }}
                                                 className='inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
-                                                title='이 사용자의 같은 토큰으로 보낸 요청 보기'
+                                                title={t('admin_api_logs.view_user_requests')}
                                               >
                                                 {log.userId.substring(0, 8)}...
                                               </button>
@@ -1116,17 +1118,17 @@ export default function ExternalApiLogsPage() {
                                     {/* 토큰 사용량 */}
                                     <div>
                                       <div className='text-xs font-semibold text-muted-foreground mb-2'>
-                                        토큰 사용량
+                                        {t('admin_api_logs.token_usage')}
                                       </div>
                                       <div className='text-sm text-muted-foreground space-y-1'>
                                         <div className='flex justify-between'>
-                                          <span>입력:</span>
+                                          <span>{t('admin_api_logs.input_label')}</span>
                                           <span className='font-medium text-foreground'>
                                             {formatTokens(log.promptTokenCount)}
                                           </span>
                                         </div>
                                         <div className='flex justify-between'>
-                                          <span>출력:</span>
+                                          <span>{t('admin_api_logs.output_label')}</span>
                                           <span className='font-medium text-foreground'>
                                             {formatTokens(
                                               log.responseTokenCount
@@ -1135,7 +1137,7 @@ export default function ExternalApiLogsPage() {
                                         </div>
                                         <div className='flex justify-between border-t border-border pt-1'>
                                           <span>
-                                            <strong>총계:</strong>
+                                            <strong>{t('admin_api_logs.total_sum')}:</strong>
                                           </span>
                                           <span className='font-bold text-foreground'>
                                             {formatTokens(log.totalTokenCount)}
@@ -1150,13 +1152,13 @@ export default function ExternalApiLogsPage() {
                                     <div className='pt-3 border-t border-border'>
                                       <div className='flex items-start justify-between'>
                                         <p className='text-sm text-muted-foreground flex-1'>
-                                          <strong>프롬프트:</strong>{' '}
+                                          <strong>{t('admin_api_logs.prompt_label')}</strong>{' '}
                                           {typeof log.prompt === 'string'
                                             ? log.prompt.length > 100
                                               ? log.prompt.substring(0, 100) +
                                                 '...'
                                               : log.prompt
-                                            : '메시지 배열'}
+                                            : t('admin_api_logs.message_array')}
                                         </p>
                                         <button
                                           onClick={(e) => {
@@ -1164,7 +1166,7 @@ export default function ExternalApiLogsPage() {
                                             openPromptModal(log);
                                           }}
                                           className='ml-2 p-1 text-primary hover:text-primary'
-                                          title='프롬프트 전체 보기'
+                                          title={t('admin_api_logs.view_full_prompt')}
                                         >
                                           <Eye className='h-4 w-4' />
                                         </button>
@@ -1178,7 +1180,7 @@ export default function ExternalApiLogsPage() {
                                     log.messages.length > 0 && (
                                       <div className='pt-3 border-t border-border'>
                                         <div className='text-xs font-semibold text-muted-foreground mb-2'>
-                                          메시지 ({log.messages.length}개)
+                                          {t('admin_api_logs.messages_count', { count: log.messages.length })}
                                         </div>
                                         <div className='space-y-2 max-h-64 overflow-y-auto'>
                                           {(() => {
@@ -1202,9 +1204,7 @@ export default function ExternalApiLogsPage() {
                                                       }}
                                                       className='w-full text-xs text-primary hover:text-primary text-center py-2 px-3 rounded-md hover:bg-primary/10 transition-colors'
                                                     >
-                                                      ... 이전{' '}
-                                                      {log.messages.length - 3}
-                                                      개 메시지 보기
+                                                      {t('admin_api_logs.view_previous_messages', { count: log.messages.length - 3 })}
                                                     </button>
                                                   )}
                                                 {isMessagesExpanded &&
@@ -1218,7 +1218,7 @@ export default function ExternalApiLogsPage() {
                                                       }}
                                                       className='w-full text-xs text-muted-foreground hover:text-foreground text-center py-2 px-3 rounded-md hover:bg-accent transition-colors'
                                                     >
-                                                      최신 3개만 보기
+                                                      {t('admin_api_logs.show_latest_3')}
                                                     </button>
                                                   )}
                                                 {displayMessages.map(
@@ -1294,8 +1294,8 @@ export default function ExternalApiLogsPage() {
                                                             className='mt-1 text-primary hover:text-primary text-xs underline'
                                                           >
                                                             {isContentExpanded
-                                                              ? '접기'
-                                                              : '전체 보기'}
+                                                              ? t('admin_api_logs.fold')
+                                                              : t('admin_api_logs.view_all')}
                                                           </button>
                                                         )}
                                                       </div>
@@ -1313,7 +1313,7 @@ export default function ExternalApiLogsPage() {
                                   {log.error && (
                                     <div className='pt-3 border-t border-destructive/30'>
                                       <p className='text-sm text-destructive'>
-                                        <strong>오류:</strong> {log.error}
+                                        <strong>{t('admin_api_logs.error_label')}</strong> {log.error}
                                       </p>
                                     </div>
                                   )}
@@ -1369,10 +1369,10 @@ export default function ExternalApiLogsPage() {
                                             copyJson(requestData);
                                           }}
                                           className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
-                                          title='Request 복사'
+                                          title={t('admin_api_logs.copy_request')}
                                         >
                                           <Copy className='h-3 w-3' />
-                                          Request 복사
+                                          {t('admin_api_logs.copy_request')}
                                         </button>
                                       </div>
 
@@ -1487,10 +1487,10 @@ export default function ExternalApiLogsPage() {
                                             copyJson(responseData);
                                           }}
                                           className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
-                                          title='Response 복사'
+                                          title={t('admin_api_logs.copy_response')}
                                         >
                                           <Copy className='h-3 w-3' />
-                                          Response 복사
+                                          {t('admin_api_logs.copy_response')}
                                         </button>
                                       </div>
 
@@ -1526,7 +1526,7 @@ export default function ExternalApiLogsPage() {
                                                   )
                                                 : log.messages &&
                                                   Array.isArray(log.messages)
-                                                ? 'Streaming response (메시지 배열)'
+                                                ? t('admin_api_logs.streaming_response_array')
                                                 : 'Response content'}
                                             </pre>
                                           </div>
@@ -1610,7 +1610,7 @@ export default function ExternalApiLogsPage() {
                               : 'bg-muted text-muted-foreground'
                           }`}
                         >
-                          재시도 {log.retryCount}회
+                          {t('admin_api_logs.retry_count', { count: log.retryCount })}
                         </span>
                       )}
 
@@ -1640,7 +1640,7 @@ export default function ExternalApiLogsPage() {
                          <span>{log.modelLabel || log.model}</span>
                          <span>•</span>
                          <span className='font-medium'>
-                           {formatTokens(log.totalTokenCount)} 토큰
+                           {formatTokens(log.totalTokenCount)} {t('admin_api_logs.tokens_label')}
                          </span>
                        </div>
                      </div>
@@ -1664,7 +1664,7 @@ export default function ExternalApiLogsPage() {
                   {log.error && !isExpanded && (
                     <div className='px-4 pb-4 border-t border-destructive/30 pt-3'>
                       <p className='text-sm text-destructive'>
-                        <strong>오류:</strong> {log.error}
+                        <strong>{t('admin_api_logs.error_label')}</strong> {log.error}
                       </p>
                     </div>
                   )}
@@ -1676,13 +1676,13 @@ export default function ExternalApiLogsPage() {
                         {/* 사용자 & 세션 정보 */}
                         <div className='bg-card rounded-lg p-4 shadow-sm'>
                           <h4 className='text-sm font-semibold text-foreground mb-3'>
-                            요청 정보
+                            {t('admin_api_logs.request_info')}
                           </h4>
                           <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
                             <div className='space-y-2'>
                               <div>
                                 <span className='text-muted-foreground'>
-                                  클라이언트:
+                                  {t('admin_api_logs.client_colon')}
                                 </span>
                                 <span className='ml-2 text-foreground font-medium'>
                                   {getClientToolLabel(log)}
@@ -1690,7 +1690,7 @@ export default function ExternalApiLogsPage() {
                               </div>
                               <div>
                                 <span className='text-muted-foreground'>
-                                  IP:
+                                  {t('admin_api_logs.ip_colon')}
                                 </span>
                                 <span className='ml-2 text-foreground font-mono text-xs'>
                                   {log.clientIP}
@@ -1699,13 +1699,13 @@ export default function ExternalApiLogsPage() {
                               {log.userName && (
                                 <div>
                                   <span className='text-muted-foreground'>
-                                    사용자:
+                                    {t('admin_api_logs.user_colon')}
                                   </span>
                                   <span className='ml-2 text-foreground'>
                                     {log.userName} ({log.userEmail})
                                     {log.userDepartment && (
                                       <span className='ml-1 text-xs text-muted-foreground'>
-                                  [{log.userDepartment.replaceAll('부서', '그룹')}]
+                                        [{log.userDepartment.replaceAll('부서', '그룹')}]
                                       </span>
                                     )}
                                   </span>
@@ -1714,7 +1714,7 @@ export default function ExternalApiLogsPage() {
                               {log.tokenName && (
                                 <div>
                                   <span className='text-muted-foreground'>
-                                    토큰:
+                                    {t('admin_api_logs.token_colon')}
                                   </span>
                                   <span className='ml-2 text-foreground'>
                                     {log.tokenName}
@@ -1726,7 +1726,7 @@ export default function ExternalApiLogsPage() {
                               {log.sessionHash && (
                                 <div className='flex items-center gap-2'>
                                   <span className='text-muted-foreground'>
-                                    세션:
+                                    {t('admin_api_logs.session_colon')}
                                   </span>
                                   <button
                                     onClick={(e) => {
@@ -1749,7 +1749,7 @@ export default function ExternalApiLogsPage() {
                                       );
                                     }}
                                     className='inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono transition-colors'
-                                    title='이 세션의 모든 요청 보기'
+                                    title={t('admin_api_logs.view_session_requests')}
                                   >
                                     <Hash className='h-3 w-3' />
                                     {log.sessionHash.substring(0, 12)}...
@@ -1759,7 +1759,7 @@ export default function ExternalApiLogsPage() {
                               {log.conversationId && (
                                 <div className='flex items-center gap-2'>
                                   <span className='text-muted-foreground'>
-                                    대화:
+                                    {t('admin_api_logs.conversation_colon')}
                                   </span>
                                   <button
                                     onClick={(e) => {
@@ -1774,7 +1774,7 @@ export default function ExternalApiLogsPage() {
                                       );
                                     }}
                                     className='inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 hover:bg-primary/20 text-primary text-xs font-mono transition-colors'
-                                    title='이 대화 세션의 모든 요청 보기'
+                                    title={t('admin_api_logs.view_conversation_requests')}
                                   >
                                     <Hash className='h-3 w-3' />
                                     {log.conversationId.substring(0, 12)}...
@@ -1783,13 +1783,13 @@ export default function ExternalApiLogsPage() {
                               )}
                               <div>
                                 <span className='text-muted-foreground'>
-                                  토큰 사용:
+                                  {t('admin_api_logs.token_usage_colon')}
                                 </span>
                                 <span className='ml-2 text-foreground font-medium'>
                                   {formatTokens(log.promptTokenCount)} →{' '}
                                   {formatTokens(log.responseTokenCount)}
                                   <span className='ml-1 text-muted-foreground text-xs'>
-                                    (총 {formatTokens(log.totalTokenCount)})
+                                    ({t('admin_api_logs.total_sum')} {formatTokens(log.totalTokenCount)})
                                   </span>
                                 </span>
                               </div>
@@ -1804,7 +1804,7 @@ export default function ExternalApiLogsPage() {
                             <div className='bg-card rounded-lg p-4 shadow-sm'>
                               <div className='flex items-center justify-between mb-3'>
                                 <h4 className='text-sm font-semibold text-foreground'>
-                                  메시지 ({log.messages.length}개)
+                                  {t('admin_api_logs.messages_count', { count: log.messages.length })}
                                 </h4>
                                 <button
                                   onClick={(e) => {
@@ -1814,7 +1814,7 @@ export default function ExternalApiLogsPage() {
                                   className='text-xs text-primary hover:text-primary flex items-center gap-1'
                                 >
                                   <Eye className='h-3 w-3' />
-                                  전체 보기
+                                  {t('admin_api_logs.view_all')}
                                 </button>
                               </div>
                               <div className='space-y-2 max-h-64 overflow-y-auto'>
@@ -1836,8 +1836,7 @@ export default function ExternalApiLogsPage() {
                                             }}
                                             className='w-full text-xs text-primary hover:text-primary text-center py-2 rounded hover:bg-primary/10 transition-colors'
                                           >
-                                            + {log.messages.length - 2}개 더
-                                            보기
+                                            {t('admin_api_logs.show_more_messages', { count: log.messages.length - 2 })}
                                           </button>
                                         )}
                                       {displayMessages.map((msg, idx) => {
@@ -1907,8 +1906,8 @@ export default function ExternalApiLogsPage() {
                                                 className='mt-1 text-primary hover:text-primary text-xs'
                                               >
                                                 {isContentExpanded
-                                                  ? '접기'
-                                                  : '더 보기'}
+                                                  ? t('admin_api_logs.fold')
+                                                  : t('admin_api_logs.view_more')}
                                               </button>
                                             )}
                                           </div>
@@ -1923,7 +1922,7 @@ export default function ExternalApiLogsPage() {
                                             }}
                                             className='w-full text-xs text-muted-foreground hover:text-foreground text-center py-2 rounded hover:bg-accent transition-colors'
                                           >
-                                            최신 2개만 보기
+                                            {t('admin_api_logs.show_latest_2')}
                                           </button>
                                         )}
                                     </>
@@ -1937,7 +1936,7 @@ export default function ExternalApiLogsPage() {
                         {log.error && (
                           <div className='bg-destructive/10 border border-destructive/30 rounded-lg p-4'>
                             <p className='text-sm text-destructive'>
-                              <strong>오류:</strong> {log.error}
+                              <strong>{t('admin_api_logs.error_label')}</strong> {log.error}
                             </p>
                           </div>
                         )}
@@ -1986,10 +1985,10 @@ export default function ExternalApiLogsPage() {
                                   copyJson(requestData);
                                 }}
                                 className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
-                                title='Request 복사'
+                                title={t('admin_api_logs.copy_request')}
                               >
                                 <Copy className='h-3 w-3' />
-                                복사
+                                {t('admin_api_logs.copy')}
                               </button>
                             </div>
                           </summary>
@@ -2020,7 +2019,7 @@ export default function ExternalApiLogsPage() {
                                   {log.isStream ? 'true' : 'false'}
                                 </code>
                                 {log.messages &&
-                                  `, messages: ${log.messages.length}개`}
+                                  `, messages: ${log.messages.length}${t('admin_api_logs.unit_count')}`}
                               </span>
                             </div>
                           </div>
@@ -2066,10 +2065,10 @@ export default function ExternalApiLogsPage() {
                                   copyJson(responseData);
                                 }}
                                 className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
-                                title='Response 복사'
+                                title={t('admin_api_logs.copy_response')}
                               >
                                 <Copy className='h-3 w-3' />
-                                복사
+                                {t('admin_api_logs.copy')}
                               </button>
                             </div>
                           </summary>
@@ -2093,8 +2092,8 @@ export default function ExternalApiLogsPage() {
                             ) : (
                               <div className='text-xs text-muted-foreground'>
                                 {log.isStream
-                                  ? 'Streaming response (콘텐츠 미저장)'
-                                  : 'Response body 없음'}
+                                  ? t('admin_api_logs.streaming_no_content')
+                                  : t('admin_api_logs.no_response_body')}
                               </div>
                             )}
                           </div>
@@ -2105,7 +2104,7 @@ export default function ExternalApiLogsPage() {
                           <summary className='cursor-pointer p-4 hover:bg-accent rounded-lg transition-colors'>
                             <div className='flex items-center justify-between'>
                               <h4 className='text-sm font-semibold text-foreground'>
-                                전체 Raw JSON 데이터
+                                {t('admin_api_logs.full_raw_json')}
                               </h4>
                               <button
                                 onClick={(e) => {
@@ -2113,10 +2112,10 @@ export default function ExternalApiLogsPage() {
                                   copyJson(log);
                                 }}
                                 className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
-                                title='전체 JSON 복사'
+                                title={t('admin_api_logs.copy_full_json')}
                               >
                                 <Copy className='h-3 w-3' />
-                                복사
+                                {t('admin_api_logs.copy')}
                               </button>
                             </div>
                           </summary>
@@ -2144,7 +2143,7 @@ export default function ExternalApiLogsPage() {
               className='flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
             >
               <ChevronLeft className='h-4 w-4' />
-              이전
+              {t('admin_api_logs.prev')}
             </button>
 
             <div className='flex items-center gap-2'>
@@ -2174,7 +2173,7 @@ export default function ExternalApiLogsPage() {
               disabled={!pagination.hasNext || loading}
               className='flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
             >
-              다음
+              {t('admin_api_logs.next')}
               <ChevronRight className='h-4 w-4' />
             </button>
           </div>
@@ -2193,13 +2192,13 @@ export default function ExternalApiLogsPage() {
           <div className='relative bg-card rounded-lg w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl max-h-[80vh] overflow-hidden'>
             <div className='flex items-center justify-between p-4 border-b border-border'>
               <h3 className='text-lg font-medium text-foreground'>
-                프롬프트 전체 보기
+                {t('admin_api_logs.prompt_full_view')}
               </h3>
               <div className='flex items-center gap-2'>
                 <button
                   onClick={() => copyPrompt(promptModal.log.prompt)}
                   className='p-2 text-muted-foreground hover:text-foreground'
-                  title='복사'
+                  title={t('admin_api_logs.copy')}
                 >
                   <Copy className='h-4 w-4' />
                 </button>
@@ -2214,11 +2213,11 @@ export default function ExternalApiLogsPage() {
             <div className='p-4 overflow-y-auto max-h-[calc(80vh-120px)]'>
               <div className='mb-4'>
                 <div className='text-sm text-muted-foreground mb-2'>
-                  <strong>API:</strong> {promptModal.log.apiType} |
-                  <strong> 모델:</strong>{' '}
+                  <strong>{t('admin_api_logs.api_label')}</strong> {promptModal.log.apiType} |
+                  <strong> {t('admin_api_logs.model_colon')}</strong>{' '}
                   {promptModal.log.modelLabel || promptModal.log.model} |
-                  <strong> IP:</strong> {promptModal.log.clientIP} |
-                  <strong> 시간:</strong>{' '}
+                  <strong> {t('admin_api_logs.ip_colon')}</strong> {promptModal.log.clientIP} |
+                  <strong> {t('admin_api_logs.time_label')}</strong>{' '}
                   {formatTime(promptModal.log.timestamp)}
                 </div>
               </div>
@@ -2233,7 +2232,7 @@ export default function ExternalApiLogsPage() {
                 Array.isArray(promptModal.log.messages) && (
                   <div className='mt-4'>
                     <h4 className='font-medium text-foreground mb-2'>
-                      메시지 배열 ({promptModal.log.messages.length}개):
+                      {t('admin_api_logs.message_array_count', { count: promptModal.log.messages.length })}
                     </h4>
                     <div className='bg-muted rounded-lg p-4 space-y-3'>
                       {promptModal.log.messages.map((msg, index) => {
@@ -2275,10 +2274,10 @@ export default function ExternalApiLogsPage() {
                       <button
                         onClick={() => copyPrompt(promptModal.log.messages)}
                         className='flex items-center gap-1 px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors'
-                        title='메시지 배열 복사'
+                        title={t('admin_api_logs.copy_message_array')}
                       >
                         <Copy className='h-3 w-3' />
-                        메시지 배열 복사
+                        {t('admin_api_logs.copy_message_array')}
                       </button>
                     </div>
                   </div>

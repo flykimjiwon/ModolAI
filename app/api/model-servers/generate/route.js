@@ -7,6 +7,7 @@ import {
 import { logQARequest } from '@/lib/qaLogger';
 import { logExternalApiRequest } from '@/lib/externalApiLogger';
 import { fetchWithRetry } from '@/lib/retryUtils';
+import { verifyToken } from '@/lib/auth';
 
 // Simple log recording function
 async function logModelServerProxyRequest(data) {
@@ -130,6 +131,15 @@ export async function POST(request) {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
+
+    // Verify authentication
+    const authPayload = verifyToken(request);
+    if (!authPayload) {
+      return NextResponse.json(
+        { error: 'Authentication required.' },
+        { status: 401, headers: corsHeaders }
+      );
+    }
 
   try {
     // Receive request body as-is - handle empty requests

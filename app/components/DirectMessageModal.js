@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, Mail, MailOpen, Trash2, Clock, User, Loader2 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChange }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const { t, lang } = useTranslation();
 
   const fetchMessages = useCallback(async () => {
     try {
@@ -100,17 +102,18 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
     const now = new Date();
     const diffMs = now - date;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const locale = lang === 'en' ? 'en-US' : 'ko-KR';
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString('ko-KR', {
+      return date.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit',
         timeZone: 'Asia/Seoul',
       });
     } else if (diffDays < 7) {
-      return `${diffDays}일 전`;
+      return t('sidebar.days_ago', { days: diffDays });
     } else {
-      return date.toLocaleDateString('ko-KR', {
+      return date.toLocaleDateString(locale, {
         month: 'short',
         day: 'numeric',
         timeZone: 'Asia/Seoul',
@@ -141,7 +144,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-semibold text-foreground">
-              받은 쪽지
+              {t('dm.title')}
             </h3>
             {unreadCount > 0 && (
               <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive text-destructive-foreground">
@@ -166,7 +169,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
           ) : messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Mail className="h-12 w-12 mb-3 opacity-50" />
-              <p>받은 쪽지가 없습니다.</p>
+              <p>{t('dm.no_messages')}</p>
             </div>
           ) : selectedMessage ? (
             <div className="flex-1 overflow-y-auto p-4">
@@ -174,7 +177,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                 onClick={() => setSelectedMessage(null)}
                 className="text-sm text-primary hover:underline mb-4"
               >
-                ← 목록으로 돌아가기
+                {t('dm.back_to_list')}
               </button>
 
               <div className="space-y-4">
@@ -184,7 +187,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                   </h4>
                   <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     <User className="h-4 w-4" />
-                    <span>{selectedMessage.sender?.name || '관리자'}</span>
+                    <span>{selectedMessage.sender?.name || t('dm.sender')}</span>
                     <span>•</span>
                     <Clock className="h-4 w-4" />
                     <span>{formatDate(selectedMessage.createdAt)}</span>
@@ -209,7 +212,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                     ) : (
                       <Trash2 className="h-4 w-4" />
                     )}
-                    삭제
+                    {t('common.delete')}
                   </Button>
                 </div>
               </div>
@@ -248,7 +251,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {message.sender?.name || '관리자'}
+                      {message.sender?.name || t('dm.sender')}
                     </p>
                     <p className="text-sm text-muted-foreground truncate mt-1">
                       {truncateText(message.content)}
@@ -263,7 +266,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
                       deleteMessage(message.id);
                     }}
                     disabled={deleting === message.id}
-                    title="삭제"
+                    title={t('common.delete')}
                     className="flex-shrink-0 text-muted-foreground hover:text-destructive"
                   >
                     {deleting === message.id ? (
@@ -284,7 +287,7 @@ export default function DirectMessageModal({ isOpen, onClose, onUnreadCountChang
             size='sm'
             onClick={onClose}
           >
-            닫기
+            {t('common.close')}
           </Button>
         </div>
       </div>

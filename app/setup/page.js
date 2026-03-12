@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, User, Mail, Lock, Loader2, AlertTriangle } from '@/components/icons';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SetupPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -42,12 +44,12 @@ export default function SetupPage() {
     setError('');
 
     if (password !== passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError(t('signup.password_mismatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('비밀번호는 6자 이상이어야 합니다.');
+      setError(t('setup.password_min_length'));
       return;
     }
 
@@ -62,7 +64,7 @@ export default function SetupPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '계정 생성에 실패했습니다.');
+        throw new Error(data.error || t('setup.create_failed'));
       }
 
       localStorage.setItem('token', data.token);
@@ -88,13 +90,13 @@ export default function SetupPage() {
         <div className='text-center'>
           <AlertTriangle className='h-12 w-12 text-yellow-500 mx-auto mb-4' />
           <h2 className='text-xl font-semibold text-foreground mb-2'>
-            이미 관리자가 존재합니다
+            {t('setup.admin_exists')}
           </h2>
           <p className='text-muted-foreground mb-4'>
-            기존 관리자에게 계정 권한을 요청하세요.
+            {t('setup.admin_exists_description')}
           </p>
           <p className='text-sm text-muted-foreground'>
-            잠시 후 로그인 페이지로 이동합니다...
+            {t('setup.redirect_notice')}
           </p>
         </div>
       </div>
@@ -115,10 +117,10 @@ export default function SetupPage() {
               </div>
             </div>
             <h1 className='text-3xl font-bold text-foreground mb-2'>
-              초기 설정
+              {t('setup.title')}
             </h1>
             <p className='text-muted-foreground'>
-              첫 번째 관리자 계정을 생성합니다
+              {t('setup.subtitle')}
             </p>
           </div>
 
@@ -132,7 +134,7 @@ export default function SetupPage() {
                 )}
 
                 <div className='space-y-2'>
-                  <Label>이름</Label>
+                  <Label>{t('signup.name')}</Label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -141,13 +143,13 @@ export default function SetupPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className='pl-10'
-                      placeholder='이름을 입력하세요'
+                      placeholder={t('signup.name_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label>이메일</Label>
+                  <Label>{t('auth.email')}</Label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -156,13 +158,13 @@ export default function SetupPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className='pl-10'
-                      placeholder='이메일을 입력하세요'
+                      placeholder={t('auth.email_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label>비밀번호</Label>
+                  <Label>{t('auth.password')}</Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -172,13 +174,13 @@ export default function SetupPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='비밀번호 (6자 이상)'
+                      placeholder={t('setup.password_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label>비밀번호 확인</Label>
+                  <Label>{t('signup.password_confirm')}</Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -188,7 +190,7 @@ export default function SetupPage() {
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
                       className='pl-10'
-                      placeholder='비밀번호를 다시 입력하세요'
+                      placeholder={t('signup.password_confirm_placeholder')}
                     />
                   </div>
                 </div>
@@ -202,12 +204,12 @@ export default function SetupPage() {
                   {loading ? (
                     <>
                       <Loader2 className='h-5 w-5 animate-spin' />
-                      생성 중...
+                      {t('setup.creating')}
                     </>
                   ) : (
                     <>
                       <ShieldCheck className='h-5 w-5' />
-                      관리자 계정 생성
+                      {t('setup.create_admin')}
                     </>
                   )}
                 </Button>
@@ -218,7 +220,7 @@ export default function SetupPage() {
                   href='/login'
                   className='text-sm text-primary hover:text-primary/80'
                 >
-                  로그인 페이지로 돌아가기
+                  {t('setup.back_to_login')}
                 </a>
               </CardFooter>
             </form>

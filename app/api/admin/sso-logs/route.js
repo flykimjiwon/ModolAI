@@ -154,6 +154,15 @@ export async function GET(request) {
 // POST: Record SSO logs (internal API)
 export async function POST(request) {
   try {
+    // Verify authentication - admin/manager only
+    const tokenPayload = verifyToken(request);
+    if (!tokenPayload || !['admin', 'manager'].includes(tokenPayload.role)) {
+      return NextResponse.json(
+        { error: 'Admin or manager privileges required.' },
+        { status: 403 }
+      );
+    }
+
     await ensureSSOLogsTable();
 
     const body = await request.json();

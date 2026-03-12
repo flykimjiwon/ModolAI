@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { TokenManager } from '@/lib/tokenManager';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 import DarkModeToggle from '@/components/DarkModeToggle';
 import {
   LayoutDashboard,
@@ -250,6 +251,7 @@ export default function AdminLayout({ children }) {
   const [editingName, setEditingName] = useState('');
   const [navigation, setNavigation] = useState([]);
   const [expandedGroups, setExpandedGroups] = useState({});
+  const { t } = useTranslation();
 
   const toggleGroup = (id) => {
     setExpandedGroups((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -260,69 +262,69 @@ export default function AdminLayout({ children }) {
     () => [
       {
         id: 'dashboard',
-        name: '대시보드',
+        name: t('admin.dashboard'),
         href: '/admin/dashboard',
         icon: LayoutDashboard,
       },
-      { id: 'users', name: '사용자 관리', href: '/admin/users', icon: Users },
+      { id: 'users', name: t('admin.users'), href: '/admin/users', icon: Users },
       {
         id: 'modelServers',
-        name: '모델 서버 관리',
+        name: t('admin.model_servers'),
         href: '/admin/modelServers',
         icon: Server,
       },
-      { id: 'models', name: '모델 관리', href: '/admin/models', icon: Cpu },
+      { id: 'models', name: t('admin.models'), href: '/admin/models', icon: Cpu },
       {
         id: 'messages',
-        name: '메시지 관리',
+        name: t('admin_layout.messages_mgmt'),
         href: '/admin/messages',
         icon: MessageSquare,
       },
       {
         id: 'direct-messages',
-        name: '쪽지 관리',
+        name: t('admin.direct_messages_mgmt'),
         href: '/admin/direct-messages',
         icon: Mail,
       },
       {
         id: 'agents',
-        name: '에이전트 관리',
+        name: t('admin.agents_mgmt'),
         href: '/admin/agents',
         icon: Bot,
       },
 
       {
         id: 'external-api-logs',
-        name: 'API 로깅',
+        name: t('admin.external_api_logs'),
         href: '/admin/external-api-logs',
         icon: Terminal,
       },
       {
         id: 'api-keys',
-        name: 'API 키 관리',
+        name: t('sidebar.api_keys'),
         href: '/admin/api-keys',
         icon: Key,
       },
       {
         id: 'security-logs',
-        name: '보안 로그',
+        name: t('admin.security_logs'),
         icon: Shield,
         children: [
-          { id: 'pii-logs', name: 'PII 로그', href: '/admin/pii-logs' },
-          { id: 'pii-test', name: 'PII 테스트', href: '/admin/pii-test' },
-          { id: 'sso-logs', name: 'SSO 로그인 로그', href: '/admin/sso-logs' },
+          { id: 'pii-logs', name: t('admin.pii_logs'), href: '/admin/pii-logs' },
+          { id: 'pii-test', name: t('admin.pii_test'), href: '/admin/pii-test' },
+          { id: 'sso-logs', name: t('admin.sso_logs'), href: '/admin/sso-logs' },
         ],
       },
       {
         id: 'analytics',
-        name: '통계 분석',
+        name: t('admin_layout.analytics'),
         href: '/admin/analytics',
         icon: BarChart3,
       },
-      { id: 'settings', name: '설정', href: '/admin/settings', icon: Settings },
-      { id: 'home', name: '메인으로', href: '/', icon: Home },
+      { id: 'settings', name: t('admin.settings'), href: '/admin/settings', icon: Settings },
+      { id: 'home', name: t('admin.go_home'), href: '/', icon: Home },
     ],
-    []
+    [t]
   );
 
   // 메뉴 순서 및 이름 초기화
@@ -335,7 +337,7 @@ export default function AdminLayout({ children }) {
       try {
         customNames = JSON.parse(savedNames);
       } catch (error) {
-        console.error('메뉴 이름 로드 실패:', error);
+        console.error(t('admin_layout.menu_name_load_error'), error);
       }
     }
 
@@ -365,7 +367,7 @@ export default function AdminLayout({ children }) {
 
         setNavigation([...orderedNavigation, ...newItems]);
       } catch (error) {
-        console.error('메뉴 순서 로드 실패:', error);
+        console.error(t('admin_layout.menu_order_load_error'), error);
         const navigationWithNames = defaultNavigation.map((item) => ({
           ...item,
           name: customNames[item.id] || item.name,
@@ -418,7 +420,7 @@ export default function AdminLayout({ children }) {
         // 토큰 유효성 검증
         const result = await TokenManager.validateToken();
         if (!result.valid) {
-          console.log('토큰이 유효하지 않습니다:', result.reason);
+          console.log(t('admin_layout.token_invalid'), result.reason);
           // 토큰이 유효하지 않으면 localStorage 직접 정리하고 로그인 페이지로
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -429,7 +431,7 @@ export default function AdminLayout({ children }) {
 
         // 관리자 권한 확인
         if (result.user.role !== 'admin') {
-          alert('관리자 권한이 필요합니다.', 'warning', '권한 오류');
+          alert(t('admin.permission_required'), 'warning', t('admin.permission_error'));
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           router.replace('/');
@@ -439,13 +441,13 @@ export default function AdminLayout({ children }) {
         // 사용자 정보 설정
         setUser({
           ...result.user,
-          name: result.user.name || '관리자',
+          name: result.user.name || t('admin.title'),
         });
 
         // 토큰 자동 갱신 + 글로벌 401 인터셉터 시작
         await TokenManager.initializeTokenValidation();
       } catch (error) {
-        console.error('인증 초기화 실패:', error);
+        console.error(t('admin_layout.auth_init_failed'), error);
         TokenManager.logout();
       } finally {
         setIsValidating(false);
@@ -462,8 +464,8 @@ export default function AdminLayout({ children }) {
 
   const handleLogout = async () => {
     const confirmed = await confirm(
-      '로그아웃 하시겠습니까?',
-      '로그아웃 확인',
+      t('sidebar.logout_confirm_message'),
+      t('sidebar.logout_confirm_title'),
       'warning'
     );
     if (confirmed) {
@@ -548,7 +550,7 @@ export default function AdminLayout({ children }) {
         try {
           customNames = JSON.parse(savedNames);
         } catch (error) {
-          console.error('기존 메뉴명 로드 실패:', error);
+          console.error(t('admin_layout.saved_menu_name_load_error'), error);
         }
       }
       customNames[itemId] = editingName.trim();
@@ -599,7 +601,7 @@ export default function AdminLayout({ children }) {
         <div className='flex flex-col items-center gap-4'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
           <p className='text-gray-600 dark:text-gray-400'>
-            {isValidating ? '인증 확인 중...' : '사용자 정보 로드 중...'}
+            {isValidating ? t('admin.validating') : t('admin.loading_user')}
           </p>
         </div>
       </div>
@@ -622,7 +624,7 @@ export default function AdminLayout({ children }) {
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-2'
-          title='사이드바 열기'
+          title={t('admin.open_sidebar')}
           data-testid='admin-sidebar-toggle-button'
         >
           <Menu className='h-5 w-5 text-gray-600 dark:text-gray-400' />
@@ -684,7 +686,7 @@ export default function AdminLayout({ children }) {
         <button
           onClick={handleLogout}
           className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-auto'
-          title='로그아웃'
+          title={t('auth.sign_out')}
           data-testid='admin-sidebar-logout-button'
         >
           <LogOut className='h-5 w-5 text-gray-600 dark:text-gray-400' />
@@ -707,14 +709,14 @@ export default function AdminLayout({ children }) {
             className='text-lg font-semibold text-gray-800 dark:text-gray-200'
             data-testid='admin-sidebar-title'
           >
-            관리자 패널
+            {t('admin.panel_title')}
           </h2>
           <div className='flex items-center gap-2'>
             <DarkModeToggle />
             <button
               onClick={() => setSidebarOpen(false)}
               className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
-              title='사이드바 닫기'
+              title={t('admin.close_sidebar')}
               data-testid='admin-sidebar-close-button'
             >
               <X className='h-5 w-5 text-gray-600 dark:text-gray-400' />
@@ -766,7 +768,7 @@ export default function AdminLayout({ children }) {
                   data-testid='admin-menu-reorder-button'
                 >
                   <Edit3 className='h-4 w-4' />
-                  순서 변경
+                  {t('admin.reorder_menu')}
                 </button>
                 <button
                   onClick={toggleEditMode}
@@ -774,7 +776,7 @@ export default function AdminLayout({ children }) {
                   data-testid='admin-menu-edit-mode-button'
                 >
                   <Edit2 className='h-4 w-4' />
-                  메뉴명 편집
+                  {t('admin.edit_menu_names')}
                 </button>
               </>
             ) : isReorderMode ? (
@@ -785,7 +787,7 @@ export default function AdminLayout({ children }) {
                   data-testid='admin-menu-save-order-button'
                 >
                   <Save className='h-4 w-4' />
-                  저장
+                  {t('common.save')}
                 </button>
                 <button
                   onClick={resetMenuOrder}
@@ -793,7 +795,7 @@ export default function AdminLayout({ children }) {
                   data-testid='admin-menu-reset-order-button'
                 >
                   <RotateCcw className='h-4 w-4' />
-                  초기화
+                  {t('admin.reset')}
                 </button>
               </>
             ) : (
@@ -804,7 +806,7 @@ export default function AdminLayout({ children }) {
                   data-testid='admin-menu-finish-edit-button'
                 >
                   <Check className='h-4 w-4' />
-                  편집 완료
+                  {t('admin.finish_edit')}
                 </button>
                 <button
                   onClick={resetMenuNames}
@@ -812,7 +814,7 @@ export default function AdminLayout({ children }) {
                   data-testid='admin-menu-reset-names-button'
                 >
                   <RotateCcw className='h-4 w-4' />
-                  메뉴명 초기화
+                  {t('admin.reset_names')}
                 </button>
               </>
             )}
@@ -828,7 +830,7 @@ export default function AdminLayout({ children }) {
                   {user.name}
                 </p>
                 <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  관리자
+                  {t('admin.title')}
                 </p>
               </div>
               <button

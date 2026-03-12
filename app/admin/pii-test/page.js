@@ -1,7 +1,23 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Info, RefreshCw } from '@/components/icons';
+import { useState } from 'react';
+import { CheckCircle2, AlertTriangle, RefreshCw, Shield } from '@/components/icons';
+import { useTranslation } from '@/hooks/useTranslation';
+
+const PII_TYPES = {
+  'resident-number': { label: 'admin_pii_test.type_resident_number' },
+  'alien-registration': { label: 'admin_pii_test.type_alien_registration' },
+  phone: { label: 'admin_pii_test.type_phone' },
+  email: { label: 'admin_pii_test.type_email' },
+  'credit-card': { label: 'admin_pii_test.type_credit_card' },
+  passport: { label: 'admin_pii_test.type_passport' },
+  'driver-license': { label: 'admin_pii_test.type_driver_license' },
+  'bank-account': { label: 'admin_pii_test.type_bank_account' },
+  'health-insurance': { label: 'admin_pii_test.type_health_insurance' },
+  'ip-address': { label: 'admin_pii_test.type_ip_address' },
+};
+
+const ALL_TYPE_KEYS = Object.keys(PII_TYPES);
 
 function prettyJson(value) {
   if (value === undefined) return 'undefined';
@@ -12,391 +28,277 @@ function prettyJson(value) {
   }
 }
 
-function formatDateTime(value) {
-  if (!value) return '-';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return String(value);
-  return parsed.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-}
-
 export default function AdminPiiTestPage() {
-  const [text, setText] = useState('홍길동 주민번호 900101-1234567, 연락처 010-1234-5678');
-  const [endpoint, setEndpoint] = useState('');
-  const [txtVrf, setTxtVrf] = useState(true);
-  const [maskOpt, setMaskOpt] = useState(true);
+  const { t } = useTranslation();
+  const [text, setText] = useState(
+    '홍길동 주민번호 900101-1234567, 연락처 010-1234-5678, 이메일 hong@example.com\n카드번호 1234-5678-9012-3456, IP 192.168.0.1'
+  );
+  const [enabledTypes, setEnabledTypes] = useState(() => {
+    const initial = {};
+    ALL_TYPE_KEYS.forEach((key) => {
+      initial[key] = true;
+    });
+    return initial;
+  });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const verdict = useMemo(() => {
-    if (!result) return null;
-    if (result.success) {
-      return {
-        icon: <CheckCircle2 className='w-5 h-5 text-primary' />,
-        title: '호출 성공',
-        tone: 'text-primary',
-      };
-    }
-    return {
-      icon: <AlertTriangle className='w-5 h-5 text-destructive' />,
-      title: '호출 실패',
-      tone: 'text-destructive',
-    };
-  }, [result]);
+  const enabledCount = Object.values(enabledTypes).filter(Boolean).length;
+  const allEnabled = enabledCount === ALL_TYPE_KEYS.length;
+  const noneEnabled = enabledCount === 0;
+
+  const toggleAll = (value) => {
+    const updated = {};
+    ALL_TYPE_KEYS.forEach((key) => {
+      updated[key] = value;
+    });
+    setEnabledTypes(updated);
+  };
 
   const handleTest = async () => {
     setLoading(true);
     setError('');
-
-    const clientRequest = {
-      text,
-      endpoint,
-      txtVrf,
-      mxtVrf: txtVrf,
-      maskOpt,
-    };
+    setResult(null);
 
     try {
       const token = localStorage.getItem('token');
+      const selectedTypes = ALL_TYPE_KEYS.filter((key) => enabledTypes[key]);
+
       const res = await fetch('/api/admin/pii-test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(clientRequest),
+        body: JSON.stringify({
+          text,
+          enabledTypes: selectedTypes.length === ALL_TYPE_KEYS.length ? null : selectedTypes,
+        }),
       });
 
-      const raw = await res.text();
-      let data;
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch {
-        const parsedError = {
-          success: false,
-          error: `응답 파싱 실패 (${res.status})`,
-          diagnostics: {
-            reasonMessage: '서버가 JSON이 아닌 응답을 반환했습니다.',
-          },
-          rawResponse: raw,
-        };
-        setResult({
-          ...parsedError,
-          httpStatus: res.status,
-          httpOk: res.ok,
-          receivedAt: new Date().toISOString(),
-          clientRequest,
-        });
-        setError(parsedError.error);
-        return;
-      }
-
-      const merged = {
-        ...data,
-        httpStatus: res.status,
-        httpOk: res.ok,
-        receivedAt: new Date().toISOString(),
-        clientRequest,
-      };
-
-      setResult(merged);
+      const data = await res.json();
+      setResult(data);
       if (!res.ok || !data.success) {
-        setError(data.error || `PII 테스트 실패 (${res.status})`);
+        setError(data.error || t('admin_pii_test.detection_failed', { status: res.status }));
       }
     } catch (e) {
-      setError(e.message || '요청 실패');
-      setResult({
-        success: false,
-        error: e.message || '요청 실패',
-        diagnostics: {
-          reasonMessage: '브라우저에서 API 호출 자체가 실패했습니다.',
-        },
-        clientRequest,
-        receivedAt: new Date().toISOString(),
-      });
+      setError(e.message || t('admin_pii_test.request_failed'));
     } finally {
       setLoading(false);
     }
   };
 
+  const detectedResult = result?.result;
+  const diagnostics = result?.diagnostics;
+
+  // 탐지 유형별 그룹핑
+  const detectedByType = {};
+  if (detectedResult?.detectedList?.length > 0) {
+    for (const item of detectedResult.detectedList) {
+      if (!detectedByType[item.type]) {
+        detectedByType[item.type] = [];
+      }
+      detectedByType[item.type].push(item);
+    }
+  }
+
   return (
     <div className='space-y-6'>
+      {/* 헤더 */}
       <div>
-        <h1 className='text-2xl font-bold text-foreground'>PII 호출 테스트</h1>
+        <h1 className='text-2xl font-bold text-foreground flex items-center gap-2'>
+          <Shield className='w-6 h-6' />
+          {t('admin_pii_test.title')}
+        </h1>
         <p className='text-sm text-muted-foreground mt-1'>
-          detectPII 호출의 요청/응답/로그를 한 번에 확인해 실패 원인과 성공 근거를 진단합니다.
+          {t('admin_pii_test.subtitle')}
         </p>
       </div>
 
-      <div className='bg-card rounded-xl border border-border p-4 space-y-4'>
-        <div>
-          <label className='block text-sm font-medium mb-1 text-foreground'>
-            Endpoint (비우면 서버 환경변수 사용)
-          </label>
-          <input
-            value={endpoint}
-            onChange={(e) => setEndpoint(e.target.value)}
-            placeholder='http://your-pii-api-server/api/v1/validate/detectPII'
-            className='w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground'
-          />
+      {/* 탐지 유형 선택 */}
+      <div className='bg-card rounded-xl border border-border p-4 space-y-3'>
+        <div className='flex items-center justify-between'>
+          <h2 className='text-sm font-semibold text-foreground'>
+            {t('admin_pii_test.select_types')}
+            <span className='ml-2 text-xs font-normal text-muted-foreground'>
+              ({t('admin_pii_test.selected_count', { count: enabledCount, total: ALL_TYPE_KEYS.length })})
+            </span>
+          </h2>
+          <div className='flex gap-2'>
+            <button
+              onClick={() => toggleAll(true)}
+              disabled={allEnabled}
+              className='px-2 py-1 text-xs rounded border border-border bg-muted text-foreground hover:bg-accent disabled:opacity-40 transition-colors'
+            >
+              {t('admin_pii_test.select_all')}
+            </button>
+            <button
+              onClick={() => toggleAll(false)}
+              disabled={noneEnabled}
+              className='px-2 py-1 text-xs rounded border border-border bg-muted text-foreground hover:bg-accent disabled:opacity-40 transition-colors'
+            >
+              {t('admin_pii_test.deselect_all')}
+            </button>
+          </div>
         </div>
-
-        <div>
-          <label className='block text-sm font-medium mb-1 text-foreground'>
-            원문 텍스트
-          </label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={5}
-            className='w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground'
-          />
+        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2'>
+          {ALL_TYPE_KEYS.map((key) => (
+            <label
+              key={key}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                enabledTypes[key]
+                  ? 'border-primary/30 bg-primary/5 text-foreground'
+                  : 'border-border bg-muted/50 text-muted-foreground'
+              }`}
+            >
+              <input
+                type='checkbox'
+                checked={enabledTypes[key]}
+                onChange={(e) =>
+                  setEnabledTypes({ ...enabledTypes, [key]: e.target.checked })
+                }
+                className='w-3.5 h-3.5 rounded'
+              />
+              <span className='text-xs'>{t(PII_TYPES[key].label)}</span>
+            </label>
+          ))}
         </div>
+      </div>
 
-        <div className='flex flex-wrap gap-4'>
-          <label className='flex items-center gap-2 text-sm text-foreground'>
-            <input
-              type='checkbox'
-              checked={txtVrf}
-              onChange={(e) => setTxtVrf(e.target.checked)}
-            />
-            txt_vrf (호환용 mxt_vrf 동시 전달)
-          </label>
-          <label className='flex items-center gap-2 text-sm text-foreground'>
-            <input
-              type='checkbox'
-              checked={maskOpt}
-              onChange={(e) => setMaskOpt(e.target.checked)}
-            />
-            mask_opt
-          </label>
-        </div>
-
+      {/* 테스트 텍스트 */}
+      <div className='bg-card rounded-xl border border-border p-4 space-y-3'>
+        <h2 className='text-sm font-semibold text-foreground'>{t('admin_pii_test.test_text')}</h2>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={4}
+          className='w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm'
+          placeholder={t('admin_pii_test.text_placeholder')}
+        />
         <button
           onClick={handleTest}
-          disabled={loading}
-          className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none px-4 py-2 rounded-lg disabled:opacity-60 inline-flex items-center gap-2'
+          disabled={loading || noneEnabled}
+          className='inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none'
         >
           {loading ? (
             <>
               <RefreshCw className='w-4 h-4 animate-spin' />
-              호출 중...
+              {t('admin_pii_test.detecting')}
             </>
           ) : (
-            'PII 호출 테스트'
+            <>
+              <Shield className='w-4 h-4' />
+              {t('admin_pii_test.run_test')}
+            </>
           )}
         </button>
-
         {error && <div className='text-sm text-destructive'>{error}</div>}
       </div>
 
-      {result && (
+      {/* 결과 */}
+      {result && detectedResult && (
         <div className='space-y-4'>
+          {/* 요약 */}
           <div className='bg-card rounded-xl border border-border p-4 space-y-3'>
             <div className='flex items-center gap-2'>
-              {verdict?.icon || <Info className='w-5 h-5 text-primary' />}
-              <span className={`font-semibold ${verdict?.tone || 'text-foreground'}`}>
-                {verdict?.title || '호출 결과'}
+              {detectedResult.detected ? (
+                <AlertTriangle className='w-5 h-5 text-destructive' />
+              ) : (
+                <CheckCircle2 className='w-5 h-5 text-primary' />
+              )}
+              <span
+                className={`font-semibold ${
+                  detectedResult.detected ? 'text-destructive' : 'text-primary'
+                }`}
+              >
+                {detectedResult.detected
+                  ? t('admin_pii_test.pii_detected', { count: detectedResult.detectedCnt })
+                  : t('admin_pii_test.pii_not_detected')}
               </span>
+              {diagnostics && (
+                <span className='text-xs text-muted-foreground ml-auto'>
+                  {diagnostics.durationMs}ms · {diagnostics.source}
+                </span>
+              )}
             </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm'>
-              <div className='rounded-lg bg-muted p-3'>
-                <div className='text-muted-foreground'>HTTP 상태</div>
-                <div className='font-semibold text-foreground'>
-                  {result.httpStatus ?? result.diagnostics?.statusCode ?? '-'}
+            {/* 마스킹 결과 */}
+            {detectedResult.detected && (
+              <div className='space-y-2'>
+                <div className='text-xs font-medium text-muted-foreground'>
+                  {t('admin_pii_test.masking_result')}
                 </div>
-              </div>
-              <div className='rounded-lg bg-muted p-3'>
-                <div className='text-muted-foreground'>호출 시간</div>
-                <div className='font-semibold text-foreground'>
-                  {result.diagnostics?.durationMs ?? '-'} ms
+                <div className='text-sm p-3 rounded-lg bg-muted text-foreground whitespace-pre-wrap'>
+                  {detectedResult.maskedText}
                 </div>
-              </div>
-              <div className='rounded-lg bg-muted p-3'>
-                <div className='text-muted-foreground'>Reason Code</div>
-                <div className='font-semibold text-foreground break-all'>
-                  {result.diagnostics?.reasonCode || '-'}
-                </div>
-              </div>
-              <div className='rounded-lg bg-muted p-3'>
-                <div className='text-muted-foreground'>Endpoint Source</div>
-                <div className='font-semibold text-foreground'>
-                  {result.diagnostics?.endpointSource || '-'}
-                </div>
-              </div>
-            </div>
-
-            <div className='text-sm text-foreground'>
-              <strong>판정 메시지:</strong>{' '}
-              {result.diagnostics?.reasonMessage || result.error || '결과 메시지 없음'}
-            </div>
-            <div className='text-xs text-muted-foreground'>
-              시작: {formatDateTime(result.diagnostics?.startedAt)} / 종료:{' '}
-              {formatDateTime(result.diagnostics?.finishedAt)} / 수신:{' '}
-              {formatDateTime(result.receivedAt)}
-            </div>
-          </div>
-
-          <div className='grid grid-cols-1 xl:grid-cols-2 gap-4'>
-            <div className='bg-card rounded-xl border border-border p-4 space-y-2'>
-              <h3 className='font-semibold text-foreground'>요청 Payload</h3>
-              <p className='text-xs text-muted-foreground'>
-                Swagger 표기(txt_vrf)와 호환 필드(mxt_vrf)를 함께 보여줍니다.
-              </p>
-
-              <div>
-                <div className='text-xs font-medium text-muted-foreground mb-1'>request</div>
-                <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.request)}
-                </pre>
-              </div>
-
-              <div>
-                <div className='text-xs font-medium text-muted-foreground mb-1'>compatibilityRequest</div>
-                <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.compatibilityRequest)}
-                </pre>
-              </div>
-
-              <div>
-                <div className='text-xs font-medium text-muted-foreground mb-1'>clientRequest</div>
-                <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.clientRequest)}
-                </pre>
-              </div>
-            </div>
-
-            <div className='bg-card rounded-xl border border-border p-4 space-y-2'>
-              <h3 className='font-semibold text-foreground'>응답 Result</h3>
-              <div className='grid grid-cols-2 gap-2 text-sm'>
-                <div className='rounded bg-muted p-2'>
-                  <span className='text-muted-foreground'>detected</span>
-                  <div className='font-semibold text-foreground'>
-                    {String(result.result?.detected ?? '-')}
-                  </div>
-                </div>
-                <div className='rounded bg-muted p-2'>
-                  <span className='text-muted-foreground'>detectedCnt</span>
-                  <div className='font-semibold text-foreground'>
-                    {result.result?.detectedCnt ?? '-'}
-                  </div>
-                </div>
-                <div className='rounded bg-muted p-2'>
-                  <span className='text-muted-foreground'>skipped</span>
-                  <div className='font-semibold text-foreground'>
-                    {String(result.result?.skipped ?? '-')}
-                  </div>
-                </div>
-                <div className='rounded bg-muted p-2'>
-                  <span className='text-muted-foreground'>statusCode</span>
-                  <div className='font-semibold text-foreground'>
-                    {result.result?.statusCode ?? '-'}
-                  </div>
-                </div>
-              </div>
-
-              <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.result)}
-              </pre>
-            </div>
-          </div>
-
-          <div className='bg-card rounded-xl border border-border p-4 space-y-3'>
-            <h3 className='font-semibold text-foreground'>로그 상세 (external_api_logs)</h3>
-
-            {result.log?.lookupError ? (
-              <div className='text-sm text-muted-foreground'>
-                로그 조회 실패: {result.log.lookupError}
-              </div>
-            ) : result.log ? (
-              <>
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-sm'>
-                  <div className='rounded-lg bg-muted p-3'>
-                    <div className='text-muted-foreground'>Log ID</div>
-                    <div className='font-semibold text-foreground break-all'>
-                      {result.log.id}
-                    </div>
-                  </div>
-                  <div className='rounded-lg bg-muted p-3'>
-                    <div className='text-muted-foreground'>Status Code</div>
-                    <div className='font-semibold text-foreground'>
-                      {result.log.statusCode ?? '-'}
-                    </div>
-                  </div>
-                  <div className='rounded-lg bg-muted p-3'>
-                    <div className='text-muted-foreground'>Response Time</div>
-                    <div className='font-semibold text-foreground'>
-                      {result.log.responseTimeMs ?? '-'} ms
-                    </div>
-                  </div>
-                  <div className='rounded-lg bg-muted p-3'>
-                    <div className='text-muted-foreground'>Logged At</div>
-                    <div className='font-semibold text-foreground'>
-                      {formatDateTime(result.log.timestamp)}
-                    </div>
-                  </div>
-                </div>
-
-                {result.log.error && (
-                  <div className='text-sm text-destructive'>
-                    로그 에러 메시지: {result.log.error}
-                  </div>
-                )}
-
-                <details className='rounded-lg border border-border p-3'>
-                  <summary className='cursor-pointer text-sm font-medium text-foreground'>
-                    requestBody / responseBody / headers 보기
-                  </summary>
-                  <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 mt-3'>
-                    <div>
-                      <div className='text-xs font-medium text-muted-foreground mb-1'>
-                        requestBody
-                      </div>
-                      <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.log.requestBody)}
-                      </pre>
-                    </div>
-                    <div>
-                      <div className='text-xs font-medium text-muted-foreground mb-1'>
-                        responseBody
-                      </div>
-                      <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.log.responseBody)}
-                      </pre>
-                    </div>
-                    <div>
-                      <div className='text-xs font-medium text-muted-foreground mb-1'>
-                        requestHeaders
-                      </div>
-                      <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.log.requestHeaders)}
-                      </pre>
-                    </div>
-                    <div>
-                      <div className='text-xs font-medium text-muted-foreground mb-1'>
-                        responseHeaders
-                      </div>
-                      <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result.log.responseHeaders)}
-                      </pre>
-                    </div>
-                  </div>
-                </details>
-              </>
-            ) : (
-              <div className='text-sm text-muted-foreground'>
-                이번 호출에 해당하는 로그를 아직 찾지 못했습니다.
               </div>
             )}
           </div>
 
-          <div className='bg-card rounded-xl border border-border p-4'>
-            <h3 className='font-semibold text-foreground mb-2'>원본 API 응답(JSON)</h3>
-            <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground'>
-{prettyJson(result)}
+          {/* 탐지 상세 */}
+          {detectedResult.detected && detectedResult.detectedList?.length > 0 && (
+            <div className='bg-card rounded-xl border border-border p-4 space-y-3'>
+              <h3 className='text-sm font-semibold text-foreground'>{t('admin_pii_test.detection_detail')}</h3>
+              <div className='overflow-x-auto'>
+                <table className='w-full text-sm'>
+                  <thead>
+                    <tr className='border-b border-border'>
+                      <th className='text-left py-2 px-3 text-xs font-medium text-muted-foreground'>
+                        {t('admin_pii_test.col_type')}
+                      </th>
+                      <th className='text-left py-2 px-3 text-xs font-medium text-muted-foreground'>
+                        {t('admin_pii_test.col_original')}
+                      </th>
+                      <th className='text-left py-2 px-3 text-xs font-medium text-muted-foreground'>
+                        {t('admin_pii_test.col_masked')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detectedResult.detectedList.map((item, idx) => (
+                      <tr key={idx} className='border-b border-border/50'>
+                        <td className='py-2 px-3'>
+                          <span className='inline-block px-2 py-0.5 text-xs rounded bg-muted text-foreground'>
+                            {item.label}
+                          </span>
+                        </td>
+                        <td className='py-2 px-3 font-mono text-xs text-destructive'>
+                          {item.original}
+                        </td>
+                        <td className='py-2 px-3 font-mono text-xs text-primary'>
+                          {item.masked}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 유형별 요약 */}
+              <div className='flex flex-wrap gap-2 pt-2'>
+                {Object.entries(detectedByType).map(([type, items]) => (
+                  <span
+                    key={type}
+                    className='inline-flex items-center gap-1 px-2 py-1 text-xs rounded-lg bg-muted text-foreground'
+                  >
+                    {PII_TYPES[type]?.label ? t(PII_TYPES[type].label) : type}
+                    <span className='font-semibold text-primary'>{items.length}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 원본 JSON */}
+          <details className='bg-card rounded-xl border border-border p-4'>
+            <summary className='cursor-pointer text-sm font-semibold text-foreground'>
+              {t('admin_pii_test.raw_response')}
+            </summary>
+            <pre className='text-xs overflow-auto p-3 rounded bg-muted text-foreground mt-3'>
+              {prettyJson(result)}
             </pre>
-          </div>
+          </details>
         </div>
       )}
     </div>

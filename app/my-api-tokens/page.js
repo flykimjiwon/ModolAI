@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Key,
   Plus,
@@ -38,6 +39,7 @@ import {
 
 export default function MyApiKeysPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -66,8 +68,8 @@ export default function MyApiKeysPage() {
     message: '', 
     type: 'warning', 
     onConfirm: null,
-    confirmText: '확인',
-    cancelText: '취소'
+    confirmText: t('my_api_tokens.confirm'),
+    cancelText: t('my_api_tokens.cancel')
   });
 
   const fetchTokens = useCallback(async () => {
@@ -105,34 +107,34 @@ export default function MyApiKeysPage() {
             errorData = JSON.parse(text);
           }
         } catch (parseError) {
-          console.error('응답 파싱 실패:', parseError);
+          console.error(t('my_api_tokens.error_response_parse_failed'), parseError);
         }
         
-        const errorMessage = errorData.error || '키 목록 조회 실패';
+        const errorMessage = errorData.error || t('my_api_tokens.error_key_list_fetch_failed');
         const errorDetails = errorData.details || errorData.hint || '';
         const errorCode = errorData.code || '';
         
-        const modalMessage = `${errorMessage}${errorDetails ? `\n\n상세: ${errorDetails}` : ''}${errorCode ? `\n\n코드: ${errorCode}` : ''}`;
+        const modalMessage = `${errorMessage}${errorDetails ? `\n\n${t('my_api_tokens.detail_prefix')} ${errorDetails}` : ''}${errorCode ? `\n\n${t('my_api_tokens.code_prefix')} ${errorCode}` : ''}`;
         
         setErrorModal({
           isOpen: true,
-          title: '키 목록 조회 실패',
+          title: t('my_api_tokens.error_key_list_fetch_failed'),
           message: modalMessage,
           type: 'error'
         });
       }
     } catch (error) {
-      console.error('키 목록 조회 오류:', error);
+      console.error(t('my_api_tokens.error_key_list_fetch_error'), error);
       setErrorModal({
         isOpen: true,
-        title: '키 목록 조회 오류',
-        message: error.message || '키 목록을 불러오는 중 오류가 발생했습니다.',
+        title: t('my_api_tokens.error_key_list_fetch_error_title'),
+        message: error.message || t('my_api_tokens.error_key_list_fetch_error_message'),
         type: 'error'
       });
     } finally {
       setLoading(false);
     }
-  }, [currentPage, router]);
+  }, [currentPage, router, t]);
 
   const createToken = async () => {
     try {
@@ -160,17 +162,17 @@ export default function MyApiKeysPage() {
         const error = await response.json();
         setErrorModal({
           isOpen: true,
-          title: '키 발급 실패',
-          message: error.error || '키 발급에 실패했습니다.',
+          title: t('my_api_tokens.error_key_issue_failed'),
+          message: error.error || t('my_api_tokens.error_key_issue_failed_message'),
           type: 'error'
         });
       }
     } catch (error) {
-      console.error('키 발급 오류:', error);
+      console.error(t('my_api_tokens.error_key_issue_error'), error);
       setErrorModal({
         isOpen: true,
-        title: '키 발급 오류',
-        message: '키 발급 중 오류가 발생했습니다.',
+        title: t('my_api_tokens.error_key_issue_error_title'),
+        message: t('my_api_tokens.error_key_issue_error_message'),
         type: 'error'
       });
     }
@@ -179,11 +181,11 @@ export default function MyApiKeysPage() {
   const deleteToken = async (tokenId) => {
     setConfirmModal({
       isOpen: true,
-      title: '키 삭제',
-      message: '정말 이 키를 삭제하시겠습니까?',
+      title: t('my_api_tokens.delete_key'),
+      message: t('my_api_tokens.delete_key_confirm'),
       type: 'warning',
-      confirmText: '삭제',
-      cancelText: '취소',
+      confirmText: t('my_api_tokens.delete'),
+      cancelText: t('my_api_tokens.cancel'),
       onConfirm: async () => {
         try {
           const token = localStorage.getItem('token');
@@ -197,8 +199,8 @@ export default function MyApiKeysPage() {
           if (response.ok) {
             setSuccessModal({
               isOpen: true,
-              title: '삭제 완료',
-              message: '키가 삭제되었습니다.',
+              title: t('my_api_tokens.delete_complete'),
+              message: t('my_api_tokens.delete_complete_message'),
               type: 'success'
             });
             fetchTokens();
@@ -206,17 +208,17 @@ export default function MyApiKeysPage() {
             const error = await response.json();
             setErrorModal({
               isOpen: true,
-              title: '키 삭제 실패',
-              message: error.error || '키 삭제에 실패했습니다.',
+              title: t('my_api_tokens.error_key_delete_failed'),
+              message: error.error || t('my_api_tokens.error_key_delete_failed_message'),
               type: 'error'
             });
           }
         } catch (error) {
-          console.error('키 삭제 오류:', error);
+          console.error(t('my_api_tokens.error_key_delete_error'), error);
           setErrorModal({
             isOpen: true,
-            title: '키 삭제 오류',
-            message: '키 삭제 중 오류가 발생했습니다.',
+            title: t('my_api_tokens.error_key_delete_error_title'),
+            message: t('my_api_tokens.error_key_delete_error_message'),
             type: 'error'
           });
         }
@@ -245,17 +247,17 @@ export default function MyApiKeysPage() {
         const error = await response.json();
         setErrorModal({
           isOpen: true,
-          title: '키 상태 변경 실패',
-          message: error.error || '키 상태 변경에 실패했습니다.',
+          title: t('my_api_tokens.error_key_status_change_failed'),
+          message: error.error || t('my_api_tokens.error_key_status_change_failed_message'),
           type: 'error'
         });
       }
     } catch (error) {
-      console.error('키 상태 변경 오류:', error);
+      console.error(t('my_api_tokens.error_key_status_change_error'), error);
       setErrorModal({
         isOpen: true,
-        title: '키 상태 변경 오류',
-        message: '키 상태 변경 중 오류가 발생했습니다.',
+        title: t('my_api_tokens.error_key_status_change_error_title'),
+        message: t('my_api_tokens.error_key_status_change_error_message'),
         type: 'error'
       });
     }
@@ -268,11 +270,11 @@ export default function MyApiKeysPage() {
   const regenerateToken = async (tokenId, tokenName, expiresInDays) => {
     setConfirmModal({
       isOpen: true,
-      title: '키 재발급',
-      message: '기존 키가 비활성화되고 새 키가 발급됩니다. 계속하시겠습니까?',
+      title: t('my_api_tokens.regenerate_key'),
+      message: t('my_api_tokens.regenerate_key_confirm'),
       type: 'warning',
-      confirmText: '재발급',
-      cancelText: '취소',
+      confirmText: t('my_api_tokens.regenerate'),
+      cancelText: t('my_api_tokens.cancel'),
       onConfirm: async () => {
         try {
           const token = localStorage.getItem('token');
@@ -312,17 +314,17 @@ export default function MyApiKeysPage() {
             const error = await response.json();
             setErrorModal({
               isOpen: true,
-              title: '키 재발급 실패',
-              message: error.error || '키 재발급에 실패했습니다.',
+              title: t('my_api_tokens.error_key_regenerate_failed'),
+              message: error.error || t('my_api_tokens.error_key_regenerate_failed_message'),
               type: 'error'
             });
           }
         } catch (error) {
-          console.error('키 재발급 오류:', error);
+          console.error(t('my_api_tokens.error_key_regenerate_error'), error);
           setErrorModal({
             isOpen: true,
-            title: '키 재발급 오류',
-            message: '키 재발급 중 오류가 발생했습니다.',
+            title: t('my_api_tokens.error_key_regenerate_error_title'),
+            message: t('my_api_tokens.error_key_regenerate_error_message'),
             type: 'error'
           });
         }
@@ -371,9 +373,9 @@ export default function MyApiKeysPage() {
       setApiConfigExample(data.apiConfigExample || '');
       setApiCurlExample(data.apiCurlExample || '');
     } catch (error) {
-      console.warn('프리셋 URL 설정 로드 실패:', error.message);
+      console.warn(t('my_api_tokens.error_preset_url_load_failed'), error.message);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchPresetSettings();
@@ -394,7 +396,7 @@ export default function MyApiKeysPage() {
         textArea.select();
         const successful = document.execCommand('copy');
         document.body.removeChild(textArea);
-        if (!successful) throw new Error('Fallback 복사 실패');
+        if (!successful) throw new Error('Fallback copy failed');
       }
       setCopiedStates((prev) => ({ ...prev, [key]: true }));
       setTimeout(
@@ -403,16 +405,16 @@ export default function MyApiKeysPage() {
       );
       setSuccessModal({
         isOpen: true,
-        title: '복사 완료',
-        message: '클립보드에 복사되었습니다.',
+        title: t('my_api_tokens.copy_complete'),
+        message: t('my_api_tokens.copy_complete_message'),
         type: 'success'
       });
     } catch (err) {
-      console.error('클립보드 복사 실패:', err);
+      console.error(t('my_api_tokens.error_clipboard_copy_failed'), err);
       setErrorModal({
         isOpen: true,
-        title: '복사 실패',
-        message: `복사에 실패했습니다. 다음 내용을 수동으로 복사해주세요:\n\n${text}`,
+        title: t('my_api_tokens.copy_failed'),
+        message: t('my_api_tokens.copy_failed_message', { text }),
         type: 'error'
       });
     }
@@ -476,7 +478,7 @@ models:
             className='mb-3'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />
-            뒤로가기
+            {t('my_api_tokens.go_back')}
           </Button>
         </div>
 
@@ -485,7 +487,7 @@ models:
             <div className='mb-4'>
               <div className='flex items-center justify-between mb-2'>
                 <h1 className='text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2'>
-                  <Key className='h-6 w-6 sm:h-8 sm:w-8' />내 API 키 관리
+                  <Key className='h-6 w-6 sm:h-8 sm:w-8' />{t('my_api_tokens.page_title')}
                 </h1>
                 <Button
                   variant='ghost'
@@ -493,7 +495,7 @@ models:
                   onClick={() =>
                     setIsTokenSectionExpanded(!isTokenSectionExpanded)
                   }
-                  aria-label={isTokenSectionExpanded ? '접기' : '펼치기'}
+                  aria-label={isTokenSectionExpanded ? t('my_api_tokens.collapse') : t('my_api_tokens.expand')}
                 >
                   {isTokenSectionExpanded ? (
                     <ChevronUp className='h-5 w-5' />
@@ -503,7 +505,7 @@ models:
                 </Button>
               </div>
               <p className='text-sm sm:text-base text-muted-foreground'>
-                OpenAI 호환 API를 사용하기 위한 개인 API 키를 관리합니다
+                {t('my_api_tokens.page_description')}
               </p>
             </div>
 
@@ -513,34 +515,30 @@ models:
                   <div className='flex items-start gap-3'>
                     <AlertCircle className='h-5 w-5 text-primary flex-shrink-0 mt-0.5' />
                     <div className='flex-1 text-sm text-primary'>
-                      <p className='font-semibold mb-1.5'>API 키 사용 안내</p>
+                      <p className='font-semibold mb-1.5'>{t('my_api_tokens.usage_guide_title')}</p>
                       <ul className='space-y-1 text-primary/80'>
                         <li className='flex items-start gap-2'>
                           <span className='text-primary/70 mt-1'>•</span>
                           <span>
-                            발급된 키는 OpenAI 호환 API 엔드포인트에서 사용할
-                            수 있습니다
+                            {t('my_api_tokens.usage_guide_1')}
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
                           <span className='text-primary/70 mt-1'>•</span>
                           <span>
-                            키가 유출된 경우 즉시 삭제하고 새 키를
-                            발급하세요
+                            {t('my_api_tokens.usage_guide_2')}
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
                           <span className='text-primary/70 mt-1'>•</span>
                           <span>
-                            사용량은 자동으로 추적되며, 외부 API 로깅 페이지에서
-                            확인할 수 있습니다
+                            {t('my_api_tokens.usage_guide_3')}
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
                           <span className='text-primary/70 mt-1'>•</span>
                           <span>
-                            <strong>1인당 1개의 키만</strong> 발급할 수 있습니다.
-                            새 키가 필요하면 기존 키를 삭제하세요
+                            {t('my_api_tokens.usage_guide_4')}
                           </span>
                         </li>
                       </ul>
@@ -550,7 +548,7 @@ models:
 
                 <div className='flex items-center justify-between mb-4'>
                   <h2 className='text-lg font-semibold text-foreground flex items-center gap-2'>
-                    내 키 목록
+                    {t('my_api_tokens.my_key_list')}
                     <span className='text-sm font-normal text-muted-foreground'>
                       ({totalCount.toLocaleString()})
                     </span>
@@ -565,16 +563,16 @@ models:
                       <RefreshCw
                         className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
                       />
-                      새로고침
+                      {t('my_api_tokens.refresh')}
                     </Button>
                     <Button
                       size='sm'
                       onClick={() => setShowCreateModal(true)}
                       disabled={tokens.some((t) => t.isActive)}
-                      title={tokens.some((t) => t.isActive) ? '이미 활성 키가 있습니다. 기존 키를 삭제한 후 새 키를 발급하세요.' : '새 키 발급'}
+                      title={tokens.some((t) => t.isActive) ? t('my_api_tokens.active_key_exists_tooltip') : t('my_api_tokens.issue_new_key')}
                     >
                       <Plus className='h-4 w-4' />
-                      키 발급
+                      {t('my_api_tokens.issue_key')}
                     </Button>
                   </div>
                 </div>
@@ -589,15 +587,15 @@ models:
                       <Key className='h-8 w-8 text-muted-foreground' />
                     </div>
                     <p className='text-muted-foreground mb-1.5 font-medium'>
-                      발급된 키가 없습니다
+                      {t('my_api_tokens.no_keys')}
                     </p>
                     <p className='text-sm text-muted-foreground mb-4'>
-                      첫 번째 API 키를 발급하여 시작하세요
+                      {t('my_api_tokens.no_keys_description')}
                     </p>
                     <Button
                       onClick={() => setShowCreateModal(true)}
                     >
-                      <Plus className='h-4 w-4' />첫 키 발급하기
+                      <Plus className='h-4 w-4' />{t('my_api_tokens.issue_first_key')}
                     </Button>
                   </div>
                 ) : (
@@ -616,15 +614,15 @@ models:
                               <div className='flex-1 min-w-0'>
                                 <div className='flex flex-wrap items-center gap-2 mb-1.5'>
                                   <span className='font-semibold text-foreground'>
-                                    {token.name || '이름 없음'}
+                                    {token.name || t('my_api_tokens.unnamed')}
                                   </span>
                                   {token.isActive ? (
-                                    <Badge>활성</Badge>
+                                    <Badge>{t('my_api_tokens.active')}</Badge>
                                   ) : (
-                                    <Badge variant='secondary'>비활성</Badge>
+                                    <Badge variant='secondary'>{t('my_api_tokens.inactive')}</Badge>
                                   )}
                                   {isExpired(token.expiresAt) && (
-                                    <Badge variant='destructive'>만료됨</Badge>
+                                    <Badge variant='destructive'>{t('my_api_tokens.expired')}</Badge>
                                   )}
                                 </div>
                                 <div className='space-y-1.5 text-sm text-muted-foreground'>
@@ -632,14 +630,14 @@ models:
                                     <div className='flex items-center gap-1.5'>
                                       <Calendar className='h-3.5 w-3.5' />
                                       <span className='text-xs'>
-                                        발급: {formatDate(token.createdAt)}
+                                        {t('my_api_tokens.issued')}: {formatDate(token.createdAt)}
                                       </span>
                                     </div>
                                     {token.expiresAt && (
                                       <div className='flex items-center gap-1.5'>
                                         <Calendar className='h-3.5 w-3.5' />
                                         <span className='text-xs'>
-                                          만료: {formatDate(token.expiresAt)}
+                                          {t('my_api_tokens.expires')}: {formatDate(token.expiresAt)}
                                         </span>
                                       </div>
                                     )}
@@ -648,9 +646,9 @@ models:
                                     <div className='flex items-center gap-1.5'>
                                       <Zap className='h-3.5 w-3.5' />
                                       <span className='text-xs'>
-                                        사용량:{' '}
+                                        {t('my_api_tokens.usage')}:{' '}
                                         <strong>
-                                          {token.usage?.requestCount || 0}회
+                                          {t('my_api_tokens.request_count', { count: token.usage?.requestCount || 0 })}
                                         </strong>
                                         {token.usage?.totalTokens && (
                                           <>
@@ -662,14 +660,14 @@ models:
                                               ).toFixed(1)}
                                               K
                                             </strong>{' '}
-                                            키
+                                            {t('my_api_tokens.tokens_unit')}
                                           </>
                                         )}
                                       </span>
                                     </div>
                                     {token.usage?.lastUsed && (
                                       <span className='text-xs text-muted-foreground'>
-                                        마지막 사용:{' '}
+                                        {t('my_api_tokens.last_used')}:{' '}
                                         {formatDate(token.usage.lastUsed)}
                                       </span>
                                     )}
@@ -686,7 +684,7 @@ models:
                                 setSelectedToken(token);
                                 setShowTokenInfoModal(true);
                               }}
-                              title='키 정보 보기'
+                              title={t('my_api_tokens.view_key_info')}
                             >
                               <Eye className='h-4 w-4' />
                             </Button>
@@ -701,7 +699,7 @@ models:
                                   ? 'text-primary hover:text-primary hover:bg-primary/10'
                                   : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                               }
-                              title={token.isActive ? '비활성화' : '활성화'}
+                              title={token.isActive ? t('my_api_tokens.deactivate') : t('my_api_tokens.activate')}
                             >
                               {token.isActive ? (
                                 <Power className='h-4 w-4' />
@@ -714,7 +712,7 @@ models:
                               size='icon'
                               onClick={() => deleteToken(token._id)}
                               className='text-destructive hover:text-destructive hover:bg-destructive/10'
-                              title='삭제'
+                              title={t('my_api_tokens.delete')}
                             >
                               <Trash2 className='h-4 w-4' />
                             </Button>
@@ -733,7 +731,7 @@ models:
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                     >
-                      이전
+                      {t('my_api_tokens.previous')}
                     </Button>
                     <span className='text-sm font-medium text-foreground'>
                       {currentPage} / {totalPages}
@@ -746,7 +744,7 @@ models:
                       }
                       disabled={currentPage === totalPages}
                     >
-                      다음
+                      {t('my_api_tokens.next')}
                     </Button>
                   </div>
                 )}
@@ -764,27 +762,27 @@ models:
         }}>
           <DialogContent className='sm:max-w-md'>
             <DialogHeader>
-              <DialogTitle>새 API 키 발급</DialogTitle>
-              <DialogDescription>새로운 API 키를 발급합니다.</DialogDescription>
+              <DialogTitle>{t('my_api_tokens.create_modal_title')}</DialogTitle>
+              <DialogDescription>{t('my_api_tokens.create_modal_description')}</DialogDescription>
             </DialogHeader>
 
             <div className='space-y-5'>
               <div>
                 <Label className='mb-2 block'>
-                  키 이름{' '}
-                  <span className='text-muted-foreground text-xs'>(선택사항)</span>
+                  {t('my_api_tokens.key_name')}{' '}
+                  <span className='text-muted-foreground text-xs'>({t('my_api_tokens.optional')})</span>
                 </Label>
                 <Input
                   type='text'
                   value={tokenName}
                   onChange={(e) => setTokenName(e.target.value)}
-                  placeholder='예: 프로덕션 API 키'
+                  placeholder={t('my_api_tokens.key_name_placeholder')}
                 />
               </div>
 
               <div>
                 <Label className='mb-2 block'>
-                  만료 기간 (일)
+                  {t('my_api_tokens.expiry_days')}
                 </Label>
                 <Input
                   type='number'
@@ -794,7 +792,7 @@ models:
                   max='365'
                 />
                 <p className='text-xs text-muted-foreground mt-2'>
-                  1일부터 365일까지 설정 가능합니다
+                  {t('my_api_tokens.expiry_days_description')}
                 </p>
               </div>
             </div>
@@ -808,10 +806,10 @@ models:
                   setTokenName('');
                 }}
               >
-                취소
+                {t('my_api_tokens.cancel')}
               </Button>
               <Button className='flex-1' onClick={createToken}>
-                발급
+                {t('my_api_tokens.issue')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -828,13 +826,13 @@ models:
             <DialogHeader>
               <div className='flex items-center gap-2'>
                 <CheckCircle className='h-6 w-6 text-primary' />
-                <DialogTitle>키가 발급되었습니다</DialogTitle>
+                <DialogTitle>{t('my_api_tokens.key_issued_title')}</DialogTitle>
               </div>
-              <DialogDescription>발급된 키를 안전한 곳에 보관하세요.</DialogDescription>
+              <DialogDescription>{t('my_api_tokens.key_issued_description')}</DialogDescription>
             </DialogHeader>
 
             <div className='mb-5'>
-              <Label className='mb-2 block'>API 키</Label>
+              <Label className='mb-2 block'>{t('my_api_tokens.api_key')}</Label>
               <div className='flex items-center gap-2'>
                 <Input
                   type='text'
@@ -846,7 +844,7 @@ models:
                   onClick={() => copyToken(newToken, 'newToken')}
                 >
                   <Copy className='h-4 w-4' />
-                  복사
+                  {t('my_api_tokens.copy')}
                 </Button>
               </div>
             </div>
@@ -854,7 +852,7 @@ models:
             <div className='mb-6'>
               <div className='flex items-center justify-between mb-2'>
                 <p className='text-sm font-medium text-foreground'>
-                  사용 예시:
+                  {t('my_api_tokens.usage_example')}:
                 </p>
                 <Button
                   variant='outline'
@@ -871,7 +869,7 @@ models:
                   ) : (
                     <Copy className='h-3 w-3' />
                   )}
-                  예시 복사
+                  {t('my_api_tokens.copy_example')}
                 </Button>
               </div>
               <div className='bg-muted rounded-lg p-4 border border-border'>
@@ -891,7 +889,7 @@ models:
                   setNewToken(null);
                 }}
               >
-                확인
+                {t('my_api_tokens.confirm')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -908,21 +906,21 @@ models:
             <DialogHeader>
               <div className='flex items-center gap-2'>
                 <Key className='h-5 w-5 text-muted-foreground' />
-                <DialogTitle>API 키 정보</DialogTitle>
+                <DialogTitle>{t('my_api_tokens.key_info_title')}</DialogTitle>
               </div>
             </DialogHeader>
 
             {selectedToken && (
               <div className='space-y-5'>
                 <div>
-                  <Label className='mb-2 block'>키 이름</Label>
+                  <Label className='mb-2 block'>{t('my_api_tokens.key_name')}</Label>
                   <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground'>
-                    {selectedToken.name || '이름 없음'}
+                    {selectedToken.name || t('my_api_tokens.unnamed')}
                   </div>
                 </div>
 
                 <div>
-                  <Label className='mb-2 block'>API 키</Label>
+                  <Label className='mb-2 block'>{t('my_api_tokens.api_key')}</Label>
                   {selectedToken.originalToken ? (
                     <>
                       <div className='flex items-center gap-2'>
@@ -941,49 +939,49 @@ models:
                           }
                         >
                           <Copy className='h-4 w-4' />
-                          복사
+                          {t('my_api_tokens.copy')}
                         </Button>
                       </div>
                       <div className='bg-primary/5 border border-primary/20 rounded-lg p-3 mt-2'>
                         <div className='flex items-start gap-2'>
                           <CheckCircle className='h-4 w-4 text-primary flex-shrink-0 mt-0.5' />
                           <p className='text-xs text-primary'>
-                            키가 표시됩니다. 유출되지 않게 조심해주세요.
+                            {t('my_api_tokens.key_visible_warning')}
                           </p>
                         </div>
                       </div>
                     </>
                   ) : (
                     <div className='px-3 py-2 border border-input rounded-md bg-muted text-muted-foreground text-sm'>
-                      키를 사용할 수 없습니다. 키를 재발급해주세요.
+                      {t('my_api_tokens.key_unavailable')}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <Label className='mb-2 block'>상태</Label>
+                  <Label className='mb-2 block'>{t('my_api_tokens.status')}</Label>
                   <div className='flex flex-wrap items-center gap-2'>
                     {selectedToken.isActive ? (
-                      <Badge>활성</Badge>
+                      <Badge>{t('my_api_tokens.active')}</Badge>
                     ) : (
-                      <Badge variant='secondary'>비활성</Badge>
+                      <Badge variant='secondary'>{t('my_api_tokens.inactive')}</Badge>
                     )}
                     {isExpired(selectedToken.expiresAt) && (
-                      <Badge variant='destructive'>만료됨</Badge>
+                      <Badge variant='destructive'>{t('my_api_tokens.expired')}</Badge>
                     )}
                   </div>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <Label className='mb-2 block'>발급일</Label>
+                    <Label className='mb-2 block'>{t('my_api_tokens.issued_date')}</Label>
                     <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground text-sm'>
                       {formatDate(selectedToken.createdAt)}
                     </div>
                   </div>
                   {selectedToken.expiresAt && (
                     <div>
-                      <Label className='mb-2 block'>만료일</Label>
+                      <Label className='mb-2 block'>{t('my_api_tokens.expiry_date')}</Label>
                       <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground text-sm'>
                         {formatDate(selectedToken.expiresAt)}
                       </div>
@@ -992,17 +990,17 @@ models:
                 </div>
 
                 <div>
-                  <Label className='mb-2 block'>사용량</Label>
+                  <Label className='mb-2 block'>{t('my_api_tokens.usage')}</Label>
                   <div className='px-3 py-2 border border-input rounded-md bg-muted text-foreground text-sm'>
                     <div className='flex flex-wrap items-center gap-4'>
                       <span>
-                        요청:{' '}
+                        {t('my_api_tokens.requests')}:{' '}
                         <strong>
-                          {selectedToken.usage?.requestCount || 0}회
+                          {t('my_api_tokens.request_count', { count: selectedToken.usage?.requestCount || 0 })}
                         </strong>
                       </span>
                       <span>
-                        키:{' '}
+                        {t('my_api_tokens.tokens_unit')}:{' '}
                         <strong>
                           {selectedToken.usage?.totalTokens
                             ? `${(
@@ -1014,7 +1012,7 @@ models:
                     </div>
                     {selectedToken.usage?.lastUsed && (
                       <div className='mt-2 text-xs text-muted-foreground'>
-                        마지막 사용: {formatDate(selectedToken.usage.lastUsed)}
+                        {t('my_api_tokens.last_used')}: {formatDate(selectedToken.usage.lastUsed)}
                       </div>
                     )}
                   </div>
@@ -1022,7 +1020,7 @@ models:
 
                 <div>
                   <div className='flex items-center justify-between mb-2'>
-                    <Label>사용 예시</Label>
+                    <Label>{t('my_api_tokens.usage_example')}</Label>
                     <Button
                       variant='outline'
                       size='sm'
@@ -1036,8 +1034,8 @@ models:
                       disabled={!selectedToken.originalToken}
                       title={
                         selectedToken.originalToken
-                          ? '예시 복사'
-                          : '키가 없어서 복사할 수 없습니다.'
+                          ? t('my_api_tokens.copy_example')
+                          : t('my_api_tokens.no_key_copy_disabled')
                       }
                     >
                       {copiedStates.tokenInfoCurl ? (
@@ -1045,7 +1043,7 @@ models:
                       ) : (
                         <Copy className='h-3 w-3' />
                       )}
-                      예시 복사
+                      {t('my_api_tokens.copy_example')}
                     </Button>
                   </div>
                   <div className='bg-muted rounded-lg p-4 border border-border'>
@@ -1066,7 +1064,7 @@ models:
                   setSelectedToken(null);
                 }}
               >
-                확인
+                {t('my_api_tokens.confirm')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1080,7 +1078,7 @@ models:
                 <div className='flex items-center justify-between mb-2'>
                   <h2 className='text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2'>
                     <Zap className='h-5 w-5 sm:h-6 sm:w-6 text-primary' />
-                    OpenAI 호환 프록시 API
+                    {t('my_api_tokens.openai_proxy_api')}
                   </h2>
                   <Button
                     variant='ghost'
@@ -1088,7 +1086,7 @@ models:
                     onClick={() =>
                       setIsApiSectionExpanded(!isApiSectionExpanded)
                     }
-                    aria-label={isApiSectionExpanded ? '접기' : '펼치기'}
+                    aria-label={isApiSectionExpanded ? t('my_api_tokens.collapse') : t('my_api_tokens.expand')}
                   >
                     {isApiSectionExpanded ? (
                       <ChevronUp className='h-5 w-5' />
@@ -1098,7 +1096,7 @@ models:
                   </Button>
                 </div>
                 <p className='text-sm sm:text-base text-muted-foreground'>
-                  VSCode Continue와 호환되는 OpenAI 호환 API 프록시
+                  {t('my_api_tokens.openai_proxy_description')}
                 </p>
               </div>
 
@@ -1111,31 +1109,29 @@ models:
                       </div>
                       <div className='flex-1'>
                         <h3 className='text-lg font-semibold text-primary mb-1'>
-                          단일 통합 API
+                          {t('my_api_tokens.unified_api')}
                         </h3>
                         <p className='text-sm text-muted-foreground'>
-                          OpenAI API 호환 형식
+                          {t('my_api_tokens.openai_api_compatible_format')}
                         </p>
                       </div>
                     </div>
 
                     <div className='bg-primary/5 p-3 rounded-lg mb-4'>
                       <h4 className='font-semibold text-primary mb-2 text-sm'>
-                        주요 특징
+                        {t('my_api_tokens.key_features')}
                       </h4>
                       <ul className='text-sm text-primary/80 space-y-1.5'>
                         <li className='flex items-start gap-2'>
                           <span className='text-primary mt-0.5'>🎯</span>
                           <span>
-                            <strong>표준 호환:</strong> OpenAI API 표준 형식
-                            지원
+                            {t('my_api_tokens.feature_standard_compatible')}
                           </span>
                         </li>
                         <li className='flex items-start gap-2'>
                           <span className='text-primary mt-0.5'>🔗</span>
                           <span>
-                            <strong>호환성:</strong> VSCode Continue 및 OpenAI
-                            호환 클라이언트(IDE) 지원
+                            {t('my_api_tokens.feature_compatibility')}
                           </span>
                         </li>
                       </ul>
@@ -1144,7 +1140,7 @@ models:
                     <div className='space-y-3'>
                       <div>
                         <Label className='mb-2 block'>
-                    API 키 선택 <span className='text-destructive'>*</span>
+                    {t('my_api_tokens.select_api_key')} <span className='text-destructive'>*</span>
                         </Label>
                         <select
                           value={
@@ -1162,7 +1158,7 @@ models:
                           }}
                           className='flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm mb-2'
                         >
-                      <option value=''>키 선택</option>
+                      <option value=''>{t('my_api_tokens.select_key')}</option>
                           {tokens
                             .filter(
                               (token) =>
@@ -1170,16 +1166,15 @@ models:
                             )
                             .map((token) => (
                               <option key={token._id} value={token._id}>
-                                {token.name || '이름 없음'}{' '}
+                                {token.name || t('my_api_tokens.unnamed')}{' '}
                                 {token.originalToken
-                            ? '(키 사용 가능)'
-                                  : '(재발급 필요)'}
+                            ? t('my_api_tokens.key_available')
+                                  : t('my_api_tokens.regenerate_needed')}
                               </option>
                             ))}
                         </select>
                         <p className='text-xs text-muted-foreground mt-1'>
-                        발급된 키를 선택해서 사용하세요. 없으면 키를
-                          재발급하세요.
+                        {t('my_api_tokens.select_key_description')}
                         </p>
                       </div>
                     </div>
@@ -1192,7 +1187,7 @@ models:
                       </div>
                       <div className='flex-1'>
                         <h3 className='text-lg font-semibold text-foreground mb-1'>
-                          VSCode Continue 설정
+                          {t('my_api_tokens.vscode_continue_settings')}
                         </h3>
                       </div>
                     </div>
@@ -1201,9 +1196,7 @@ models:
                       <div className='flex items-start gap-2'>
                         <AlertCircle className='h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5' />
                         <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-                          <strong>주의:</strong> VSCode Continue에서도 API
-                        키가 필수입니다. 위의 단일 통합 API 섹션에서 키를
-                          선택하세요.
+                          {t('my_api_tokens.vscode_warning')}
                         </p>
                       </div>
                     </div>
@@ -1211,7 +1204,7 @@ models:
                     <div className='space-y-3'>
                       <div className='flex items-center justify-between'>
                         <h4 className='font-semibold text-foreground text-sm'>
-                          config 설정 예시
+                          {t('my_api_tokens.config_example_title')}
                         </h4>
                         <Button
                           variant='outline'
@@ -1226,7 +1219,7 @@ models:
                           ) : (
                             <Copy className='h-4 w-4' />
                           )}
-                          예시 복사
+                          {t('my_api_tokens.copy_example')}
                         </Button>
                       </div>
 
@@ -1241,20 +1234,19 @@ models:
                   <div className='border border-border rounded-lg p-4 sm:p-5'>
                     <div className='flex items-center gap-2 mb-2'>
                       <h3 className='text-lg font-semibold text-foreground'>
-                        API 테스트 (curl)
+                        {t('my_api_tokens.api_test_curl')}
                       </h3>
                       <Badge variant='secondary'>Windows</Badge>
                     </div>
                     <p className='text-sm text-muted-foreground mb-3'>
-                        API 키가 필수입니다. 위에서 키를 선택하세요.
+                        {t('my_api_tokens.api_key_required_message')}
                     </p>
 
                     <div className='bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border-l-4 border-yellow-500 mb-4'>
                       <div className='flex items-start gap-2'>
                         <AlertCircle className='h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5' />
                         <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-                          <strong>주의:</strong> 모든 API 호출에는 Authorization
-                        헤더에 유효한 API 키가 필요합니다.
+                          {t('my_api_tokens.api_auth_warning')}
                         </p>
                       </div>
                     </div>
@@ -1263,7 +1255,7 @@ models:
                       <div>
                         <div className='flex items-center justify-between mb-2'>
                           <h5 className='font-medium text-foreground text-sm'>
-                            /v1/chat/completions 테스트
+                            {t('my_api_tokens.chat_completions_test')}
                           </h5>
                           <Button
                             variant='outline'
@@ -1278,7 +1270,7 @@ models:
                             ) : (
                               <Copy className='h-3 w-3' />
                             )}
-                            복사
+                            {t('my_api_tokens.copy')}
                           </Button>
                         </div>
                         <div className='bg-muted text-foreground p-3 rounded-lg border border-border text-xs font-mono overflow-x-auto'>
@@ -1318,15 +1310,15 @@ models:
           message: '', 
           type: 'warning', 
           onConfirm: null,
-          confirmText: '확인',
-          cancelText: '취소'
+          confirmText: t('my_api_tokens.confirm'),
+          cancelText: t('my_api_tokens.cancel')
         })}
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
         message={confirmModal.message}
         type={confirmModal.type}
-        confirmText={confirmModal.confirmText || '확인'}
-        cancelText={confirmModal.cancelText || '취소'}
+        confirmText={confirmModal.confirmText || t('my_api_tokens.confirm')}
+        cancelText={confirmModal.cancelText || t('my_api_tokens.cancel')}
       />
     </div>
   );

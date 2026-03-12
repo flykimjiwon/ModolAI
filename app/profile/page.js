@@ -13,6 +13,7 @@ import {
   Eye,
   EyeOff,
 } from '@/components/icons';
+import { useTranslation } from '@/hooks/useTranslation';
 import { AlertModal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorModal, setErrorModal] = useState({
@@ -53,12 +55,12 @@ export default function ProfilePage() {
   const [changePassword, setChangePassword] = useState(false);
 
   const departments = [
-    { value: '디지털서비스개발부', label: '디지털서비스개발부' },
-    { value: '글로벌서비스개발부', label: '글로벌서비스개발부' },
-    { value: '금융서비스개발부', label: '금융서비스개발부' },
-    { value: '정보서비스개발부', label: '정보서비스개발부' },
-    { value: 'Tech혁신Unit', label: 'Tech혁신Unit' },
-    { value: '기타부서', label: '기타그룹' },
+    { value: '디지털서비스개발부', label: t('signup.group_digital') },
+    { value: '글로벌서비스개발부', label: t('signup.group_global') },
+    { value: '금융서비스개발부', label: t('signup.group_finance') },
+    { value: '정보서비스개발부', label: t('signup.group_info') },
+    { value: 'Tech혁신Unit', label: t('signup.group_tech') },
+    { value: '기타부서', label: t('signup.group_other') },
   ];
 
   // 현재 사용자 정보 조회
@@ -79,7 +81,7 @@ export default function ProfilePage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || '사용자 정보 조회 실패');
+        throw new Error(errorData.error || t('profile.fetch_failed'));
       }
 
       const data = await response.json();
@@ -88,17 +90,17 @@ export default function ProfilePage() {
       setDepartment(data.user.department || '');
       setCell(data.user.cell || '');
     } catch (error) {
-      console.error('사용자 정보 조회 실패:', error);
+      console.error('Failed to fetch user info:', error);
       setErrorModal({
         isOpen: true,
-        title: '사용자 정보 조회 실패',
-        message: error.message || '사용자 정보를 불러오는데 실패했습니다.',
+        title: t('profile.fetch_failed'),
+        message: error.message || t('profile.fetch_error_message'),
         type: 'error',
       });
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, t]);
 
   // 프로필 업데이트
   const handleSubmit = async (e) => {
@@ -110,8 +112,8 @@ export default function ProfilePage() {
       if (!currentPassword) {
         setErrorModal({
           isOpen: true,
-          title: '입력 오류',
-          message: '현재 비밀번호를 입력해주세요.',
+          title: t('profile.input_error'),
+          message: t('profile.enter_current_password'),
           type: 'warning',
         });
         setSaving(false);
@@ -121,8 +123,8 @@ export default function ProfilePage() {
       if (newPassword.length < 6) {
         setErrorModal({
           isOpen: true,
-          title: '입력 오류',
-          message: '새 비밀번호는 최소 6자 이상이어야 합니다.',
+          title: t('profile.input_error'),
+          message: t('profile.new_password_too_short'),
           type: 'warning',
         });
         setSaving(false);
@@ -132,8 +134,8 @@ export default function ProfilePage() {
       if (newPassword !== confirmPassword) {
         setErrorModal({
           isOpen: true,
-          title: '입력 오류',
-          message: '새 비밀번호가 일치하지 않습니다.',
+          title: t('profile.input_error'),
+          message: t('profile.new_password_mismatch'),
           type: 'warning',
         });
         setSaving(false);
@@ -166,13 +168,13 @@ export default function ProfilePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '프로필 업데이트 실패');
+        throw new Error(errorData.error || t('profile.update_failed'));
       }
 
       setSuccessModal({
         isOpen: true,
-        title: '업데이트 완료',
-        message: '프로필이 성공적으로 업데이트되었습니다.',
+        title: t('profile.update_complete'),
+        message: t('profile.update_success'),
         type: 'success',
       });
 
@@ -184,11 +186,11 @@ export default function ProfilePage() {
         setChangePassword(false);
       }
     } catch (error) {
-      console.error('프로필 업데이트 실패:', error);
+      console.error('Profile update failed:', error);
       setErrorModal({
         isOpen: true,
-        title: '프로필 업데이트 실패',
-        message: error.message || '프로필 업데이트에 실패했습니다.',
+        title: t('profile.update_failed'),
+        message: error.message || t('profile.update_failed'),
         type: 'error',
       });
     } finally {
@@ -219,13 +221,13 @@ export default function ProfilePage() {
             className='mb-4'
           >
             <ArrowLeft className='h-4 w-4 mr-1' />
-            뒤로 가기
+            {t('profile.back_to_chat')}
           </Button>
           <h1 className='text-3xl font-bold text-foreground'>
-            프로필 수정
+            {t('profile.title')}
           </h1>
           <p className='text-muted-foreground mt-1'>
-            개인 정보를 수정할 수 있습니다.
+            {t('profile.subtitle')}
           </p>
         </div>
 
@@ -236,13 +238,13 @@ export default function ProfilePage() {
               {/* 기본 정보 섹션 */}
               <div className='space-y-4'>
                 <h3 className='text-lg font-medium text-foreground pb-2'>
-                  기본 정보
+                  {t('profile.basic_info')}
                 </h3>
                 <Separator className='-mt-2' />
 
                 {/* 이름 */}
                 <div className='space-y-2'>
-                  <Label>이름</Label>
+                  <Label>{t('profile.name')}</Label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -251,14 +253,14 @@ export default function ProfilePage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className='pl-10'
-                      placeholder='이름을 입력하세요'
+                      placeholder={t('profile.name_placeholder')}
                     />
                   </div>
                 </div>
 
                 {/* 이메일 (읽기 전용) */}
                 <div className='space-y-2'>
-                  <Label>이메일</Label>
+                  <Label>{t('profile.email')}</Label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -266,17 +268,17 @@ export default function ProfilePage() {
                       value={email}
                       readOnly
                       className='pl-10 bg-muted text-muted-foreground cursor-not-allowed'
-                      placeholder='이메일'
+                      placeholder={t('profile.email')}
                     />
                   </div>
                   <p className='text-xs text-muted-foreground'>
-                    이메일은 변경할 수 없습니다.
+                    {t('profile.email_read_only')}
                   </p>
                 </div>
 
                 {/* 부서 */}
                 <div className='space-y-2'>
-                  <Label>그룹</Label>
+                  <Label>{t('signup.group')}</Label>
                   <div className='relative'>
                     <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <select
@@ -285,7 +287,7 @@ export default function ProfilePage() {
                       onChange={(e) => setDepartment(e.target.value)}
                       className='flex h-9 w-full rounded-md border border-input bg-transparent pl-10 pr-4 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm'
                     >
-                      <option value=''>그룹을 선택하세요</option>
+                      <option value=''>{t('signup.group_placeholder')}</option>
                       {departments.map((dept) => (
                         <option key={dept.value} value={dept.value}>
                           {dept.label}
@@ -297,7 +299,7 @@ export default function ProfilePage() {
 
                 {/* Cell */}
                 <div className='space-y-2'>
-                  <Label>Cell (팀/파트)</Label>
+                  <Label>{t('profile.cell')}</Label>
                   <div className='relative'>
                     <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                     <Input
@@ -306,7 +308,7 @@ export default function ProfilePage() {
                       value={cell}
                       onChange={(e) => setCell(e.target.value)}
                       className='pl-10'
-                      placeholder='예: 디지털라이프셀, 디지털뱅킹셀'
+                      placeholder={t('profile.cell_placeholder')}
                     />
                   </div>
                 </div>
@@ -316,7 +318,7 @@ export default function ProfilePage() {
               <div className='space-y-4'>
                 <div className='flex items-center justify-between pb-2'>
                   <h3 className='text-lg font-medium text-foreground'>
-                    비밀번호 변경
+                    {t('profile.change_password')}
                   </h3>
                   <Button
                     type='button'
@@ -324,7 +326,7 @@ export default function ProfilePage() {
                     size='sm'
                     onClick={() => setChangePassword(!changePassword)}
                   >
-                    {changePassword ? '취소' : '비밀번호 변경'}
+                    {changePassword ? t('common.cancel') : t('profile.change_password')}
                   </Button>
                 </div>
                 <Separator className='-mt-2' />
@@ -333,7 +335,7 @@ export default function ProfilePage() {
                   <div className='space-y-4 bg-muted p-4 rounded-lg'>
                     {/* 현재 비밀번호 */}
                     <div className='space-y-2'>
-                      <Label>현재 비밀번호</Label>
+                      <Label>{t('profile.current_password')}</Label>
                       <div className='relative'>
                         <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                         <Input
@@ -341,7 +343,7 @@ export default function ProfilePage() {
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           className='pl-10 pr-10'
-                          placeholder='현재 비밀번호를 입력하세요'
+                          placeholder={t('profile.current_password_placeholder')}
                         />
                         <button
                           type='button'
@@ -361,7 +363,7 @@ export default function ProfilePage() {
 
                     {/* 새 비밀번호 */}
                     <div className='space-y-2'>
-                      <Label>새 비밀번호</Label>
+                      <Label>{t('profile.new_password')}</Label>
                       <div className='relative'>
                         <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                         <Input
@@ -369,7 +371,7 @@ export default function ProfilePage() {
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           className='pl-10 pr-10'
-                          placeholder='새 비밀번호를 입력하세요'
+                          placeholder={t('profile.new_password_placeholder')}
                         />
                         <button
                           type='button'
@@ -384,13 +386,13 @@ export default function ProfilePage() {
                         </button>
                       </div>
                       <p className='text-xs text-muted-foreground'>
-                        최소 6자 이상
+                        {t('profile.password_min_length')}
                       </p>
                     </div>
 
                     {/* 새 비밀번호 확인 */}
                     <div className='space-y-2'>
-                      <Label>새 비밀번호 확인</Label>
+                      <Label>{t('profile.confirm_password')}</Label>
                       <div className='relative'>
                         <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
                         <Input
@@ -398,7 +400,7 @@ export default function ProfilePage() {
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           className='pl-10 pr-10'
-                          placeholder='새 비밀번호를 다시 입력하세요'
+                          placeholder={t('profile.confirm_password_placeholder')}
                         />
                         <button
                           type='button'
@@ -416,7 +418,7 @@ export default function ProfilePage() {
                       </div>
                       {confirmPassword && newPassword !== confirmPassword && (
                         <p className='text-xs text-destructive'>
-                          비밀번호가 일치하지 않습니다.
+                          {t('profile.password_mismatch')}
                         </p>
                       )}
                     </div>
@@ -434,12 +436,12 @@ export default function ProfilePage() {
                   {saving ? (
                     <>
                       <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground mr-2'></div>
-                      저장 중...
+                      {t('profile.saving')}
                     </>
                   ) : (
                     <>
                       <Save className='h-4 w-4 mr-2' />
-                      저장하기
+                      {t('profile.save_changes')}
                     </>
                   )}
                 </Button>

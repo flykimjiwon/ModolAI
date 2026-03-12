@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';
 import DirectMessageModal from '@/components/DirectMessageModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function Sidebar({
   sidebarOpen,
@@ -39,6 +40,7 @@ function Sidebar({
   boardEnabled = true,
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [editingRoom, setEditingRoom] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [alertModal, setAlertModal] = useState({
@@ -53,8 +55,8 @@ function Sidebar({
     message: '',
     type: 'warning',
     onConfirm: null,
-    confirmText: '확인',
-    cancelText: '취소',
+    confirmText: t('common.confirm'),
+    cancelText: t('common.cancel'),
   });
 
   // 쪽지 관련 상태
@@ -148,7 +150,7 @@ function Sidebar({
     }
     // 7일 이내인 경우
     if (diffDays < 7) {
-      return `${diffDays}일 전`;
+      return t('sidebar.days_ago', { days: diffDays });
     }
     // 그 외의 경우
     return date.toLocaleDateString('ko-KR', {
@@ -177,9 +179,8 @@ function Sidebar({
     if (messages.length === 0 && currentRoom) {
       setAlertModal({
         isOpen: true,
-        title: '현재 채팅방 사용',
-        message:
-          '현재 채팅방에 대화 내용이 없습니다. 현재 채팅방을 계속 사용해주세요.',
+        title: t('sidebar.room_empty_title'),
+        message: t('sidebar.room_empty_message'),
         type: 'info',
       });
       return;
@@ -189,9 +190,8 @@ function Sidebar({
     if (rooms.length >= 20) {
       setConfirmModal({
         isOpen: true,
-        title: '대화방 개수 제한',
-        message:
-          '최대 값(20개)의 대화방이 생성되어 있습니다. 가장 오래된 대화방을 삭제하시겠습니까?',
+        title: t('sidebar.room_limit_title'),
+        message: t('sidebar.room_limit_message'),
         type: 'warning',
         onConfirm: async () => {
           // 가장 오래된 방 찾기 (createdAt 기준)
@@ -252,7 +252,7 @@ function Sidebar({
           size='icon'
           onClick={handleHamburgerClick}
           className='mb-4'
-          title='사이드바 열기'
+          title={t('sidebar.open_sidebar')}
         >
           <Menu className='h-5 w-5 text-muted-foreground' />
         </Button>
@@ -265,7 +265,7 @@ function Sidebar({
           size='icon'
           onClick={handleCreateRoom}
           className='mb-4'
-          title='새 채팅방'
+          title={t('sidebar.new_chat')}
           disabled={loading}
         >
           <Plus className='h-5 w-5 text-muted-foreground' />
@@ -280,7 +280,7 @@ function Sidebar({
             className={`relative ${
               loading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
-            title='받은 쪽지'
+            title={t('sidebar.direct_messages')}
             disabled={loading}
           >
             <Mail className='h-5 w-5 text-muted-foreground' />
@@ -296,7 +296,7 @@ function Sidebar({
             <div className='absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 animate-bounce'>
               <div className='relative bg-primary text-primary-foreground text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
                 <div className='absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-r-[8px] border-r-primary'></div>
-                새 쪽지 {newDmCount}개가 도착했습니다
+                {t('sidebar.new_dm', { count: newDmCount })}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -321,19 +321,19 @@ function Sidebar({
             if (!loading) {
               setConfirmModal({
                 isOpen: true,
-                title: '로그아웃 확인',
-                message: '로그아웃 하시겠습니까?',
+                title: t('sidebar.logout_confirm_title'),
+                message: t('sidebar.logout_confirm_message'),
                 type: 'warning',
                 onConfirm: () => {
                   handleLogout();
                 },
-                confirmText: '로그아웃',
-                cancelText: '취소',
+                confirmText: t('auth.sign_out'),
+                cancelText: t('common.cancel'),
               });
             }
           }}
           className='mt-auto'
-          title='로그아웃'
+          title={t('auth.sign_out')}
           disabled={loading}
         >
           <LogOut className='h-5 w-5 text-muted-foreground' />
@@ -352,13 +352,13 @@ function Sidebar({
         {/* 사이드바 헤더 */}
         <div className='flex items-center justify-between p-4 border-b border-border'>
           <h2 className='text-lg font-semibold text-foreground'>
-            채팅방
+            {t('sidebar.chat_rooms')}
           </h2>
           <Button
             variant='ghost'
             size='icon-sm'
             onClick={handleCloseClick}
-            title='사이드바 닫기'
+            title={t('sidebar.close_sidebar')}
           >
             <X className='h-5 w-5 text-muted-foreground' />
           </Button>
@@ -373,7 +373,7 @@ function Sidebar({
             onClick={handleCreateRoom}
             disabled={loading}
           >
-            <Plus className='h-4 w-4' />새 채팅방
+            <Plus className='h-4 w-4' />{t('sidebar.new_chat')}
           </button>
         </div>
 
@@ -444,12 +444,12 @@ function Sidebar({
                             }`}
                           >
                             {room.createdAt && (
-                              <span>생성: {formatDate(room.createdAt)}</span>
+                              <span>{t('sidebar.created')} {formatDate(room.createdAt)}</span>
                             )}
                             {room.updatedAt &&
                               room.createdAt !== room.updatedAt && (
                                 <span>
-                                  마지막: {formatDate(room.updatedAt)}
+                                  {t('sidebar.last_updated')} {formatDate(room.updatedAt)}
                                 </span>
                               )}
                           </div>
@@ -465,14 +465,14 @@ function Sidebar({
                       <button
                         className='p-1.5 rounded-md transition-colors duration-200 text-green-600 hover:bg-green-100'
                         onClick={saveEdit}
-                        aria-label='저장'
+                        aria-label={t('common.save')}
                       >
                         <Edit className='h-3 w-3' />
                       </button>
                       <button
                         className='p-1.5 rounded-md transition-colors duration-200 text-red-600 hover:bg-red-100'
                         onClick={cancelEdit}
-                        aria-label='취소'
+                        aria-label={t('common.cancel')}
                       >
                         <X className='h-3 w-3' />
                       </button>
@@ -496,7 +496,7 @@ function Sidebar({
                           if (!loading) startEditing(room);
                         }}
                         disabled={loading}
-                        aria-label='방 이름 편집'
+                        aria-label={t('sidebar.edit_room_name')}
                       >
                         <Edit className='h-3 w-3' />
                       </button>
@@ -519,8 +519,8 @@ function Sidebar({
                             if (!loading) {
                               setConfirmModal({
                                 isOpen: true,
-                                title: '대화방 삭제',
-                                message: `"${room.name}" 방을 삭제하시겠습니까?`,
+                                title: t('sidebar.delete_room_title'),
+                                message: t('sidebar.delete_room_message', { name: room.name }),
                                 type: 'warning',
                                 onConfirm: async () => {
                                   await deleteRoom(room._id);
@@ -529,7 +529,7 @@ function Sidebar({
                             }
                           }}
                           disabled={loading}
-                          aria-label='방 삭제'
+                          aria-label={t('sidebar.delete_room')}
                         >
                           <X className='h-3 w-3' />
                         </button>
@@ -554,7 +554,7 @@ function Sidebar({
             disabled={loading}
           >
             <Bell className='h-4 w-4' />
-            공지사항
+            {t('notice.title')}
           </Button>
 
           {boardEnabled && (
@@ -567,7 +567,7 @@ function Sidebar({
               disabled={loading}
             >
               <MessageSquare className='h-4 w-4' />
-              자유게시판
+              {t('sidebar.free_board')}
             </Button>
           )}
 
@@ -579,7 +579,7 @@ function Sidebar({
             }`}
             disabled={loading}
           >
-            <Key className='h-4 w-4' />내 API 키
+            <Key className='h-4 w-4' />{t('sidebar.my_api_keys')}
           </Button>
 
           {/* 프로필 수정 */}
@@ -593,7 +593,7 @@ function Sidebar({
               disabled={loading}
             >
               <User className='h-4 w-4' />
-              프로필 수정
+              {t('sidebar.edit_profile')}
             </Button>
           )}
 
@@ -610,7 +610,7 @@ function Sidebar({
               disabled={loading}
             >
               <Shield className='h-4 w-4' />
-              관리자 페이지
+              {t('sidebar.admin_page')}
             </Button>
           )}
         </div>
@@ -620,14 +620,14 @@ function Sidebar({
           <div className='flex items-center justify-between'>
             <div className='min-w-0 flex-1'>
               <p className='text-sm font-medium text-foreground'>
-                로그인 계정
+                {t('sidebar.login_account')}
               </p>
               <p className='text-xs text-muted-foreground truncate'>
                 {userEmail}
               </p>
               {userRole === 'admin' && (
                 <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mt-1'>
-                  관리자
+                  {t('common.admin')}
                 </span>
               )}
             </div>
@@ -641,7 +641,7 @@ function Sidebar({
                   className={`relative ${
                     loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
-                  title='받은 쪽지'
+                  title={t('sidebar.direct_messages')}
                   disabled={loading}
                 >
                   <Mail className='h-4 w-4 text-muted-foreground' />
@@ -656,7 +656,7 @@ function Sidebar({
                 {showDmNotification && (
                   <div className='absolute bottom-full mb-2 right-0 z-50 animate-bounce'>
                     <div className='relative bg-primary text-primary-foreground text-xs font-medium px-3 py-2 rounded-lg shadow-lg whitespace-nowrap'>
-                      새 쪽지 {newDmCount}개가 도착했습니다
+                      {t('sidebar.new_dm', { count: newDmCount })}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -679,21 +679,21 @@ function Sidebar({
                   if (!loading) {
                     setConfirmModal({
                       isOpen: true,
-                      title: '로그아웃 확인',
-                      message: '로그아웃 하시겠습니까?',
+                      title: t('sidebar.logout_confirm_title'),
+                      message: t('sidebar.logout_confirm_message'),
                       type: 'warning',
                       onConfirm: () => {
                         handleLogout();
                       },
-                      confirmText: '로그아웃',
-                      cancelText: '취소',
+                      confirmText: t('auth.sign_out'),
+                      cancelText: t('common.cancel'),
                     });
                   }
                 }}
                 className={`${
                   loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
-                title='로그아웃'
+                title={t('auth.sign_out')}
                 disabled={loading}
               >
                 <LogOut className='h-4 w-4 text-muted-foreground' />
@@ -722,16 +722,16 @@ function Sidebar({
             message: '',
             type: 'warning',
             onConfirm: null,
-            confirmText: '확인',
-            cancelText: '취소',
+            confirmText: t('common.confirm'),
+            cancelText: t('common.cancel'),
           })
         }
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
         message={confirmModal.message}
         type={confirmModal.type}
-        confirmText={confirmModal.confirmText || '확인'}
-        cancelText={confirmModal.cancelText || '취소'}
+        confirmText={confirmModal.confirmText || t('common.confirm')}
+        cancelText={confirmModal.cancelText || t('common.cancel')}
       />
 
       {/* 쪽지 모달 */}

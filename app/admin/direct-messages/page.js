@@ -20,9 +20,11 @@ import {
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import SendMessageModal from './components/SendMessageModal';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function DirectMessagesPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,18 +59,18 @@ export default function DirectMessagesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || '쪽지 목록 조회 실패');
+        throw new Error(data.error || t('admin_dm.fetch_error'));
       }
       setMessages(data.messages);
       setTotalPages(data.pagination.totalPages);
       setTotalCount(data.pagination.totalCount);
     } catch (error) {
-      console.error('쪽지 목록 조회 실패:', error);
-      alert('쪽지 목록을 불러오는데 실패했습니다.', 'error', '조회 실패');
+      console.error(t('admin_dm.fetch_error'), error);
+      alert(t('admin_dm.fetch_failed'), 'error', t('admin_dm.fetch_error_title'));
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, recipientFilter, isReadFilter, alert]);
+  }, [currentPage, searchTerm, recipientFilter, isReadFilter, alert, t]);
 
   useEffect(() => {
     fetchMessages();
@@ -82,8 +84,8 @@ export default function DirectMessagesPage() {
   // 쪽지 삭제
   const deleteMessage = async (messageId) => {
     const confirmed = await confirm(
-      '이 쪽지를 정말 삭제하시겠습니까?',
-      '쪽지 삭제 확인'
+      t('admin_dm.delete_confirm'),
+      t('admin_dm.delete_confirm_title')
     );
     if (!confirmed) return;
 
@@ -98,14 +100,14 @@ export default function DirectMessagesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('쪽지 삭제 실패');
+        throw new Error(t('admin_dm.delete_error'));
       }
 
       fetchMessages();
-      alert('쪽지가 삭제되었습니다.', 'success', '삭제 완료');
+      alert(t('admin_dm.deleted'), 'success', t('admin_dm.delete_complete'));
     } catch (error) {
-      console.error('쪽지 삭제 실패:', error);
-      alert('쪽지 삭제에 실패했습니다.', 'error', '삭제 실패');
+      console.error(t('admin_dm.delete_error'), error);
+      alert(t('admin_dm.delete_failed'), 'error', t('admin_dm.delete_failed_title'));
     }
   };
 
@@ -143,7 +145,7 @@ export default function DirectMessagesPage() {
   };
 
   const handleSendSuccess = (message) => {
-    alert(message, 'success', '발송 완료');
+    alert(message, 'success', t('admin_dm.send_complete'));
     fetchMessages();
   };
 
@@ -157,10 +159,10 @@ export default function DirectMessagesPage() {
               <div className="bg-primary p-2 rounded-lg">
                 <Mail className="h-7 w-7 text-white" />
               </div>
-              쪽지 관리
+              {t('admin_dm.title')}
             </h1>
             <p className="text-muted-foreground mt-2 text-sm">
-              사용자에게 쪽지를 보내고 발송 내역을 관리합니다
+              {t('admin_dm.subtitle')}
             </p>
 
             {/* 통계 요약 */}
@@ -168,7 +170,7 @@ export default function DirectMessagesPage() {
               <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-lg shadow-sm">
                 <Mail className="h-4 w-4 text-primary" />
                 <span className="text-sm text-muted-foreground">
-                  총 발송:
+                  {t('admin_dm.total_sent')}
                 </span>
                 <span className="text-lg font-bold text-foreground">
                   {totalCount.toLocaleString()}
@@ -187,14 +189,14 @@ export default function DirectMessagesPage() {
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
               />
-              새로고침
+              {t('admin_dm.refresh')}
             </button>
             <button
               onClick={() => setShowSendModal(true)}
               className="inline-flex items-center px-4 py-2.5 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-all shadow-sm"
             >
               <Plus className="h-4 w-4 mr-2" />
-              새 쪽지 보내기
+              {t('admin_dm.new_message')}
             </button>
           </div>
         </div>
@@ -208,11 +210,11 @@ export default function DirectMessagesPage() {
             <div className="flex items-center gap-3">
               <Filter className="h-5 w-5 text-foreground" />
               <h3 className="text-lg font-semibold text-foreground">
-                필터 및 검색
+                {t('admin_dm.filter_search')}
               </h3>
               {getActiveFiltersCount() > 0 && (
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                  {getActiveFiltersCount()}개 활성
+                  {t('admin_dm.active_filters', { count: getActiveFiltersCount() })}
                 </span>
               )}
             </div>
@@ -223,7 +225,7 @@ export default function DirectMessagesPage() {
                   className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors"
                 >
                   <XCircle className="h-4 w-4 mr-1" />
-                  모두 초기화
+                  {t('admin_dm.clear_all')}
                 </button>
               )}
               <button
@@ -233,12 +235,12 @@ export default function DirectMessagesPage() {
                 {showFilters ? (
                   <>
                     <ChevronUp className="h-4 w-4 mr-1" />
-                    숨기기
+                    {t('admin_dm.hide')}
                   </>
                 ) : (
                   <>
                     <ChevronDown className="h-4 w-4 mr-1" />
-                    펼치기
+                    {t('admin_dm.expand')}
                   </>
                 )}
               </button>
@@ -254,13 +256,13 @@ export default function DirectMessagesPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   <Search className="inline h-4 w-4 mr-1" />
-                  제목/내용 검색
+                  {t('admin_dm.search_title_content')}
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <input
                     type="text"
-                    placeholder="검색어를 입력하세요..."
+                    placeholder={t('admin_dm.search_placeholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all"
@@ -272,11 +274,11 @@ export default function DirectMessagesPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   <User className="inline h-4 w-4 mr-1" />
-                  수신자 검색
+                  {t('admin_dm.recipient_search')}
                 </label>
                 <input
                   type="text"
-                  placeholder="이름 또는 이메일..."
+                  placeholder={t('admin_dm.recipient_placeholder')}
                   value={recipientFilter}
                   onChange={(e) => setRecipientFilter(e.target.value)}
                   className="w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all"
@@ -287,16 +289,16 @@ export default function DirectMessagesPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
                   <MailOpen className="inline h-4 w-4 mr-1" />
-                  읽음 상태
+                  {t('admin_dm.read_status')}
                 </label>
                 <select
                   value={isReadFilter}
                   onChange={(e) => setIsReadFilter(e.target.value)}
                   className="w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all"
                 >
-                  <option value="">전체</option>
-                  <option value="true">읽음</option>
-                  <option value="false">안 읽음</option>
+                  <option value="">{t('admin_dm.all')}</option>
+                  <option value="true">{t('admin_dm.read')}</option>
+                  <option value="false">{t('admin_dm.unread')}</option>
                 </select>
               </div>
             </div>
@@ -310,7 +312,7 @@ export default function DirectMessagesPage() {
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             <p className="text-sm text-muted-foreground">
-              데이터를 불러오는 중...
+              {t('admin_dm.loading')}
             </p>
           </div>
         ) : messages.length === 0 ? (
@@ -319,17 +321,17 @@ export default function DirectMessagesPage() {
               <Mail className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">
-              보낸 쪽지가 없습니다
+              {t('admin_dm.no_messages')}
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              새 쪽지를 보내보세요.
+              {t('admin_dm.no_messages_hint')}
             </p>
             <button
               onClick={() => setShowSendModal(true)}
               className="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors"
             >
               <Plus className="h-4 w-4 mr-2" />
-              새 쪽지 보내기
+              {t('admin_dm.new_message')}
             </button>
           </div>
         ) : (
@@ -339,22 +341,22 @@ export default function DirectMessagesPage() {
               <div className="grid grid-cols-12 gap-4 text-xs font-bold text-foreground uppercase tracking-wider">
                 <div className="col-span-2 flex items-center gap-1">
                   <User className="h-3.5 w-3.5" />
-                  수신자
+                  {t('admin_dm.col_recipient')}
                 </div>
                 <div className="col-span-3 flex items-center gap-1">
                   <Mail className="h-3.5 w-3.5" />
-                  제목
+                  {t('admin_dm.col_title')}
                 </div>
-                <div className="col-span-3">내용</div>
+                <div className="col-span-3">{t('admin_dm.col_content')}</div>
                 <div className="col-span-1 flex items-center gap-1">
                   <MailOpen className="h-3.5 w-3.5" />
-                  상태
+                  {t('admin_dm.col_status')}
                 </div>
                 <div className="col-span-2 flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  발송일시
+                  {t('admin_dm.col_sent_at')}
                 </div>
-                <div className="col-span-1 text-center">작업</div>
+                <div className="col-span-1 text-center">{t('admin_dm.col_actions')}</div>
               </div>
             </div>
 
@@ -375,7 +377,7 @@ export default function DirectMessagesPage() {
                       <div className="col-span-2">
                         <div className="text-sm">
                           <p className="font-semibold text-foreground truncate">
-                            {message.recipient?.name || '이름 없음'}
+                            {message.recipient?.name || t('admin_dm.no_name')}
                           </p>
                           <p className="text-muted-foreground text-xs truncate">
                             {message.recipient?.email}
@@ -406,17 +408,17 @@ export default function DirectMessagesPage() {
                       <div className="col-span-1">
                         {message.deletedByRecipient ? (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                            삭제됨
+                            {t('admin_dm.status_deleted')}
                           </span>
                         ) : message.isRead ? (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                             <MailOpen className="h-3 w-3 mr-1" />
-                            읽음
+                            {t('admin_dm.status_read')}
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                             <Mail className="h-3 w-3 mr-1" />
-                            안읽음
+                            {t('admin_dm.status_unread')}
                           </span>
                         )}
                       </div>
@@ -428,7 +430,7 @@ export default function DirectMessagesPage() {
                         </p>
                         {message.readAt && (
                           <p className="text-xs text-primary mt-1">
-                            읽음: {formatDate(message.readAt)}
+                            {t('admin_dm.read_at', { date: formatDate(message.readAt) })}
                           </p>
                         )}
                       </div>
@@ -439,14 +441,14 @@ export default function DirectMessagesPage() {
                           <button
                             onClick={() => setSelectedMessage(message)}
                             className="p-2 text-primary hover:text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all"
-                            title="상세 보기"
+                            title={t('admin_dm.detail_view')}
                           >
                             <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => deleteMessage(message.id)}
                             className="p-2 text-destructive hover:text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-all"
-                            title="삭제"
+                            title={t('admin_dm.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -477,7 +479,7 @@ export default function DirectMessagesPage() {
               <span className="font-medium text-foreground">
                 {totalCount.toLocaleString()}
               </span>
-              {' 개 쪽지'}
+              {' '}{t('admin_dm.count_messages')}
             </div>
 
             <div className="flex items-center gap-2">
@@ -493,7 +495,7 @@ export default function DirectMessagesPage() {
                 disabled={currentPage === 1}
                 className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                ‹ 이전
+                {t('admin_dm.prev')}
               </button>
 
               <div className="flex items-center gap-1">
@@ -539,7 +541,7 @@ export default function DirectMessagesPage() {
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                다음 ›
+                {t('admin_dm.next')}
               </button>
               <button
                 onClick={() => setCurrentPage(totalPages)}
@@ -563,7 +565,7 @@ export default function DirectMessagesPage() {
           <div className="relative bg-card rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-lg font-semibold text-foreground">
-                쪽지 상세
+                {t('admin_dm.detail_title')}
               </h3>
               <button
                 onClick={() => setSelectedMessage(null)}
@@ -575,7 +577,7 @@ export default function DirectMessagesPage() {
             <div className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
               <div>
                  <label className="text-sm font-medium text-muted-foreground">
-                  수신자
+                  {t('admin_dm.label_recipient')}
                 </label>
                  <p className="text-foreground">
                   {selectedMessage.recipient?.name} (
@@ -584,7 +586,7 @@ export default function DirectMessagesPage() {
               </div>
               <div>
                  <label className="text-sm font-medium text-muted-foreground">
-                  제목
+                  {t('admin_dm.label_title')}
                 </label>
                  <p className="text-foreground font-medium">
                   {selectedMessage.title}
@@ -592,7 +594,7 @@ export default function DirectMessagesPage() {
               </div>
               <div>
                  <label className="text-sm font-medium text-muted-foreground">
-                  내용
+                  {t('admin_dm.label_content')}
                 </label>
                  <div className="mt-1 p-4 bg-muted rounded-lg">
                    <p className="text-foreground whitespace-pre-wrap">
@@ -603,7 +605,7 @@ export default function DirectMessagesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                    <label className="text-sm font-medium text-muted-foreground">
-                    발송일시
+                    {t('admin_dm.label_sent_at')}
                   </label>
                    <p className="text-foreground text-sm">
                     {formatDate(selectedMessage.createdAt)}
@@ -611,12 +613,12 @@ export default function DirectMessagesPage() {
                 </div>
                 <div>
                    <label className="text-sm font-medium text-muted-foreground">
-                    읽음 상태
+                    {t('admin_dm.label_read_status')}
                   </label>
                    <p className="text-foreground text-sm">
                     {selectedMessage.isRead
-                      ? `읽음 (${formatDate(selectedMessage.readAt)})`
-                      : '안 읽음'}
+                      ? t('admin_dm.read_with_date', { date: formatDate(selectedMessage.readAt) })
+                      : t('admin_dm.unread')}
                   </p>
                 </div>
               </div>
@@ -626,7 +628,7 @@ export default function DirectMessagesPage() {
                 onClick={() => setSelectedMessage(null)}
                  className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
               >
-                닫기
+                {t('admin_dm.close')}
               </button>
             </div>
           </div>

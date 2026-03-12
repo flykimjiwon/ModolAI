@@ -11,6 +11,7 @@ import {
   Building,
   Briefcase,
 } from '@/components/icons';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,13 +34,13 @@ export default function SignUpPage() {
   const [checkingEmail, setCheckingEmail] = useState(false);
 
   const departments = [
-    { value: '', label: '그룹을 선택하세요' },
-    { value: '디지털서비스개발부', label: '디지털서비스개발부' },
-    { value: '글로벌서비스개발부', label: '글로벌서비스개발부' },
-    { value: '금융서비스개발부', label: '금융서비스개발부' },
-    { value: '정보서비스개발부', label: '정보서비스개발부' },
-    { value: 'Tech혁신Unit', label: 'Tech혁신Unit' },
-    { value: '기타부서', label: '기타그룹' },
+    { value: '', label: t('signup.group_placeholder') },
+    { value: '디지털서비스개발부', label: t('signup.group_digital') },
+    { value: '글로벌서비스개발부', label: t('signup.group_global') },
+    { value: '금융서비스개발부', label: t('signup.group_finance') },
+    { value: '정보서비스개발부', label: t('signup.group_info') },
+    { value: 'Tech혁신Unit', label: t('signup.group_tech') },
+    { value: '기타부서', label: t('signup.group_other') },
   ];
 
   // 이메일 중복 검증 함수
@@ -61,7 +63,7 @@ export default function SignUpPage() {
         setEmailError(data.message);
       }
     } catch (error) {
-      console.error('이메일 검증 오류:', error);
+      console.error('Email validation error:', error);
     } finally {
       setCheckingEmail(false);
     }
@@ -85,13 +87,13 @@ export default function SignUpPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError(t('signup.password_mismatch'));
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다.');
+      setError(t('signup.password_too_short'));
       setLoading(false);
       return;
     }
@@ -106,7 +108,7 @@ export default function SignUpPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || '회원가입에 실패했습니다.');
+        throw new Error(data.error || t('signup.signup_failed'));
       }
 
       router.push('/login');
@@ -124,10 +126,10 @@ export default function SignUpPage() {
           {/* Logo/Title */}
           <div className='text-center mb-8'>
             <h1 className='text-3xl font-bold text-foreground mb-2'>
-              Tech그룹 AI
+              {t('signup.title')}
             </h1>
             <p className='text-muted-foreground'>
-              새 계정을 만드세요
+              {t('signup.subtitle')}
             </p>
           </div>
 
@@ -152,7 +154,7 @@ export default function SignUpPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-name'>
-                    이름
+                    {t('signup.name')}
                   </Label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -164,14 +166,14 @@ export default function SignUpPage() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className='pl-10'
-                      placeholder='이름을 입력하세요'
+                      placeholder={t('signup.name_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-email'>
-                    이메일
+                    {t('auth.email')}
                   </Label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -183,7 +185,7 @@ export default function SignUpPage() {
                       value={email}
                       onChange={handleEmailChange}
                       className={`pl-10 pr-10 ${emailError ? 'border-destructive' : ''}`}
-                      placeholder='이메일을 입력하세요'
+                      placeholder={t('auth.email_placeholder')}
                     />
                     {checkingEmail && (
                       <Loader2
@@ -205,7 +207,7 @@ export default function SignUpPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-department'>
-                    그룹
+                    {t('signup.group')}
                   </Label>
                   <div className='relative'>
                     <Building className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -232,7 +234,7 @@ export default function SignUpPage() {
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-position'>
-                    직급
+                    {t('signup.position')}
                   </Label>
                   <div className='relative'>
                     <Briefcase className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -244,14 +246,14 @@ export default function SignUpPage() {
                       value={position}
                       onChange={(e) => setPosition(e.target.value)}
                       className='pl-10'
-                      placeholder='직급을 입력하세요 (예: 프로, 팀장)'
+                      placeholder={t('signup.position_placeholder')}
                     />
                   </div>
                 </div>
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-password'>
-                    비밀번호
+                    {t('auth.password')}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -264,7 +266,7 @@ export default function SignUpPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='비밀번호를 입력하세요 (최소 6자)'
+                      placeholder={t('signup.password_placeholder')}
                     />
                   </div>
                   <p
@@ -272,13 +274,13 @@ export default function SignUpPage() {
                     data-testid='signup-password-hint'
                     className='text-xs text-muted-foreground'
                   >
-                    비밀번호는 최소 6자 이상이어야 합니다.
+                    {t('signup.password_hint')}
                   </p>
                 </div>
 
                 <div className='space-y-2'>
                   <Label htmlFor='signup-confirm-password'>
-                    비밀번호 확인
+                    {t('signup.password_confirm')}
                   </Label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground' />
@@ -290,7 +292,7 @@ export default function SignUpPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className='pl-10'
-                      placeholder='비밀번호를 다시 입력하세요'
+                      placeholder={t('signup.password_confirm_placeholder')}
                     />
                   </div>
                   {confirmPassword && password !== confirmPassword && (
@@ -299,7 +301,7 @@ export default function SignUpPage() {
                       data-testid='signup-password-mismatch'
                       className='text-xs text-destructive'
                     >
-                      비밀번호가 일치하지 않습니다.
+                      {t('signup.password_mismatch')}
                     </p>
                   )}
                 </div>
@@ -318,12 +320,12 @@ export default function SignUpPage() {
                         data-testid='signup-submit-loading'
                         className='h-5 w-5 animate-spin'
                       />
-                      처리 중...
+                      {t('common.processing')}
                     </>
                   ) : (
                     <>
                       <UserPlus className='h-5 w-5' />
-                      회원가입
+                      {t('signup.submit')}
                     </>
                   )}
                 </Button>
@@ -331,14 +333,14 @@ export default function SignUpPage() {
 
               <CardFooter className='justify-center border-t border-border'>
                 <p className='text-sm text-muted-foreground'>
-                  이미 계정이 있나요?{' '}
+                  {t('auth.has_account')}{' '}
                   <a
                     id='signup-login-link'
                     data-testid='signup-login-link'
                     href='/login'
                     className='text-primary hover:text-primary/80 font-medium'
                   >
-                    로그인
+                    {t('auth.sign_in')}
                   </a>
                 </p>
               </CardFooter>

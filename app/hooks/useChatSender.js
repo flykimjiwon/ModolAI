@@ -2,24 +2,26 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import { sendChatMessage, saveMessageToHistory } from '@/lib/api';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // 사용자 질문 길이 검증
 const DEFAULT_MAX_USER_QUESTION_LENGTH = 300000;
 function validateUserQuestion(
   userPrompt,
-  maxLength = DEFAULT_MAX_USER_QUESTION_LENGTH
+  maxLength = DEFAULT_MAX_USER_QUESTION_LENGTH,
+  t
 ) {
   if (!userPrompt || typeof userPrompt !== 'string') {
     return {
       valid: false,
-      error: '질문을 입력해주세요.',
+      error: t('chat_sender.enter_question'),
     };
   }
 
   if (userPrompt.length > maxLength) {
     return {
       valid: false,
-      error: `질문이 너무 깁니다. 최대 ${maxLength.toLocaleString()}자까지 입력 가능합니다. (현재: ${userPrompt.length.toLocaleString()}자)`,
+      error: t('chat_sender.question_too_long', { maxLength: maxLength.toLocaleString(), currentLength: userPrompt.length.toLocaleString() }),
     };
   }
   return { valid: true };
@@ -61,15 +63,15 @@ function extractStreamDelta(parsed) {
   return '';
 }
 
-function toUserFriendlyError(message = '') {
+function toUserFriendlyError(message = '', t) {
   const lower = message.toLowerCase();
   if (lower.includes('insufficient_quota') || lower.includes('exceeded your current quota')) {
-    return '일시적 한도 초과로 응답을 받을 수 없어요. 잠시 후 다시 시도해 주세요.';
+    return t('chat_sender.quota_exceeded');
   }
   if (lower.includes('rate_limit') || lower.includes('too many requests') || lower.includes('http 429')) {
-    return '요청이 몰려 잠시 제한됐어요. 잠시 후 다시 시도해 주세요.';
+    return t('chat_sender.rate_limited');
   }
-  return message || '일시적으로 처리할 수 없어요. 잠시 후 다시 시도해 주세요.';
+  return message || t('chat_sender.temporary_error');
 }
 
 async function consumeStreamResponse(res) {
@@ -173,6 +175,7 @@ export function useChatSender({
 }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const abortControllerRef = useRef(null);
   const lastSubmitTime = useRef(0);
@@ -288,7 +291,8 @@ export function useChatSender({
                   const parsed = JSON.parse(data);
                   if (parsed?.error) {
                     streamErrorMessage = toUserFriendlyError(
-                      parsed.error?.message || '요청에 실패했습니다.'
+                      parsed.error?.message || t('chat_sender.request_failed'),
+                      t
                     );
                     break;
                   }
@@ -393,7 +397,7 @@ export function useChatSender({
         }
 
         if (streamErrorMessage) {
-          const errorText = '🐣 요청 안내: ' + streamErrorMessage;
+          const errorText = t('chat_sender.request_notice', { message: streamErrorMessage });
           setMessages((prev) => {
             const copy = [...prev];
             const idx = assistantIdxRef.current;
@@ -643,7 +647,7 @@ export function useChatSender({
             if (copy[idx]) {
               copy[idx] = {
                 ...copy[idx],
-                text: '🐣 응답을 받지 못했어요. 잠시 후 다시 시도해 주세요.',
+                text: t('chat_sender.no_response'),
                 isTyping: false,
               };
             }
@@ -661,7 +665,7 @@ export function useChatSender({
             if (copy[assistantIdxRef.current]) {
               copy[assistantIdxRef.current] = {
                 ...copy[assistantIdxRef.current],
-                text: copy[assistantIdxRef.current].text + '\n⚡ 응답 중단',
+                text: copy[assistantIdxRef.current].text + '\n' + t('chat_sender.response_stopped'),
                 roomId: currentRoom,
               };
             }
@@ -718,8 +722,8 @@ export function useChatSender({
             );
           }
 
-          const displayMessage = toUserFriendlyError(normalizedMessage);
-          const errorText = '🐣 요청 안내: ' + displayMessage;
+          const displayMessage = toUserFriendlyError(normalizedMessage, t);
+          const errorText = t('chat_sender.request_notice', { message: displayMessage });
           setMessages((prev) => {
             const copy = [...prev];
             copy[assistantIdxRef.current] = {
@@ -755,6 +759,7 @@ export function useChatSender({
       rooms,
       loadRooms,
       inputRef,
+      t,
     ]
   );
 
@@ -764,7 +769,7 @@ export function useChatSender({
       const hasImages = Array.isArray(selectedImages) && selectedImages.length > 0;
       if (!userQuestion && hasImages) {
         userQuestion =
-          imageAnalysisPrompt?.trim() || '이 이미지를 설명해줘.';
+          imageAnalysisPrompt?.trim() || t('chat.image_analysis_prompt');
       }
       if (!userQuestion || !currentRoom || loading) return;
       if (Date.now() - lastSubmitTime.current < 300) return;
@@ -780,8 +785,7 @@ export function useChatSender({
         Number.parseInt(modelInfoForLimit?.multiturnLimit, 10) || null;
 
       if (hasImages && !analysisModel) {
-        const errorMsg =
-          '이미지 분석 모델이 설정되지 않았습니다. 관리자 설정에서 모델을 선택해주세요.';
+        const errorMsg = t('chat_sender.image_model_not_set');
         alert(errorMsg);
         return;
       }
@@ -792,14 +796,15 @@ export function useChatSender({
 
       if (modelsLoading || !responseModel) {
         const errorMsg = modelsLoading
-          ? '모델을 로딩 중입니다. 잠시 후 다시 시도해주세요.'
-          : '모델을 선택해주세요.';
+          ? t('chat_sender.model_loading')
+          : t('chat_sender.select_model');
         alert(errorMsg);
         return;
       }
       const userValidation = validateUserQuestion(
         userQuestion,
-        maxUserQuestionLength
+        maxUserQuestionLength,
+        t
       );
       if (!userValidation.valid) {
         alert(userValidation.error);
@@ -942,7 +947,7 @@ export function useChatSender({
           userMsg,
           {
             role: 'assistant',
-            text: '⚠️ 개인정보가 탐지되었습니다. 필터링된 정보를 복사 후 재 질문 해주세요.',
+            text: t('chat_sender.pii_detected'),
             roomId: currentRoom,
           },
         ]);
@@ -980,7 +985,7 @@ export function useChatSender({
           if (hasImages && analysisModel && shouldUseAnalysisOnly) {
             try {
               const analysisQuestion =
-                imageAnalysisPrompt?.trim() || '이 이미지를 설명해줘.';
+                imageAnalysisPrompt?.trim() || t('chat.image_analysis_prompt');
               const analysisPayload = {
                 model: analysisModel,
                 question: analysisQuestion,
@@ -1067,6 +1072,7 @@ export function useChatSender({
       clientIP,
       setMessages,
       performAPICall,
+      t,
     ]
   );
 

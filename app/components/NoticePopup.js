@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { X, Eye, Bell } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NoticePopup({ target = 'main', initialNotice = null }) {
   const [notice, setNotice] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { t, lang } = useTranslation();
 
   // 모달이 열릴 때 body 스크롤 방지
   useEffect(() => {
@@ -162,7 +164,8 @@ export default function NoticePopup({ target = 'main', initialNotice = null }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
+    const locale = lang === 'en' ? 'en-US' : 'ko-KR';
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -199,14 +202,14 @@ export default function NoticePopup({ target = 'main', initialNotice = null }) {
           <div className='flex items-center gap-2'>
             <Bell className='h-5 w-5 text-primary' />
             <h3 className='text-lg font-semibold text-foreground'>
-              공지사항
+              {t('notice.title')}
             </h3>
           </div>
           <Button
             variant='ghost'
             size='icon-sm'
             onClick={closePopup}
-            title='닫기'
+            title={t('notice.close')}
           >
             <X className='h-5 w-5' />
           </Button>
@@ -239,14 +242,14 @@ export default function NoticePopup({ target = 'main', initialNotice = null }) {
                 size='xs'
                 onClick={hideForOneDay}
               >
-                하루 안보기
+                {t('notice.hide_one_day')}
               </Button>
               <Button
                 variant='outline'
                 size='xs'
                 onClick={hidePermanently}
               >
-                계속 안보기
+                {t('notice.hide_permanently')}
               </Button>
             </div>
 
@@ -256,14 +259,14 @@ export default function NoticePopup({ target = 'main', initialNotice = null }) {
                 size='sm'
                 onClick={closePopup}
               >
-                닫기
+                {t('notice.close')}
               </Button>
               <Button
                 size='sm'
                 onClick={goToDetail}
               >
                 <Eye className='h-4 w-4' />
-                자세히 보기
+                {t('notice.detail')}
               </Button>
             </div>
           </div>

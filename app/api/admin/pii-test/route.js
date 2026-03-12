@@ -4,60 +4,7 @@ import { verifyAdminWithResult } from '@/lib/auth';
 import { getClientIP } from '@/lib/ip';
 import { detectAndMaskPII } from '@/lib/piiFilter';
 
-const REMOTE_FAILURE_REASONS = new Set([
-  'missing-endpoint',
-  'http-error',
-  'fetch-failed',
-  'invalid-json',
-]);
-
-function parseMaybeJson(value) {
-  if (!value) return null;
-  if (typeof value === 'object') return value;
-  if (typeof value !== 'string') return value;
-
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
-function buildFailureMessage(result) {
-  switch (result?.reason) {
-    case 'missing-endpoint':
-      return 'PII endpoint is empty. Check env var (PII_DETECT_API_URL) or the entered endpoint.';
-    case 'http-error':
-      return `PII API returned HTTP ${result?.statusCode ?? 'error'}. Check response body/headers.`;
-    case 'fetch-failed':
-      return `PII API network call failed: ${
-        result?.errorMessage || 'Unknown network error'
-      }`;
-    case 'invalid-json':
-      return 'PII API response is not valid JSON. Check rawResponse and response headers.';
-    default:
-      return result?.reason
-        ? `PII API call failed (${result.reason})`
-        : 'PII API call failed';
-  }
-}
-
-function buildSuccessMessage(result) {
-  if (result?.skipped) {
-    if (result.reason === 'empty-text') {
-      return 'Input text is empty, so validation was skipped.';
-    }
-    return `PII filter was skipped due to ${result?.reason || 'unknown'}, so the original text was used.`;
-  }
-
-  if (result?.detected) {
-    return `Detected ${result?.detectedCnt || 0} PII item(s) and returned a masked result.`;
-  }
-
-  return 'No PII was detected, so the original text was kept.';
-}
-
-async function findLatestPiiTestLog({ userId, endpoint, startedAt }) {
+async function findLatestPiiTestLog({ userId, startedAt }) {
   try {
     const whereConditions = [
       "api_type = 'pii-detect'",
@@ -69,11 +16,6 @@ async function findLatestPiiTestLog({ userId, endpoint, startedAt }) {
     if (userId) {
       whereConditions.push(`user_id = $${params.length + 1}`);
       params.push(userId);
-    }
-
-    if (endpoint) {
-      whereConditions.push(`endpoint = $${params.length + 1}`);
-      params.push(endpoint);
     }
 
     const result = await query(
@@ -103,6 +45,17 @@ async function findLatestPiiTestLog({ userId, endpoint, startedAt }) {
 
     const row = result.rows[0];
     if (!row) return null;
+
+    const parseMaybeJson = (value) => {
+      if (!value) return null;
+      if (typeof value === 'object') return value;
+      if (typeof value !== 'string') return value;
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    };
 
     return {
       id: row.id,
@@ -153,22 +106,14 @@ export async function POST(request) {
   try {
     const body = await request.json().catch(() => ({}));
     const text = typeof body.text === 'string' ? body.text : '';
-    const endpoint =
-      typeof body.endpoint === 'string' && body.endpoint.trim()
-        ? body.endpoint.trim()
-        : process.env.PII_DETECT_API_URL;
-    const txtVrf =
-      body.txtVrf !== undefined ? body.txtVrf !== false : body.mxtVrf !== false;
-    const maskOpt = body.maskOpt !== false;
+    const enabledTypes = Array.isArray(body.enabledTypes) ? body.enabledTypes : null;
     const requestStartedAt = Date.now();
     const userId = authResult.user?.sub || authResult.user?.id || null;
 
     const result = await detectAndMaskPII(
       text,
       {
-        mxtVrf: txtVrf,
-        maskOpt,
-        endpoint,
+        enabledTypes,
       },
       {
         model: 'admin-pii-test',
@@ -190,47 +135,28 @@ export async function POST(request) {
 
     const log = await findLatestPiiTestLog({
       userId,
-      endpoint,
       startedAt: new Date(requestStartedAt - 60000),
     });
 
-    const isRemoteFailure =
-      result?.skipped === true && REMOTE_FAILURE_REASONS.has(result.reason);
-    const success = !isRemoteFailure;
-    const reasonMessage = success
-      ? buildSuccessMessage(result)
-      : buildFailureMessage(result);
-
-    const statusCode =
-      result?.statusCode ??
-      (log && typeof log.statusCode === 'number' ? log.statusCode : null);
-
     return NextResponse.json(
       {
-        success,
-        endpoint,
-        request: {
-          original_text: text,
-          mxt_vrf: txtVrf,
-          mask_opt: maskOpt,
+        success: true,
+        result: {
+          detected: result?.detected || false,
+          maskedText: result?.maskedText || text,
+          detectedList: result?.detectedList || [],
+          detectedCnt: result?.detectedCnt || 0,
+          skipped: result?.skipped || false,
+          reason: result?.reason || null,
         },
         diagnostics: {
-          verdict: success ? 'success' : 'failure',
-          reasonCode: result?.reason || null,
-          reasonMessage,
-          statusCode,
-          statusText: result?.statusText || null,
           durationMs: requestEndedAt - requestStartedAt,
           startedAt: new Date(requestStartedAt).toISOString(),
           finishedAt: new Date(requestEndedAt).toISOString(),
-          endpointSource:
-            typeof body.endpoint === 'string' && body.endpoint.trim()
-              ? 'custom-input'
-              : 'env-default',
+          source: 'local-regex',
         },
-        result,
         log,
-        error: success ? null : reasonMessage,
+        error: null,
       },
       { status: 200 }
     );

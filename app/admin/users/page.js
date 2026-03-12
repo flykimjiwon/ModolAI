@@ -27,9 +27,11 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UsersPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,11 +68,11 @@ export default function UsersPage() {
           `${department}|${auth_type}`,
           auth_type === 'sso'
             ? `${department.replaceAll('부서', '그룹')}(SSO)`
-            : `${department.replaceAll('부서', '그룹')}(일반)`
+            : `${department.replaceAll('부서', '그룹')}(${t('admin_users.auth_local')})`
         );
         });
         DEFAULT_DEPTS.forEach((dept) => {
-          if (!seen.has(`${dept}|local`)) seen.set(`${dept}|local`, `${dept}(일반)`);
+          if (!seen.has(`${dept}|local`)) seen.set(`${dept}|local`, `${dept}(${t('admin_users.auth_local')})`);
         });
         setDepartments(
           Array.from(seen.entries())
@@ -82,7 +84,7 @@ export default function UsersPage() {
       setDepartments(
         DEFAULT_DEPTS.map((d) => ({
           value: `${d}|local`,
-          label: `${d.replaceAll('부서', '그룹')}(일반)`,
+          label: `${d.replaceAll('부서', '그룹')}(${t('admin_users.auth_local')})`,
         }))
       );
       });
@@ -110,7 +112,7 @@ export default function UsersPage() {
       });
 
       if (!response.ok) {
-        throw new Error('사용자 데이터 조회 실패');
+        throw new Error(t('admin_users.fetch_data_error'));
       }
 
       const data = await response.json();
@@ -118,8 +120,8 @@ export default function UsersPage() {
       setTotalPages(data.pagination.totalPages);
       setTotalCount(data.pagination.totalCount);
     } catch (error) {
-      console.error('사용자 조회 실패:', error);
-      alert('사용자 데이터를 불러오는데 실패했습니다.', 'error', '조회 실패');
+      console.error(t('admin_users.fetch_data_error'), error);
+      alert(t('admin_users.fetch_data_failed'), 'error', t('admin.fetch_error'));
     } finally {
       setLoading(false);
     }
@@ -130,6 +132,7 @@ export default function UsersPage() {
     deptFilter,
     selectedRole,
     alert,
+    t,
   ]);
 
   const updateUserRole = async (userId, newRole) => {
@@ -147,18 +150,18 @@ export default function UsersPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || '역할 변경 실패');
+        throw new Error(result.error || t('admin_users.role_change_error'));
       }
 
       fetchUsers();
       alert(
-        result.message || `사용자 역할이 ${newRole}으로 변경되었습니다.`,
+        result.message || t('admin.role_changed', { role: newRole }),
         'success',
-        '변경 완료'
+        t('admin.change_complete')
       );
     } catch (error) {
-      console.error('역할 변경 실패:', error);
-      alert(error.message || '역할 변경에 실패했습니다.', 'error', '변경 실패');
+      console.error(t('admin_users.role_change_error'), error);
+      alert(error.message || t('admin.role_change_failed'), 'error', t('admin.change_failed'));
     }
   };
 
@@ -167,7 +170,7 @@ export default function UsersPage() {
     setEditForm({
       name: user.name || '',
       department: user.department || '',
-      cell: user.employeePositionName || '프로',
+      cell: user.employeePositionName || t('admin_users.default_position'),
     });
     setShowEditModal(true);
   };
@@ -192,31 +195,31 @@ export default function UsersPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || '사용자 정보 수정 실패');
+        throw new Error(result.error || t('admin_users.update_profile_error'));
       }
 
       fetchUsers();
       setShowEditModal(false);
       setEditingUser(null);
       alert(
-        result.message || '사용자 정보가 수정되었습니다.',
+        result.message || t('admin.user_updated'),
         'success',
-        '수정 완료'
+        t('admin.update_complete')
       );
     } catch (error) {
-      console.error('사용자 정보 수정 실패:', error);
+      console.error(t('admin_users.update_profile_error'), error);
       alert(
-        error.message || '사용자 정보 수정에 실패했습니다.',
+        error.message || t('admin.user_update_failed'),
         'error',
-        '수정 실패'
+        t('admin.update_failed')
       );
     }
   };
 
   const deleteUser = async (userId, userEmail) => {
     const confirmed = await confirm(
-      `${userEmail} 사용자를 정말 삭제하시겠습니까?`,
-      '사용자 삭제 확인'
+      t('admin.user_delete_confirm', { email: userEmail }),
+      t('admin_users.delete_confirm_title')
     );
     if (!confirmed) {
       return;
@@ -235,21 +238,21 @@ export default function UsersPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || '사용자 삭제 실패');
+        throw new Error(result.error || t('admin_users.delete_error'));
       }
 
       fetchUsers();
       alert(
-        result.message || '사용자가 삭제되었습니다.',
+        result.message || t('admin.user_deleted'),
         'success',
-        '삭제 완료'
+        t('admin.delete_complete')
       );
     } catch (error) {
-      console.error('사용자 삭제 실패:', error);
+      console.error(t('admin_users.delete_error'), error);
       alert(
-        error.message || '사용자 삭제에 실패했습니다.',
+        error.message || t('admin.user_delete_failed'),
         'error',
-        '삭제 실패'
+        t('admin.delete_failed')
       );
     }
   };
@@ -311,9 +314,9 @@ export default function UsersPage() {
 
   const getRoleBadge = (role) => {
     if (role === 'admin') {
-      return <Badge variant='destructive'>관리자</Badge>;
+      return <Badge variant='destructive'>{t('admin_users.admin_badge')}</Badge>;
     }
-    return <Badge variant='secondary'>일반</Badge>;
+    return <Badge variant='secondary'>{t('admin_users.user_badge')}</Badge>;
   };
 
   return (
@@ -323,18 +326,18 @@ export default function UsersPage() {
           <div>
             <h1 className='text-2xl font-bold text-foreground flex items-center gap-2'>
               <Users className='h-6 w-6' />
-              사용자 관리
+              {t('admin.users')}
             </h1>
             <p className='text-muted-foreground mt-1'>
-              시스템 사용자를 조회하고 관리합니다.
+              {t('admin.users_subtitle')}
             </p>
           </div>
           <div className='text-right'>
             <div className='text-2xl font-bold text-primary'>
-              {totalCount.toLocaleString()}명
+              {t('admin_users.count_suffix', { count: totalCount.toLocaleString() })}
             </div>
             <div className='text-sm text-muted-foreground'>
-              총 회원수
+              {t('admin.total_users')}
             </div>
           </div>
         </div>
@@ -347,7 +350,7 @@ export default function UsersPage() {
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
               <Input
                 type='text'
-                placeholder='이름, 이메일로 검색...'
+                placeholder={t('admin.search_users')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className='pl-10'
@@ -359,7 +362,7 @@ export default function UsersPage() {
               onChange={(e) => { setDeptFilter(e.target.value); setCurrentPage(1); }}
               className='px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground'
             >
-                      <option value=''>모든 그룹</option>
+                      <option value=''>{t('admin.all_groups')}</option>
               {departments.map((dept) => (
                 <option key={dept.value} value={dept.value}>
                   {dept.label}
@@ -372,9 +375,9 @@ export default function UsersPage() {
               onChange={(e) => setSelectedRole(e.target.value)}
               className='px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground'
             >
-              <option value=''>모든 역할</option>
-              <option value='user'>일반사용자</option>
-              <option value='admin'>관리자</option>
+              <option value=''>{t('admin.all_roles')}</option>
+              <option value='user'>{t('common.user')}</option>
+              <option value='admin'>{t('common.admin')}</option>
             </select>
 
             <select
@@ -382,20 +385,17 @@ export default function UsersPage() {
               onChange={(e) => setPageSize(parseInt(e.target.value))}
               className='px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground min-w-[120px]'
             >
-              <option value={10}>10명씩 보기</option>
-              <option value={20}>20명씩 보기</option>
-              <option value={50}>50명씩 보기</option>
+              <option value={10}>{t('admin.items_10')}</option>
+              <option value={20}>{t('admin.items_20')}</option>
+              <option value={50}>{t('admin.items_50')}</option>
             </select>
           </div>
 
           <div className='flex items-center justify-between text-sm text-muted-foreground border-t border-border pt-3'>
             <div>
-              전체 {totalCount.toLocaleString()}명 중{' '}
-              {((currentPage - 1) * pageSize + 1).toLocaleString()}~
-              {Math.min(currentPage * pageSize, totalCount).toLocaleString()}명
-              표시
+              {t('admin.showing_users', { total: totalCount.toLocaleString(), start: ((currentPage - 1) * pageSize + 1).toLocaleString(), end: Math.min(currentPage * pageSize, totalCount).toLocaleString() })}
             </div>
-            <div>{totalPages > 0 && `${currentPage}/${totalPages} 페이지`}</div>
+            <div>{totalPages > 0 && t('admin.page_info', { current: currentPage, total: totalPages })}</div>
           </div>
         </div>
       </div>
@@ -409,45 +409,45 @@ export default function UsersPage() {
           <div className='text-center py-12'>
             <Users className='mx-auto h-12 w-12 text-muted-foreground' />
             <h3 className='mt-2 text-sm font-medium text-foreground'>
-              사용자가 없습니다
+              {t('admin_users.no_users')}
             </h3>
             <p className='mt-1 text-sm text-muted-foreground'>
-              검색 조건을 변경해보세요.
+              {t('admin_users.change_search_hint')}
             </p>
           </div>
         ) : (
           <>
             <div className='bg-muted px-6 py-3 border-b border-border'>
               <div className='grid grid-cols-18 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[1200px]'>
-                <div className='col-span-4'>사용자 정보</div>
-                    <div className='col-span-2'>그룹</div>
-                <div className='col-span-2'>직급</div>
-                <div className='col-span-1'>역할</div>
-                <div className='col-span-2'>로그인타입</div>
-                <div className='col-span-2'>가입일</div>
+                <div className='col-span-4'>{t('admin_users.col_user_info')}</div>
+                    <div className='col-span-2'>{t('admin_users.col_group')}</div>
+                <div className='col-span-2'>{t('admin_users.col_position')}</div>
+                <div className='col-span-1'>{t('admin_users.col_role')}</div>
+                <div className='col-span-2'>{t('admin_users.col_login_type')}</div>
+                <div className='col-span-2'>{t('admin_users.col_join_date')}</div>
                 <div className='col-span-3 flex items-center gap-1'>
-                  <span>마지막 접속 / 활동</span>
+                  <span>{t('admin_users.col_last_access')}</span>
                   <div className='relative group'>
                     <HelpCircle className='w-3 h-3 text-muted-foreground cursor-help' />
                     <div className='pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-lg bg-slate-900 text-white text-[11px] px-3 py-2 opacity-0 group-hover:opacity-100 z-20 shadow-lg leading-relaxed'>
-                      <p className='font-semibold mb-1 text-slate-200'>기록 방식</p>
+                      <p className='font-semibold mb-1 text-slate-200'>{t('admin_users.tooltip_record_method')}</p>
                       <p className='mb-1'>
-                        <span className='text-sky-300 font-medium'>활동</span>
-                        {' '}— 채팅 메시지 전송 시 기록
+                        <span className='text-sky-300 font-medium'>{t('admin_users.tooltip_activity')}</span>
+                        {' '}{t('admin_users.tooltip_activity_desc')}
                         <br />
-                        <span className='text-slate-400'>동일 사용자 10분 이내 중복 미기록</span>
+                        <span className='text-slate-400'>{t('admin_users.tooltip_activity_dedup')}</span>
                       </p>
                       <p>
-                            <span className='text-primary font-medium'>로그인</span>
-                        {' '}— 로그인 성공 시마다 기록
+                            <span className='text-primary font-medium'>{t('admin_users.tooltip_login')}</span>
+                        {' '}{t('admin_users.tooltip_login_desc')}
                       </p>
                       <p className='mt-1 text-slate-400 border-t border-slate-700 pt-1'>
-                        표시 우선순위: 활동 {'>'} 로그인
+                        {t('admin_users.tooltip_priority')}
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className='col-span-2'>작업</div>
+                <div className='col-span-2'>{t('admin_users.col_actions')}</div>
               </div>
             </div>
 
@@ -457,7 +457,7 @@ export default function UsersPage() {
                   key={user._id}
                   className='px-6 py-4 hover:bg-accent cursor-pointer transition-colors duration-150'
                   onDoubleClick={() => handleDoubleClick(user)}
-                  title='더블 클릭하여 상세 정보 보기'
+                  title={t('admin_users.double_click_hint')}
                 >
                   <div className='grid grid-cols-18 gap-4 items-center min-w-[1200px]'>
                     <div className='col-span-4'>
@@ -470,7 +470,7 @@ export default function UsersPage() {
                         </div>
                         <div className='ml-3 min-w-0 flex-1'>
                           <div className='text-sm font-medium text-foreground'>
-                            {user.name || '이름 없음'}
+                            {user.name || t('auth.no_name')}
                             {user.authType === 'sso' && user.employeeNo && (
                               <span className='text-muted-foreground font-normal ml-1'>
                                 ({user.employeeNo})
@@ -489,7 +489,7 @@ export default function UsersPage() {
                       <div className='flex items-center text-sm text-foreground'>
                         <Building className='h-4 w-4 mr-1 text-muted-foreground flex-shrink-0' />
                             <span className='truncate'>
-                              {user.department?.replaceAll('부서', '그룹') || '미설정'}
+                              {user.department?.replaceAll('부서', '그룹') || t('admin_users.not_set')}
                             </span>
                       </div>
                     </div>
@@ -504,7 +504,7 @@ export default function UsersPage() {
 
                     <div className='col-span-2'>
                       <Badge variant={user.authType === 'sso' ? 'default' : 'secondary'}>
-                        {user.authType === 'sso' ? 'SSO' : '일반'}
+                        {user.authType === 'sso' ? 'SSO' : t('admin_users.auth_local')}
                       </Badge>
                     </div>
 
@@ -521,19 +521,19 @@ export default function UsersPage() {
                       <div className='inline-flex flex-col text-sm text-muted-foreground gap-0.5'>
                         {user.lastActiveAt ? (
                           <span>
-                            <span className='text-[10px] text-sky-500 mr-1'>활동</span>
+                            <span className='text-[10px] text-sky-500 mr-1'>{t('admin_users.activity_label')}</span>
                             {formatDate(user.lastActiveAt)}
                           </span>
                         ) : (
-                          <span className='text-muted-foreground text-xs'>활동 기록 없음</span>
+                          <span className='text-muted-foreground text-xs'>{t('admin_users.no_activity')}</span>
                         )}
                         {user.lastLoginAt ? (
                           <span>
-                            <span className='text-[10px] text-primary mr-1'>로그인</span>
+                            <span className='text-[10px] text-primary mr-1'>{t('admin_users.login_label')}</span>
                             {formatDate(user.lastLoginAt)}
                           </span>
                         ) : (
-                          <span className='text-muted-foreground text-xs'>로그인 기록 없음</span>
+                          <span className='text-muted-foreground text-xs'>{t('admin_users.no_login')}</span>
                         )}
                       </div>
                     </div>
@@ -545,7 +545,7 @@ export default function UsersPage() {
                           size='icon-sm'
                           onClick={() => openEditModal(user)}
                           className='text-primary hover:text-primary hover:bg-primary/10'
-                          title='사용자 정보 수정'
+                          title={t('admin_users.edit_user')}
                         >
                           <Edit2 className='h-4 w-4' />
                         </Button>
@@ -556,7 +556,7 @@ export default function UsersPage() {
                             size='icon-sm'
                             onClick={() => updateUserRole(user._id, 'user')}
                             className='text-muted-foreground hover:text-foreground hover:bg-accent'
-                            title='관리자 권한 해제'
+                            title={t('admin_users.revoke_admin')}
                           >
                             <UserX className='h-4 w-4' />
                           </Button>
@@ -566,7 +566,7 @@ export default function UsersPage() {
                             size='icon-sm'
                             onClick={() => updateUserRole(user._id, 'admin')}
                             className='text-primary hover:text-primary hover:bg-primary/10'
-                            title='관리자 권한 부여'
+                            title={t('admin_users.grant_admin')}
                           >
                             <UserCheck className='h-4 w-4' />
                           </Button>
@@ -577,7 +577,7 @@ export default function UsersPage() {
                           size='icon-sm'
                           onClick={() => deleteUser(user._id, user.email)}
                           className='text-destructive hover:text-destructive hover:bg-destructive/10'
-                          title='사용자 삭제'
+                          title={t('admin_users.delete_user')}
                         >
                           <Trash2 className='h-4 w-4' />
                         </Button>
@@ -599,7 +599,7 @@ export default function UsersPage() {
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
-            이전
+            {t('common.previous')}
           </Button>
 
           <span className='px-4 py-2 text-sm font-medium text-foreground'>
@@ -614,7 +614,7 @@ export default function UsersPage() {
             }
             disabled={currentPage === totalPages}
           >
-            다음
+            {t('common.next')}
           </Button>
         </div>
       )}
@@ -622,12 +622,12 @@ export default function UsersPage() {
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className='sm:max-w-lg lg:max-w-2xl'>
           <DialogHeader>
-            <DialogTitle>사용자 정보 수정</DialogTitle>
+            <DialogTitle>{t('admin_users.edit_user')}</DialogTitle>
           </DialogHeader>
 
           <div className='space-y-4'>
             <div>
-              <Label className='mb-1'>이메일</Label>
+              <Label className='mb-1'>{t('auth.email')}</Label>
               <Input
                 type='email'
                 value={editingUser?.email || ''}
@@ -637,38 +637,38 @@ export default function UsersPage() {
             </div>
 
             <div>
-              <Label className='mb-1'>이름</Label>
+              <Label className='mb-1'>{t('admin_users.name_label')}</Label>
               <Input
                 type='text'
                 value={editForm.name}
                 onChange={(e) =>
                   setEditForm({ ...editForm, name: e.target.value })
                 }
-                placeholder='이름을 입력하세요'
+                placeholder={t('admin_users.name_placeholder')}
               />
             </div>
 
             <div>
-                      <Label className='mb-1'>그룹</Label>
+                      <Label className='mb-1'>{t('admin_users.group_label')}</Label>
               <Input
                 type='text'
                 value={editForm.department}
                 onChange={(e) =>
                   setEditForm({ ...editForm, department: e.target.value })
                 }
-                            placeholder='그룹을 입력하세요'
+                            placeholder={t('admin_users.group_placeholder')}
               />
             </div>
 
             <div>
-              <Label className='mb-1'>직급</Label>
+              <Label className='mb-1'>{t('admin_users.position_label')}</Label>
               <Input
                 type='text'
                 value={editForm.cell}
                 onChange={(e) =>
                   setEditForm({ ...editForm, cell: e.target.value })
                 }
-                placeholder='예: 프로, 팀장'
+                placeholder={t('admin_users.position_placeholder')}
               />
             </div>
           </div>
@@ -678,10 +678,10 @@ export default function UsersPage() {
               variant='outline'
               onClick={() => setShowEditModal(false)}
             >
-              취소
+              {t('common.cancel')}
             </Button>
             <Button onClick={updateUser}>
-              저장
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

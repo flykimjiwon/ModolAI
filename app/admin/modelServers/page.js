@@ -19,9 +19,11 @@ import {
   Check,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function ModelServersPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [modelServers, setmodelServers] = useState([]);
   const [realTimeStatus, setRealTimeStatus] = useState([]); // 실시간 상태
   const [serverStatusLoading, setServerStatusLoading] = useState({}); // 각 서버별 로딩 상태
@@ -56,7 +58,7 @@ export default function ModelServersPage() {
       }, 2000);
     } catch (err) {
       console.error('클립보드 복사 실패:', err);
-      alert('클립보드 복사에 실패했습니다.', 'error', '오류');
+      alert(t('admin_model_servers.clipboard_copy_failed'), 'error', t('common.error'));
     }
   };
 
@@ -260,16 +262,16 @@ export default function ModelServersPage() {
       const token = localStorage.getItem('token');
       if (!token) {
         alert(
-          '인증 토큰이 없습니다. 다시 로그인해 주세요.',
+          t('admin_model_servers.auth_token_missing'),
           'warning',
-          '인증 오류'
+          t('admin_model_servers.auth_error')
         );
         return;
       }
 
       const confirmed = await confirm(
-        `정말 이 endpoint의 모든 오류 이력을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`,
-        '오류 이력 전체 삭제 확인'
+        t('admin_model_servers.confirm_delete_all_errors_msg'),
+        t('admin_model_servers.confirm_delete_all_errors_title')
       );
 
       if (!confirmed) {
@@ -287,23 +289,23 @@ export default function ModelServersPage() {
       if (response.ok) {
         const data = await response.json();
         alert(
-          `오류 이력 ${data.deletedCount || 0}개가 삭제되었습니다.`,
+          t('admin_model_servers.errors_deleted', { count: data.deletedCount || 0 }),
           'success',
-          '삭제 완료'
+          t('admin_model_servers.delete_complete')
         );
         // 목록 새로고침
         await fetchErrorHistory(endpointUrl);
       } else {
         const errorData = await response.json().catch(() => ({}));
         alert(
-          errorData.error || '오류 이력 삭제에 실패했습니다.',
+          errorData.error || t('admin_model_servers.error_history_delete_failed'),
           'error',
-          '삭제 실패'
+          t('admin_model_servers.delete_failed')
         );
       }
     } catch (error) {
       console.error('오류 이력 삭제 실패:', error);
-      alert('오류 이력 삭제 중 오류가 발생했습니다.', 'error', '오류');
+      alert(t('admin_model_servers.error_history_delete_error'), 'error', t('common.error'));
     }
   };
 
@@ -401,9 +403,9 @@ export default function ModelServersPage() {
     const token = localStorage.getItem('token');
     if (!token) {
       alert(
-        '인증 토큰이 없습니다. 다시 로그인해 주세요.',
+        t('admin_model_servers.auth_token_missing'),
         'warning',
-        '인증 오류'
+        t('admin_model_servers.auth_error')
       );
       return false;
     }
@@ -435,9 +437,9 @@ export default function ModelServersPage() {
           const normalizedName = ep.name.trim().toLowerCase();
           if (seenNames.has(normalizedName)) {
             alert(
-              `중복된 Ollama 서버 이름입니다: ${ep.name}`,
+              t('admin_model_servers.duplicate_name_with_value', { name: ep.name }),
               'warning',
-              '중복 오류'
+              t('admin_model_servers.duplicate_error')
             );
             setSavingEndpoints(false);
             return false;
@@ -490,7 +492,7 @@ export default function ModelServersPage() {
         } catch (parseError) {
           console.error('에러 응답 파싱 실패:', parseError);
         }
-        throw new Error(err.error || 'Ollama 서버 저장 실패');
+        throw new Error(err.error || t('admin_model_servers.server_save_failed'));
       }
       setEndpoints(uniqueList);
       // 저장 후 모니터 즉시 갱신 요청
@@ -502,7 +504,7 @@ export default function ModelServersPage() {
       return true;
     } catch (e) {
       console.error(e);
-      alert(e.message, 'error', '저장 실패');
+      alert(e.message, 'error', t('admin_model_servers.save_failed'));
       return false;
     } finally {
       setSavingEndpoints(false);
@@ -514,11 +516,11 @@ export default function ModelServersPage() {
     const name = endpointNameInput.trim();
     const provider = 'ollama';
     if (!name) {
-      alert('Ollama 서버 이름을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_model_servers.enter_server_name'), 'warning', t('admin_model_servers.input_error'));
       return;
     }
     if (!value) {
-      alert('URL을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_model_servers.enter_url'), 'warning', t('admin_model_servers.input_error'));
       return;
     }
     let urlObj;
@@ -527,23 +529,23 @@ export default function ModelServersPage() {
     } catch (error) {
       console.warn('[Catch] 에러 발생:', error.message);
       alert(
-        '유효한 URL 형식이 아닙니다. 예: http://localhost:11434',
+        t('admin_model_servers.invalid_url'),
         'warning',
-        'URL 형식 오류'
+        t('admin_model_servers.url_format_error')
       );
       return;
     }
     if (!/^https?:$/.test(urlObj.protocol)) {
       alert(
-        'http 또는 https 프로토콜만 지원합니다.',
+        t('admin_model_servers.protocol_http_only'),
         'warning',
-        '프로토콜 오류'
+        t('admin_model_servers.protocol_error')
       );
       return;
     }
     // 포트 강제는 제거 (Ollama 기본 포트 예시는 안내로만 사용)
     if (endpoints.some((e) => e.url === value)) {
-      alert('이미 존재하는 Ollama 서버 URL입니다.', 'warning', '중복 오류');
+      alert(t('admin_model_servers.duplicate_url'), 'warning', t('admin_model_servers.duplicate_error'));
       return;
     }
     // 이름 중복 체크
@@ -553,7 +555,7 @@ export default function ModelServersPage() {
           e.name && e.name.trim().toLowerCase() === name.trim().toLowerCase()
       )
     ) {
-      alert('이미 존재하는 Ollama 서버 이름입니다.', 'warning', '중복 오류');
+      alert(t('admin_model_servers.duplicate_name'), 'warning', t('admin_model_servers.duplicate_error'));
       return;
     }
     const next = [
@@ -594,11 +596,11 @@ export default function ModelServersPage() {
     const urlText = (editingEndpoint.url || '').trim();
     const provider = 'ollama';
     if (!name) {
-      alert('Ollama 서버 이름이 없습니다.', 'warning', '입력 오류');
+      alert(t('admin_model_servers.server_name_missing'), 'warning', t('admin_model_servers.input_error'));
       return;
     }
     if (!urlText) {
-      alert('URL을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('admin_model_servers.enter_url'), 'warning', t('admin_model_servers.input_error'));
       return;
     }
     let urlObj;
@@ -607,17 +609,17 @@ export default function ModelServersPage() {
     } catch (error) {
       console.warn('[Catch] 에러 발생:', error.message);
       alert(
-        '유효한 URL 형식이 아닙니다. 예: http://localhost:11434',
+        t('admin_model_servers.invalid_url'),
         'warning',
-        'URL 형식 오류'
+        t('admin_model_servers.url_format_error')
       );
       return;
     }
     if (!/^https?:$/.test(urlObj.protocol)) {
       alert(
-        'http 또는 https 프로토콜만 지원합니다.',
+        t('admin_model_servers.protocol_http_only'),
         'warning',
-        '프로토콜 오류'
+        t('admin_model_servers.protocol_error')
       );
       return;
     }
@@ -628,7 +630,7 @@ export default function ModelServersPage() {
         (e) => e.url === urlText && e.url !== editingEndpoint.originalUrl
       )
     ) {
-      alert('이미 존재하는 Ollama 서버 URL입니다.', 'warning', '중복 오류');
+      alert(t('admin_model_servers.duplicate_url'), 'warning', t('admin_model_servers.duplicate_error'));
       return;
     }
     // 이름은 수정 불가이므로 중복 체크 불필요
@@ -707,10 +709,10 @@ export default function ModelServersPage() {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (days > 0) return `${days}일 ${hours % 24}시간`;
-    if (hours > 0) return `${hours}시간 ${minutes % 60}분`;
-    if (minutes > 0) return `${minutes}분`;
-    return `${seconds}초`;
+    if (days > 0) return t('admin_model_servers.uptime_days_hours', { days, hours: hours % 24 });
+    if (hours > 0) return t('admin_model_servers.uptime_hours_mins', { hours, minutes: minutes % 60 });
+    if (minutes > 0) return t('admin_model_servers.uptime_mins', { minutes });
+    return t('admin_model_servers.uptime_secs', { seconds });
   };
 
   const formatMemory = (bytes) => {
@@ -725,18 +727,18 @@ export default function ModelServersPage() {
         <div>
           <div className='flex items-center gap-3'>
             <h1 className='text-2xl font-bold text-foreground'>
-              Ollama 서버 관리
+              {t('admin_model_servers.title')}
             </h1>
             <button
               onClick={() => setShowHelpSection(!showHelpSection)}
               className='p-1 text-muted-foreground hover:text-foreground transition-colors'
-              title='도움말 보기'
+              title={t('admin_model_servers.show_help')}
             >
               <HelpCircle className='h-5 w-5' />
             </button>
           </div>
           <p className='text-muted-foreground mt-1'>
-            온프레미스 Ollama 서버 상태와 로그를 실시간으로 확인합니다.
+            {t('admin_model_servers.subtitle')}
           </p>
         </div>
         <div className='flex items-center gap-3'>
@@ -749,11 +751,11 @@ export default function ModelServersPage() {
             ></div>
             <span>
               {isPollingEnabled
-                ? '자동 새로고침 활성화'
-                : '자동 새로고침 비활성화'}
+                ? t('admin_model_servers.auto_refresh_on')
+                : t('admin_model_servers.auto_refresh_off')}
             </span>
             <span className='text-xs'>
-              마지막 업데이트:{' '}
+              {t('admin_model_servers.last_update')}{' '}
               {lastRefresh.toLocaleTimeString('ko-KR', {
                 timeZone: 'Asia/Seoul',
               })}
@@ -772,12 +774,12 @@ export default function ModelServersPage() {
             {isPollingEnabled ? (
               <>
                 <Pause className='h-3 w-3' />
-                중지
+                {t('admin_model_servers.stop')}
               </>
             ) : (
               <>
                 <Play className='h-3 w-3' />
-                시작
+                {t('admin_model_servers.start')}
               </>
             )}
           </button>
@@ -803,7 +805,7 @@ export default function ModelServersPage() {
                   : ''
               }`}
             />
-            모든 서버 새로고침
+            {t('admin_model_servers.refresh_all')}
           </button>
         </div>
       </div>
@@ -814,7 +816,7 @@ export default function ModelServersPage() {
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-semibold text-foreground flex items-center gap-2'>
               <Info className='h-5 w-5' />
-              Ollama 서버 관리 안내
+              {t('admin_model_servers.help_title')}
             </h3>
             <button
               onClick={() => setShowHelpSection(false)}
@@ -828,58 +830,58 @@ export default function ModelServersPage() {
             <div>
               <h4 className='font-semibold text-primary mb-2 flex items-center gap-2'>
                 <Server className='h-4 w-4' />
-                Ollama 서버 관리
+                {t('admin_model_servers.help_mgmt_title')}
               </h4>
               <ul className='space-y-1.5 text-primary'>
-                <li>• 온프레미스 Ollama 서버만 등록/관리합니다</li>
-                <li>• 로컬 개발/테스트 서버에서 LLM 테스트용으로 사용됩니다</li>
-                <li>• 등록된 Ollama 서버의 실시간 상태를 확인합니다</li>
-                <li>• 각 서버의 모델 개수, 응답 시간, 활성 상태 표시</li>
-                <li>• 서버 이름과 URL을 수정하거나 삭제할 수 있습니다</li>
+                <li>• {t('admin_model_servers.help_mgmt_item1')}</li>
+                <li>• {t('admin_model_servers.help_mgmt_item2')}</li>
+                <li>• {t('admin_model_servers.help_mgmt_item3')}</li>
+                <li>• {t('admin_model_servers.help_mgmt_item4')}</li>
+                <li>• {t('admin_model_servers.help_mgmt_item5')}</li>
               </ul>
             </div>
 
             <div>
               <h4 className='font-semibold text-primary mb-2 flex items-center gap-2'>
                 <Activity className='h-4 w-4' />
-                실시간 모니터링
+                {t('admin_model_servers.help_monitor_title')}
               </h4>
               <ul className='space-y-1.5 text-primary'>
                 <li>
-                  • <strong>자동 새로고침:</strong> 5분마다 상태 자동 업데이트
+                  • <strong>{t('admin_model_servers.help_monitor_auto_refresh')}:</strong> {t('admin_model_servers.help_monitor_auto_refresh_desc')}
                 </li>
                 <li>
                   •{' '}
                   <span className='inline-flex items-center gap-1'>
-                    <Activity className='h-3 w-3 text-primary' /> 녹색
+                    <Activity className='h-3 w-3 text-primary' /> {t('admin_model_servers.help_monitor_green')}
                   </span>{' '}
-                  정상 작동 중
+                  {t('admin_model_servers.help_monitor_green_desc')}
                 </li>
                 <li>
                   •{' '}
                   <span className='inline-flex items-center gap-1'>
-                    <Activity className='h-3 w-3 text-destructive' /> 빨간색
+                    <Activity className='h-3 w-3 text-destructive' /> {t('admin_model_servers.help_monitor_red')}
                   </span>{' '}
-                  오프라인 또는 오류
+                  {t('admin_model_servers.help_monitor_red_desc')}
                 </li>
-                <li>• 24시간 로그 개수로 Ollama 사용량 파악</li>
-                <li>• 각 Ollama 서버의 응답 시간(ms) 실시간 표시</li>
+                <li>• {t('admin_model_servers.help_monitor_24h_log')}</li>
+                <li>• {t('admin_model_servers.help_monitor_response_time')}</li>
               </ul>
             </div>
 
             <div>
               <h4 className='font-semibold text-primary mb-2 flex items-center gap-2'>
                 <Zap className='h-4 w-4' />
-                로컬 테스트용 API
+                {t('admin_model_servers.help_api_title')}
               </h4>
               <ul className='space-y-1.5 text-primary'>
                 <li>
-                  • <strong>통합 API:</strong> /api/model-servers/generate
+                  • <strong>{t('admin_model_servers.help_api_integrated')}:</strong> /api/model-servers/generate
                 </li>
-                <li>• 등록된 Ollama 서버 간 라운드로빈 로드밸런싱</li>
-                <li>• 스트리밍 및 일반 응답 모두 지원</li>
-                <li>• 로컬 개발/테스트에서만 사용 권장</li>
-                <li>• 외부 제공 API 연동은 별도 경로로 이관 예정</li>
+                <li>• {t('admin_model_servers.help_api_roundrobin')}</li>
+                <li>• {t('admin_model_servers.help_api_streaming')}</li>
+                <li>• {t('admin_model_servers.help_api_local_only')}</li>
+                <li>• {t('admin_model_servers.help_api_external_note')}</li>
               </ul>
             </div>
           </div>
@@ -892,7 +894,7 @@ export default function ModelServersPage() {
           <div className='flex items-center gap-2'>
             <Server className='h-5 w-5 text-primary' />
             <h2 className='text-lg font-semibold text-foreground'>
-              Ollama 서버 관리
+              {t('admin_model_servers.server_management')}
             </h2>
           </div>
           <button
@@ -906,7 +908,7 @@ export default function ModelServersPage() {
             className='px-2 py-1 text-sm text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground border border-border rounded-md hover:bg-accent transition-colors flex items-center gap-1'
           >
             <Edit className='h-3 w-3' />
-            추가
+            {t('admin_model_servers.add')}
           </button>
         </div>
 
@@ -915,7 +917,7 @@ export default function ModelServersPage() {
           <div className='mb-4'>
             <div className='mb-3 flex items-center justify-between'>
               <h3 className='text-sm font-semibold text-foreground'>
-                등록된 Ollama 서버 ({endpoints.length}개)
+                {t('admin_model_servers.registered_servers', { count: endpoints.length })}
               </h3>
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
@@ -1034,7 +1036,7 @@ export default function ModelServersPage() {
                     ? 'bg-primary'
                     : 'bg-destructive';
                 const statusText =
-                  isActive === null ? '조회중' : isActive ? '정상' : '오프라인';
+                  isActive === null ? t('admin_model_servers.status_checking') : isActive ? t('admin_model_servers.status_normal') : t('admin_model_servers.status_offline');
                 const statusIconColor =
                   isActive === null
                     ? 'text-muted-foreground'
@@ -1076,11 +1078,11 @@ export default function ModelServersPage() {
                                     : 'text-foreground'
                                 }`}
                               >
-                                {ep.name || '(이름 없음)'}
+                                {ep.name || t('admin_model_servers.no_name')}
                               </div>
                               {isInactive && (
                                 <span className='px-1.5 py-0.5 bg-muted text-muted-foreground text-[10px] font-medium rounded'>
-                                  비활성화
+                                  {t('admin_model_servers.inactive_badge')}
                                 </span>
                               )}
                             </div>
@@ -1126,7 +1128,7 @@ export default function ModelServersPage() {
                           }}
                           disabled={isServerLoading}
                           className='inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-                          title='상태 새로고침'
+                          title={t('admin_model_servers.refresh_status')}
                         >
                           <RefreshCw
                             className={`h-3 w-3 ${
@@ -1137,7 +1139,7 @@ export default function ModelServersPage() {
                         {modelCount > 0 && (
                           <span className='inline-flex items-center gap-1.5 px-2 py-1 bg-muted text-muted-foreground rounded'>
                             <Server className='h-3 w-3' />
-                            {modelCount}개 모델
+                            {t('admin_model_servers.model_count', { count: modelCount })}
                           </span>
                         )}
                         {responseTime !== null && (
@@ -1160,14 +1162,14 @@ export default function ModelServersPage() {
                         className='text-xs text-muted-foreground hover:text-muted-foreground font-medium transition-colors flex items-center gap-1'
                       >
                         <AlertCircle className='h-3 w-3' />
-                        오류 이력
+                        {t('admin_model_servers.error_history_label')}
                       </button>
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
                           const confirmed = await confirm(
-                            '정말 삭제하시겠습니까?',
-                            'Ollama 서버 삭제 확인'
+                            t('admin_model_servers.confirm_delete_server'),
+                            t('admin_model_servers.confirm_delete_server_title')
                           );
                           if (confirmed) {
                             removeEndpoint(ep.url);
@@ -1176,7 +1178,7 @@ export default function ModelServersPage() {
                         disabled={savingEndpoints}
                         className='text-xs text-destructive hover:text-destructive font-medium transition-colors'
                       >
-                        삭제
+                        {t('common.delete')}
                       </button>
                     </div>
                   </div>
@@ -1187,19 +1189,19 @@ export default function ModelServersPage() {
               <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm'>
                 <div className='flex items-center gap-4'>
                   <span className='text-muted-foreground'>
-                    총{' '}
+                    {t('admin_model_servers.total_label')}{' '}
                     <span className='font-semibold text-foreground'>
                       {endpoints.length}
                     </span>
-                    개 Ollama 서버
+                    {t('admin_model_servers.servers_unit')}
                   </span>
                   <span className='text-muted-foreground'>•</span>
                   <span className='text-muted-foreground'>
-                    활성화:{' '}
+                    {t('admin_model_servers.active_label')}{' '}
                     <span className='font-semibold text-primary'>
                       {endpoints.filter((e) => e.isActive !== false).length}
                     </span>
-                    개
+                    {t('admin_model_servers.unit_count')}
                   </span>
                   {endpoints.filter((e) => e.isActive === false).length > 0 && (
                     <>
@@ -1207,11 +1209,11 @@ export default function ModelServersPage() {
                         •
                       </span>
                       <span className='text-muted-foreground'>
-                        비활성화:{' '}
+                        {t('admin_model_servers.inactive_label')}{' '}
                         <span className='font-semibold text-muted-foreground'>
                           {endpoints.filter((e) => e.isActive === false).length}
                         </span>
-                        개
+                        {t('admin_model_servers.unit_count')}
                       </span>
                     </>
                   )}
@@ -1307,7 +1309,7 @@ export default function ModelServersPage() {
                       }
                     }).length
                   }
-                  /{endpoints.length}개 Ollama 서버 정상 작동
+                  /{endpoints.length}{t('admin_model_servers.healthy_servers')}
                 </span>
               </div>
             </div>
@@ -1329,7 +1331,7 @@ export default function ModelServersPage() {
             >
               <div className='flex items-center justify-between mb-4'>
                 <h3 className='text-lg font-semibold text-foreground'>
-                  Ollama 서버 수정
+                  {t('admin_model_servers.edit_server_title')}
                 </h3>
                 <button
                   onClick={cancelEditEndpoint}
@@ -1343,17 +1345,17 @@ export default function ModelServersPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1 flex items-center gap-2'>
                     <span>
-                      Ollama 서버 이름 <span className='text-destructive'>*</span>
+                      {t('admin_model_servers.server_name_label')} <span className='text-destructive'>*</span>
                     </span>
                     <div className='group relative'>
                       <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
                       <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10'>
                         <div className='bg-foreground dark:bg-muted text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
                           <div className='font-semibold mb-1'>
-                            이름은 수정할 수 없습니다
+                            {t('admin_model_servers.name_readonly_title')}
                           </div>
-                          <div>Ollama 서버 이름은 고유 식별자로</div>
-                          <div>수정할 수 없습니다.</div>
+                          <div>{t('admin_model_servers.name_readonly_line1')}</div>
+                          <div>{t('admin_model_servers.name_readonly_line2')}</div>
                           <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-700'></div>
                         </div>
                       </div>
@@ -1416,10 +1418,10 @@ export default function ModelServersPage() {
                       className='w-4 h-4 text-primary bg-muted border-border rounded focus:ring-ring'
                       disabled={savingEndpoints}
                     />
-                    <span>활성화</span>
+                    <span>{t('admin_model_servers.active_checkbox')}</span>
                   </label>
                   <p className='text-xs text-muted-foreground mt-1 ml-6'>
-                    비활성화된 Ollama 서버는 라운드로빈에서 제외됩니다.
+                    {t('admin_model_servers.inactive_roundrobin_note')}
                   </p>
                 </div>
                 <div className='flex items-center justify-end gap-2 pt-2'>
@@ -1428,14 +1430,14 @@ export default function ModelServersPage() {
                     disabled={savingEndpoints}
                     className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
-                    취소
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={saveEditEndpoint}
                     disabled={savingEndpoints}
                     className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
-                    저장
+                    {t('common.save')}
                   </button>
                 </div>
               </div>
@@ -1458,7 +1460,7 @@ export default function ModelServersPage() {
             >
               <div className='flex items-center justify-between mb-4'>
                 <h3 className='text-lg font-semibold text-foreground'>
-                  Ollama 서버 추가
+                  {t('admin_model_servers.add_server_title')}
                 </h3>
                 <button
                   onClick={() => setShowAddForm(false)}
@@ -1472,17 +1474,17 @@ export default function ModelServersPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1 flex items-center gap-2'>
                     <span>
-                      Ollama 서버 이름 <span className='text-destructive'>*</span>
+                      {t('admin_model_servers.server_name_label')} <span className='text-destructive'>*</span>
                     </span>
                     <div className='group relative'>
                       <HelpCircle className='h-4 w-4 text-muted-foreground hover:text-foreground cursor-help' />
                       <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-10'>
                         <div className='bg-foreground dark:bg-muted text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap max-w-xs'>
                           <div className='font-semibold mb-1'>
-                            라운드로빈 안내
+                            {t('admin_model_servers.roundrobin_help_title')}
                           </div>
-                          <div>동일한 이름을 설정한 서버들은</div>
-                          <div>자동으로 라운드로빈됩니다.</div>
+                          <div>{t('admin_model_servers.roundrobin_help_line1')}</div>
+                          <div>{t('admin_model_servers.roundrobin_help_line2')}</div>
                           <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-700'></div>
                         </div>
                       </div>
@@ -1529,14 +1531,14 @@ export default function ModelServersPage() {
                     disabled={savingEndpoints}
                     className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
-                    취소
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={addEndpoint}
                     disabled={savingEndpoints}
                     className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
                   >
-                    추가
+                    {t('admin_model_servers.add')}
                   </button>
                 </div>
               </div>
@@ -1560,7 +1562,7 @@ export default function ModelServersPage() {
           <div className='relative bg-card rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col'>
             <div className='flex items-center justify-between p-4 border-b border-border'>
               <h2 className='text-lg font-semibold text-foreground'>
-                오류 이력 - {selectedEndpointForHistory}
+                {t('admin_model_servers.error_history_for', { endpoint: selectedEndpointForHistory })}
               </h2>
               <div className='flex items-center gap-2'>
                 {errorHistory.length > 0 && (
@@ -1572,7 +1574,7 @@ export default function ModelServersPage() {
                     className='px-3 py-1.5 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed'
                   >
                     <Trash2 className='h-4 w-4' />
-                    전체 삭제
+                    {t('admin_model_servers.delete_all')}
                   </button>
                 )}
                 <button
@@ -1594,7 +1596,7 @@ export default function ModelServersPage() {
                 </div>
               ) : errorHistory.length === 0 ? (
                 <div className='text-center py-8 text-muted-foreground'>
-                  최근 7일간 오류 이력이 없습니다.
+                  {t('admin_model_servers.no_errors_7days')}
                 </div>
               ) : (
                 <div className='space-y-3'>
@@ -1639,7 +1641,7 @@ export default function ModelServersPage() {
                             {hasStack && (
                               <details className='mt-2'>
                                 <summary className='text-xs text-muted-foreground cursor-pointer hover:text-foreground font-medium'>
-                                  스택 트레이스 보기
+                                  {t('admin_model_servers.view_stack_trace')}
                                 </summary>
                                 <div className='relative mt-2'>
                                   <button
@@ -1650,7 +1652,7 @@ export default function ModelServersPage() {
                                       )
                                     }
                                     className='absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent rounded transition-colors'
-                                    title='클립보드에 복사'
+                                    title={t('admin_model_servers.copy_to_clipboard')}
                                   >
                                     {copiedTexts.has(`stack-${error.id}`) ? (
                                       <Check className='w-4 h-4 text-primary' />
@@ -1672,7 +1674,7 @@ export default function ModelServersPage() {
                               ).length > 0 && (
                                 <details className='mt-2'>
                                   <summary className='text-xs text-muted-foreground cursor-pointer hover:text-foreground'>
-                                    상세 정보 보기
+                                    {t('admin_model_servers.view_details')}
                                   </summary>
                                   <div className='relative mt-2'>
                                     {(() => {
@@ -1695,7 +1697,7 @@ export default function ModelServersPage() {
                                               )
                                             }
                                             className='absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent rounded transition-colors'
-                                            title='클립보드에 복사'
+                                            title={t('admin_model_servers.copy_to_clipboard')}
                                           >
                                             {copiedTexts.has(
                                               `metadata-${error.id}`

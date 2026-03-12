@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyToken } from '@/lib/auth';
 import {
   createAuthError,
   createValidationError,
@@ -99,8 +99,13 @@ async function ensureSettingsColumns() {
 // Fetch settings (readable by regular users too)
 export async function GET(request) {
   try {
-    // Reading settings is allowed for all users
-
+    const tokenPayload = verifyToken(request);
+    if (!tokenPayload) {
+      return NextResponse.json(
+        { error: 'Authentication required.' },
+        { status: 401, headers: NO_STORE_HEADERS }
+      );
+    }
     // Fetch settings
     let settingsResult = await query(
       'SELECT * FROM settings WHERE config_type = $1 LIMIT 1',

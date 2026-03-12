@@ -18,6 +18,7 @@ import {
   PowerOff,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const TOKENS_PER_PAGE = 20;
 const DEFAULT_EXPIRES_IN_DAYS = 90;
@@ -86,15 +87,16 @@ const getAuthHeaders = () => {
   };
 };
 
-const handleApiError = async (response, defaultMessage, alert) => {
+const handleApiError = async (response, defaultMessage, alert, errorTitle) => {
   const errorData = await response.json().catch(() => ({}));
   const message = errorData.error || defaultMessage;
-  alert(message, 'error', '오류');
+  alert(message, 'error', errorTitle);
   return errorData;
 };
 
 export default function ApiKeysPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [tokens, setTokens] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,9 +125,9 @@ export default function ApiKeysPage() {
         setUsers(data.users || []);
       }
     } catch (error) {
-      console.error('사용자 목록 조회 실패:', error);
+      console.error(t('admin_api_tokens.fetch_users_error'), error);
     }
-  }, []);
+  }, [t]);
 
   const fetchTokens = useCallback(async () => {
     try {
@@ -148,20 +150,21 @@ export default function ApiKeysPage() {
       } else {
         await handleApiError(
           response,
-          `키 목록 조회 실패 (${response.status})`,
-          alert
+          t('admin_api_tokens.fetch_tokens_error', { status: response.status }),
+          alert,
+          t('admin_api_tokens.error')
         );
       }
     } catch (error) {
-      console.error('키 목록 조회 오류:', error);
+      console.error(t('admin_api_tokens.fetch_tokens_console_error'), error);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, selectedUserFilter, alert]);
+  }, [currentPage, selectedUserFilter, alert, t]);
 
   const createToken = useCallback(async () => {
     if (!selectedUserId) {
-      alert('사용자를 선택해주세요.', 'warning', '선택 오류');
+      alert(t('admin_api_tokens.select_user_required'), 'warning', t('admin_api_tokens.select_error'));
       return;
     }
 
@@ -185,16 +188,16 @@ export default function ApiKeysPage() {
         setSelectedUserId('');
         fetchTokens();
       } else {
-        await handleApiError(response, '키 발급 실패', alert);
+        await handleApiError(response, t('admin_api_tokens.create_failed'), alert, t('admin_api_tokens.error'));
       }
     } catch (error) {
-      console.error('키 발급 오류:', error);
-      alert('키 발급 중 오류가 발생했습니다.', 'error', '오류');
+      console.error(t('admin_api_tokens.create_console_error'), error);
+      alert(t('admin_api_tokens.create_error'), 'error', t('admin_api_tokens.error'));
     }
-  }, [selectedUserId, tokenName, expiresInDays, alert, fetchTokens]);
+  }, [selectedUserId, tokenName, expiresInDays, alert, fetchTokens, t]);
 
   const deleteToken = useCallback(async (tokenId) => {
-    const confirmed = await confirm('정말 이 키를 삭제하시겠습니까?', '키 삭제 확인');
+    const confirmed = await confirm(t('admin_api_tokens.delete_confirm'), t('admin_api_tokens.delete_confirm_title'));
     if (!confirmed) return;
 
     try {
@@ -204,16 +207,16 @@ export default function ApiKeysPage() {
       });
 
       if (response.ok) {
-        alert('키가 삭제되었습니다.', 'success', '삭제 완료');
+        alert(t('admin_api_tokens.deleted'), 'success', t('admin_api_tokens.delete_complete'));
         fetchTokens();
       } else {
-        await handleApiError(response, '키 삭제 실패', alert);
+        await handleApiError(response, t('admin_api_tokens.delete_failed'), alert, t('admin_api_tokens.error'));
       }
     } catch (error) {
-      console.error('키 삭제 오류:', error);
-      alert('키 삭제 중 오류가 발생했습니다.', 'error', '오류');
+      console.error(t('admin_api_tokens.delete_console_error'), error);
+      alert(t('admin_api_tokens.delete_error'), 'error', t('admin_api_tokens.error'));
     }
-  }, [confirm, alert, fetchTokens]);
+  }, [confirm, alert, fetchTokens, t]);
 
   const toggleTokenStatus = useCallback(async (tokenId, currentStatus) => {
     try {
@@ -229,23 +232,23 @@ export default function ApiKeysPage() {
       if (response.ok) {
         fetchTokens();
       } else {
-        await handleApiError(response, '키 상태 변경 실패', alert);
+        await handleApiError(response, t('admin_api_tokens.toggle_status_failed'), alert, t('admin_api_tokens.error'));
       }
     } catch (error) {
-      console.error('키 상태 변경 오류:', error);
-      alert('키 상태 변경 중 오류가 발생했습니다.', 'error', '오류');
+      console.error(t('admin_api_tokens.toggle_console_error'), error);
+      alert(t('admin_api_tokens.toggle_error'), 'error', t('admin_api_tokens.error'));
     }
-  }, [alert, fetchTokens]);
+  }, [alert, fetchTokens, t]);
 
   const copyToken = useCallback(async (token) => {
     try {
       await navigator.clipboard.writeText(token);
-      alert('키가 클립보드에 복사되었습니다.', 'success');
+      alert(t('admin_api_tokens.copied'), 'success');
     } catch (error) {
-      console.error('복사 실패:', error);
-      alert('키 복사에 실패했습니다.', 'error');
+      console.error(t('admin_api_tokens.copy_console_error'), error);
+      alert(t('admin_api_tokens.copy_failed'), 'error');
     }
-  }, [alert]);
+  }, [alert, t]);
 
   const resetCreateForm = useCallback(() => {
     setShowCreateModal(false);
@@ -313,20 +316,20 @@ export default function ApiKeysPage() {
             <div>
               <div className='flex items-center gap-2'>
                 <span className='font-medium text-foreground'>
-                  {token.name || '이름 없음'}
+                  {token.name || t('admin_api_tokens.no_name')}
                 </span>
                 {token.isActive ? (
                   <span className='px-2 py-0.5 bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary rounded text-xs font-medium'>
-                    활성
+                    {t('admin_api_tokens.active')}
                   </span>
                 ) : (
                   <span className='px-2 py-0.5 bg-muted text-foreground dark:bg-muted dark:text-muted-foreground rounded text-xs font-medium'>
-                    비활성
+                    {t('admin_api_tokens.inactive')}
                   </span>
                 )}
                 {isExpired(token.expiresAt) && (
                   <span className='px-2 py-0.5 bg-destructive/10 text-destructive dark:bg-destructive/10 dark:text-destructive rounded text-xs font-medium'>
-                    만료됨
+                    {t('admin_api_tokens.expired')}
                   </span>
                 )}
               </div>
@@ -342,12 +345,12 @@ export default function ApiKeysPage() {
                 <div className='flex items-center gap-4'>
                   <div className='flex items-center gap-1'>
                     <Calendar className='h-4 w-4' />
-                    <span>발급: {formatDate(token.createdAt)}</span>
+                    <span>{t('admin_api_tokens.issued', { date: formatDate(token.createdAt) })}</span>
                   </div>
                   {token.expiresAt && (
                     <div className='flex items-center gap-1'>
                       <Calendar className='h-4 w-4' />
-                      <span>만료: {formatDate(token.expiresAt)}</span>
+                      <span>{t('admin_api_tokens.expires', { date: formatDate(token.expiresAt) })}</span>
                     </div>
                   )}
                 </div>
@@ -355,17 +358,17 @@ export default function ApiKeysPage() {
                   <div className='flex items-center gap-1'>
                     <Zap className='h-4 w-4' />
                     <span>
-                      사용량: {token.usage?.requestCount || 0}회 / {formatTokenCount(token.usage?.totalTokens)} 키
+                      {t('admin_api_tokens.usage', { count: token.usage?.requestCount || 0, tokens: formatTokenCount(token.usage?.totalTokens) })}
                     </span>
                   </div>
                   {token.usage?.lastUsed && (
                     <div className='text-xs text-muted-foreground'>
-                      마지막 사용: {formatDate(token.usage.lastUsed)}
+                      {t('admin_api_tokens.last_used', { date: formatDate(token.usage.lastUsed) })}
                     </div>
                   )}
                 </div>
                 <div className='text-xs text-muted-foreground font-mono'>
-                  해시: {token.tokenHash}
+                  {t('admin_api_tokens.hash', { hash: token.tokenHash })}
                 </div>
               </div>
             </div>
@@ -375,7 +378,7 @@ export default function ApiKeysPage() {
           <button
             onClick={() => onView(token)}
             className='p-2 text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent rounded transition-colors'
-            title='키 정보 보기'
+            title={t('admin_api_tokens.view_info')}
           >
             <Eye className='h-4 w-4' />
           </button>
@@ -386,7 +389,7 @@ export default function ApiKeysPage() {
                 ? 'text-primary hover:text-primary dark:text-primary dark:hover:text-primary hover:bg-primary/10'
                 : 'text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-accent'
             }`}
-            title={token.isActive ? '비활성화' : '활성화'}
+            title={token.isActive ? t('admin_api_tokens.deactivate') : t('admin_api_tokens.activate')}
           >
             {token.isActive ? (
               <Power className='h-4 w-4' />
@@ -397,7 +400,7 @@ export default function ApiKeysPage() {
           <button
             onClick={() => onDelete(token._id)}
             className='p-2 text-destructive hover:text-destructive dark:hover:text-destructive hover:bg-destructive/10 rounded transition-colors'
-            title='삭제'
+            title={t('admin_api_tokens.delete')}
           >
             <Trash2 className='h-4 w-4' />
           </button>
@@ -416,7 +419,7 @@ export default function ApiKeysPage() {
           disabled={currentPage === 1}
           className='px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
         >
-          이전
+          {t('common.previous')}
         </button>
         <span className='text-sm text-muted-foreground'>
           {currentPage} / {totalPages}
@@ -426,7 +429,7 @@ export default function ApiKeysPage() {
           disabled={currentPage === totalPages}
           className='px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent'
         >
-          다음
+          {t('common.next')}
         </button>
       </div>
     );
@@ -449,10 +452,10 @@ export default function ApiKeysPage() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-foreground'>
-            API 키 관리
+            {t('admin_api_tokens.title')}
           </h1>
           <p className='text-muted-foreground mt-1'>
-            사용자별 API 키를 발급하고 관리합니다
+            {t('admin_api_tokens.subtitle')}
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -462,14 +465,14 @@ export default function ApiKeysPage() {
             className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            새로고침
+            {t('admin_api_tokens.refresh')}
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
             className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
           >
             <Plus className='h-4 w-4' />
-            키 발급
+            {t('admin_api_tokens.create')}
           </button>
         </div>
       </div>
@@ -480,13 +483,13 @@ export default function ApiKeysPage() {
           <div className='flex items-center gap-2'>
             <Filter className='h-5 w-5 text-muted-foreground' />
             <span className='text-sm font-medium text-foreground'>
-              필터
+              {t('admin_api_tokens.filter')}
             </span>
           </div>
           <div className='flex-1'>
             <input
               type='text'
-              placeholder='키명, 사용자명, 이메일로 검색...'
+              placeholder={t('admin_api_tokens.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
@@ -498,7 +501,7 @@ export default function ApiKeysPage() {
               onChange={(e) => handleUserFilterChange(e.target.value)}
               className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
             >
-              <option value=''>전체 사용자</option>
+              <option value=''>{t('admin_api_tokens.all_users')}</option>
               {users.map((user) => (
                 <option key={user._id} value={user._id}>
                   {user.name} ({user.email})
@@ -513,7 +516,7 @@ export default function ApiKeysPage() {
       <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
           <h3 className='font-medium text-foreground'>
-            키 목록 ({totalCount.toLocaleString()})
+            {t('admin_api_tokens.token_list', { count: totalCount.toLocaleString() })}
           </h3>
         </div>
 
@@ -523,7 +526,7 @@ export default function ApiKeysPage() {
           </div>
         ) : filteredTokens.length === 0 ? (
           <div className='text-center py-8 text-muted-foreground'>
-            키가 없습니다
+            {t('admin_api_tokens.no_tokens')}
           </div>
         ) : (
           <div className='space-y-3'>
@@ -552,18 +555,18 @@ export default function ApiKeysPage() {
       {/* 키 발급 모달 */}
       {showCreateModal && (
         <ModalOverlay onClose={resetCreateForm}>
-          <ModalHeader title='새 API 키 발급' onClose={resetCreateForm} />
+          <ModalHeader title={t('admin_api_tokens.create_title')} onClose={resetCreateForm} />
           <div className='space-y-4'>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                사용자 선택 *
+                {t('admin_api_tokens.select_user')}
               </label>
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
                 className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
               >
-                <option value=''>사용자를 선택하세요</option>
+                <option value=''>{t('admin_api_tokens.select_user_placeholder')}</option>
                 {users.map((user) => (
                   <option key={user._id} value={user._id}>
                     {user.name} ({user.email})
@@ -573,19 +576,19 @@ export default function ApiKeysPage() {
             </div>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                키 이름 (선택사항)
+                {t('admin_api_tokens.token_name')}
               </label>
               <input
                 type='text'
                 value={tokenName}
                 onChange={(e) => setTokenName(e.target.value)}
-                placeholder='예: 프로덕션 API 키'
+                placeholder={t('admin_api_tokens.token_name_placeholder')}
                 className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
               />
             </div>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                만료 기간 (일)
+                {t('admin_api_tokens.expires_days')}
               </label>
               <input
                 type='number'
@@ -602,13 +605,13 @@ export default function ApiKeysPage() {
               onClick={resetCreateForm}
               className='flex-1 px-4 py-2 border border-border rounded-md bg-background text-foreground hover:bg-accent'
             >
-              취소
+              {t('common.cancel')}
             </button>
             <button
               onClick={createToken}
               className='flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90'
             >
-              발급
+              {t('admin_api_tokens.issue')}
             </button>
           </div>
         </ModalOverlay>
@@ -624,7 +627,7 @@ export default function ApiKeysPage() {
           maxWidth='md:max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl'
         >
           <ModalHeader
-            title='키가 발급되었습니다'
+            title={t('admin_api_tokens.issued_title')}
             icon={AlertCircle}
             iconClassName='h-5 w-5 text-muted-foreground'
             onClose={() => {
@@ -634,12 +637,12 @@ export default function ApiKeysPage() {
           />
           <div className='bg-muted border border-border rounded-lg p-4 mb-4'>
             <p className='text-sm text-muted-foreground'>
-              ⚠️ 이 키는 이번에만 표시됩니다. 안전한 곳에 저장해주세요.
+              {t('admin_api_tokens.issued_warning')}
             </p>
           </div>
           <div>
             <label className='block text-sm font-medium text-foreground mb-2'>
-              API 키
+              {t('admin_api_tokens.api_key_label')}
             </label>
             <div className='flex items-center gap-2'>
               <input
@@ -653,13 +656,13 @@ export default function ApiKeysPage() {
                 className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center gap-2'
               >
                 <Copy className='h-4 w-4' />
-                복사
+                {t('admin_api_tokens.copy')}
               </button>
             </div>
           </div>
           <div className='mt-4'>
             <p className='text-sm text-muted-foreground'>
-              사용 예시는 관리자 화면에서 제공하지 않습니다.
+              {t('admin_api_tokens.usage_hint')}
             </p>
           </div>
           <div className='mt-6'>
@@ -670,7 +673,7 @@ export default function ApiKeysPage() {
               }}
               className='w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90'
             >
-              확인
+              {t('common.confirm')}
             </button>
           </div>
         </ModalOverlay>
@@ -686,7 +689,7 @@ export default function ApiKeysPage() {
           maxWidth='md:max-w-2xl lg:max-w-3xl xl:max-w-4xl 2xl:max-w-5xl'
         >
           <ModalHeader
-            title='API 키 정보'
+            title={t('admin_api_tokens.info_title')}
             icon={Key}
             onClose={() => {
               setShowTokenInfoModal(false);
@@ -696,16 +699,16 @@ export default function ApiKeysPage() {
           <div className='space-y-4'>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                키 이름
+                {t('admin_api_tokens.key_name')}
               </label>
               <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground'>
-                {selectedToken.name || '이름 없음'}
+                {selectedToken.name || t('admin_api_tokens.no_name')}
               </div>
             </div>
             {selectedToken.user && (
               <div>
                 <label className='block text-sm font-medium text-foreground mb-1'>
-                  사용자
+                  {t('admin_api_tokens.user')}
                 </label>
                 <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground'>
                   {selectedToken.user.name} ({selectedToken.user.email})
@@ -714,7 +717,7 @@ export default function ApiKeysPage() {
             )}
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                원본 키
+                {t('admin_api_tokens.original_key')}
               </label>
               {selectedToken.originalToken ? (
                 <div className='flex items-center gap-2'>
@@ -729,18 +732,18 @@ export default function ApiKeysPage() {
                     className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center gap-2'
                   >
                     <Copy className='h-4 w-4' />
-                    복사
+                    {t('admin_api_tokens.copy')}
                   </button>
                 </div>
               ) : (
                 <div className='px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground text-sm'>
-                  원본 키를 사용할 수 없습니다. 새로 발급된 키만 표시됩니다.
+                  {t('admin_api_tokens.original_key_unavailable')}
                 </div>
               )}
             </div>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                키 해시
+                {t('admin_api_tokens.key_hash')}
               </label>
               <div className='flex items-center gap-2'>
                 <input
@@ -754,27 +757,27 @@ export default function ApiKeysPage() {
                   className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center gap-2'
                 >
                   <Copy className='h-4 w-4' />
-                  복사
+                  {t('admin_api_tokens.copy')}
                 </button>
               </div>
             </div>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                상태
+                {t('admin_api_tokens.status')}
               </label>
               <div className='flex items-center gap-2'>
                 {selectedToken.isActive ? (
                   <span className='px-2 py-1 bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary rounded text-sm font-medium'>
-                    활성
+                    {t('admin_api_tokens.active')}
                   </span>
                 ) : (
                   <span className='px-2 py-1 bg-muted text-foreground dark:bg-muted dark:text-muted-foreground rounded text-sm font-medium'>
-                    비활성
+                    {t('admin_api_tokens.inactive')}
                   </span>
                 )}
                 {isExpired(selectedToken.expiresAt) && (
                   <span className='px-2 py-1 bg-destructive/10 text-destructive dark:bg-destructive/10 dark:text-destructive rounded text-sm font-medium'>
-                    만료됨
+                    {t('admin_api_tokens.expired')}
                   </span>
                 )}
               </div>
@@ -782,7 +785,7 @@ export default function ApiKeysPage() {
             <div className='grid grid-cols-2 gap-4'>
               <div>
                 <label className='block text-sm font-medium text-foreground mb-1'>
-                  발급일
+                  {t('admin_api_tokens.issue_date')}
                 </label>
                 <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground text-sm'>
                   {formatDate(selectedToken.createdAt)}
@@ -791,7 +794,7 @@ export default function ApiKeysPage() {
               {selectedToken.expiresAt && (
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-1'>
-                    만료일
+                    {t('admin_api_tokens.expiry_date')}
                   </label>
                   <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground text-sm'>
                     {formatDate(selectedToken.expiresAt)}
@@ -801,26 +804,26 @@ export default function ApiKeysPage() {
             </div>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                사용량
+                {t('admin_api_tokens.usage_label')}
               </label>
               <div className='px-3 py-2 border border-border rounded-md bg-muted text-foreground text-sm'>
                 <div className='flex items-center gap-4'>
-                  <span>요청: {selectedToken.usage?.requestCount || 0}회</span>
-                  <span>키: {formatTokenCount(selectedToken.usage?.totalTokens)}</span>
+                  <span>{t('admin_api_tokens.request_count', { count: selectedToken.usage?.requestCount || 0 })}</span>
+                  <span>{t('admin_api_tokens.token_count', { count: formatTokenCount(selectedToken.usage?.totalTokens) })}</span>
                 </div>
                 {selectedToken.usage?.lastUsed && (
                   <div className='mt-2 text-xs text-muted-foreground'>
-                    마지막 사용: {formatDate(selectedToken.usage.lastUsed)}
+                    {t('admin_api_tokens.last_used', { date: formatDate(selectedToken.usage.lastUsed) })}
                   </div>
                 )}
               </div>
             </div>
             <div>
               <label className='block text-sm font-medium text-foreground mb-1'>
-                사용 예시
+                {t('admin_api_tokens.usage_example')}
               </label>
               <div className='px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground text-sm'>
-                사용 예시는 관리자 화면에서 제공하지 않습니다.
+                {t('admin_api_tokens.usage_hint')}
               </div>
             </div>
           </div>
@@ -832,7 +835,7 @@ export default function ApiKeysPage() {
               }}
               className='px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90'
             >
-              확인
+              {t('common.confirm')}
             </button>
           </div>
         </ModalOverlay>

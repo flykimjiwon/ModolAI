@@ -12,6 +12,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
+import { useTranslation } from '@/hooks/useTranslation';
 
 // 라운드로빈 여부 확인 (같은 label + 서로 다른 endpoint)
 function isRoundRobinGroup(models) {
@@ -102,6 +103,7 @@ const ModelSelector = memo(function ModelSelector({
   disabled,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
   const [hasInteracted, setHasInteracted] = useState(false);
   const [roundRobinInfo, setRoundRobinInfo] = useState(null);
   const [checkingRoundRobin, setCheckingRoundRobin] = useState(false);
@@ -196,7 +198,7 @@ const ModelSelector = memo(function ModelSelector({
         >
           <Zap size={14} className='text-muted-foreground' />
           <span className='hidden sm:inline'>
-            {selectedModelInfo?.label || '모델 선택'}
+            {selectedModelInfo?.label || t('chat.model_select')}
           </span>
           {/* 라운드로빈 상태 태그 */}
           {roundRobinInfo?.isRoundRobin && (
@@ -265,7 +267,7 @@ const ModelSelector = memo(function ModelSelector({
                           )}
                           {hasDefaultModel && (
                             <Badge variant='outline' className='text-[10px] px-1.5 py-0'>
-                              기본
+                              {t('chat.model_default')}
                             </Badge>
                           )}
                         </div>

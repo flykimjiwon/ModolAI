@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
+import { verifyAdminWithResult } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request) {
     try {
+        const authResult = verifyAdminWithResult(request);
+        if (!authResult.valid) {
+            return NextResponse.json(
+                { error: authResult.error || 'Admin privileges required.' },
+                { status: 403 }
+            );
+        }
+
         const columnsToAdd = [
             "ADD COLUMN IF NOT EXISTS auth_type VARCHAR(50) DEFAULT 'local'",
             "ADD COLUMN IF NOT EXISTS employee_no VARCHAR(50)",

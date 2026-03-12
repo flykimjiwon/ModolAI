@@ -10,13 +10,14 @@ import {
   TokenUsageChart,
   DepartmentTokenUsageChart,
 } from '@/components/admin/AnalyticsCharts';
+import { useTranslation } from '@/hooks/useTranslation';
 
-const PERIODS = [
-  { value: '7days', label: '최근 7일' },
-  { value: '30days', label: '최근 30일' },
-  { value: '3months', label: '최근 3개월' },
-  { value: '1year', label: '최근 1년' },
-  { value: 'custom', label: '기간 지정' },
+const PERIOD_OPTIONS = [
+  { value: '7days', labelKey: 'admin_analytics.period_7days' },
+  { value: '30days', labelKey: 'admin_analytics.period_30days' },
+  { value: '3months', labelKey: 'admin_analytics.period_3months' },
+  { value: '1year', labelKey: 'admin_analytics.period_1year' },
+  { value: 'custom', labelKey: 'admin_analytics.period_custom' },
 ];
 
 const DEFAULT_DEPTS = [
@@ -68,6 +69,7 @@ const LoadingSkeleton = () => (
 );
 
 export default function Analytics() {
+  const { t } = useTranslation();
   const [data, setData] = useState(INITIAL_DATA);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('7days');
@@ -86,11 +88,11 @@ export default function Analytics() {
           `${department}|${auth_type}`,
           auth_type === 'sso'
             ? `${department.replaceAll('부서', '그룹')}(SSO)`
-            : `${department.replaceAll('부서', '그룹')}(일반)`
+            : `${department.replaceAll('부서', '그룹')}(${t('admin_analytics.auth_local')})`
         );
         });
         DEFAULT_DEPTS.forEach((dept) => {
-          if (!seen.has(`${dept}|local`)) seen.set(`${dept}|local`, `${dept}(일반)`);
+          if (!seen.has(`${dept}|local`)) seen.set(`${dept}|local`, `${dept}(${t('admin_analytics.auth_local')})`);
         });
         setDepartments(
           Array.from(seen.entries())
@@ -102,7 +104,7 @@ export default function Analytics() {
       setDepartments(
         DEFAULT_DEPTS.map((d) => ({
           value: `${d}|local`,
-          label: `${d.replaceAll('부서', '그룹')}(일반)`,
+          label: `${d.replaceAll('부서', '그룹')}(${t('admin_analytics.auth_local')})`,
         }))
       );
       });
@@ -132,7 +134,7 @@ export default function Analytics() {
       const result = await response.json();
       setData(result);
     } catch (error) {
-      console.error('분석 데이터 로드 실패:', error);
+      console.error(t('admin_analytics.data_load_failed'), error);
     } finally {
       setLoading(false);
     }
@@ -169,7 +171,7 @@ export default function Analytics() {
       const filename = `analytics-${selectedPeriod}-${Date.now()}.csv`;
       downloadFile(blob, filename);
     } catch (error) {
-      console.error('데이터 내보내기 실패:', error);
+      console.error(t('admin_analytics.export_failed'), error);
     }
   }, [selectedPeriod, deptFilter, customStartDate, customEndDate]);
 
@@ -183,10 +185,10 @@ export default function Analytics() {
         <div className='md:flex md:items-center md:justify-between'>
           <div className='min-w-0 flex-1'>
             <h2 className='text-2xl font-bold leading-7 text-foreground sm:truncate sm:text-3xl'>
-              통계 분석
+              {t('admin_analytics.title')}
             </h2>
             <p className='mt-1 text-sm text-muted-foreground'>
-              사용자 활동과 시스템 사용량을 분석합니다
+              {t('admin_analytics.subtitle')}
             </p>
           </div>
           <div className='mt-4 flex gap-2 md:ml-4 md:mt-0'>
@@ -195,7 +197,7 @@ export default function Analytics() {
               className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2'
             >
               <Download className='h-4 w-4' />
-              내보내기
+              {t('admin_analytics.export')}
             </button>
           </div>
         </div>
@@ -207,7 +209,7 @@ export default function Analytics() {
             <div className='flex items-center gap-2'>
               <Filter className='h-4 w-4 text-muted-foreground' />
               <span className='text-sm font-medium text-foreground'>
-                필터:
+                {t('admin_analytics.filter')}
               </span>
             </div>
 
@@ -216,9 +218,9 @@ export default function Analytics() {
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[120px]'
             >
-              {PERIODS.map((period) => (
+              {PERIOD_OPTIONS.map((period) => (
                 <option key={period.value} value={period.value}>
-                  {period.label}
+                  {t(period.labelKey)}
                 </option>
               ))}
             </select>
@@ -228,7 +230,7 @@ export default function Analytics() {
               onChange={(e) => setDeptFilter(e.target.value)}
               className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[160px]'
             >
-                    <option value='all'>전체 그룹</option>
+                    <option value='all'>{t('admin_analytics.all_groups')}</option>
               {departments.map((dept) => (
                 <option key={dept.value} value={dept.value}>
                   {dept.label}
@@ -240,7 +242,7 @@ export default function Analytics() {
           {selectedPeriod === 'custom' && (
             <div className='flex items-center gap-3 flex-wrap pl-6'>
               <span className='text-sm text-muted-foreground'>
-                기간:
+                {t('admin_analytics.period_label')}
               </span>
               <input
                 type='date'
@@ -248,7 +250,7 @@ export default function Analytics() {
                 onChange={(e) => setCustomStartDate(e.target.value)}
                 onClick={(e) => e.currentTarget.showPicker?.()}
                 className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[140px]'
-                placeholder='시작 날짜'
+                placeholder={t('admin_analytics.start_date')}
               />
               <span className='text-sm text-muted-foreground'>~</span>
               <input
@@ -257,13 +259,13 @@ export default function Analytics() {
                 onChange={(e) => setCustomEndDate(e.target.value)}
                 onClick={(e) => e.currentTarget.showPicker?.()}
                 className='w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors duration-200 w-auto min-w-[140px]'
-                placeholder='종료 날짜'
+                placeholder={t('admin_analytics.end_date')}
               />
               <button
                 onClick={fetchAnalyticsData}
                 className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-4 py-2'
               >
-                조회
+                {t('admin_analytics.search')}
               </button>
             </div>
           )}
@@ -273,24 +275,24 @@ export default function Analytics() {
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
         <UserStatsChart
           data={data.userStats}
-          title='사용자별 사용량'
-          tooltip='메시지 수는 실제 LLM 호출 횟수 기준입니다. 에이전트/플랜 모드의 다중 호출도 모두 집계합니다. (PII 감지 호출 제외)'
+          title={t('admin_analytics.user_usage')}
+          tooltip={t('admin_analytics.message_count_tooltip')}
         />
-        <ModelStatsChart data={data.modelStats} title='모델별 사용량' />
+        <ModelStatsChart data={data.modelStats} title={t('admin_analytics.model_usage')} />
         <DepartmentStatsChart
           data={data.departmentStats}
-                  title='그룹별 사용량'
-          tooltip='메시지 수는 실제 LLM 호출 횟수 기준입니다. 에이전트/플랜 모드의 다중 호출도 모두 집계합니다. (PII 감지 호출 제외)'
+                  title={t('admin_analytics.group_usage')}
+          tooltip={t('admin_analytics.message_count_tooltip')}
         />
         <DailyActivityChart
           data={data.dailyActivity}
-          title='일별 활동량'
-          tooltip='메시지 수는 실제 LLM 호출 횟수 기준입니다. 에이전트/플랜 모드의 다중 호출도 모두 집계합니다. (PII 감지 호출 제외)'
+          title={t('admin_analytics.daily_activity')}
+          tooltip={t('admin_analytics.message_count_tooltip')}
         />
-        <TokenUsageChart data={data.tokenUsage} title='개인별 토큰 사용량' />
+        <TokenUsageChart data={data.tokenUsage} title={t('admin_analytics.personal_token_usage')} />
         <DepartmentTokenUsageChart
           data={data.departmentTokenUsage}
-                  title='그룹별 토큰 사용량'
+                  title={t('admin_analytics.group_token_usage')}
         />
       </div>
     </div>

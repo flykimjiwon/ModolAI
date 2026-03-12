@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const MDEditor = dynamic(
   () => import('@uiw/react-md-editor').then((mod) => mod.default),
@@ -34,6 +35,7 @@ export default function NoticeEditPage() {
   const params = useParams();
   const { id } = params;
   const { alert } = useAlert();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -45,7 +47,7 @@ export default function NoticeEditPage() {
     try {
       const payload = decodeJWTPayload(token);
       if (payload.role !== 'admin') {
-        alert('관리자 권한이 필요합니다.', 'warning', '권한 오류');
+        alert(t('notice.admin_required'), 'warning', t('notice.permission_error'));
         router.push('/notice');
         return;
       }
@@ -55,7 +57,7 @@ export default function NoticeEditPage() {
       localStorage.removeItem('token');
       router.push('/login?redirect=' + encodeURIComponent(window.location.pathname));
     }
-  }, [router, alert]);
+  }, [router, alert, t]);
 
   useEffect(() => {
     const fetchNotice = async () => {
@@ -66,13 +68,13 @@ export default function NoticeEditPage() {
         const response = await fetch(`/api/notice/${id}`);
 
         if (response.status === 404) {
-          alert('공지사항을 찾을 수 없습니다.', 'error', '조회 실패');
+          alert(t('notice.not_found_msg'), 'error', t('notice.fetch_failed_title'));
           router.push('/notice');
           return;
         }
 
         if (!response.ok) {
-          throw new Error('공지사항 조회 실패');
+          throw new Error(t('notice.fetch_error'));
         }
 
         const data = await response.json();
@@ -87,7 +89,7 @@ export default function NoticeEditPage() {
         setPopupHeight(noticeData.popupHeight || '');
       } catch (error) {
         console.error('공지사항 조회 실패:', error);
-        alert('공지사항을 불러오는데 실패했습니다.', 'error', '조회 실패');
+        alert(t('notice.fetch_failed'), 'error', t('notice.fetch_failed_title'));
         router.push('/notice');
       } finally {
         setLoading(false);
@@ -97,7 +99,7 @@ export default function NoticeEditPage() {
     if (id && userRole === 'admin') {
       fetchNotice();
     }
-  }, [id, router, userRole, alert]);
+  }, [id, router, userRole, alert, t]);
 
   const handleImageUpload = () => {
     const input = document.createElement('input');
@@ -108,7 +110,7 @@ export default function NoticeEditPage() {
       if (!file) return;
 
       if (file.size > 10 * 1024 * 1024) {
-        alert('파일 크기는 10MB를 초과할 수 없습니다.', 'warning', '파일 크기 제한');
+        alert(t('notice.file_size_exceeded'), 'warning', t('notice.file_size_limit'));
         return;
       }
 
@@ -126,13 +128,13 @@ export default function NoticeEditPage() {
         });
 
         if (response.status === 401) {
-          alert('로그인이 필요합니다.', 'warning', '인증 필요');
+          alert(t('notice.login_required'), 'warning', t('notice.auth_required'));
           return;
         }
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || '이미지 업로드 실패');
+          throw new Error(error.error || t('notice.image_upload_error'));
         }
 
         const result = await response.json();
@@ -141,10 +143,10 @@ export default function NoticeEditPage() {
         const newContent = content + '\n\n' + imageMarkdown;
         setContent(newContent);
 
-        alert('이미지가 업로드되었습니다.', 'success', '업로드 완료');
+        alert(t('notice.image_uploaded'), 'success', t('notice.upload_complete'));
       } catch (error) {
         console.error('이미지 업로드 실패:', error);
-        alert(error.message || '이미지 업로드에 실패했습니다.', 'error', '업로드 실패');
+        alert(error.message || t('notice.image_upload_failed'), 'error', t('notice.upload_failed'));
       }
     };
     input.click();
@@ -152,7 +154,7 @@ export default function NoticeEditPage() {
 
   const handleSave = async () => {
     if (!title.trim() || !content.trim()) {
-      alert('제목과 내용을 입력해주세요.', 'warning', '입력 오류');
+      alert(t('common.title_content_required'), 'warning', t('notice.input_error'));
       return;
     }
 
@@ -185,14 +187,14 @@ export default function NoticeEditPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || '공지사항 수정 실패');
+        throw new Error(error.error || t('notice.update_error'));
       }
 
-      alert('공지사항이 수정되었습니다.', 'success', '수정 완료');
+      alert(t('notice.updated'), 'success', t('notice.update_complete'));
       router.push(`/notice/${id}`);
     } catch (error) {
       console.error('공지사항 수정 실패:', error);
-      alert(error.message || '공지사항 수정에 실패했습니다.', 'error', '수정 실패');
+      alert(error.message || t('notice.update_failed'), 'error', t('notice.update_failed_title'));
     } finally {
       setSaving(false);
     }
@@ -211,14 +213,14 @@ export default function NoticeEditPage() {
       <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='text-center'>
           <h3 className='text-lg font-medium text-foreground'>
-            권한이 없습니다
+            {t('notice.no_permission')}
           </h3>
           <Button
             onClick={() => router.push('/notice')}
             variant='link'
             className='mt-4'
           >
-            목록으로 돌아가기
+            {t('common.back_to_list_full')}
           </Button>
         </div>
       </div>
@@ -240,12 +242,12 @@ export default function NoticeEditPage() {
               }}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <h1 className='text-2xl font-bold text-foreground'>
-              공지사항 수정
+              {t('notice.edit_title')}
             </h1>
           </div>
 
@@ -255,14 +257,14 @@ export default function NoticeEditPage() {
               variant='outline'
             >
               <Eye className='h-4 w-4' />
-              {previewMode ? '편집' : '미리보기'}
+              {previewMode ? t('common.edit') : t('notice.preview')}
             </Button>
             <Button
               onClick={handleSave}
               disabled={saving}
             >
               <Save className='h-4 w-4' />
-              {saving ? '저장 중...' : '저장'}
+              {saving ? t('common.saving') : t('common.save')}
             </Button>
           </div>
         </div>
@@ -271,13 +273,13 @@ export default function NoticeEditPage() {
           <CardContent className='p-6'>
             <div className='mb-4'>
               <Label className='mb-2'>
-                제목
+                {t('common.title_label')}
               </Label>
               <Input
                 type='text'
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder='공지사항 제목을 입력하세요'
+                placeholder={t('notice.title_placeholder')}
               />
             </div>
 
@@ -288,7 +290,7 @@ export default function NoticeEditPage() {
                   onCheckedChange={(checked) => setIsPopup(!!checked)}
                 />
                 <span className='text-sm text-foreground'>
-                  메인화면 팝업으로 표시
+                  {t('notice.show_main_popup')}
                 </span>
               </label>
               <label className='flex items-center gap-2'>
@@ -297,7 +299,7 @@ export default function NoticeEditPage() {
                   onCheckedChange={(checked) => setIsPopupLogin(!!checked)}
                 />
                 <span className='text-sm text-foreground'>
-                  로그인화면 팝업으로 표시
+                  {t('notice.show_login_popup')}
                 </span>
               </label>
               <label className='flex items-center gap-2'>
@@ -306,16 +308,16 @@ export default function NoticeEditPage() {
                   onCheckedChange={(checked) => setIsActive(!!checked)}
                 />
                 <span className='text-sm text-foreground'>
-                  활성화
+                  {t('notice.active')}
                 </span>
               </label>
             </div>
 
             {(isPopup || isPopupLogin) && (
               <div className='flex items-center gap-4 mb-4 p-3 bg-muted rounded-lg'>
-                <span className='text-sm font-medium text-foreground'>팝업 사이즈:</span>
+                <span className='text-sm font-medium text-foreground'>{t('notice.popup_size')}</span>
                 <div className='flex items-center gap-2'>
-                  <Label className='text-sm text-muted-foreground'>너비</Label>
+                  <Label className='text-sm text-muted-foreground'>{t('notice.width')}</Label>
                   <Input
                     type='number'
                     value={popupWidth}
@@ -328,24 +330,24 @@ export default function NoticeEditPage() {
                   <span className='text-xs text-muted-foreground'>px</span>
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Label className='text-sm text-muted-foreground'>높이</Label>
+                  <Label className='text-sm text-muted-foreground'>{t('notice.height')}</Label>
                   <Input
                     type='number'
                     value={popupHeight}
                     onChange={(e) => setPopupHeight(e.target.value)}
                     className='w-20 h-8 text-sm'
-                    placeholder='자동'
+                    placeholder={t('notice.auto')}
                     min='200'
                     max='900'
                   />
-                  <span className='text-xs text-muted-foreground'>px (비우면 자동)</span>
+                  <span className='text-xs text-muted-foreground'>{t('notice.height_auto_hint')}</span>
                 </div>
               </div>
             )}
 
             <div className='mb-4'>
               <Label className='mb-2'>
-                내용
+                {t('common.content_label')}
               </Label>
               {previewMode ? (
                 <div className='min-h-[400px] p-4 border border-border rounded-lg bg-muted'>
@@ -371,7 +373,7 @@ export default function NoticeEditPage() {
                       >
                         <path d='M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z' />
                       </svg>
-                      이미지 업로드
+                      {t('notice.image_upload')}
                     </Button>
                   </div>
 
@@ -388,9 +390,9 @@ export default function NoticeEditPage() {
             </div>
 
             <div className='text-xs text-muted-foreground'>
-              <p className='mb-1'>💡 마크다운 문법을 사용할 수 있습니다.</p>
-              <p>• **굵은글씨**, *기울임글씨*, `코드`, [링크](URL)</p>
-              <p>• 📷 이미지 업로드: 툴바의 이미지 버튼 클릭 (최대 10MB)</p>
+              <p className='mb-1'>{t('notice.markdown_hint')}</p>
+              <p>{t('notice.markdown_syntax')}</p>
+              <p>{t('notice.markdown_image')}</p>
             </div>
           </CardContent>
         </Card>

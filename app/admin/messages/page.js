@@ -29,9 +29,11 @@ import {
 } from '@/components/icons';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function MessagesPage() {
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -68,13 +70,13 @@ export default function MessagesPage() {
   ];
 
   const dateRangeOptions = [
-    { value: '1d', label: '오늘' },
-    { value: '7d', label: '최근 7일' },
-    { value: '30d', label: '최근 30일' },
-    { value: '90d', label: '최근 3개월' },
-    { value: '365d', label: '최근 1년' },
-    { value: 'all', label: '전체' },
-    { value: 'custom', label: '기간 지정' },
+    { value: '1d', label: t('admin_messages.date_today') },
+    { value: '7d', label: t('admin_messages.date_7days') },
+    { value: '30d', label: t('admin_messages.date_30days') },
+    { value: '90d', label: t('admin_messages.date_3months') },
+    { value: '365d', label: t('admin_messages.date_1year') },
+    { value: 'all', label: t('admin_messages.date_all') },
+    { value: 'custom', label: t('admin_messages.date_custom') },
   ];
 
   useEffect(() => {
@@ -167,9 +169,9 @@ export default function MessagesPage() {
         console.error('메시지 조회 실패:', error);
         if (!silentRefresh) {
           alert(
-            '메시지 데이터를 불러오는데 실패했습니다.',
+            t('admin_messages.fetch_messages_failed'),
             'error',
-            '조회 실패'
+            t('admin_messages.fetch_failed_title')
           );
         }
       } finally {
@@ -196,14 +198,15 @@ export default function MessagesPage() {
       setTotalPages,
       setTotalCount,
       setLastRefresh,
+      t,
     ]
   );
 
   // 메시지 삭제
   const deleteMessage = async (messageId) => {
     const confirmed = await confirm(
-      '이 메시지를 정말 삭제하시겠습니까?',
-      '메시지 삭제 확인'
+      t('admin_messages.delete_confirm'),
+      t('admin_messages.delete_confirm_title')
     );
     if (!confirmed) {
       return;
@@ -224,10 +227,10 @@ export default function MessagesPage() {
       }
 
       fetchMessages();
-      alert('메시지가 삭제되었습니다.', 'success', '삭제 완료');
+      alert(t('admin_messages.delete_success'), 'success', t('admin_messages.delete_success_title'));
     } catch (error) {
       console.error('메시지 삭제 실패:', error);
-      alert('메시지 삭제에 실패했습니다.', 'error', '삭제 실패');
+      alert(t('admin_messages.delete_failed'), 'error', t('admin_messages.delete_failed_title'));
     }
   };
 
@@ -276,7 +279,7 @@ export default function MessagesPage() {
       document.body.removeChild(a);
     } catch (error) {
       console.error('데이터 내보내기 실패:', error);
-      alert('데이터 내보내기에 실패했습니다.', 'error', '내보내기 실패');
+      alert(t('admin_messages.export_failed'), 'error', t('admin_messages.export_failed_title'));
     }
   };
 
@@ -444,9 +447,9 @@ export default function MessagesPage() {
   // 역할에 따른 표시 이름 반환
   const getRoleLabel = (role, text = '') => {
     if (isSystemMessage(text)) {
-      return '시스템';
+      return t('admin_messages.role_system');
     }
-    return role === 'user' ? '사용자' : 'AI';
+    return role === 'user' ? t('admin_messages.role_user') : 'AI';
   };
 
   // 역할에 따른 아이콘 반환
@@ -467,7 +470,7 @@ export default function MessagesPage() {
       return (
         <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
           <Bot className='h-3 w-3 mr-1' />
-          시스템
+          {t('admin_messages.role_system')}
         </span>
       );
     }
@@ -476,7 +479,7 @@ export default function MessagesPage() {
       return (
         <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
           <User className='h-3 w-3 mr-1' />
-          사용자
+          {t('admin_messages.role_user')}
         </span>
       );
     }
@@ -547,7 +550,7 @@ export default function MessagesPage() {
       return (
         <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
           <ThumbsUp className='h-3 w-3 mr-1' />
-          좋아요
+          {t('admin_messages.feedback_like')}
         </span>
       );
     }
@@ -555,7 +558,7 @@ export default function MessagesPage() {
       return (
         <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-destructive/10 text-destructive'>
           <ThumbsDown className='h-3 w-3 mr-1' />
-          싫어요
+          {t('admin_messages.feedback_dislike')}
         </span>
       );
     }
@@ -572,10 +575,10 @@ export default function MessagesPage() {
               <div className='bg-primary p-2 rounded-lg'>
                 <MessageCircle className='h-7 w-7 text-white' />
               </div>
-              메시지 관리
+              {t('admin_messages.page_title')}
             </h1>
             <p className='text-muted-foreground mt-2 text-sm'>
-              시스템의 모든 메시지를 실시간으로 조회하고 관리합니다
+              {t('admin_messages.page_subtitle')}
             </p>
 
             {/* 통계 요약 */}
@@ -583,7 +586,7 @@ export default function MessagesPage() {
               <div className='flex items-center gap-2 bg-card px-4 py-2 rounded-lg shadow-sm'>
                 <BarChart3 className='h-4 w-4 text-primary' />
                 <span className='text-sm text-muted-foreground'>
-                  총 메시지:
+                  {t('admin_messages.total_messages')}
                 </span>
                 <span className='text-lg font-bold text-foreground'>
                   {totalCount.toLocaleString()}
@@ -600,8 +603,8 @@ export default function MessagesPage() {
                 ></div>
                 <span className='text-sm text-muted-foreground'>
                   {isPollingEnabled
-                    ? '자동 새로고침 활성'
-                    : '자동 새로고침 비활성'}
+                    ? t('admin_messages.auto_refresh_active')
+                    : t('admin_messages.auto_refresh_inactive')}
                 </span>
               </div>
 
@@ -626,7 +629,7 @@ export default function MessagesPage() {
                     ? 'bg-primary text-primary-foreground'
                     : 'text-foreground hover:bg-accent'
                 }`}
-                title='테이블 뷰'
+                title={t('admin_messages.table_view')}
               >
                 <List className='h-4 w-4' />
               </button>
@@ -637,7 +640,7 @@ export default function MessagesPage() {
                     ? 'bg-primary text-primary-foreground'
                     : 'text-foreground hover:bg-accent'
                 }`}
-                title='카드 뷰'
+                title={t('admin_messages.card_view')}
               >
                 <LayoutGrid className='h-4 w-4' />
               </button>
@@ -651,7 +654,7 @@ export default function MessagesPage() {
                   : 'bg-primary hover:bg-primary/90 text-primary-foreground'
               }`}
               title={
-                isPollingEnabled ? '자동 새로고침 중지' : '자동 새로고침 시작'
+                isPollingEnabled ? t('admin_messages.auto_refresh_stop') : t('admin_messages.auto_refresh_start')
               }
             >
               {isPollingEnabled ? (
@@ -659,19 +662,19 @@ export default function MessagesPage() {
               ) : (
                 <Play className='h-4 w-4 mr-2' />
               )}
-              {isPollingEnabled ? '중지' : '시작'}
+              {isPollingEnabled ? t('admin_messages.stop') : t('admin_messages.start')}
             </button>
 
             <button
               onClick={() => fetchMessages()}
               disabled={loading}
               className='inline-flex items-center px-4 py-2.5 bg-primary hover:bg-primary/90 disabled:bg-muted text-white text-sm font-medium rounded-lg transition-all shadow-sm'
-              title='수동 새로고침'
+              title={t('admin_messages.manual_refresh')}
             >
               <RefreshCw
                 className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`}
               />
-              새로고침
+              {t('admin_messages.refresh')}
             </button>
 
             <button
@@ -693,11 +696,11 @@ export default function MessagesPage() {
             <div className='flex items-center gap-3'>
               <Filter className='h-5 w-5 text-foreground' />
               <h3 className='text-lg font-semibold text-foreground'>
-                필터 및 검색
+                {t('admin_messages.filter_and_search')}
               </h3>
               {getActiveFiltersCount() > 0 && (
                 <span className='inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                  {getActiveFiltersCount()}개 활성
+                  {t('admin_messages.active_count', { count: getActiveFiltersCount() })}
                 </span>
               )}
             </div>
@@ -708,7 +711,7 @@ export default function MessagesPage() {
                   className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors'
                 >
                   <XCircle className='h-4 w-4 mr-1' />
-                  모두 초기화
+                  {t('admin_messages.clear_all')}
                 </button>
               )}
               <button
@@ -718,12 +721,12 @@ export default function MessagesPage() {
                 {showFilters ? (
                   <>
                     <ChevronUp className='h-4 w-4 mr-1' />
-                    숨기기
+                    {t('admin_messages.hide')}
                   </>
                 ) : (
                   <>
                     <ChevronDown className='h-4 w-4 mr-1' />
-                    펼치기
+                    {t('admin_messages.expand')}
                   </>
                 )}
               </button>
@@ -740,13 +743,13 @@ export default function MessagesPage() {
                 <div className={dateRange === 'custom' ? 'lg:col-span-3' : ''}>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <Search className='inline h-4 w-4 mr-1' />
-                    메시지 내용 검색
+                    {t('admin_messages.search_message_content')}
                   </label>
                   <div className='relative'>
                     <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                     <input
                       type='text'
-                      placeholder='메시지 내용을 입력하세요...'
+                      placeholder={t('admin_messages.search_message_placeholder')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className='w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
@@ -765,13 +768,13 @@ export default function MessagesPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <User className='inline h-4 w-4 mr-1' />
-                    사용자 검색
+                    {t('admin_messages.search_user')}
                   </label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
                     <input
                       type='text'
-                      placeholder='이름 또는 이메일로 검색...'
+                      placeholder={t('admin_messages.search_user_placeholder')}
                       value={selectedUser}
                       onChange={(e) => setSelectedUser(e.target.value)}
                       className='w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
@@ -793,14 +796,14 @@ export default function MessagesPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <Building className='inline h-4 w-4 mr-1' />
-                    그룹
+                    {t('admin_messages.group')}
                   </label>
                   <select
                     value={deptFilter}
                     onChange={(e) => { setDeptFilter(e.target.value); setCurrentPage(1); }}
                     className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
-                    <option value=''>모든 그룹</option>
+                    <option value=''>{t('admin_messages.all_groups')}</option>
                     {departments.map((dept) => (
                       <option key={dept.value} value={dept.value}>
                         {dept.label}
@@ -812,15 +815,15 @@ export default function MessagesPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <User className='inline h-4 w-4 mr-1' />
-                    역할
+                    {t('admin_messages.role')}
                   </label>
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
                     className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
-                    <option value=''>모든 역할</option>
-                    <option value='user'>사용자</option>
+                    <option value=''>{t('admin_messages.all_roles')}</option>
+                    <option value='user'>{t('admin_messages.role_user')}</option>
                     <option value='assistant'>AI</option>
                   </select>
                 </div>
@@ -828,29 +831,29 @@ export default function MessagesPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <ThumbsUp className='inline h-4 w-4 mr-1' />
-                    피드백
+                    {t('admin_messages.feedback')}
                   </label>
                   <select
                     value={selectedFeedback}
                     onChange={(e) => setSelectedFeedback(e.target.value)}
                     className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
                   >
-                    <option value=''>모든 피드백</option>
-                    <option value='like'>좋아요</option>
-                    <option value='dislike'>싫어요</option>
-                    <option value='none'>피드백 없음</option>
+                    <option value=''>{t('admin_messages.all_feedback')}</option>
+                    <option value='like'>{t('admin_messages.feedback_like')}</option>
+                    <option value='dislike'>{t('admin_messages.feedback_dislike')}</option>
+                    <option value='none'>{t('admin_messages.feedback_none')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <Bot className='inline h-4 w-4 mr-1' />
-                    모델
+                    {t('admin_messages.model')}
                   </label>
                   <div className='relative'>
                     <input
                       type='text'
-                      placeholder='모델명 입력...'
+                      placeholder={t('admin_messages.model_placeholder')}
                       value={selectedModel}
                       onChange={(e) => setSelectedModel(e.target.value)}
                       className='w-full px-3 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground transition-all'
@@ -869,12 +872,12 @@ export default function MessagesPage() {
                 <div>
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <Hash className='inline h-4 w-4 mr-1' />
-                    채팅방 ID 검색
+                    {t('admin_messages.room_id_search')}
                   </label>
                   <div className='relative'>
                     <input
                       type='text'
-                      placeholder='채팅방 ID를 입력하세요...'
+                      placeholder={t('admin_messages.room_id_placeholder')}
                       value={selectedRoomId}
                       onChange={(e) => setSelectedRoomId(e.target.value)}
                       className='w-full px-4 py-2.5 border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground font-mono text-sm transition-all'
@@ -899,7 +902,7 @@ export default function MessagesPage() {
                 >
                   <label className='block text-sm font-medium text-foreground mb-2'>
                     <Calendar className='inline h-4 w-4 mr-1' />
-                    기간
+                    {t('admin_messages.period')}
                   </label>
                   <select
                     value={dateRange}
@@ -938,11 +941,11 @@ export default function MessagesPage() {
                 <div className='pt-4 border-t border-border'>
                   <div className='flex flex-wrap items-center gap-2'>
                     <span className='text-sm font-medium text-foreground'>
-                      활성 필터:
+                      {t('admin_messages.active_filters')}
                     </span>
                     {searchTerm && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                        검색: {searchTerm.substring(0, 20)}
+                        {t('admin_messages.filter_search')}: {searchTerm.substring(0, 20)}
                         {searchTerm.length > 20 ? '...' : ''}
                         <button
                           onClick={() => setSearchTerm('')}
@@ -954,7 +957,7 @@ export default function MessagesPage() {
                     )}
                     {selectedRoomId && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary font-mono'>
-                        방ID: {formatRoomId(selectedRoomId)}
+                        {t('admin_messages.filter_room_id')}: {formatRoomId(selectedRoomId)}
                         <button
                           onClick={() => setSelectedRoomId('')}
                           className='ml-1.5 hover:text-primary'
@@ -965,7 +968,7 @@ export default function MessagesPage() {
                     )}
                     {selectedUser && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                        사용자: {selectedUser.substring(0, 20)}
+                        {t('admin_messages.filter_user')}: {selectedUser.substring(0, 20)}
                         {selectedUser.length > 20 ? '...' : ''}
                         <button
                           onClick={() => setSelectedUser('')}
@@ -980,10 +983,10 @@ export default function MessagesPage() {
                         customStartDate ||
                         customEndDate)) && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                        기간:{' '}
+                        {t('admin_messages.filter_period')}:{' '}
                         {dateRange === 'custom'
-                          ? `${customStartDate || '시작 없음'} ~ ${
-                              customEndDate || '끝 없음'
+                          ? `${customStartDate || t('admin_messages.no_start')} ~ ${
+                              customEndDate || t('admin_messages.no_end')
                             }`
                           : dateRangeOptions.find(
                               (opt) => opt.value === dateRange
@@ -1002,7 +1005,7 @@ export default function MessagesPage() {
                     )}
                     {deptFilter && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                        그룹: {departments.find((d) => d.value === deptFilter)?.label || deptFilter.split('|')[0].replaceAll('부서', '그룹')}
+                        {t('admin_messages.filter_group')}: {departments.find((d) => d.value === deptFilter)?.label || deptFilter.split('|')[0].replaceAll('부서', '그룹')}
                         <button
                           onClick={() => setDeptFilter('')}
                           className='ml-1.5 hover:text-primary'
@@ -1013,7 +1016,7 @@ export default function MessagesPage() {
                     )}
                     {selectedRole && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground'>
-                        역할: {selectedRole === 'user' ? '사용자' : 'AI'}
+                        {t('admin_messages.filter_role')}: {selectedRole === 'user' ? t('admin_messages.role_user') : 'AI'}
                         <button
                           onClick={() => setSelectedRole('')}
                           className='ml-1.5 hover:text-foreground'
@@ -1024,12 +1027,12 @@ export default function MessagesPage() {
                     )}
                     {selectedFeedback && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground'>
-                        피드백:{' '}
+                        {t('admin_messages.filter_feedback')}:{' '}
                         {selectedFeedback === 'like'
-                          ? '좋아요'
+                          ? t('admin_messages.feedback_like')
                           : selectedFeedback === 'dislike'
-                          ? '싫어요'
-                          : '없음'}
+                          ? t('admin_messages.feedback_dislike')
+                          : t('admin_messages.feedback_none_label')}
                         <button
                           onClick={() => setSelectedFeedback('')}
                           className='ml-1.5 hover:text-foreground'
@@ -1040,7 +1043,7 @@ export default function MessagesPage() {
                     )}
                     {selectedModel && (
                       <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary'>
-                        모델: {selectedModel}
+                        {t('admin_messages.filter_model')}: {selectedModel}
                         <button
                           onClick={() => setSelectedModel('')}
                           className='ml-1.5 hover:text-primary'
@@ -1063,7 +1066,7 @@ export default function MessagesPage() {
           <div className='flex flex-col items-center justify-center h-64 space-y-4'>
             <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary'></div>
             <p className='text-sm text-muted-foreground'>
-              데이터를 불러오는 중...
+              {t('admin_messages.loading_data')}
             </p>
           </div>
         ) : messages.length === 0 ? (
@@ -1072,12 +1075,12 @@ export default function MessagesPage() {
               <MessageCircle className='h-8 w-8 text-muted-foreground' />
             </div>
             <h3 className='text-lg font-medium text-foreground mb-2'>
-              메시지가 없습니다
+              {t('admin_messages.no_messages')}
             </h3>
             <p className='text-sm text-muted-foreground'>
               {getActiveFiltersCount() > 0
-                ? '검색 조건과 일치하는 메시지가 없습니다. 필터를 조정해보세요.'
-                : '아직 메시지가 없습니다.'}
+                ? t('admin_messages.no_messages_with_filter')
+                : t('admin_messages.no_messages_yet')}
             </p>
             {getActiveFiltersCount() > 0 && (
               <button
@@ -1085,7 +1088,7 @@ export default function MessagesPage() {
                 className='mt-4 inline-flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded-lg transition-colors'
               >
                 <XCircle className='h-4 w-4 mr-2' />
-                필터 초기화
+                {t('admin_messages.reset_filters')}
               </button>
             )}
           </div>
@@ -1111,9 +1114,9 @@ export default function MessagesPage() {
                             setCurrentPage(1);
                           }}
                           className='font-medium text-foreground text-sm truncate hover:text-primary transition-colors block text-left w-full'
-                          title={`이 사용자의 메시지만 보기 (${message.name || message.email})`}
+                          title={t('admin_messages.filter_by_user', { name: message.name || message.email })}
                         >
-                          {message.name || '이름 없음'}
+                          {message.name || t('admin_messages.no_name')}
                         </button>
                         <button
                           onClick={() => {
@@ -1121,7 +1124,7 @@ export default function MessagesPage() {
                             setCurrentPage(1);
                           }}
                           className='text-xs text-muted-foreground truncate hover:text-primary transition-colors block text-left w-full'
-                          title={`이 이메일의 메시지만 보기 (${message.email})`}
+                          title={t('admin_messages.filter_by_email', { email: message.email })}
                         >
                           {message.email}
                         </button>
@@ -1141,7 +1144,7 @@ export default function MessagesPage() {
                         setCurrentPage(1);
                       }}
                       className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
-                      title={`이 채팅방의 메시지만 보기 (${message.roomId})`}
+                      title={t('admin_messages.filter_by_room', { roomId: message.roomId })}
                     >
                       <Hash className='h-3 w-3' />
                       {formatRoomId(message.roomId)}
@@ -1188,18 +1191,18 @@ export default function MessagesPage() {
                     <button
                       onClick={() => openMessageModal(message)}
                       className='inline-flex items-center px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors'
-                      title='메시지 상세 보기'
+                      title={t('admin_messages.view_detail')}
                     >
                       <Eye className='h-3 w-3 mr-1' />
-                      상세
+                      {t('admin_messages.detail')}
                     </button>
                     <button
                       onClick={() => deleteMessage(message._id)}
                       className='inline-flex items-center px-3 py-1.5 text-xs font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors'
-                      title='메시지 삭제'
+                      title={t('admin_messages.delete_message')}
                     >
                       <Trash2 className='h-3 w-3 mr-1' />
-                      삭제
+                      {t('common.delete')}
                     </button>
                   </div>
                 </div>
@@ -1215,29 +1218,29 @@ export default function MessagesPage() {
               <div className='grid grid-cols-12 gap-4 text-xs font-bold text-foreground uppercase tracking-wider'>
                 <div className='col-span-2 flex items-center gap-1'>
                   <User className='h-3.5 w-3.5' />
-                  사용자
+                  {t('admin_messages.col_user')}
                 </div>
                 <div className='col-span-1 flex items-center gap-1'>
                   <Bot className='h-3.5 w-3.5' />
-                  역할
+                  {t('admin_messages.col_role')}
                 </div>
                 <div className='col-span-3 flex items-center gap-1'>
                   <MessageCircle className='h-3.5 w-3.5' />
-                  메시지
+                  {t('admin_messages.col_message')}
                 </div>
                 <div className='col-span-1 flex items-center gap-1'>
                   <Bot className='h-3.5 w-3.5' />
-                  모델
+                  {t('admin_messages.col_model')}
                 </div>
                 <div className='col-span-1 flex items-center gap-1'>
                   <ThumbsUp className='h-3.5 w-3.5' />
-                  피드백
+                  {t('admin_messages.col_feedback')}
                 </div>
                 <div className='col-span-2 flex items-center gap-1'>
                   <Clock className='h-3.5 w-3.5' />
-                  시간
+                  {t('admin_messages.col_time')}
                 </div>
-                <div className='col-span-2 text-center'>작업</div>
+                <div className='col-span-2 text-center'>{t('admin_messages.col_actions')}</div>
               </div>
             </div>
 
@@ -1264,9 +1267,9 @@ export default function MessagesPage() {
                             setCurrentPage(1);
                           }}
                           className='font-semibold text-foreground truncate hover:text-primary transition-colors text-left'
-                          title={`이 사용자의 메시지만 보기 (${message.name || message.email})`}
+                          title={t('admin_messages.filter_by_user', { name: message.name || message.email })}
                         >
-                          {message.name || '이름 없음'}
+                          {message.name || t('admin_messages.no_name')}
                         </button>
                         <button
                           onClick={() => {
@@ -1274,7 +1277,7 @@ export default function MessagesPage() {
                             setCurrentPage(1);
                           }}
                           className='block text-muted-foreground text-xs truncate hover:text-primary transition-colors text-left'
-                          title={`이 이메일의 메시지만 보기 (${message.email})`}
+                          title={t('admin_messages.filter_by_email', { email: message.email })}
                         >
                           {message.email}
                         </button>
@@ -1306,7 +1309,7 @@ export default function MessagesPage() {
                             setCurrentPage(1);
                           }}
                           className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
-                          title={`이 채팅방의 메시지만 보기 (${message.roomId})`}
+                          title={t('admin_messages.filter_by_room', { roomId: message.roomId })}
                         >
                           <Hash className='h-3 w-3' />
                           {formatRoomId(message.roomId)}
@@ -1346,7 +1349,7 @@ export default function MessagesPage() {
                                 : 'bg-muted text-muted-foreground'
                             }`}
                           >
-                            재시도 {message.retryCount}회
+                            {t('admin_messages.retry_count', { count: message.retryCount })}
                           </span>
                         )}
                       </div>
@@ -1374,7 +1377,7 @@ export default function MessagesPage() {
                         <button
                           onClick={() => openMessageModal(message)}
                           className='p-2 text-primary hover:text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-all duration-150 hover:scale-105'
-                          title='메시지 상세 보기'
+                          title={t('admin_messages.view_detail')}
                         >
                           <Eye className='h-4 w-4' />
                         </button>
@@ -1383,7 +1386,7 @@ export default function MessagesPage() {
                         <button
                           onClick={() => deleteMessage(message._id)}
                           className='p-2 text-destructive hover:text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-all duration-150 hover:scale-105'
-                          title='메시지 삭제'
+                          title={t('admin_messages.delete_message')}
                         >
                           <Trash2 className='h-4 w-4' />
                         </button>
@@ -1415,7 +1418,7 @@ export default function MessagesPage() {
               <span className='font-medium text-foreground'>
                 {totalCount.toLocaleString()}
               </span>
-              {' 개 메시지'}
+              {' '}{t('admin_messages.unit_messages')}
             </div>
 
             {/* 페이지 네비게이션 */}
@@ -1425,7 +1428,7 @@ export default function MessagesPage() {
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
                 className='px-3 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-                title='첫 페이지'
+                title={t('admin_messages.first_page')}
               >
                 ««
               </button>
@@ -1436,7 +1439,7 @@ export default function MessagesPage() {
                 disabled={currentPage === 1}
                 className='px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
               >
-                ‹ 이전
+                ‹ {t('admin_messages.prev')}
               </button>
 
               {/* 페이지 번호 */}
@@ -1484,7 +1487,7 @@ export default function MessagesPage() {
                 disabled={currentPage === totalPages}
                 className='px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
               >
-                다음 ›
+                {t('admin_messages.next')} ›
               </button>
 
               {/* 마지막 페이지 */}
@@ -1492,7 +1495,7 @@ export default function MessagesPage() {
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
                 className='px-3 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-lg hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-                title='마지막 페이지'
+                title={t('admin_messages.last_page')}
               >
                 »»
               </button>
@@ -1512,7 +1515,7 @@ export default function MessagesPage() {
                   }
                 }}
                 className='w-20 px-3 py-2 text-sm text-center border border-border rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent bg-card text-foreground'
-                placeholder='페이지'
+                placeholder={t('admin_messages.page')}
               />
               <span className='text-sm text-muted-foreground'>
                 / {totalPages}
@@ -1535,7 +1538,7 @@ export default function MessagesPage() {
           <div className='relative bg-card rounded-lg shadow-xl w-full max-w-full md:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl max-h-[90vh] overflow-y-auto p-6'>
             <div className='flex items-center justify-between mb-4'>
               <h3 className='text-lg font-medium text-foreground'>
-                메시지 상세 정보
+                {t('admin_messages.message_detail')}
               </h3>
               <button
                 onClick={() => setShowMessageModal(false)}
@@ -1552,10 +1555,10 @@ export default function MessagesPage() {
                   {getRoleIcon(selectedMessage.role, selectedMessage.text)}
                   <h4 className='text-lg font-medium text-foreground'>
                     {isSystemMessage(selectedMessage.text)
-                      ? '시스템 메시지'
+                      ? t('admin_messages.system_message')
                       : selectedMessage.role === 'user'
-                      ? '사용자 메시지'
-                      : 'AI 응답'}
+                      ? t('admin_messages.user_message')
+                      : t('admin_messages.ai_response')}
                   </h4>
                   <div className='ml-auto flex items-center gap-2'>
                     <button
@@ -1566,7 +1569,7 @@ export default function MessagesPage() {
                           : 'bg-muted text-foreground hover:bg-accent'
                       }`}
                     >
-                      마크다운
+                      {t('admin_messages.markdown')}
                     </button>
                     <button
                       onClick={() => setMessageViewMode('raw')}
@@ -1576,13 +1579,13 @@ export default function MessagesPage() {
                           : 'bg-muted text-foreground hover:bg-accent'
                       }`}
                     >
-                      원본
+                      {t('admin_messages.raw')}
                     </button>
                   </div>
                 </div>
                 <div className='text-xs text-muted-foreground mb-2'>
-                  글자수: {normalizeMessageText(selectedMessage.text).length}
-                  {hasMessageOverflow ? ' · 스크롤 있음' : ''}
+                  {t('admin_messages.char_count')}: {normalizeMessageText(selectedMessage.text).length}
+                  {hasMessageOverflow ? ` · ${t('admin_messages.has_scroll')}` : ''}
                 </div>
                 <div
                   ref={messageContentRef}
@@ -1613,20 +1616,20 @@ export default function MessagesPage() {
                 <div>
                   <h4 className='text-sm font-medium text-foreground mb-3 flex items-center gap-2'>
                     <User className='h-4 w-4' />
-                    사용자 정보
+                    {t('admin_messages.user_info')}
                   </h4>
                   <div className='bg-muted p-4 rounded-lg space-y-2'>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        이름:
+                        {t('admin_messages.label_name')}
                       </span>
                       <span className='font-medium text-foreground'>
-                        {selectedMessage.name || '이름 없음'}
+                        {selectedMessage.name || t('admin_messages.no_name')}
                       </span>
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        이메일:
+                        {t('admin_messages.label_email')}
                       </span>
                       <span className='font-medium text-foreground'>
                         {selectedMessage.email}
@@ -1634,10 +1637,10 @@ export default function MessagesPage() {
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        그룹:
+                        {t('admin_messages.label_group')}
                       </span>
                       <span className='font-medium text-foreground'>
-                        {selectedMessage.department || '미설정'}
+                        {selectedMessage.department || t('admin_messages.not_set')}
                       </span>
                     </div>
                     <div className='flex justify-between'>
@@ -1645,7 +1648,7 @@ export default function MessagesPage() {
                         Cell:
                       </span>
                       <span className='font-medium text-foreground'>
-                        {selectedMessage.cell || '미설정'}
+                        {selectedMessage.cell || t('admin_messages.not_set')}
                       </span>
                     </div>
                   </div>
@@ -1655,12 +1658,12 @@ export default function MessagesPage() {
                 <div>
                   <h4 className='text-sm font-medium text-foreground mb-3 flex items-center gap-2'>
                     <MessageCircle className='h-4 w-4' />
-                    메시지 정보
+                    {t('admin_messages.message_info')}
                   </h4>
                   <div className='bg-muted p-4 rounded-lg space-y-2'>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        모델:
+                        {t('admin_messages.label_model')}
                       </span>
                       <span className='font-medium text-foreground'>
                         {(() => {
@@ -1690,7 +1693,7 @@ export default function MessagesPage() {
                                         : 'bg-muted text-muted-foreground'
                                     }`}
                                   >
-                                    재시도 {selectedMessage.retryCount}회
+                                    {t('admin_messages.retry_count', { count: selectedMessage.retryCount })}
                                   </span>
                                 )}
                             </div>
@@ -1701,7 +1704,7 @@ export default function MessagesPage() {
                     {selectedMessage.role === 'assistant' && (
                       <div className='flex justify-between'>
                         <span className='text-muted-foreground'>
-                          피드백:
+                          {t('admin_messages.label_feedback')}
                         </span>
                         <span className='font-medium text-foreground'>
                           {getFeedbackBadge(selectedMessage.feedback)}
@@ -1710,7 +1713,7 @@ export default function MessagesPage() {
                     )}
                     <div className='flex justify-between items-center'>
                       <span className='text-muted-foreground'>
-                        방 ID:
+                        {t('admin_messages.label_room_id')}
                       </span>
                       <button
                         onClick={() => {
@@ -1719,7 +1722,7 @@ export default function MessagesPage() {
                           setShowMessageModal(false);
                         }}
                         className='inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium transition-colors font-mono'
-                        title={`이 채팅방의 메시지만 보기 (${selectedMessage.roomId})`}
+                        title={t('admin_messages.filter_by_room', { roomId: selectedMessage.roomId })}
                       >
                         <Hash className='h-3 w-3' />
                         {formatRoomId(selectedMessage.roomId)}
@@ -1727,15 +1730,15 @@ export default function MessagesPage() {
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        IP 주소:
+                        {t('admin_messages.label_ip')}
                       </span>
                       <span className='font-medium text-foreground font-mono text-xs'>
-                        {selectedMessage.clientIP || '미기록'}
+                        {selectedMessage.clientIP || t('admin_messages.not_recorded')}
                       </span>
                     </div>
                     <div className='flex justify-between'>
                       <span className='text-muted-foreground'>
-                        시간:
+                        {t('admin_messages.label_time')}
                       </span>
                       <span className='font-medium text-foreground text-xs'>
                         {formatDate(selectedMessage.createdAt)}
@@ -1751,7 +1754,7 @@ export default function MessagesPage() {
                 onClick={() => setShowMessageModal(false)}
                 className='px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors'
               >
-                닫기
+                {t('common.close')}
               </button>
             </div>
           </div>

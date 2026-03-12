@@ -1,6 +1,11 @@
-import { useState, useEffect } from 'react';
+'use client';
 
-export default function TypingAnimation({ baseText = "답변을 준비중입니다" }) {
+import { useState, useEffect } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
+
+export default function TypingAnimation({ baseText }) {
+  const { t } = useTranslation();
+  const displayText = baseText ?? t('chat.preparing_answer');
   const [dots, setDots] = useState('');
 
   useEffect(() => {
@@ -17,7 +22,7 @@ export default function TypingAnimation({ baseText = "답변을 준비중입니�
   return (
     <div className="flex items-center w-full text-foreground">
       <div className="mr-2 w-4 h-4 bg-primary rounded-full animate-pulse"></div>
-      <span>{baseText}{dots}</span>
+      <span>{displayText}{dots}</span>
     </div>
   );
 }

@@ -2,8 +2,11 @@
 
 import { ChevronUp, ChevronDown } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
 
 function ScrollButtons({ show, containerRef }) {
+  const { t } = useTranslation();
+
   const scrollToTop = () => {
     const container = containerRef?.current;
     if (container) {
@@ -37,7 +40,7 @@ function ScrollButtons({ show, containerRef }) {
         size="icon"
         onClick={scrollToTop}
         className="rounded-full shadow-lg size-12"
-        aria-label="맨 위로 스크롤"
+        aria-label={t('chat.scroll_to_top')}
       >
         <ChevronUp className="size-6" />
       </Button>
@@ -46,7 +49,7 @@ function ScrollButtons({ show, containerRef }) {
         size="icon"
         onClick={scrollToBottom}
         className="rounded-full shadow-lg size-12"
-        aria-label="맨 아래로 스크롤"
+        aria-label={t('chat.scroll_to_bottom')}
       >
         <ChevronDown className="size-6" />
       </Button>

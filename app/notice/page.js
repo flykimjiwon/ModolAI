@@ -18,6 +18,7 @@ import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NoticePage() {
   const [notices, setNotices] = useState([]);
@@ -27,6 +28,7 @@ export default function NoticePage() {
   const [userRole, setUserRole] = useState('');
   const router = useRouter();
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
 
   // 사용자 권한 확인
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function NoticePage() {
       }
 
       if (!response.ok) {
-        throw new Error('공지사항 조회 실패');
+        throw new Error(t('notice.fetch_error'));
       }
 
       const data = await response.json();
@@ -67,17 +69,17 @@ export default function NoticePage() {
       setTotalPages(data.totalPages);
     } catch (error) {
       console.error('공지사항 조회 실패:', error);
-      alert('공지사항을 불러오는데 실패했습니다.', 'error', '오류');
+      alert(t('notice.fetch_failed'), 'error', t('common.error'));
     } finally {
       setLoading(false);
     }
-  }, [currentPage, router, alert]);
+  }, [currentPage, router, alert, t]);
 
   // 공지사항 삭제
   const deleteNotice = async (id, title) => {
     const confirmed = await confirm(
-      `'${title}' 공지사항을 정말 삭제하시겠습니까?`,
-      '공지사항 삭제 확인'
+      t('notice.delete_confirm', { title }),
+      t('notice.delete_confirm_title')
     );
     if (!confirmed) {
       return;
@@ -99,14 +101,14 @@ export default function NoticePage() {
       }
 
       if (!response.ok) {
-        throw new Error('공지사항 삭제 실패');
+        throw new Error(t('notice.delete_error'));
       }
 
-      alert('공지사항이 삭제되었습니다.', 'success', '삭제 완료');
+      alert(t('notice.deleted'), 'success', t('common.delete_complete'));
       fetchNotices();
     } catch (error) {
       console.error('공지사항 삭제 실패:', error);
-      alert('공지사항 삭제에 실패했습니다.', 'error', '삭제 실패');
+      alert(t('notice.delete_failed'), 'error', t('common.delete_failed'));
     }
   };
 
@@ -142,17 +144,17 @@ export default function NoticePage() {
               onClick={() => router.push('/')}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <div>
               <h1 className='text-2xl font-bold text-foreground flex items-center gap-2'>
                 <Bell className='h-6 w-6' />
-                공지사항
+                {t('notice.title')}
               </h1>
               <p className='text-muted-foreground mt-1'>
-                시스템 공지사항을 확인하세요.
+                {t('notice.subtitle')}
               </p>
             </div>
           </div>
@@ -163,7 +165,7 @@ export default function NoticePage() {
               onClick={() => router.push('/notice/write')}
             >
               <Plus className='h-4 w-4' />
-              글쓰기
+              {t('common.write')}
             </Button>
           )}
         </div>
@@ -179,10 +181,10 @@ export default function NoticePage() {
               <div className='text-center py-12'>
                 <Bell className='mx-auto h-12 w-12 text-muted-foreground' />
                 <h3 className='mt-2 text-sm font-medium text-foreground'>
-                  공지사항이 없습니다
+                  {t('notice.no_notices')}
                 </h3>
                 <p className='mt-1 text-sm text-muted-foreground'>
-                  아직 등록된 공지사항이 없습니다.
+                  {t('notice.no_notices_desc')}
                 </p>
               </div>
             ) : (
@@ -204,12 +206,12 @@ export default function NoticePage() {
                           </h3>
                           {notice.isPopup && (
                             <Badge variant='destructive'>
-                              팝업
+                              {t('notice.popup_badge')}
                             </Badge>
                           )}
                           {!notice.isActive && (
                             <Badge variant='secondary'>
-                              비활성
+                              {t('notice.inactive_badge')}
                             </Badge>
                           )}
                         </div>
@@ -246,7 +248,7 @@ export default function NoticePage() {
                             variant='ghost'
                             size='icon'
                             className='text-primary hover:bg-primary/10'
-                            title='수정'
+                            title={t('common.modify')}
                           >
                             <Edit className='h-4 w-4' />
                           </Button>
@@ -255,7 +257,7 @@ export default function NoticePage() {
                             variant='ghost'
                             size='icon'
                             className='text-destructive hover:bg-destructive/10'
-                            title='삭제'
+                            title={t('common.delete')}
                           >
                             <Trash2 className='h-4 w-4' />
                           </Button>
@@ -278,7 +280,7 @@ export default function NoticePage() {
               variant='outline'
               size='sm'
             >
-              이전
+              {t('common.previous')}
             </Button>
 
             <span className='px-4 py-2 text-sm font-medium text-muted-foreground'>
@@ -293,7 +295,7 @@ export default function NoticePage() {
               variant='outline'
               size='sm'
             >
-              다음
+              {t('common.next')}
             </Button>
           </div>
         )}

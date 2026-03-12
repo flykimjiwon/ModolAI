@@ -1,39 +1,42 @@
+[English](README_en.md)
+
 # ModolAI
 
-ModolAI is an open-source, self-hosted AI chat platform built with Next.js 15.
+ModolAI는 Next.js 15 기반의 오픈소스 셀프호스팅 AI 챗 플랫폼입니다.
 
-It combines multi-model chat, agent workflows, admin operations, OpenAI-compatible APIs, direct messaging, board/notice features, and compliance tooling in a single JavaScript stack.
+멀티모델 채팅, 에이전트 워크플로우, 관리자 운영, OpenAI 호환 API, 쪽지, 게시판/공지사항, 컴플라이언스 도구를 하나의 JavaScript 스택으로 제공합니다.
 
-## Highlights
+## 주요 특징
 
 - Next.js 15 App Router + React 19
-- shadcn/ui-based component system with monochrome design tokens
-- Multi-provider model routing (Ollama, OpenAI-compatible, Gemini)
-- OpenAI-compatible API (`/v1/chat/completions`, `/v1/models`, `/v1/embeddings`, `/v1/rerank`)
-- Admin control panel (users, models, model servers, logs, settings, analytics)
-- PII detection/testing and log views
-- Local login + generic OAuth SSO flow
-- Built-in PPT creation workflow (`app/components/PPTMaker.js`)
+- shadcn/ui 기반 모노크롬 디자인 토큰 컴포넌트 시스템
+- 멀티 프로바이더 모델 라우팅 (Ollama, OpenAI 호환, Gemini)
+- OpenAI 호환 API (`/v1/chat/completions`, `/v1/models`, `/v1/embeddings`, `/v1/rerank`)
+- 관리자 패널 (사용자, 모델, 모델 서버, 로그, 설정, 분석)
+- 개인정보(PII) 탐지/테스트 및 로그 조회
+- 로컬 로그인 + 범용 OAuth SSO 지원
+- PPT 생성 워크플로우 내장 (`app/components/PPTMaker.js`)
+- 다국어 지원 (한국어 / 영어)
 
-## Tech Stack
+## 기술 스택
 
-- Framework: Next.js 15.5.9
-- Runtime: React 19.2.1
-- Language: JavaScript
+- 프레임워크: Next.js 15.5.9
+- 런타임: React 19.2.1
+- 언어: JavaScript
 - UI: shadcn/ui + Tailwind CSS v4
-- Database: PostgreSQL (Supabase-compatible via connection string)
-- Auth: JWT + refresh token
-- Charts: Recharts
-- Package manager: npm
+- 데이터베이스: PostgreSQL (Supabase 호환, 연결 문자열 방식)
+- 인증: JWT + 리프레시 토큰
+- 차트: Recharts
+- 패키지 매니저: npm
 
-## Quick Start
+## 빠른 시작
 
-### Prerequisites
+### 사전 요구사항
 
 - Node.js 20+
 - PostgreSQL 14+
 
-### Install
+### 설치
 
 ```bash
 git clone <your-fork-or-repo-url> modol
@@ -41,20 +44,20 @@ cd modol
 npm install
 ```
 
-### Environment
+### 환경 설정
 
 ```bash
 cp .env.development .env.local
 ```
 
-Required values in `.env.local`:
+`.env.local`에 필수 값 설정:
 
 ```env
 JWT_SECRET=your-secret
 POSTGRES_URI=postgresql://user:password@localhost:5432/modol
 ```
 
-Optional values:
+선택 값:
 
 ```env
 TZ=UTC
@@ -66,7 +69,7 @@ OAUTH_CLIENT_ID=
 OAUTH_CLIENT_SECRET=
 ```
 
-### Database bootstrap
+### 데이터베이스 초기화
 
 ```bash
 createdb modol
@@ -74,57 +77,60 @@ npm run setup-postgres
 npm run create-admin
 ```
 
-Default admin account:
+기본 관리자 계정:
 
-- Email: `admin@modol.ai`
-- Password: `modol@admin`
+- 이메일: `admin@modol.ai`
+- 비밀번호: `modol@admin`
 
-### Run
+### 실행
 
 ```bash
 npm run dev
 ```
 
-Build verification:
+빌드 검증:
 
 ```bash
 SKIP_DB_CONNECTION=true npm run build
 ```
 
-## Project Layout
+## 프로젝트 구조
 
-- `app/` - Next.js app routes, pages, and API handlers
-- `app/admin/` - Admin UI pages
-- `app/api/` - Application API routes
-- `app/components/` - Shared UI and feature components
-- `app/components/ui/` - shadcn/ui primitives
-- `app/lib/` - Auth, DB, logging, model-server, and utilities
-- `scripts/` - Setup/admin/diagnostic scripts
+- `app/` — Next.js 앱 라우트, 페이지, API 핸들러
+- `app/admin/` — 관리자 UI 페이지
+- `app/api/` — 애플리케이션 API 라우트
+- `app/components/` — 공유 UI 및 기능 컴포넌트
+- `app/components/ui/` — shadcn/ui 기본 컴포넌트
+- `app/lib/` — 인증, DB, 로깅, 모델서버, 유틸리티
+- `app/lib/i18n/` — 다국어 지원 (한국어 / 영어)
+- `scripts/` — 설정/관리/진단 스크립트
 
-## Current Migration Status
+## 마이그레이션 현황
 
-Completed:
+완료된 작업:
 
-- Company-specific branding cleanup
-- Monochrome shadcn/ui migration across chat/admin/auth/profile flows
-- Admin page migrations (dashboard/users/settings/env + logs/messages/analytics)
-- Remaining component migrations including PPTMaker and modal/toggle/spinner utilities
-- SSO generalization (removed Swing-specific route/page)
-- Timezone configuration moved to env-driven session setup
-- Legacy utility class removal (`btn-*`, `input-primary`, `card`)
-- `modol` branding updated to `ModolAI` in package metadata and defaults
+- 기업 전용 브랜딩 정리
+- 모노크롬 shadcn/ui 마이그레이션 (채팅/관리자/인증/프로필)
+- 관리자 페이지 마이그레이션 (대시보드/사용자/설정/환경 + 로그/메시지/분석)
+- PPTMaker, 모달/토글/스피너 등 나머지 컴포넌트 마이그레이션
+- SSO 범용화 (특정 기업 전용 라우트/페이지 제거)
+- 타임존 설정을 환경변수 기반 세션 설정으로 이전
+- 레거시 유틸리티 클래스 제거 (`btn-*`, `input-primary`, `card`)
+- `modol` 브랜딩을 `ModolAI`로 업데이트
+- 전체 다국어(한국어/영어) i18n 적용 — 모든 페이지 및 컴포넌트
+- 보안 점검 및 패치 (API 엔드포인트 인증)
 
-## Verification
+## 빌드 검증
 
-Latest full build check:
+최신 빌드 확인:
 
-- Command: `SKIP_DB_CONNECTION=true npm run build`
-- Result: success (warnings only)
+- 명령어: `SKIP_DB_CONNECTION=true npm run build`
+- 결과: 성공 (경고만 존재)
 
-## Contributing
+## 기여
 
-See `CONTRIBUTING.md`.
+`CONTRIBUTING.md`를 참고하세요.
 
-## License
+## 라이선스
 
-MIT. See `LICENSE`.
+MIT. `LICENSE`를 참고하세요.

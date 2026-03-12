@@ -9,6 +9,7 @@ import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function NoticeDetailPage() {
   const [notice, setNotice] = useState(null);
@@ -18,6 +19,7 @@ export default function NoticeDetailPage() {
   const params = useParams();
   const { id } = params;
   const { alert } = useAlert();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -43,20 +45,20 @@ export default function NoticeDetailPage() {
         const response = await fetch(`/api/notice/${id}`);
 
         if (response.status === 404) {
-          alert('공지사항을 찾을 수 없습니다.', 'error', '오류');
+          alert(t('notice.not_found_msg'), 'error', t('common.error'));
           router.push('/notice');
           return;
         }
 
         if (!response.ok) {
-          throw new Error('공지사항 조회 실패');
+          throw new Error(t('notice.fetch_error'));
         }
 
         const data = await response.json();
         setNotice(data.notice);
       } catch (error) {
         console.error('공지사항 조회 실패:', error);
-        alert('공지사항을 불러오는데 실패했습니다.', 'error', '오류');
+        alert(t('notice.fetch_failed'), 'error', t('common.error'));
         router.push('/notice');
       } finally {
         setLoading(false);
@@ -66,7 +68,7 @@ export default function NoticeDetailPage() {
     if (id) {
       fetchNotice();
     }
-  }, [id, router, alert]);
+  }, [id, router, alert, t]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -92,14 +94,14 @@ export default function NoticeDetailPage() {
       <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='text-center'>
           <h3 className='text-lg font-medium text-foreground'>
-            공지사항을 찾을 수 없습니다
+            {t('notice.not_found')}
           </h3>
           <Button
             onClick={() => router.push('/notice')}
             variant='link'
             className='mt-4'
           >
-            목록으로 돌아가기
+            {t('common.back_to_list_full')}
           </Button>
         </div>
       </div>
@@ -115,12 +117,12 @@ export default function NoticeDetailPage() {
               onClick={() => router.push('/notice')}
               variant='ghost'
               size='icon'
-              title='목록으로'
+              title={t('common.back_to_list')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <h1 className='text-2xl font-bold text-foreground'>
-              공지사항
+              {t('notice.title')}
             </h1>
           </div>
 
@@ -130,7 +132,7 @@ export default function NoticeDetailPage() {
               variant='ghost'
             >
               <Edit className='h-4 w-4' />
-              수정
+              {t('common.modify')}
             </Button>
           )}
         </div>
@@ -144,12 +146,12 @@ export default function NoticeDetailPage() {
                 </h1>
                 {notice.isPopup && (
                   <Badge variant='destructive'>
-                    팝업
+                    {t('notice.popup_badge')}
                   </Badge>
                 )}
                 {!notice.isActive && (
                   <Badge variant='secondary'>
-                    비활성
+                    {t('notice.inactive_badge')}
                   </Badge>
                 )}
               </div>
@@ -165,11 +167,11 @@ export default function NoticeDetailPage() {
                 </div>
                 <div className='flex items-center gap-2'>
                   <Eye className='h-4 w-4' />
-                  <span>조회 {notice.views}</span>
+                  <span>{t('notice.views_count', { count: notice.views })}</span>
                 </div>
                 {notice.updatedAt && notice.updatedAt !== notice.createdAt && (
                   <div className='text-xs'>
-                    수정: {formatDate(notice.updatedAt)}
+                    {t('notice.updated_at', { date: formatDate(notice.updatedAt) })}
                   </div>
                 )}
               </div>
@@ -194,7 +196,7 @@ export default function NoticeDetailPage() {
             onClick={() => router.push('/notice')}
             variant='outline'
           >
-            목록으로
+            {t('common.back_to_list')}
           </Button>
         </div>
       </div>

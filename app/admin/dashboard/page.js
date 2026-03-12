@@ -21,8 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalMessages: 0,
@@ -101,7 +103,7 @@ export default function AdminDashboard() {
         setStats(data);
       }
     } catch (error) {
-      console.error('대시보드 데이터 로드 실패:', error);
+      console.error(t('admin_dashboard.data_load_failed'), error);
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ export default function AdminDashboard() {
         setSystemStatus(data.status);
       }
     } catch (error) {
-      console.error('시스템 상태 조회 실패:', error);
+      console.error(t('admin_dashboard.system_status_failed'), error);
       setSystemStatus({
         database: {
           status: 'error',
@@ -187,46 +189,42 @@ export default function AdminDashboard() {
 
   const statCards = [
     {
-      name: '신규 가입자',
+      name: t('admin_dashboard.new_users'),
       description: formatPeriod(),
       stat: stats.totalUsers,
-      tooltip: '선택한 기간 내 가입한 사용자 수입니다.',
+      tooltip: t('admin_dashboard.new_users_tooltip'),
       icon: Users,
       color: 'text-primary',
     },
     {
-      name: '메시지 수',
+      name: t('admin_dashboard.message_count'),
       description: formatPeriod(),
       stat: stats.totalMessages,
-      tooltip:
-        '선택한 기간 내 실제 LLM 호출 횟수입니다. 에이전트/플랜 모드의 다중 호출도 모두 합산합니다. (PII 감지 호출 제외)',
+      tooltip: t('admin_dashboard.message_count_tooltip'),
       icon: MessageSquare,
       color: 'text-primary',
     },
     {
-      name: '오늘 메시지',
-      description: '당일 메시지',
+      name: t('admin_dashboard.today_messages'),
+      description: t('admin_dashboard.today_messages_desc'),
       stat: stats.todayMessages,
-      tooltip:
-        '오늘 발생한 실제 LLM 호출 횟수입니다. 에이전트/플랜 모드의 다중 호출도 모두 합산합니다. (PII 감지 호출 제외)',
+      tooltip: t('admin_dashboard.today_messages_tooltip'),
       icon: Activity,
       color: 'text-muted-foreground',
     },
     {
-      name: '활성 사용자',
+      name: t('admin_dashboard.active_users'),
       description: formatPeriod(),
       stat: stats.activeUsers,
-      tooltip:
-        '선택한 기간 내 메시지/외부 API 로그에 등장한 사용자 수(중복 제거)입니다.',
+      tooltip: t('admin_dashboard.active_users_tooltip'),
       icon: TrendingUp,
       color: 'text-primary',
     },
     {
-      name: '총 토큰 사용량',
-      description: `입력 ${formatTokenCount(stats.tokenUsage?.promptTokens || 0)} / 출력 ${formatTokenCount(stats.tokenUsage?.responseTokens || 0)}`,
+      name: t('admin_dashboard.total_token_usage'),
+      description: t('admin_dashboard.token_input_output', { input: formatTokenCount(stats.tokenUsage?.promptTokens || 0), output: formatTokenCount(stats.tokenUsage?.responseTokens || 0) }),
       stat: stats.tokenUsage?.totalTokens || 0,
-      tooltip:
-        '선택한 기간 내 웹 채팅과 외부 API에서 사용된 총 토큰 수입니다. (입력 토큰 + 출력 토큰)',
+      tooltip: t('admin_dashboard.total_token_tooltip'),
       icon: Coins,
       color: 'text-muted-foreground',
     },
@@ -245,16 +243,16 @@ export default function AdminDashboard() {
         <div className='md:flex md:items-center md:justify-between'>
           <div className='min-w-0 flex-1'>
             <h2 className='text-2xl font-bold leading-7 text-foreground sm:truncate sm:text-3xl'>
-              관리자 대시보드
+              {t('admin_dashboard.title')}
             </h2>
             <p className='mt-1 text-sm text-muted-foreground'>
-              시스템 현황과 사용자 활동을 모니터링하세요
+              {t('admin_dashboard.subtitle')}
             </p>
           </div>
           <div className='mt-4 flex md:ml-4 md:mt-0'>
             <Button onClick={fetchDashboardData}>
               <Activity className='h-4 w-4' />
-              새로고침
+              {t('admin_dashboard.refresh')}
             </Button>
           </div>
         </div>
@@ -265,7 +263,7 @@ export default function AdminDashboard() {
               <div className='flex items-center gap-2'>
                 <Clock className='h-4 w-4 text-muted-foreground' />
                 <span className='text-sm font-medium text-foreground'>
-                  비교 기간:
+                  {t('admin_dashboard.comparison_period')}
                 </span>
               </div>
 
@@ -274,9 +272,9 @@ export default function AdminDashboard() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='1day'>오늘</SelectItem>
-                  <SelectItem value='7days'>최근 7일</SelectItem>
-                  <SelectItem value='custom'>기간 지정</SelectItem>
+                  <SelectItem value='1day'>{t('admin_dashboard.today')}</SelectItem>
+                  <SelectItem value='7days'>{t('admin_dashboard.last_7_days')}</SelectItem>
+                  <SelectItem value='custom'>{t('admin_dashboard.custom_period')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -288,7 +286,7 @@ export default function AdminDashboard() {
                     onChange={(e) => setStartDate(e.target.value)}
                     onClick={(e) => e.currentTarget.showPicker?.()}
                     className='min-w-[140px] w-auto'
-                    placeholder='시작 날짜'
+                    placeholder={t('admin_dashboard.start_date')}
                   />
                   <span className='text-sm text-muted-foreground'>~</span>
                   <Input
@@ -297,19 +295,19 @@ export default function AdminDashboard() {
                     onChange={(e) => setEndDate(e.target.value)}
                     onClick={(e) => e.currentTarget.showPicker?.()}
                     className='min-w-[140px] w-auto'
-                    placeholder='종료 날짜'
+                    placeholder={t('admin_dashboard.end_date')}
                   />
                   <Button
                     onClick={fetchDashboardData}
                     size='sm'
                   >
-                    조회
+                    {t('admin_dashboard.search')}
                   </Button>
                 </>
               )}
 
               <div className='ml-auto text-xs text-muted-foreground'>
-                * 선택한 기간의 통계를 표시합니다
+                {t('admin_dashboard.period_stats_note')}
               </div>
             </div>
           </CardContent>
@@ -359,7 +357,7 @@ export default function AdminDashboard() {
             <div className='flex items-center mb-4'>
               <Cpu className='h-5 w-5 text-muted-foreground mr-2' />
               <h3 className='text-lg font-medium text-foreground'>
-                인기 모델
+                {t('admin_dashboard.popular_models')}
               </h3>
             </div>
             <div className='space-y-3'>
@@ -374,7 +372,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className='ml-3'>
                       <p className='text-sm font-medium text-foreground'>
-                        {model.label || model.model_name || '<삭제된 모델>'}
+                        {model.label || model.model_name || t('admin_dashboard.deleted_model')}
                       </p>
                       {model.server_name && (
                         <p className='text-xs text-muted-foreground'>
@@ -384,13 +382,13 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className='text-sm text-muted-foreground'>
-                    {model.count}회 사용
+                    {t('admin_dashboard.usage_count', { count: model.count })}
                   </div>
                 </div>
               ))}
               {(!stats.topModels || stats.topModels.length === 0) && (
                 <p className='text-sm text-muted-foreground text-center py-4'>
-                  데이터가 없습니다
+                  {t('admin_dashboard.no_data')}
                 </p>
               )}
             </div>
@@ -402,7 +400,7 @@ export default function AdminDashboard() {
             <div className='flex items-center mb-4'>
               <Clock className='h-5 w-5 text-muted-foreground mr-2' />
               <h3 className='text-lg font-medium text-foreground'>
-                최근 활동
+                {t('admin_dashboard.recent_activity')}
               </h3>
             </div>
             <div className='space-y-3'>
@@ -416,7 +414,7 @@ export default function AdminDashboard() {
                       {activity.email}
                     </p>
                     <p className='text-xs text-muted-foreground'>
-                      {activity.modelLabel || activity.model} 모델 사용
+                      {t('admin_dashboard.model_used', { model: activity.modelLabel || activity.model })}
                     </p>
                   </div>
                   <div className='text-xs text-muted-foreground'>
@@ -426,7 +424,7 @@ export default function AdminDashboard() {
               ))}
               {(!stats.recentActivity || stats.recentActivity.length === 0) && (
                 <p className='text-sm text-muted-foreground text-center py-4'>
-                  활동 데이터가 없습니다
+                  {t('admin_dashboard.no_activity_data')}
                 </p>
               )}
             </div>
@@ -439,7 +437,7 @@ export default function AdminDashboard() {
           <div className='flex items-center mb-4'>
             <Database className='h-5 w-5 text-muted-foreground mr-2' />
             <h3 className='text-lg font-medium text-foreground'>
-              시스템 상태
+              {t('admin_dashboard.system_status')}
             </h3>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
@@ -449,7 +447,7 @@ export default function AdminDashboard() {
                   className={`h-3 w-3 rounded-full mr-2 ${getStatusColor(systemStatus.database.status)}`}
                 ></div>
                 <span className='text-sm text-foreground'>
-                  데이터베이스
+                  {t('admin_dashboard.database')}
                 </span>
               </div>
               <p className='text-xs text-muted-foreground mt-1'>
@@ -468,7 +466,7 @@ export default function AdminDashboard() {
                   className={`h-3 w-3 rounded-full mr-2 ${getStatusColor(systemStatus.apiServer.status)}`}
                 ></div>
                 <span className='text-sm text-foreground'>
-                  API 서버
+                  {t('admin_dashboard.api_server')}
                 </span>
               </div>
               <p className='text-xs text-muted-foreground mt-1'>
@@ -482,7 +480,7 @@ export default function AdminDashboard() {
                   className={`h-3 w-3 rounded-full mr-2 ${getStatusColor(systemStatus.modelServers.status)}`}
                 ></div>
                 <span className='text-sm text-foreground'>
-                  모델 서버
+                  {t('admin_dashboard.model_server')}
                 </span>
               </div>
               <p className='text-xs text-muted-foreground mt-1'>

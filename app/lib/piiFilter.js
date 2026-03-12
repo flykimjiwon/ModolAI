@@ -1,28 +1,18 @@
 import { logExternalApiRequest } from '@/lib/externalApiLogger';
+import { detectPII } from '@/lib/piiDetector';
 
-const PII_API_URL = process.env.PII_DETECT_API_URL;
-
-function parseJsonSafe(rawText) {
-  if (typeof rawText !== 'string') return null;
-  if (!rawText.trim()) return {};
-  try {
-    return JSON.parse(rawText);
-  } catch {
-    return null;
-  }
-}
-
-function headersToObject(headers) {
-  const result = {};
-  if (!headers || typeof headers.entries !== 'function') {
-    return result;
-  }
-  for (const [key, value] of headers.entries()) {
-    result[key] = value;
-  }
-  return result;
-}
-
+/**
+ * Detect and mask PII in text using the local regex-based engine.
+ *
+ * @param {string}  text              Input text to scan
+ * @param {object}  options
+ * @param {string[]|null} options.enabledTypes  PII type keys to detect (null = all)
+ * @param {boolean} [options.mxtVrf]            Legacy flag (ignored, kept for compat)
+ * @param {boolean} [options.maskOpt]           Legacy flag (ignored, kept for compat)
+ * @param {string}  [options.endpoint]          Legacy field (ignored, kept for compat)
+ * @param {object}  context           Logging context
+ * @returns {Promise<object>} Detection result
+ */
 export async function detectAndMaskPII(text, options = {}, context = {}) {
   if (!text || typeof text !== 'string' || !text.trim()) {
     return {
@@ -35,43 +25,16 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
     };
   }
 
-  const mxtVrf = options.mxtVrf !== false;
-  const maskOpt = options.maskOpt !== false;
-  const endpoint = options.endpoint || PII_API_URL;
-  const vrfFieldMode = options.vrfFieldMode === 'txt' ? 'txt' : 'mxt';
   const startedAt = Date.now();
-
-  const baseResult = {
-    detected: false,
-    maskedText: text,
-    detectedList: [],
-    detectedCnt: 0,
-    skipped: false,
-    reason: null,
-  };
-
-  const requestBody = {
-    original_text: text,
-    mask_opt: maskOpt,
-  };
-
-  if (vrfFieldMode === 'txt') {
-    requestBody.txt_vrf = mxtVrf;
-  } else {
-    requestBody.mxt_vrf = mxtVrf;
-  }
-  const requestHeaders = {
-    accept: 'application/json',
-    'Content-Type': 'application/json',
-  };
+  const enabledTypes = options.enabledTypes || null;
 
   async function safeLog(logData) {
     try {
       await logExternalApiRequest({
         sourceType: 'internal',
-        provider: 'pii-api',
+        provider: 'pii-local',
         apiType: 'pii-detect',
-        endpoint,
+        endpoint: 'local-regex',
         model: context.model || 'pii-detect',
         messages: [
           { role: 'user', content: text },
@@ -82,6 +45,7 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
               detectedCnt: logData.detectedCnt,
               maskedTextPreview: (logData.maskedText || '').slice(0, 200),
               reason: logData.reason || null,
+              enabledTypes: enabledTypes,
             }),
           },
         ],
@@ -103,9 +67,12 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
         acceptLanguage: context.acceptLanguage || null,
         referer: context.referer || null,
         origin: context.origin || null,
-        requestHeaders: logData.requestHeaders || requestHeaders,
-        requestBody,
-        responseHeaders: logData.responseHeaders || null,
+        requestHeaders: { source: 'local-regex' },
+        requestBody: {
+          original_text: text,
+          enabledTypes: enabledTypes,
+        },
+        responseHeaders: null,
         responseBody: logData.responseBody || null,
       });
     } catch (logError) {
@@ -114,119 +81,41 @@ export async function detectAndMaskPII(text, options = {}, context = {}) {
   }
 
   try {
-    if (!endpoint) {
-      console.warn('[PII] PII_DETECT_API_URL not configured - skipping filtering');
-      const result = {
-        ...baseResult,
-        skipped: true,
-        reason: 'missing-endpoint',
-        statusCode: 0,
-        statusText: 'NOT_CONFIGURED',
-        errorMessage: 'PII endpoint is not configured',
-      };
-      await safeLog({
-        ...result,
-        statusCode: 0,
-        error: result.errorMessage,
-        requestHeaders,
-      });
-      return result;
-    }
+    const result = detectPII(text, enabledTypes);
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: requestHeaders,
-      body: JSON.stringify(requestBody),
-    });
-    const responseHeaders = headersToObject(res.headers);
-    const rawResponseBody = await res.text();
-    const parsedResponseBody = parseJsonSafe(rawResponseBody);
-
-    if (!res.ok) {
-      console.warn(`[PII] API response error: ${res.status}`);
-      const responseBody =
-        parsedResponseBody !== null
-          ? parsedResponseBody
-          : rawResponseBody || null;
-      const result = {
-        ...baseResult,
-        skipped: true,
-        reason: 'http-error',
-        statusCode: res.status,
-        statusText: res.statusText || null,
-        responseBody,
-        errorMessage: `PII API HTTP ${res.status}${
-          res.statusText ? ` ${res.statusText}` : ''
-        }`,
-      };
-      await safeLog({
-        ...result,
-        statusCode: res.status,
-        error: result.errorMessage,
-        requestHeaders,
-        responseHeaders,
-        responseBody,
-      });
-      return result;
-    }
-
-    if (parsedResponseBody === null || typeof parsedResponseBody !== 'object') {
-      const result = {
-        ...baseResult,
-        skipped: true,
-        reason: 'invalid-json',
-        statusCode: res.status,
-        statusText: res.statusText || null,
-        rawResponse: rawResponseBody
-          ? rawResponseBody.slice(0, 2000)
-          : null,
-        errorMessage: 'PII API returned a non-JSON response',
-      };
-      await safeLog({
-        ...result,
-        statusCode: res.status,
-        error: result.errorMessage,
-        requestHeaders,
-        responseHeaders,
-        responseBody: result.rawResponse,
-      });
-      return result;
-    }
-
-    const data = parsedResponseBody;
-    const result = {
-      detected: data.detected === true,
-      maskedText: data.masked_text || text,
-      detectedList: data.detected_list || [],
-      detectedCnt: data.detected_cnt || 0,
+    const output = {
+      detected: result.detected,
+      maskedText: result.maskedText,
+      detectedList: result.detectedList,
+      detectedCnt: result.detectedCnt,
       skipped: false,
       reason: null,
-      statusCode: res.status,
-      statusText: res.statusText || null,
+      statusCode: 200,
+      statusText: 'OK',
     };
+
     await safeLog({
-      ...result,
-      statusCode: res.status,
-      requestHeaders,
-      responseHeaders,
-      responseBody: data,
+      ...output,
+      responseBody: result,
     });
-    return result;
+
+    return output;
   } catch (err) {
-    console.warn('[PII] API call failed (skipping filtering):', err.message);
+    console.warn('[PII] Local detection failed:', err.message);
     const result = {
-      ...baseResult,
+      detected: false,
+      maskedText: text,
+      detectedList: [],
+      detectedCnt: 0,
       skipped: true,
-      reason: 'fetch-failed',
-      statusCode: 0,
-      statusText: 'FETCH_FAILED',
+      reason: 'detection-error',
+      statusCode: 500,
+      statusText: 'DETECTION_ERROR',
       errorMessage: err.message,
     };
     await safeLog({
       ...result,
-      statusCode: 0,
       error: err.message,
-      requestHeaders,
     });
     return result;
   }

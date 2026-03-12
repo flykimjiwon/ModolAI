@@ -6,9 +6,11 @@ import MarkdownPreview from '@uiw/react-markdown-preview';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import TypingAnimation from '../TypingAnimation';
 import { logger } from '@/lib/logger';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const CopyButton = memo(function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
 
   const handleCopy = async () => {
     try {
@@ -39,7 +41,7 @@ const CopyButton = memo(function CopyButton({ text }) {
     <button
       onClick={handleCopy}
       className='absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-foreground bg-background/80 rounded-md shadow-sm hover:shadow-md transition-all opacity-70 group-hover:opacity-100 z-[1]'
-      title={copied ? '복사됨!' : '답변 전체 복사'}
+      title={copied ? t('chat.copied') : t('chat.copy')}
     >
       {copied ? (
         <Check className='h-4 w-4 text-green-500' />
@@ -57,6 +59,7 @@ const FeedbackButton = memo(function FeedbackButton({
 }) {
   const [feedback, setFeedback] = useState(initialFeedback || null);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   // initialFeedback prop이 변경될 때 state 업데이트
   useEffect(() => {
@@ -74,7 +77,7 @@ const FeedbackButton = memo(function FeedbackButton({
     // 임시 ID인 경우 (메시지 저장 실패)
     if (messageId.startsWith('temp-')) {
       console.warn('⚠️ 메시지가 서버에 저장되지 않아 피드백을 제공할 수 없습니다.');
-      alert('이 메시지는 서버에 저장되지 않아 피드백을 제공할 수 없습니다.\n페이지를 새로고침하거나 다시 시도해주세요.');
+      alert(t('chat.feedback_not_saved'));
       return;
     }
 
@@ -94,7 +97,7 @@ const FeedbackButton = memo(function FeedbackButton({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `HTTP ${response.status} 오류`;
+        const errorMessage = errorData.error || t('errors.http_error', { status: response.status });
         throw new Error(errorMessage);
       }
 
@@ -124,7 +127,7 @@ const FeedbackButton = memo(function FeedbackButton({
             ? 'text-primary bg-primary/10'
             : 'text-muted-foreground hover:text-primary hover:bg-accent'
         }`}
-        title={!messageId ? '메시지 저장 중...' : '좋아요'}
+        title={!messageId ? t('chat.feedback_saving') : t('chat.feedback_like')}
       >
         <ThumbsUp className='h-4 w-4' />
       </button>
@@ -138,7 +141,7 @@ const FeedbackButton = memo(function FeedbackButton({
             ? 'text-destructive bg-destructive/10'
             : 'text-muted-foreground hover:text-destructive hover:bg-accent'
         }`}
-        title={!messageId ? '메시지 저장 중...' : '싫어요'}
+        title={!messageId ? t('chat.feedback_saving') : t('chat.feedback_dislike')}
       >
         <ThumbsDown className='h-4 w-4' />
       </button>
@@ -229,6 +232,7 @@ const SafeMarkdown = memo(function SafeMarkdown({ source }) {
   const plugins = useMemo(() => [[rehypeSanitize, svgSchema]], []);
   const markdownRef = useRef(null);
   const [colorMode, setColorMode] = useState('light');
+  const { t } = useTranslation();
 
   // 다크모드 상태 감지
   useEffect(() => {
@@ -262,7 +266,7 @@ const SafeMarkdown = memo(function SafeMarkdown({ source }) {
         if (pre && !pre.querySelector('.copy-button')) {
           const button = document.createElement('button');
           button.className = 'copy-button';
-          button.textContent = '복사';
+          button.textContent = t('chat.copy_code');
           button.onclick = async () => {
             try {
               // HTTPS가 아닌 환경에서는 fallback 방식 사용
@@ -281,15 +285,15 @@ const SafeMarkdown = memo(function SafeMarkdown({ source }) {
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
               }
-              button.textContent = '복사됨!';
+              button.textContent = t('chat.copy_code_done');
               setTimeout(() => {
-                button.textContent = '복사';
+                button.textContent = t('chat.copy_code');
               }, 2000);
             } catch (err) {
               logger.error('복사 실패:', err);
-              button.textContent = '실패';
+              button.textContent = t('chat.copy_code_failed');
               setTimeout(() => {
-                button.textContent = '복사';
+                button.textContent = t('chat.copy_code');
               }, 2000);
             }
           };
@@ -335,6 +339,8 @@ function MessageList({
   imageHistoryByRoom = {},
   listRef,
 }) {
+  const { t } = useTranslation();
+
   // 방제목 생성 관련 디버그 메시지 필터링
   const filteredMessages = messages.filter((msg) => {
     const text = msg.text || '';
@@ -475,12 +481,12 @@ function MessageList({
         >
           <MessageCircle className='h-16 w-16 text-muted-foreground/40 mb-4' />
           <h3 className='text-lg font-medium text-muted-foreground mb-2'>
-            새로운 대화를 시작하세요
+            {t('chat.new_conversation')}
           </h3>
           <p className='text-sm text-muted-foreground'>
-            아래 입력창에 질문을 입력하면 AI가 답변해드립니다.
+            {t('chat.input_hint')}
             <br />
-            전체 화면에 이미지 드래그 또는 클립보드 붙여넣기도 가능합니다.
+            {t('chat.image_drag_hint_full')}
           </p>
         </div>
       ) : (
@@ -548,13 +554,13 @@ function MessageList({
               {msg.role === 'user' && userImages.length > 0 && (
                 <div className='mt-3'>
                   <div className='text-[11px] text-muted-foreground mb-2'>
-                    첨부 이미지 {userImages.length}개
+                    {t('chat.attached_images', { count: userImages.length })}
                   </div>
                   <div className='grid grid-cols-5 gap-1.5'>
                     {userImages.map((image, imageIdx) => {
                       const src = image?.dataUrl || image?.url || image;
                       if (!src) return null;
-                      const label = image?.name || `이미지 ${imageIdx + 1}`;
+                      const label = image?.name || t('chat.image_label', { index: imageIdx + 1 });
                       const sizeLabel = formatSize(image?.size);
                       return (
                         <button
@@ -621,12 +627,12 @@ function MessageList({
               className='absolute -top-4 -right-4 bg-background text-foreground rounded-full shadow px-3 py-1 text-sm'
               onClick={() => setPreviewImage(null)}
             >
-              닫기
+              {t('common.close')}
             </button>
             <div className='bg-black rounded-lg overflow-hidden'>
               <img
                 src={previewImage.src}
-                alt={previewImage.name || '첨부 이미지'}
+                alt={previewImage.name || t('chat.attached_image')}
                 className='w-full max-h-[80vh] object-contain'
               />
             </div>

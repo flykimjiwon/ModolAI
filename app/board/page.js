@@ -17,10 +17,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function BoardPage() {
   const router = useRouter();
   const { alert, confirm } = useAlert();
+  const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -88,7 +90,7 @@ export default function BoardPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '자유게시판 조회 실패');
+        throw new Error(data.error || t('board.fetch_error'));
       }
 
       const data = await response.json();
@@ -96,11 +98,11 @@ export default function BoardPage() {
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (error) {
       console.error('자유게시판 조회 실패:', error);
-      alert('자유게시판을 불러오는데 실패했습니다.', 'error', '오류');
+      alert(t('board.fetch_failed'), 'error', t('common.error'));
     } finally {
       setLoading(false);
     }
-  }, [alert, currentPage, router, searchTerm]);
+  }, [alert, currentPage, router, searchTerm, t]);
 
   useEffect(() => {
     fetchBoardEnabled();
@@ -136,8 +138,8 @@ export default function BoardPage() {
 
   const deletePost = async (post) => {
     const confirmed = await confirm(
-      `'${post.title}' 글을 삭제하시겠습니까?`,
-      '게시글 삭제 확인'
+      t('board.delete_post_confirm', { title: post.title }),
+      t('board.delete_post_confirm_title')
     );
     if (!confirmed) return;
 
@@ -152,14 +154,14 @@ export default function BoardPage() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '게시글 삭제 실패');
+        throw new Error(data.error || t('board.post_delete_error'));
       }
 
-      alert('게시글이 삭제되었습니다.', 'success', '삭제 완료');
+      alert(t('board.post_deleted'), 'success', t('common.delete_complete'));
       fetchPosts();
     } catch (error) {
       console.error('게시글 삭제 실패:', error);
-      alert('게시글 삭제에 실패했습니다.', 'error', '삭제 실패');
+      alert(t('board.post_delete_failed'), 'error', t('common.delete_failed'));
     }
   };
 
@@ -172,19 +174,19 @@ export default function BoardPage() {
               onClick={() => router.push('/')}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <h1 className='text-2xl font-bold text-foreground'>
-              자유게시판
+              {t('board.title')}
             </h1>
           </div>
           <Card>
             <CardContent className='p-8 text-center'>
               <MessageSquare className='mx-auto h-12 w-12 text-muted-foreground' />
               <p className='mt-4 text-sm text-muted-foreground'>
-                자유게시판이 비활성화되어 있습니다.
+                {t('board.disabled')}
               </p>
             </CardContent>
           </Card>
@@ -202,17 +204,17 @@ export default function BoardPage() {
               onClick={() => router.push('/')}
               variant='ghost'
               size='icon'
-              title='뒤로 가기'
+              title={t('common.go_back')}
             >
               <ArrowLeft className='h-5 w-5' />
             </Button>
             <div>
               <h1 className='text-2xl font-bold text-foreground flex items-center gap-2'>
                 <MessageSquare className='h-6 w-6' />
-                자유게시판
+                {t('board.title')}
               </h1>
               <p className='text-muted-foreground mt-1'>
-                자유롭게 질문하고 의견을 나눠보세요.
+                {t('board.subtitle')}
               </p>
             </div>
           </div>
@@ -224,7 +226,7 @@ export default function BoardPage() {
                 type='text'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder='제목/내용 검색'
+                placeholder={t('board.search_placeholder')}
                 className='pl-9'
               />
             </div>
@@ -232,7 +234,7 @@ export default function BoardPage() {
               onClick={() => router.push('/board/write')}
             >
               <Plus className='h-4 w-4' />
-              글쓰기
+              {t('common.write')}
             </Button>
           </div>
         </div>
@@ -247,10 +249,10 @@ export default function BoardPage() {
               <div className='text-center py-12'>
                 <MessageSquare className='mx-auto h-12 w-12 text-muted-foreground' />
                 <h3 className='mt-2 text-sm font-medium text-foreground'>
-                  게시글이 없습니다
+                  {t('board.no_posts')}
                 </h3>
                 <p className='mt-1 text-sm text-muted-foreground'>
-                  {searchTerm ? '검색 결과가 없습니다.' : '첫 글을 작성해보세요.'}
+                  {searchTerm ? t('board.no_search_results') : t('board.first_post_hint')}
                 </p>
               </div>
             ) : (
@@ -271,18 +273,18 @@ export default function BoardPage() {
                           </h3>
                           {post.isNotice && (
                             <Badge variant='destructive'>
-                              공지
+                              {t('common.notice_badge')}
                             </Badge>
                           )}
                           {post.commentCount > 0 && (
                             <span className='text-xs text-muted-foreground'>
-                              댓글 {post.commentCount}
+                              {t('board.comment_count', { count: post.commentCount })}
                             </span>
                           )}
                         </div>
 
                         <div className='flex flex-wrap items-center gap-4 text-xs text-muted-foreground'>
-                          <span>{post.author?.name || '익명'}</span>
+                          <span>{post.author?.name || t('common.anonymous')}</span>
                           {post.author?.department && (
                       <span>{post.author.department.replaceAll('부서', '그룹')}</span>
                           )}
@@ -304,7 +306,7 @@ export default function BoardPage() {
                             variant='ghost'
                             size='icon'
                             className='text-primary bg-primary/10 hover:bg-primary/20'
-                            title='게시글 수정'
+                            title={t('board.edit_post')}
                           >
                             <Edit className='h-4 w-4' />
                           </Button>
@@ -316,7 +318,7 @@ export default function BoardPage() {
                             variant='ghost'
                             size='icon'
                             className='text-destructive bg-destructive/10 hover:bg-destructive/20'
-                            title='게시글 삭제'
+                            title={t('board.delete_post')}
                           >
                             <Trash2 className='h-4 w-4' />
                           </Button>
@@ -338,7 +340,7 @@ export default function BoardPage() {
               variant='outline'
               size='sm'
             >
-              이전
+              {t('common.previous')}
             </Button>
             <span className='text-sm text-muted-foreground'>
               {currentPage} / {totalPages}
@@ -351,7 +353,7 @@ export default function BoardPage() {
               variant='outline'
               size='sm'
             >
-              다음
+              {t('common.next')}
             </Button>
           </div>
         )}
