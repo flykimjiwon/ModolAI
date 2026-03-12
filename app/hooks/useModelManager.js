@@ -57,6 +57,7 @@ export function useModelManager(userRole) {
         const headers = { next: { revalidate: 0 } };
 
         if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
           try {
             const payload = decodeJWTPayload(token);
             headers['X-User-Role'] = payload.role || 'user';
