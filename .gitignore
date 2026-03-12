@@ -96,3 +96,10 @@ check_gpt4_config.sql
 
 # Tesseract OCR trained data binaries
 *.traineddata
+
+# Agent skills (local tool configurations)
+.agents/
+.agent/
+.claude/
+skills/
+skills-lock.json
