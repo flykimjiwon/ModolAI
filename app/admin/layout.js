@@ -95,9 +95,9 @@ function SortableNavItem({
       className={`group flex items-center rounded-md ${isReorderMode
             ? 'bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 py-2 px-2 mb-1 text-gray-700 dark:text-gray-300'
             : isEditMode
-            ? 'bg-gray-50 dark:bg-gray-700 border border-blue-200 dark:border-blue-600 py-2 px-2 mb-1 text-gray-700 dark:text-gray-300'
+            ? 'bg-gray-50 dark:bg-gray-700 border border-border py-2 px-2 mb-1 text-gray-700 dark:text-gray-300'
             : isActive
-            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 px-2 py-2'
+            ? 'bg-accent text-foreground font-medium hover:bg-accent px-2 py-2'
             : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-2'
         }`}
         data-testid={`admin-menu-item-${id}`}
@@ -114,7 +114,7 @@ function SortableNavItem({
       <div className='flex items-center flex-1'>
           <item.icon
           className={`mr-3 h-5 w-5 shrink-0 ${isActive && !isReorderMode && !isEditMode
-                ? 'text-blue-600 dark:text-blue-400'
+                ? 'text-foreground'
                 : 'text-gray-400 group-hover:text-gray-500'
             }`}
           />
@@ -223,7 +223,7 @@ function SortableNavItem({
                 href={isEditMode ? undefined : child.href}
                 className={`flex items-center px-2 py-1.5 text-sm rounded-md ${
                   isChildActive
-                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
+                    ? 'bg-accent text-foreground font-medium'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
                 }`}
                 data-testid={`admin-sidebar-menu-link-${child.id}`}
@@ -599,7 +599,7 @@ export default function AdminLayout({ children }) {
     return (
       <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
         <div className='flex flex-col items-center gap-4'>
-          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
           <p className='text-gray-600 dark:text-gray-400'>
             {isValidating ? t('admin.validating') : t('admin.loading_user')}
           </p>
@@ -654,7 +654,7 @@ export default function AdminLayout({ children }) {
                   onClick={() => setSidebarOpen(true)}
                   className={`p-3 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+                      ? 'bg-accent text-foreground'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                   }`}
                   title={item.name}
@@ -670,7 +670,7 @@ export default function AdminLayout({ children }) {
                 href={item.href}
                 className={`p-3 rounded-lg transition-colors ${
                   isActive
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
+                    ? 'bg-accent text-foreground'
                     : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
                 title={item.name}
@@ -783,7 +783,7 @@ export default function AdminLayout({ children }) {
               <>
                 <button
                   onClick={saveMenuOrder}
-                  className='w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md'
+                   className='w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md'
                   data-testid='admin-menu-save-order-button'
                 >
                   <Save className='h-4 w-4' />

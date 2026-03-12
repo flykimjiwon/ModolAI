@@ -32,7 +32,7 @@ export default function ModelServersPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [showHelpSection, setShowHelpSection] = useState(false);
   const [endpointNameInput, setEndpointNameInput] = useState('');
-  const [endpointUrlInput, setEndpointUrlInput] = useState('');
+  const [endpointUrlInput, setEndpointUrlInput] = useState('http://localhost:11434');
   const [endpoints, setEndpoints] = useState([]); // [{name, url, provider}]
   const [savingEndpoints, setSavingEndpoints] = useState(false);
   const [editingEndpoint, setEditingEndpoint] = useState(null); // {originalUrl, name, url, provider}
@@ -1364,7 +1364,7 @@ export default function ModelServersPage() {
                   <input
                     type='text'
                     value={editingEndpoint.name}
-                    placeholder='예: 개발1, 운영A'
+                    placeholder='예: My Server, GPU-1'
                     className='w-full px-3 py-2 border border-border rounded-md bg-muted text-muted-foreground cursor-not-allowed'
                     readOnly
                     maxLength={50}
@@ -1494,7 +1494,7 @@ export default function ModelServersPage() {
                     type='text'
                     value={endpointNameInput}
                     onChange={(e) => setEndpointNameInput(e.target.value)}
-                    placeholder='예: 개발1, 운영A'
+                    placeholder='예: My Server, GPU-1'
                     className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
                     disabled={savingEndpoints}
                     maxLength={50}

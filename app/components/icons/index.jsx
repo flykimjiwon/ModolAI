@@ -105,7 +105,7 @@ import {
   WarningCircle as PhWarningCircle,
   X as PhX,
   XCircle as PhXCircle,
-} from '@phosphor-icons/react/dist/ssr';
+} from '@phosphor-icons/react/ssr';
 
 /**
  * 기본 weight를 주입하는 래퍼 팩토리.
