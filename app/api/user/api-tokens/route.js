@@ -9,7 +9,7 @@ import { createAuthError, createValidationError, createNotFoundError, createServ
 // Encryption/decryption functions
 function encryptToken(token) {
   const algorithm = 'aes-256-cbc';
-  const key = crypto.scryptSync(process.env.JWT_SECRET || 'default-secret', 'salt', 32);
+  const key = crypto.scryptSync(process.env.JWT_SECRET, 'salt', 32);
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encrypted = cipher.update(token, 'utf8', 'hex');
@@ -20,7 +20,7 @@ function encryptToken(token) {
 function decryptToken(encryptedToken) {
   try {
     const algorithm = 'aes-256-cbc';
-    const key = crypto.scryptSync(process.env.JWT_SECRET || 'default-secret', 'salt', 32);
+    const key = crypto.scryptSync(process.env.JWT_SECRET, 'salt', 32);
     const parts = encryptedToken.split(':');
     const iv = Buffer.from(parts[0], 'hex');
     const encrypted = parts[1];

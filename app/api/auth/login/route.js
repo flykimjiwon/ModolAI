@@ -30,7 +30,7 @@ export async function POST(request) {
   // SSO users cannot use regular login
   if (user.auth_type === 'sso') {
     return new Response(
-      JSON.stringify({ error: 'This is an SSO account. Please use Swing login (/sso).' }),
+      JSON.stringify({ error: 'This is an SSO account. Please use SSO login (/sso).' }),
       {
         status: 401,
       }

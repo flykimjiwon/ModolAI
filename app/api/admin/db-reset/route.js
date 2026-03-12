@@ -3,7 +3,10 @@ import { Pool } from 'pg';
 import jwt from 'jsonwebtoken';
 
 const pool = new Pool({ connectionString: process.env.POSTGRES_URI });
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 /**
  * DB reset API
