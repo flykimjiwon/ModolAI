@@ -429,19 +429,19 @@ export default function UsersPage() {
                   <span>{t('admin_users.col_last_access')}</span>
                   <div className='relative group'>
                     <HelpCircle className='w-3 h-3 text-muted-foreground cursor-help' />
-                    <div className='pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-lg bg-slate-900 text-white text-[11px] px-3 py-2 opacity-0 group-hover:opacity-100 z-20 shadow-lg leading-relaxed'>
-                      <p className='font-semibold mb-1 text-slate-200'>{t('admin_users.tooltip_record_method')}</p>
+                    <div className='pointer-events-none absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 rounded-lg bg-popover text-popover-foreground text-[11px] px-3 py-2 opacity-0 group-hover:opacity-100 z-20 shadow-lg leading-relaxed'>
+                      <p className='font-semibold mb-1 text-popover-foreground'>{t('admin_users.tooltip_record_method')}</p>
                       <p className='mb-1'>
                         <span className='text-sky-300 font-medium'>{t('admin_users.tooltip_activity')}</span>
                         {' '}{t('admin_users.tooltip_activity_desc')}
                         <br />
-                        <span className='text-slate-400'>{t('admin_users.tooltip_activity_dedup')}</span>
+                        <span className='text-muted-foreground'>{t('admin_users.tooltip_activity_dedup')}</span>
                       </p>
                       <p>
                             <span className='text-primary font-medium'>{t('admin_users.tooltip_login')}</span>
                         {' '}{t('admin_users.tooltip_login_desc')}
                       </p>
-                      <p className='mt-1 text-slate-400 border-t border-slate-700 pt-1'>
+                      <p className='mt-1 text-muted-foreground border-t border-border pt-1'>
                         {t('admin_users.tooltip_priority')}
                       </p>
                     </div>
@@ -511,7 +511,7 @@ export default function UsersPage() {
                     <div className='col-span-2'>
                       <div className='relative group inline-flex items-center text-sm text-muted-foreground'>
                         <span>{formatDate(user.createdAt)}</span>
-                        <span className='pointer-events-none absolute left-0 top-full mt-1 rounded bg-slate-900 text-white text-[11px] px-2 py-1 opacity-0 group-hover:opacity-100 whitespace-nowrap'>
+                        <span className='pointer-events-none absolute left-0 top-full mt-1 rounded bg-popover text-popover-foreground text-[11px] px-2 py-1 opacity-0 group-hover:opacity-100 whitespace-nowrap'>
                           {formatDate(user.createdAt)}
                         </span>
                       </div>

@@ -349,7 +349,7 @@ export default function Home() {
       <div
         id='chat-input-container'
         data-testid='chat-input-container'
-        className={`fixed bottom-0 z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out left-16 ${sidebarOpen ? 'lg:left-80' : 'lg:left-16'
+        className={`fixed bottom-0 z-30 bg-background border-t border-border transition-all duration-300 ease-in-out left-16 ${sidebarOpen ? 'lg:left-80' : 'lg:left-16'
           } right-0 ${loading ? 'relative' : ''}`}
       >
         {/* 맨 아래로 스크롤 버튼 - 응답 끝나고 맨 아래가 아닐 때 표시 */}
@@ -357,7 +357,7 @@ export default function Home() {
           <div className='flex justify-center'>
             <button
               onClick={scrollToBottom}
-              className='absolute -top-12 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-full shadow-lg border border-gray-200 dark:border-gray-600 transition-all flex items-center gap-1.5 text-sm'
+              className='absolute -top-12 px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground rounded-full shadow-lg border border-border transition-all flex items-center gap-1.5 text-sm'
               aria-label={t('chat.scroll_to_bottom')}
             >
               <ChevronDown className='h-4 w-4' />
@@ -369,19 +369,19 @@ export default function Home() {
           <div
             id='chat-loading-overlay'
             data-testid='chat-loading-overlay'
-            className='absolute top-0 bottom-0 -left-16 lg:-left-80 right-0 bg-white dark:bg-gray-900 z-40 flex items-center justify-center'
+            className='absolute top-0 bottom-0 -left-16 lg:-left-80 right-0 bg-background z-40 flex items-center justify-center'
           >
             <div className='w-full px-4'>
               <div className='flex flex-col items-center gap-2 w-full'>
                 <div className='flex items-center gap-3'>
                   <Loader2
                     data-testid='chat-loading-spinner'
-                    className='h-5 w-5 text-blue-600 animate-spin'
+                    className='h-5 w-5 text-primary animate-spin'
                   />
                   <span
                     id='chat-loading-text'
                     data-testid='chat-loading-text'
-                    className='text-gray-600 dark:text-gray-400 text-sm'
+                    className='text-muted-foreground text-sm'
                   >
                     {t('chat.generating')}
                   </span>

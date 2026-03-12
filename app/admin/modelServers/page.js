@@ -1356,7 +1356,7 @@ export default function ModelServersPage() {
                           </div>
                           <div>{t('admin_model_servers.name_readonly_line1')}</div>
                           <div>{t('admin_model_servers.name_readonly_line2')}</div>
-                          <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-700'></div>
+                          <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-foreground dark:border-t-muted'></div>
                         </div>
                       </div>
                     </div>
@@ -1485,7 +1485,7 @@ export default function ModelServersPage() {
                           </div>
                           <div>{t('admin_model_servers.roundrobin_help_line1')}</div>
                           <div>{t('admin_model_servers.roundrobin_help_line2')}</div>
-                          <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900 dark:border-t-gray-700'></div>
+                          <div className='absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-foreground dark:border-t-muted'></div>
                         </div>
                       </div>
                     </div>

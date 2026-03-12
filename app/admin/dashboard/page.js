@@ -330,7 +330,7 @@ export default function AdminDashboard() {
                     <dt className='text-sm font-medium text-muted-foreground'>
                       <span className='relative inline-flex items-center group'>
                         <span className='cursor-help'>{item.name}</span>
-                        <span className='pointer-events-none absolute left-0 bottom-full z-10 mb-2 w-64 rounded-md bg-slate-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100'>
+                        <span className='pointer-events-none absolute left-0 bottom-full z-10 mb-2 w-64 rounded-md bg-popover px-3 py-2 text-xs text-popover-foreground opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100'>
                           {item.tooltip}
                         </span>
                       </span>

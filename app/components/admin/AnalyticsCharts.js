@@ -58,7 +58,7 @@ const ChartTypeToggle = ({ currentType, onTypeChange, availableTypes }) => {
   };
 
   return (
-    <div className='flex items-center gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg'>
+    <div className='flex items-center gap-1 bg-muted p-1 rounded-lg'>
       {availableTypes.map((type) => {
         const Icon = typeIcons[type];
         return (
@@ -67,8 +67,8 @@ const ChartTypeToggle = ({ currentType, onTypeChange, availableTypes }) => {
             onClick={() => onTypeChange(type)}
             className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               currentType === type
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             title={typeLabels[type]}
           >
@@ -83,14 +83,14 @@ const ChartTypeToggle = ({ currentType, onTypeChange, availableTypes }) => {
 
 const TitleWithTooltip = ({ title, tooltip }) => {
   if (!tooltip) {
-    return <h3 className='text-lg font-medium text-gray-900 dark:text-white'>{title}</h3>;
+    return <h3 className='text-lg font-medium text-foreground'>{title}</h3>;
   }
 
   return (
     <span className='relative inline-flex items-center gap-1 group'>
-      <h3 className='text-lg font-medium text-gray-900 dark:text-white'>{title}</h3>
-      <CircleHelp className='h-4 w-4 text-gray-400 cursor-help' />
-      <span className='pointer-events-none absolute left-0 bottom-full z-10 mb-2 w-72 rounded-md bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100'>
+      <h3 className='text-lg font-medium text-foreground'>{title}</h3>
+      <CircleHelp className='h-4 w-4 text-muted-foreground cursor-help' />
+      <span className='pointer-events-none absolute left-0 bottom-full z-10 mb-2 w-72 rounded-md bg-foreground px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100'>
         {tooltip}
       </span>
     </span>
@@ -200,31 +200,31 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
               <div key={user._id} className='flex items-center justify-between'>
                 <div className='flex items-center min-w-0 flex-1'>
                   <div className='flex-shrink-0 w-8'>
-                    <span className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+                    <span className='text-sm font-medium text-muted-foreground'>
                       #{index + 1}
                     </span>
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
+                    <p className='text-sm font-medium text-foreground truncate'>
                       {user.name || user.email}
                     </p>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='text-xs text-muted-foreground'>
                       {user.department} • {user.cell}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
                   <div className='text-right mr-4'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white'>
+                    <p className='text-sm font-medium text-foreground'>
                       {t('analytics_charts.count_suffix', { count: user.messageCount })}
                     </p>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='text-xs text-muted-foreground'>
                       {t('analytics_charts.per_day_suffix', { count: user.avgPerDay != null ? Number(user.avgPerDay).toFixed(1) : '0.0' })}
                     </p>
                   </div>
-                  <div className='w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+                  <div className='w-16 bg-muted rounded-full h-2'>
                     <div
-                      className='bg-blue-600 h-2 rounded-full'
+                      className='bg-primary h-2 rounded-full'
                       style={{
                         width: `${Math.min(
                           (user.messageCount / (data?.[0]?.messageCount || 1)) *
@@ -243,7 +243,7 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+    <div className='bg-card shadow rounded-lg p-6'>
       <div className='flex items-center justify-between mb-4'>
         <TitleWithTooltip title={title} tooltip={tooltip} />
         <ChartTypeToggle
@@ -253,7 +253,7 @@ export const UserStatsChart = ({ data, title, tooltip }) => {
         />
       </div>
       {!data || data.length === 0 ? (
-        <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
+        <p className='text-sm text-muted-foreground text-center py-8'>
           {t('analytics_charts.no_data')}
         </p>
       ) : (
@@ -370,26 +370,26 @@ export const ModelStatsChart = ({ data, title }) => {
                     <div
                       className={`w-3 h-3 rounded-full ${
                         index === 0
-                          ? 'bg-blue-500'
+                          ? 'bg-primary'
                           : index === 1
                           ? 'bg-green-500'
                           : index === 2
                           ? 'bg-yellow-500'
-                          : 'bg-gray-400'
+                          : 'bg-muted-foreground'
                       }`}
                     ></div>
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
+                    <p className='text-sm font-medium text-foreground truncate'>
                       {model.label || model._id || t('analytics_charts.unknown')}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
-                  <span className='text-sm font-medium text-gray-900 dark:text-white mr-2'>
+                  <span className='text-sm font-medium text-foreground mr-2'>
                     {t('analytics_charts.count_suffix', { count: model.count })}
                   </span>
-                  <span className='text-xs text-gray-500 dark:text-gray-400'>
+                  <span className='text-xs text-muted-foreground'>
                     (
                     {(
                       (model.count /
@@ -407,9 +407,9 @@ export const ModelStatsChart = ({ data, title }) => {
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+    <div className='bg-card shadow rounded-lg p-6'>
       <div className='flex items-center justify-between mb-4'>
-        <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+        <h3 className='text-lg font-medium text-foreground'>
           {title}
         </h3>
         <ChartTypeToggle
@@ -419,7 +419,7 @@ export const ModelStatsChart = ({ data, title }) => {
         />
       </div>
       {!data || data.length === 0 ? (
-        <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
+        <p className='text-sm text-muted-foreground text-center py-8'>
           {t('analytics_charts.no_data')}
         </p>
       ) : (
@@ -537,7 +537,7 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
                         index === 0
                           ? 'bg-purple-500'
                           : index === 1
-                          ? 'bg-indigo-500'
+                          ? 'bg-amber-500'
                           : index === 2
                           ? 'bg-pink-500'
                           : index === 3
@@ -547,16 +547,16 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
                     ></div>
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
+                    <p className='text-sm font-medium text-foreground truncate'>
                       {dept._id || t('analytics_charts.other')}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
-                  <span className='text-sm font-medium text-gray-900 dark:text-white mr-2'>
+                  <span className='text-sm font-medium text-foreground mr-2'>
                     {t('analytics_charts.user_count_suffix', { count: dept.userCount })}
                   </span>
-                  <span className='text-xs text-gray-500 dark:text-gray-400'>
+                  <span className='text-xs text-muted-foreground'>
                     ({t('analytics_charts.count_suffix_parens', { count: dept.messageCount })})
                   </span>
                 </div>
@@ -568,7 +568,7 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+    <div className='bg-card shadow rounded-lg p-6'>
       <div className='flex items-center justify-between mb-4'>
         <TitleWithTooltip title={title} tooltip={tooltip} />
         <ChartTypeToggle
@@ -578,7 +578,7 @@ export const DepartmentStatsChart = ({ data, title, tooltip }) => {
         />
       </div>
       {!data || data.length === 0 ? (
-        <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
+        <p className='text-sm text-muted-foreground text-center py-8'>
           {t('analytics_charts.no_data')}
         </p>
       ) : (
@@ -724,29 +724,29 @@ export const TokenUsageChart = ({ data, title }) => {
               <div key={user._id} className='flex items-center justify-between'>
                 <div className='flex items-center min-w-0 flex-1'>
                   <div className='flex-shrink-0 w-8'>
-                    <span className='text-sm font-medium text-gray-500 dark:text-gray-400'>
+                    <span className='text-sm font-medium text-muted-foreground'>
                       #{index + 1}
                     </span>
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
+                    <p className='text-sm font-medium text-foreground truncate'>
                       {user.name || user.email}
                     </p>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='text-xs text-muted-foreground'>
                       {user.department} • {user.cell}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
                   <div className='text-right mr-4'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    <p className='text-sm font-medium text-foreground'>
                       {t('analytics_charts.total_sum', { count: user.totalTokens?.toLocaleString() || 0 })}
                     </p>
-                    <p className='text-xs text-gray-700 dark:text-gray-300'>
+                    <p className='text-xs text-muted-foreground'>
                       {t('analytics_charts.input_output', { input: formatTokenCount(user.promptTokens || 0), output: formatTokenCount(user.responseTokens || 0) })}
                     </p>
                   </div>
-                  <div className='w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+                  <div className='w-16 bg-muted rounded-full h-2'>
                     <div
                       className='bg-purple-600 h-2 rounded-full'
                       style={{
@@ -767,11 +767,11 @@ export const TokenUsageChart = ({ data, title }) => {
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+    <div className='bg-card shadow rounded-lg p-6'>
       <div className='flex items-center justify-between mb-4'>
         <div className='flex items-center gap-2'>
           <Coins className='h-5 w-5 text-purple-600' />
-          <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+          <h3 className='text-lg font-medium text-foreground'>
             {title}
           </h3>
         </div>
@@ -782,7 +782,7 @@ export const TokenUsageChart = ({ data, title }) => {
         />
       </div>
       {!data || data.length === 0 ? (
-        <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
+        <p className='text-sm text-muted-foreground text-center py-8'>
           {t('analytics_charts.no_token_data')}
         </p>
       ) : (
@@ -917,7 +917,7 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
                         index === 0
                           ? 'bg-purple-500'
                           : index === 1
-                          ? 'bg-indigo-500'
+                          ? 'bg-amber-500'
                           : index === 2
                           ? 'bg-pink-500'
                           : index === 3
@@ -927,20 +927,20 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
                     ></div>
                   </div>
                   <div className='ml-3 min-w-0 flex-1'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white truncate'>
+                    <p className='text-sm font-medium text-foreground truncate'>
                       {dept._id || t('analytics_charts.other')}
                     </p>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='text-xs text-muted-foreground'>
                       {t('analytics_charts.user_count_dot_request', { userCount: dept.userCount, requestCount: dept.requestCount })}
                     </p>
                   </div>
                 </div>
                 <div className='flex items-center'>
                   <div className='text-right mr-2'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    <p className='text-sm font-medium text-foreground'>
                       {t('analytics_charts.total_sum', { count: dept.totalTokens?.toLocaleString() || 0 })}
                     </p>
-                    <p className='text-xs text-gray-700 dark:text-gray-300'>
+                    <p className='text-xs text-muted-foreground'>
                       {t('analytics_charts.input_output', { input: formatTokenCount(dept.promptTokens || 0), output: formatTokenCount(dept.responseTokens || 0) })}
                     </p>
                   </div>
@@ -953,11 +953,11 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+    <div className='bg-card shadow rounded-lg p-6'>
       <div className='flex items-center justify-between mb-4'>
         <div className='flex items-center gap-2'>
           <Coins className='h-5 w-5 text-amber-600' />
-          <h3 className='text-lg font-medium text-gray-900 dark:text-white'>
+          <h3 className='text-lg font-medium text-foreground'>
             {title}
           </h3>
         </div>
@@ -968,7 +968,7 @@ export const DepartmentTokenUsageChart = ({ data, title }) => {
         />
       </div>
       {!data || data.length === 0 ? (
-        <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
+        <p className='text-sm text-muted-foreground text-center py-8'>
           {t('analytics_charts.no_token_data')}
         </p>
       ) : (
@@ -1074,7 +1074,7 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
                 className='flex items-center justify-between py-2'
               >
                 <div className='flex items-center'>
-                  <span className='text-sm text-gray-900 dark:text-white'>
+                  <span className='text-sm text-foreground'>
                     {new Date(day._id).toLocaleDateString('ko-KR', {
                       month: 'short',
                       day: 'numeric',
@@ -1084,14 +1084,14 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
                 </div>
                 <div className='flex items-center'>
                   <div className='text-right mr-3'>
-                    <p className='text-sm font-medium text-gray-900 dark:text-white'>
+                    <p className='text-sm font-medium text-foreground'>
                       {t('analytics_charts.piece_suffix', { count: day.messageCount })}
                     </p>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='text-xs text-muted-foreground'>
                       {t('analytics_charts.user_count_active', { count: day.userCount })}
                     </p>
                   </div>
-                  <div className='w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+                  <div className='w-20 bg-muted rounded-full h-2'>
                     <div
                       className='bg-green-600 h-2 rounded-full'
                       style={{
@@ -1116,7 +1116,7 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
   };
 
   return (
-    <div className='bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+    <div className='bg-card shadow rounded-lg p-6'>
       <div className='flex items-center justify-between mb-4'>
         <TitleWithTooltip title={title} tooltip={tooltip} />
         <ChartTypeToggle
@@ -1126,7 +1126,7 @@ export const DailyActivityChart = ({ data, title, tooltip }) => {
         />
       </div>
       {!data || data.length === 0 ? (
-        <p className='text-sm text-gray-500 dark:text-gray-400 text-center py-8'>
+        <p className='text-sm text-muted-foreground text-center py-8'>
           {t('analytics_charts.no_data')}
         </p>
       ) : (

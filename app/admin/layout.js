@@ -93,12 +93,12 @@ function SortableNavItem({
       {/* Main row */}
       <div
       className={`group flex items-center rounded-md ${isReorderMode
-            ? 'bg-gray-50 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 py-2 px-2 mb-1 text-gray-700 dark:text-gray-300'
+            ? 'bg-muted border-2 border-dashed border-border py-2 px-2 mb-1 text-muted-foreground'
             : isEditMode
-            ? 'bg-gray-50 dark:bg-gray-700 border border-border py-2 px-2 mb-1 text-gray-700 dark:text-gray-300'
+            ? 'bg-muted border border-border py-2 px-2 mb-1 text-muted-foreground'
             : isActive
             ? 'bg-accent text-foreground font-medium hover:bg-accent px-2 py-2'
-            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-2'
+            : 'text-muted-foreground hover:bg-muted px-2 py-2'
         }`}
         data-testid={`admin-menu-item-${id}`}
       >
@@ -106,7 +106,7 @@ function SortableNavItem({
           <div
             {...attributes}
             {...listeners}
-            className='mr-2 cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600'
+            className='mr-2 cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground'
           >
             <GripVertical className='h-4 w-4' />
           </div>
@@ -115,7 +115,7 @@ function SortableNavItem({
           <item.icon
           className={`mr-3 h-5 w-5 shrink-0 ${isActive && !isReorderMode && !isEditMode
                 ? 'text-foreground'
-                : 'text-gray-400 group-hover:text-gray-500'
+                : 'text-muted-foreground group-hover:text-muted-foreground'
             }`}
           />
 
@@ -134,14 +134,14 @@ function SortableNavItem({
               {isEditMode ? (
                 <button
                   onClick={() => onStartEditing(id, item.name)}
-                  className='opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600'
+                  className='opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground'
                   data-testid={`admin-menu-edit-button-${id}`}
                 >
                   <Edit2 className='h-4 w-4' />
                 </button>
               ) : !isReorderMode && (
                 <ChevronRight
-                  className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 ${
+                  className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
                     isExpanded ? 'rotate-90' : ''
                   }`}
                 />
@@ -154,7 +154,7 @@ function SortableNavItem({
                 type='text'
                 value={editingName}
                 onChange={(e) => onEditingNameChange(e.target.value)}
-                className='flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='flex-1 px-2 py-1 text-sm border border-border rounded bg-card text-foreground'
                 autoFocus
                 data-testid={`admin-menu-edit-input-${id}`}
                 onKeyDown={(e) => {
@@ -199,7 +199,7 @@ function SortableNavItem({
             {isEditMode && (
                 <button
                   onClick={() => onStartEditing(id, item.name)}
-                  className='opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600'
+                  className='opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground'
                   data-testid={`admin-menu-edit-button-${id}`}
                 >
                   <Edit2 className='h-4 w-4' />
@@ -224,7 +224,7 @@ function SortableNavItem({
                 className={`flex items-center px-2 py-1.5 text-sm rounded-md ${
                   isChildActive
                     ? 'bg-accent text-foreground font-medium'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                 }`}
                 data-testid={`admin-sidebar-menu-link-${child.id}`}
               >
@@ -597,10 +597,10 @@ export default function AdminLayout({ children }) {
 
   if (isValidating || !user) {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
+      <div className='min-h-screen bg-background flex items-center justify-center'>
         <div className='flex flex-col items-center gap-4'>
           <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
-          <p className='text-gray-600 dark:text-gray-400'>
+          <p className='text-muted-foreground'>
             {isValidating ? t('admin.validating') : t('admin.loading_user')}
           </p>
         </div>
@@ -609,11 +609,11 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-all duration-300 ease-in-out'>
+    <div className='min-h-screen bg-background transition-all duration-300 ease-in-out'>
       {/* 접힌 사이드바 (아이콘만) */}
       <div
         className={`
-          fixed left-0 top-0 h-full w-16 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-40
+          fixed left-0 top-0 h-full w-16 bg-card border-r border-border z-40
           flex flex-col items-center py-4
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
@@ -623,11 +623,11 @@ export default function AdminLayout({ children }) {
         {/* 메뉴 버튼 (열기/닫기 토글) */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-2'
+          className='p-3 rounded-lg hover:bg-muted transition-colors mb-2'
           title={t('admin.open_sidebar')}
           data-testid='admin-sidebar-toggle-button'
         >
-          <Menu className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+          <Menu className='h-5 w-5 text-muted-foreground' />
         </button>
 
         {/* 다크모드 토글 */}
@@ -655,7 +655,7 @@ export default function AdminLayout({ children }) {
                   className={`p-3 rounded-lg transition-colors ${
                     isActive
                       ? 'bg-accent text-foreground'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+                      : 'hover:bg-muted text-muted-foreground'
                   }`}
                   title={item.name}
                   data-testid={`admin-sidebar-menu-icon-${item.id}`}
@@ -671,7 +671,7 @@ export default function AdminLayout({ children }) {
                 className={`p-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-accent text-foreground'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    : 'hover:bg-muted text-muted-foreground'
                 }`}
                 title={item.name}
                 data-testid={`admin-sidebar-menu-icon-${item.id}`}
@@ -685,18 +685,18 @@ export default function AdminLayout({ children }) {
         {/* 로그아웃 */}
         <button
           onClick={handleLogout}
-          className='p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mt-auto'
+          className='p-3 rounded-lg hover:bg-muted transition-colors mt-auto'
           title={t('auth.sign_out')}
           data-testid='admin-sidebar-logout-button'
         >
-          <LogOut className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+          <LogOut className='h-5 w-5 text-muted-foreground' />
         </button>
       </div>
 
       {/* 펼쳐진 사이드바 */}
       <div
         className={`
-          fixed left-0 top-0 h-full w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 z-50
+          fixed left-0 top-0 h-full w-80 bg-card border-r border-border z-50
           flex flex-col
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -704,9 +704,9 @@ export default function AdminLayout({ children }) {
         data-testid='admin-sidebar-expanded'
       >
         {/* 사이드바 헤더 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between p-4 border-b border-border'>
           <h2
-            className='text-lg font-semibold text-gray-800 dark:text-gray-200'
+            className='text-lg font-semibold text-foreground'
             data-testid='admin-sidebar-title'
           >
             {t('admin.panel_title')}
@@ -715,11 +715,11 @@ export default function AdminLayout({ children }) {
             <DarkModeToggle />
             <button
               onClick={() => setSidebarOpen(false)}
-              className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+              className='p-2 rounded-lg hover:bg-muted transition-colors'
               title={t('admin.close_sidebar')}
               data-testid='admin-sidebar-close-button'
             >
-              <X className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+              <X className='h-5 w-5 text-muted-foreground' />
             </button>
           </div>
         </div>
@@ -759,12 +759,12 @@ export default function AdminLayout({ children }) {
           </DndContext>
 
           {/* 메뉴 편집 버튼들 */}
-          <div className='mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2'>
+          <div className='mt-4 pt-4 border-t border-border space-y-2'>
             {!isReorderMode && !isEditMode ? (
               <>
                 <button
                   onClick={toggleReorderMode}
-                  className='w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md'
+                  className='w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md'
                   data-testid='admin-menu-reorder-button'
                 >
                   <Edit3 className='h-4 w-4' />
@@ -772,7 +772,7 @@ export default function AdminLayout({ children }) {
                 </button>
                 <button
                   onClick={toggleEditMode}
-                  className='w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md'
+                  className='w-full flex items-center justify-start gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md'
                   data-testid='admin-menu-edit-mode-button'
                 >
                   <Edit2 className='h-4 w-4' />
@@ -791,7 +791,7 @@ export default function AdminLayout({ children }) {
                 </button>
                 <button
                   onClick={resetMenuOrder}
-                  className='w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md'
+                  className='w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md'
                   data-testid='admin-menu-reset-order-button'
                 >
                   <RotateCcw className='h-4 w-4' />
@@ -810,7 +810,7 @@ export default function AdminLayout({ children }) {
                 </button>
                 <button
                   onClick={resetMenuNames}
-                  className='w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md'
+                  className='w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md'
                   data-testid='admin-menu-reset-names-button'
                 >
                   <RotateCcw className='h-4 w-4' />
@@ -822,20 +822,20 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* 사용자 정보 및 로그아웃 */}
-        <div className='flex shrink-0 border-t border-gray-200 dark:border-gray-700 p-4'>
+        <div className='flex shrink-0 border-t border-border p-4'>
           <div className='group block w-full shrink-0'>
             <div className='flex items-center justify-between'>
               <div>
-                <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <p className='text-sm font-medium text-muted-foreground'>
                   {user.name}
                 </p>
-                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                <p className='text-xs text-muted-foreground'>
                   {t('admin.title')}
                 </p>
               </div>
               <button
                 onClick={handleLogout}
-                className='p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                className='p-2 text-muted-foreground hover:text-foreground'
                 data-testid='admin-sidebar-logout-button-bottom'
               >
                 <LogOut className='h-4 w-4' />

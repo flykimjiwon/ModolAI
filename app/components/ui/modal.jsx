@@ -21,7 +21,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const iconMap = {
-  info: <Info className="h-6 w-6 text-blue-500" />,
+  info: <Info className="h-6 w-6 text-primary" />,
   warning: <AlertTriangle className="h-6 w-6 text-yellow-500" />,
   error: <AlertCircle className="h-6 w-6 text-red-500" />,
   success: <CheckCircle className="h-6 w-6 text-green-500" />,

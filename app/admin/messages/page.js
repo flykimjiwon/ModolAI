@@ -1589,7 +1589,7 @@ export default function MessagesPage() {
                 </div>
                 <div
                   ref={messageContentRef}
-                  className={`bg-muted p-4 rounded-lg border-l-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/70 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800 ${
+                  className={`bg-muted p-4 rounded-lg border-l-4 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/70 scrollbar-track-muted dark:scrollbar-thumb-muted-foreground dark:scrollbar-track-muted ${
                     isSystemMessage(selectedMessage.text)
                       ? 'border-primary'
                       : selectedMessage.role === 'user'

@@ -36,7 +36,7 @@ const Tooltip = ({ text, children }) => (
     {children}
     <div className='absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 p-2 bg-card text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10'>
       {text}
-      <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800'></div>
+      <div className='absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-foreground'></div>
     </div>
   </div>
 );
