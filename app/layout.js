@@ -159,6 +159,33 @@ export default function RootLayout({ children }) {
                   if (lang === 'ko' || lang === 'en') {
                     root.lang = lang;
                   }
+                  // Theme color restoration (FOUC prevention)
+                  var themeData = localStorage.getItem('modolai-theme');
+                  if (themeData) {
+                    try {
+                      var parsed = JSON.parse(themeData);
+                      var isDarkMode = root.classList.contains('dark');
+                      var vars = isDarkMode ? parsed.dark : parsed.light;
+                      if (vars && typeof vars === 'object') {
+                        for (var key in vars) {
+                          if (key.indexOf('--') === 0) {
+                            root.style.setProperty(key, vars[key]);
+                          }
+                        }
+                      }
+                      if (parsed.dark) {
+                        var s = document.createElement('style');
+                        s.id = 'modolai-theme-dark';
+                        var css = '.dark {';
+                        for (var dk in parsed.dark) {
+                          if (dk.indexOf('--') === 0) css += dk + ':' + parsed.dark[dk] + ';';
+                        }
+                        css += '}';
+                        s.textContent = css;
+                        document.head.appendChild(s);
+                      }
+                    } catch(e) { /* ignore parse errors */ }
+                  }
               })();
             `,
           }}
