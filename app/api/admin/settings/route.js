@@ -90,6 +90,16 @@ async function ensureSettingsColumns() {
       'ADD COLUMN IF NOT EXISTS api_curl_example TEXT'
     );
   }
+  if (!columns.has('theme_preset')) {
+    missing.push(
+      "ADD COLUMN IF NOT EXISTS theme_preset VARCHAR(30) DEFAULT 'amber-soft'"
+    );
+  }
+  if (!columns.has('theme_colors')) {
+    missing.push(
+      "ADD COLUMN IF NOT EXISTS theme_colors JSONB DEFAULT '{}'::jsonb"
+    );
+  }
 
   if (missing.length > 0) {
     await query(`ALTER TABLE settings ${missing.join(', ')}`);
@@ -142,6 +152,8 @@ export async function GET(request) {
         loginType: settings.login_type,
         apiConfigExample: settings.api_config_example,
         apiCurlExample: settings.api_curl_example,
+        themePreset: settings.theme_preset,
+        themeColors: settings.theme_colors,
         createdAt: settings.created_at,
         updatedAt: settings.updated_at,
       };
@@ -192,6 +204,27 @@ models:
   -d "{\\\"model\\\": \\\"gemma3:4b\\\", \\\"messages\\\": [{\\\"role\\\": \\\"user\\\", \\\"content\\\": \\\"Hello!\\\"}], \\\"stream\\\": true}"`,
         createdAt: new Date(),
         updatedAt: new Date(),
+        themePreset: 'amber-soft',
+        themeColors: {
+          light: {
+            '--primary': '#e5a63b',
+            '--primary-foreground': '#ffffff',
+            '--ring': '#f5be5b',
+            '--chart-1': '#e5a63b',
+            '--chart-3': '#f5be5b',
+            '--sidebar-primary': '#e5a63b',
+            '--sidebar-ring': '#f5be5b'
+          },
+          dark: {
+            '--primary': '#f5be5b',
+            '--primary-foreground': '#1c1917',
+            '--ring': '#fcd480',
+            '--chart-1': '#f5be5b',
+            '--chart-3': '#fcd480',
+            '--sidebar-primary': '#f5be5b',
+            '--sidebar-ring': '#fcd480'
+          }
+        },
       };
 
       await query(
