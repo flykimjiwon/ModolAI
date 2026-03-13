@@ -798,7 +798,19 @@
     "vscode_config_label": "VSCode Continue Config Example (YAML)",
     "warning_full_reset": "Full reset cannot be undone. Core tables like users/settings are preserved, but conversation/log data will be deleted.",
     "warning_partial_reset": "Selected table data will be permanently deleted.",
-    "widget_saved": "Chat widget settings have been saved."
+    "widget_saved": "Chat widget settings have been saved.",
+    "design_theme": "Design Theme",
+    "design_theme_desc": "Change the primary colors across the platform. Applied to all users.",
+    "preset_palettes": "Preset Palettes",
+    "custom_color": "Custom Color",
+    "custom_color_desc": "Enter a HEX code directly to set a custom color.",
+    "primary_color": "Primary Color",
+    "current_theme": "Current Theme",
+    "theme_saved": "Theme saved.",
+    "theme_reset": "Reset to Default Theme",
+    "theme_reset_confirm": "Reset to the default theme (Amber Soft)?",
+    "theme_preview": "Preview",
+    "apply_theme": "Apply Theme"
   },
   "auth": {
     "email": "Email",

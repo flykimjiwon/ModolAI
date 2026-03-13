@@ -798,7 +798,19 @@
     "vscode_config_label": "VSCode Continue config 예시 (YAML)",
     "warning_full_reset": "전체 초기화는 복구할 수 없습니다. users/settings 등 핵심 테이블은 보존되지만, 대화/로그 데이터는 삭제됩니다.",
     "warning_partial_reset": "선택한 테이블 데이터가 영구 삭제됩니다.",
-    "widget_saved": "채팅 위젯 설정이 저장되었습니다."
+    "widget_saved": "채팅 위젯 설정이 저장되었습니다.",
+    "design_theme": "디자인 테마",
+    "design_theme_desc": "플랫폼 전체의 주요 색상을 변경합니다. 모든 사용자에게 적용됩니다.",
+    "preset_palettes": "프리셋 팔레트",
+    "custom_color": "커스텀 색상",
+    "custom_color_desc": "HEX 코드를 직접 입력하여 커스텀 색상을 설정합니다.",
+    "primary_color": "주요 색상",
+    "current_theme": "현재 테마",
+    "theme_saved": "테마가 저장되었습니다.",
+    "theme_reset": "기본 테마로 초기화",
+    "theme_reset_confirm": "기본 테마(Amber Soft)로 초기화하시겠습니까?",
+    "theme_preview": "미리보기",
+    "apply_theme": "테마 적용"
   },
   "auth": {
     "email": "이메일",
