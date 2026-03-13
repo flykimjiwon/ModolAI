@@ -90,16 +90,6 @@ async function ensureSettingsColumns() {
       'ADD COLUMN IF NOT EXISTS api_curl_example TEXT'
     );
   }
-  if (!columns.has('theme_preset')) {
-    missing.push(
-      "ADD COLUMN IF NOT EXISTS theme_preset VARCHAR(30) DEFAULT 'amber-soft'"
-    );
-  }
-  if (!columns.has('theme_colors')) {
-    missing.push(
-      "ADD COLUMN IF NOT EXISTS theme_colors JSONB DEFAULT '{}'::jsonb"
-    );
-  }
 
   if (missing.length > 0) {
     await query(`ALTER TABLE settings ${missing.join(', ')}`);
@@ -152,8 +142,6 @@ export async function GET(request) {
         loginType: settings.login_type,
         apiConfigExample: settings.api_config_example,
         apiCurlExample: settings.api_curl_example,
-        themePreset: settings.theme_preset,
-        themeColors: settings.theme_colors,
         createdAt: settings.created_at,
         updatedAt: settings.updated_at,
       };
@@ -202,29 +190,6 @@ models:
   -H "Content-Type: application/json" ^
   -H "Authorization: Bearer YOUR_API_KEY" ^
   -d "{\\\"model\\\": \\\"gemma3:4b\\\", \\\"messages\\\": [{\\\"role\\\": \\\"user\\\", \\\"content\\\": \\\"Hello!\\\"}], \\\"stream\\\": true}"`,
-        themePreset: 'amber-soft',
-        themeColors: {
-          light: {
-            '--primary': '#e5a63b',
-            '--primary-foreground': '#ffffff',
-            '--ring': '#f5be5b',
-            '--chart-1': '#e5a63b',
-            '--chart-3': '#f5be5b',
-            '--sidebar-primary': '#e5a63b',
-            '--sidebar-primary-foreground': '#ffffff',
-            '--sidebar-ring': '#f5be5b',
-          },
-          dark: {
-            '--primary': '#f5be5b',
-            '--primary-foreground': '#1c1917',
-            '--ring': '#fcd480',
-            '--chart-1': '#f5be5b',
-            '--chart-3': '#fcd480',
-            '--sidebar-primary': '#f5be5b',
-            '--sidebar-primary-foreground': '#1c1917',
-            '--sidebar-ring': '#fcd480',
-          },
-        },
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -235,9 +200,10 @@ models:
           chat_widget_enabled, profile_edit_enabled, board_enabled, manual_preset_base_url, manual_preset_api_base, site_title, site_description, favicon_url,
           room_name_generation_model, max_user_question_length, ollama_endpoints,
           endpoint_type, openai_compat_base, openai_compat_api_key, custom_endpoints, support_contacts,
-          support_contacts_enabled, theme_preset, theme_colors,
+          support_contacts_enabled,
+          theme_preset, theme_colors,
           created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`,
         [
           'general',
           defaultSettings.tooltipEnabled,
@@ -259,11 +225,10 @@ models:
           JSON.stringify(defaultSettings.customEndpoints),
           JSON.stringify(defaultSettings.supportContacts || []),
           defaultSettings.supportContactsEnabled,
-          defaultSettings.themePreset,
-          JSON.stringify(defaultSettings.themeColors),
-          defaultSettings.supportContactsEnabled,
           defaultSettings.createdAt,
           defaultSettings.updatedAt,
+          defaultSettings.themePreset,
+          JSON.stringify(defaultSettings.themeColors),
         ]
       );
 
