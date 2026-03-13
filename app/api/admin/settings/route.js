@@ -393,6 +393,8 @@ export async function PUT(request) {
       loginType,
       apiConfigExample,
       apiCurlExample,
+      themePreset,
+      themeColors,
     } = await request.json();
 
     // Validate input values
@@ -726,6 +728,46 @@ export async function PUT(request) {
         );
       }
       updateData.apiCurlExample = apiCurlExample || '';
+    }
+
+    // Validate and save theme preset
+    if (themePreset !== undefined) {
+      const VALID_PRESETS = ['amber-soft', 'blue', 'green', 'purple', 'rose', 'slate', 'custom'];
+      if (typeof themePreset !== 'string' || !VALID_PRESETS.includes(themePreset)) {
+        return createValidationError(
+          `themePreset must be one of: ${VALID_PRESETS.join(', ')}.`
+        );
+      }
+      updateData.themePreset = themePreset;
+    }
+
+    // Validate and save theme colors
+    if (themeColors !== undefined) {
+      if (typeof themeColors !== 'object' || themeColors === null) {
+        return createValidationError('themeColors must be an object.');
+      }
+      const ALLOWED_VARS = [
+        '--primary', '--primary-foreground', '--ring',
+        '--chart-1', '--chart-3',
+        '--sidebar-primary', '--sidebar-primary-foreground', '--sidebar-ring'
+      ];
+      const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;
+      for (const mode of ['light', 'dark']) {
+        if (themeColors[mode]) {
+          if (typeof themeColors[mode] !== 'object') {
+            return createValidationError(`themeColors.${mode} must be an object.`);
+          }
+          for (const [varName, value] of Object.entries(themeColors[mode])) {
+            if (!ALLOWED_VARS.includes(varName)) {
+              return createValidationError(`CSS variable '${varName}' is not allowed.`);
+            }
+            if (!HEX_REGEX.test(value)) {
+              return createValidationError(`Invalid HEX color '${value}' for '${varName}'. Use format #RRGGBB.`);
+            }
+          }
+        }
+      }
+      updateData.themeColors = themeColors;
     }
 
     // Build PostgreSQL update query

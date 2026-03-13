@@ -21,7 +21,9 @@ export async function GET() {
          login_type,
          site_title,
          site_description,
-         favicon_url
+         favicon_url,
+         theme_preset,
+         theme_colors
        FROM settings
        WHERE config_type = 'general'
        LIMIT 1`
@@ -35,6 +37,8 @@ export async function GET() {
         siteTitle: settings.site_title || 'ModolAI',
         siteDescription: settings.site_description || 'ModolAI',
         faviconUrl: settings.favicon_url || null,
+        themePreset: settings.theme_preset || 'amber-soft',
+        themeColors: settings.theme_colors || {},
       },
       {
         headers: NO_STORE_HEADERS,
@@ -50,6 +54,8 @@ export async function GET() {
         siteTitle: 'ModolAI',
         siteDescription: 'ModolAI',
         faviconUrl: null,
+        themePreset: 'amber-soft',
+        themeColors: {},
       },
       {
         headers: NO_STORE_HEADERS,
