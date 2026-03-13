@@ -7,7 +7,7 @@ const net = require('node:net');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const DEFAULT_PORT = Number(process.env.PORT || 3100);
+const DEFAULT_PORT = 3100;
 
 function isPortInUse(port) {
   return new Promise((resolve) => {
