@@ -3,8 +3,21 @@
 import { useEffect } from 'react';
 
 const BRANDING_EVENT_NAME = 'modolai-site-branding-updated';
+const THEME_EVENT_NAME = 'modolai-theme-updated';
 const DEFAULT_SITE_TITLE = 'ModolAI';
 const DEFAULT_SITE_DESCRIPTION = 'ModolAI';
+const THEME_STORAGE_KEY = 'modolai-theme';
+
+const THEME_VARS = [
+  '--primary',
+  '--primary-foreground',
+  '--ring',
+  '--chart-1',
+  '--chart-3',
+  '--sidebar-primary',
+  '--sidebar-primary-foreground',
+  '--sidebar-ring',
+];
 
 function applySiteBranding(payload = {}) {
   const siteTitle =
@@ -39,6 +52,71 @@ function applySiteBranding(payload = {}) {
   favicon.href = faviconUrl;
 }
 
+function applyThemeColors(themeColors) {
+  if (!themeColors || typeof themeColors !== 'object') {
+    resetThemeColors();
+    return;
+  }
+
+  const lightVars = themeColors.light;
+  const darkVars = themeColors.dark;
+
+  // :root 변수 주입 (inline style — @supports oklch보다 specificity 높음)
+  if (lightVars && typeof lightVars === 'object') {
+    Object.entries(lightVars).forEach(([varName, value]) => {
+      if (varName.startsWith('--')) {
+        document.documentElement.style.setProperty(varName, value);
+      }
+    });
+  } else {
+    resetThemeColors();
+    return;
+  }
+
+  // .dark 변수 주입 (동적 style 태그 — inline style은 .dark 스코프 불가)
+  let styleTag = document.getElementById('modolai-theme-dark');
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = 'modolai-theme-dark';
+    document.head.appendChild(styleTag);
+  }
+
+  if (darkVars && typeof darkVars === 'object') {
+    const cssVars = Object.entries(darkVars)
+      .filter(([varName]) => varName.startsWith('--'))
+      .map(([varName, value]) => `  ${varName}: ${value};`)
+      .join('\n');
+    styleTag.textContent = `.dark {\n${cssVars}\n}`;
+  }
+
+  // localStorage 캐시 (FOUC 방지용 — Task 7에서 사용)
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(themeColors));
+  } catch (e) {
+    // ignore storage errors
+  }
+}
+
+function resetThemeColors() {
+  // :root inline style 제거 → globals.css 기본값 복원
+  THEME_VARS.forEach((varName) => {
+    document.documentElement.style.removeProperty(varName);
+  });
+
+  // 동적 style 태그 제거
+  const styleTag = document.getElementById('modolai-theme-dark');
+  if (styleTag) {
+    styleTag.remove();
+  }
+
+  // localStorage 캐시 제거
+  try {
+    localStorage.removeItem(THEME_STORAGE_KEY);
+  } catch (e) {
+    // ignore storage errors
+  }
+}
+
 export default function SiteSettings() {
   useEffect(() => {
     const fetchSiteSettings = async () => {
@@ -52,6 +130,12 @@ export default function SiteSettings() {
         if (response.ok) {
           const data = await response.json();
           applySiteBranding(data);
+          // 테마 적용
+          if (data.themeColors && Object.keys(data.themeColors).length > 0) {
+            applyThemeColors(data.themeColors);
+          } else {
+            resetThemeColors();
+          }
         }
       } catch (error) {
         console.error('Failed to load site settings:', error);
@@ -62,12 +146,23 @@ export default function SiteSettings() {
       applySiteBranding(event?.detail || {});
     };
 
+    const handleThemeUpdated = (event) => {
+      const { themeColors } = event?.detail || {};
+      if (themeColors && Object.keys(themeColors).length > 0) {
+        applyThemeColors(themeColors);
+      } else {
+        resetThemeColors();
+      }
+    };
+
     fetchSiteSettings();
 
     window.addEventListener(BRANDING_EVENT_NAME, handleBrandingUpdated);
+    window.addEventListener(THEME_EVENT_NAME, handleThemeUpdated);
 
     return () => {
       window.removeEventListener(BRANDING_EVENT_NAME, handleBrandingUpdated);
+      window.removeEventListener(THEME_EVENT_NAME, handleThemeUpdated);
     };
   }, []);
 

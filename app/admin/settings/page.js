@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, AlertTriangle, ImageIcon, Code } from '@/components/icons';
+import { THEME_PRESETS } from '@/lib/themePresets';
 import Image from 'next/image'; // Image 컴포넌트 임포트
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -56,6 +57,9 @@ export default function SettingsPage() {
   const [loginType, setLoginType] = useState('local'); // 'local' | 'sso'
   const [apiConfigExample, setApiConfigExample] = useState('');
   const [apiCurlExample, setApiCurlExample] = useState('');
+  const [themePreset, setThemePreset] = useState('amber-soft');
+  const [themeColors, setThemeColors] = useState({});
+  const [themeCustomPrimary, setThemeCustomPrimary] = useState('#e5a63b');
 
   const dbResetTableOptions = [
     {
@@ -257,6 +261,11 @@ export default function SettingsPage() {
         setLoginType(data.loginType || 'local');
         setApiConfigExample(data.apiConfigExample || '');
         setApiCurlExample(data.apiCurlExample || '');
+        setThemePreset(data.themePreset || 'amber-soft');
+        setThemeColors(data.themeColors || {});
+        if (data.themeColors?.light?.['--primary']) {
+          setThemeCustomPrimary(data.themeColors.light['--primary']);
+        }
       } else {
         setTooltipEnabled(true);
         setTooltipMessage(t('admin.tooltip_default'));
@@ -505,6 +514,45 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const saveTheme = async () => {
+    try {
+      setSavingSection('theme');
+      const token = localStorage.getItem('token');
+      const body = { themePreset, themeColors };
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      if (response.ok) {
+        window.dispatchEvent(
+          new CustomEvent('modolai-theme-updated', {
+            detail: { themePreset, themeColors },
+          })
+        );
+        alert(t('admin_settings.theme_saved'), 'success', t('admin_settings.save_complete'));
+        fetchSettings();
+      } else {
+        let errorMessage = t('admin_settings.settings_save_failed');
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          console.warn('Failed to parse error response', e.message);
+        }
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Failed to save theme:', error);
       alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
@@ -1286,6 +1334,148 @@ export default function SettingsPage() {
           >
             {t('admin_settings.add_contact')}
           </button>
+        </div>
+      </div>
+
+      {/* 디자인 테마 섹션 */}
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
+        <div className='flex items-center justify-between mb-4'>
+          <div className='flex items-center gap-3'>
+            <div className='h-5 w-5 rounded-full bg-primary' />
+            <h2 className='text-lg font-semibold text-foreground'>
+              {t('admin_settings.design_theme')}
+            </h2>
+          </div>
+        </div>
+        <p className='text-sm text-muted-foreground mb-6'>
+          {t('admin_settings.design_theme_desc')}
+        </p>
+
+        {/* 프리셋 팔레트 그리드 */}
+        <div className='mb-6'>
+          <p className='text-sm font-medium text-foreground mb-3'>
+            {t('admin_settings.preset_palettes')}
+          </p>
+          <div className='grid grid-cols-3 gap-3'>
+            {Object.values(THEME_PRESETS).map((preset) => (
+              <button
+                key={preset.id}
+                data-testid={`theme-swatch-${preset.id}`}
+                onClick={() => {
+                  setThemePreset(preset.id);
+                  setThemeColors({ light: preset.light, dark: preset.dark });
+                  setThemeCustomPrimary(preset.light['--primary'] || '#e5a63b');
+                  if (preset.light) {
+                    Object.entries(preset.light).forEach(([varName, value]) => {
+                      document.documentElement.style.setProperty(varName, value);
+                    });
+                  }
+                }}
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-all cursor-pointer text-left ${
+                  themePreset === preset.id
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50 bg-background'
+                }`}
+              >
+                <div
+                  className='h-8 w-8 rounded-full flex-shrink-0'
+                  style={{ backgroundColor: preset.preview }}
+                />
+                <span className='text-sm font-medium text-foreground'>
+                  {preset.nameKo}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 커스텀 색상 입력 */}
+        <div className='mb-6'>
+          <p className='text-sm font-medium text-foreground mb-2'>
+            {t('admin_settings.custom_color')}
+          </p>
+          <p className='text-xs text-muted-foreground mb-3'>
+            {t('admin_settings.custom_color_desc')}
+          </p>
+          <div className='flex items-center gap-3'>
+            <input
+              type='color'
+              value={themeCustomPrimary}
+              onChange={(e) => {
+                const hex = e.target.value;
+                setThemeCustomPrimary(hex);
+                setThemePreset('custom');
+                const customColors = {
+                  light: { '--primary': hex, '--ring': hex, '--chart-1': hex, '--sidebar-primary': hex },
+                  dark: { '--primary': hex, '--ring': hex, '--chart-1': hex, '--sidebar-primary': hex },
+                };
+                setThemeColors(customColors);
+                document.documentElement.style.setProperty('--primary', hex);
+              }}
+              className='h-10 w-16 rounded border border-border cursor-pointer'
+            />
+            <Input
+              type='text'
+              value={themeCustomPrimary}
+              onChange={(e) => {
+                const hex = e.target.value;
+                if (/^#[0-9a-fA-F]{0,6}$/.test(hex)) {
+                  setThemeCustomPrimary(hex);
+                  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+                    setThemePreset('custom');
+                    const customColors = {
+                      light: { '--primary': hex, '--ring': hex, '--chart-1': hex, '--sidebar-primary': hex },
+                      dark: { '--primary': hex, '--ring': hex, '--chart-1': hex, '--sidebar-primary': hex },
+                    };
+                    setThemeColors(customColors);
+                    document.documentElement.style.setProperty('--primary', hex);
+                  }
+                }
+              }}
+              placeholder='#e5a63b'
+              className='w-32 font-mono text-sm'
+            />
+            <span className='text-sm text-muted-foreground'>
+              {t('admin_settings.primary_color')}
+            </span>
+          </div>
+        </div>
+
+        {/* 저장/초기화 버튼 */}
+        <div className='flex items-center gap-3'>
+          <Button
+            onClick={saveTheme}
+            disabled={savingSection === 'theme'}
+            className='flex items-center gap-2'
+          >
+            <Save className='h-4 w-4' />
+            {savingSection === 'theme' ? t('common.saving') : t('admin_settings.apply_theme')}
+          </Button>
+          <Button
+            variant='outline'
+            onClick={async () => {
+              const confirmed = await confirm(
+                t('admin_settings.theme_reset_confirm'),
+                t('admin_settings.theme_reset'),
+                'warning'
+              );
+              if (confirmed) {
+                setThemePreset('amber-soft');
+                const defaultPreset = THEME_PRESETS['amber-soft'];
+                setThemeColors({ light: defaultPreset.light, dark: defaultPreset.dark });
+                setThemeCustomPrimary(defaultPreset.light['--primary'] || '#e5a63b');
+                if (defaultPreset.light) {
+                  Object.entries(defaultPreset.light).forEach(([varName, value]) => {
+                    document.documentElement.style.setProperty(varName, value);
+                  });
+                }
+              }
+            }}
+            className='flex items-center gap-2'
+          >
+            <RefreshCw className='h-4 w-4' />
+            {t('admin_settings.theme_reset')}
+          </Button>
         </div>
       </div>
 
