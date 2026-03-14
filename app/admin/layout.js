@@ -6,6 +6,7 @@ import { TokenManager } from '@/lib/tokenManager';
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import { AdminAuthProvider } from '@/contexts/AdminAuthContext';
 import {
   LayoutDashboard,
   Users,
@@ -429,8 +430,7 @@ export default function AdminLayout({ children }) {
           return;
         }
 
-        // 관리자 권한 확인
-        if (result.user.role !== 'admin') {
+        if (!['admin', 'manager'].includes(result.user.role)) {
           alert(t('admin.permission_required'), 'warning', t('admin.permission_error'));
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -830,7 +830,7 @@ export default function AdminLayout({ children }) {
                   {user.name}
                 </p>
                 <p className='text-xs text-muted-foreground'>
-                  {t('admin.title')}
+                  {user.role === 'manager' ? 'Manager (Read-Only)' : t('admin.title')}
                 </p>
               </div>
               <button
@@ -854,7 +854,9 @@ export default function AdminLayout({ children }) {
         {/* Page content */}
         <main className='py-6'>
           <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
-            {children}
+            <AdminAuthProvider user={user}>
+              {children}
+            </AdminAuthProvider>
           </div>
         </main>
       </div>

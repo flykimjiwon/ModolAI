@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import { createServerError } from '@/lib/errorHandler';
 
 // Define agent list
@@ -11,7 +11,7 @@ const AGENTS = [
 // GET: Retrieve agent list and permissions
 export async function GET(request) {
   try {
-    const authResult = await verifyAdminWithResult(request);
+    const authResult = await verifyAdminOrManagerWithResult(request);
     if (!authResult.valid) {
       const status = authResult.error?.includes('Admin') ? 403 : 401;
       return NextResponse.json({ error: authResult.error }, { status });
@@ -135,6 +135,49 @@ export async function DELETE(request) {
     return NextResponse.json({ message: 'Permission deleted' });
   } catch (error) {
     console.error('[DELETE /api/admin/agents] error:', error);
+    return createServerError(error);
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const authResult = await verifyAdminWithResult(request);
+    if (!authResult.valid) {
+      const status = authResult.error?.includes('Admin') ? 403 : 401;
+      return NextResponse.json({ error: authResult.error }, { status });
+    }
+
+    const body = await request.json();
+    const { agentId, isVisible } = body;
+
+    if (!agentId) {
+      return NextResponse.json({ error: 'Agent ID is required' }, { status: 400 });
+    }
+
+    await query(`
+      CREATE TABLE IF NOT EXISTS agent_settings (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agent_id VARCHAR(50) NOT NULL UNIQUE,
+        is_visible BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).catch(() => {});
+
+    await query(`
+      INSERT INTO agent_settings (agent_id, is_visible)
+      VALUES ($1, $2)
+      ON CONFLICT (agent_id)
+      DO UPDATE SET is_visible = $2, updated_at = CURRENT_TIMESTAMP
+    `, [agentId, isVisible !== false]);
+
+    return NextResponse.json({
+      message: `Agent visibility updated.`,
+      agentId,
+      isVisible: isVisible !== false,
+    });
+  } catch (error) {
+    console.error('[PATCH /api/admin/agents] error:', error);
     return createServerError(error);
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { isValidUUID } from '@/lib/utils';
@@ -43,7 +43,7 @@ function toISOString(dateValue) {
 // Get API token list by user
 export async function GET(request) {
   try {
-    const authResult = verifyAdminWithResult(request);
+    const authResult = verifyAdminOrManagerWithResult(request);
     if (!authResult.valid) {
       return createAuthError(authResult.error);
     }

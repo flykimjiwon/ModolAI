@@ -37,6 +37,41 @@ export function verifyAdmin(request) {
 }
 
 /**
+ * Admin or Manager authorization verification
+ * Managers can access admin pages in read-only mode
+ */
+export function verifyAdminOrManager(request) {
+  const authHeader = request.headers.get("authorization");
+  
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+
+  const token = authHeader.split(" ")[1];
+  
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (!['admin', 'manager'].includes(payload.role)) {
+      return NextResponse.json({ error: "Admin or manager privileges required." }, { status: 403 });
+    }
+    
+    return { 
+      success: true, 
+      user: {
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        role: payload.role
+      }
+    };
+  } catch (error) {
+    console.log('[Admin Auth] JWT token verification failed:', error.message, 'Token length:', token?.length || 0);
+    return NextResponse.json({ error: "Invalid token." }, { status: 401 });
+  }
+}
+
+/**
  * Admin or regular user authorization verification (when admin views user data)
  */
 export function verifyUser(request) {

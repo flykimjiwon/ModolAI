@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
 // Helper function to convert model IDs to display names
@@ -146,7 +146,7 @@ function findModelLabel(modelId, modelLabelMap, allModels) {
 
 export async function GET(request) {
   // Verify admin permission
-  const authResult = verifyAdminWithResult(request);
+  const authResult = verifyAdminOrManagerWithResult(request);
   if (!authResult.valid) {
     return createAuthError(authResult.error);
   }

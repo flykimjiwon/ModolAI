@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import pg from 'pg';
 import { query } from '@/lib/postgres';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
 const { Pool } = pg;
@@ -37,7 +37,7 @@ export async function GET(request) {
   let targetPool = null;
 
   try {
-    const adminCheck = verifyAdminWithResult(request);
+    const adminCheck = verifyAdminOrManagerWithResult(request);
     if (!adminCheck.valid) {
       return createAuthError(adminCheck.error);
     }

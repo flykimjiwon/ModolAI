@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { verifyAdmin } from '@/lib/adminAuth';
+import { verifyAdmin, verifyAdminOrManager } from '@/lib/adminAuth';
 import { parseModelName, getModelServerEndpointsByName } from '@/lib/modelServers';
 
 /**
  * Parse server info from model name and check round-robin status
  */
 export async function GET(request) {
-  const authResult = verifyAdmin(request);
+  const authResult = verifyAdminOrManager(request);
   if (!authResult.success) {
     return authResult;
   }
@@ -60,4 +60,3 @@ export async function GET(request) {
     );
   }
 }
-

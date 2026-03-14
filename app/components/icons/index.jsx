@@ -87,6 +87,7 @@ import {
   SignIn as PhSignIn,
   SignOut as PhSignOut,
   Sparkle as PhSparkle,
+  Star as PhStar,
   SquaresFour as PhSquaresFour,
   Sun as PhSun,
   Table as PhTable,
@@ -225,6 +226,7 @@ export const Hash      = w(PhHash);
 export const Moon      = w(PhMoon);
 export const Phone     = w(PhPhone);
 export const Sun       = w(PhSun);
+export const Star      = w(PhStar);
 export const Zap       = w(PhLightning);
 
 // ─── shadcn/ui 프리미티브 전용 ────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 'use client';
 import { useState, memo, useEffect, Fragment } from 'react';
-import { Zap, ChevronDown, Loader2 } from '@/components/icons';
+import { Zap, ChevronDown, Loader2, Star } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -101,6 +101,8 @@ const ModelSelector = memo(function ModelSelector({
   setSelectedModel,
   modelConfig,
   disabled,
+  userDefaultModelId,
+  onSetUserDefault,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
@@ -248,7 +250,9 @@ const ModelSelector = memo(function ModelSelector({
                     (m) => m.isDefault
                   );
 
-                  return (
+                    const isUserDefault = userDefaultModelId === model.id;
+
+                    return (
                     <DropdownMenuRadioItem
                       key={`${categoryKey}-${model.id}-${index}`}
                       id={`model-option-${model.id}`}
@@ -269,6 +273,26 @@ const ModelSelector = memo(function ModelSelector({
                             <Badge variant='outline' className='text-[10px] px-1.5 py-0'>
                               {t('chat.model_default')}
                             </Badge>
+                          )}
+                          {isUserDefault && (
+                            <Badge variant='secondary' className='text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'>
+                              My Default
+                            </Badge>
+                          )}
+                          {onSetUserDefault && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSetUserDefault(isUserDefault ? '' : model.id);
+                              }}
+                              className='p-0.5 hover:text-amber-500 transition-colors'
+                              title={isUserDefault ? 'Remove as my default' : 'Set as my default'}
+                            >
+                              <Star
+                                size={12}
+                                className={isUserDefault ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground'}
+                              />
+                            </button>
                           )}
                         </div>
                       </div>

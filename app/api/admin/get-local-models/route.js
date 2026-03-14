@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { verifyAdmin } from '@/lib/adminAuth';
+import { verifyAdmin, verifyAdminOrManager } from '@/lib/adminAuth';
 import { getAllEndpoints } from '@/lib/modelServerMonitor';
 
 export async function GET(request) {
   try {
     // Admin auth check
-    const adminCheck = verifyAdmin(request);
+    const adminCheck = verifyAdminOrManager(request);
     if (!adminCheck.success) {
       // Return the NextResponse object from verifyAdmin as-is
       return adminCheck;

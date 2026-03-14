@@ -1,16 +1,41 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Bot } from '@/components/icons';
 
-const AGENTS = [
-  { id: 'chat', name: 'Chat', path: '/' },
-  { id: 'agent7', name: 'PPT Maker', path: '/agent/7' },
+const ALL_AGENTS = [
+  { id: 'chat', name: 'Chat', path: '/', agentId: null },
+  { id: 'agent7', name: 'PPT Maker', path: '/agent/7', agentId: '7' },
 ];
 
 export default function AgentSelector() {
   const router = useRouter();
   const pathname = usePathname();
+  const [visibleAgents, setVisibleAgents] = useState(ALL_AGENTS);
+
+  useEffect(() => {
+    async function loadVisibility() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('/api/agents/list', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const map = data.visibilityMap || {};
+        const filtered = ALL_AGENTS.filter((agent) => {
+          if (!agent.agentId) return true;
+          return map[agent.agentId] !== false;
+        });
+        setVisibleAgents(filtered);
+      } catch (e) {
+        console.warn('Failed to load agent visibility:', e.message);
+      }
+    }
+    loadVisibility();
+  }, []);
 
   const getCurrentAgent = () => {
     if (pathname === '/' || pathname === '/chat') return 'chat';
@@ -23,11 +48,13 @@ export default function AgentSelector() {
 
   const handleChange = (e) => {
     const selectedId = e.target.value;
-    const agent = AGENTS.find((a) => a.id === selectedId);
+    const agent = visibleAgents.find((a) => a.id === selectedId);
     if (agent) {
       router.push(agent.path);
     }
   };
+
+  if (visibleAgents.length <= 1) return null;
 
   return (
     <div className="flex items-center gap-2 px-3 py-2 bg-muted border-b border-border">
@@ -37,7 +64,7 @@ export default function AgentSelector() {
         onChange={handleChange}
         className="px-3 py-1.5 text-sm bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-ring focus:border-transparent cursor-pointer"
       >
-        {AGENTS.map((agent) => (
+        {visibleAgents.map((agent) => (
           <option key={agent.id} value={agent.id}>
             {agent.name}
           </option>

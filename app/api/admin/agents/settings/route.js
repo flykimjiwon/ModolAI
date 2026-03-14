@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import { createServerError } from '@/lib/errorHandler';
 import { getModelsFromTables } from '@/lib/modelTables';
 
@@ -105,7 +105,7 @@ function normalizeSettingsInput(settings) {
 
 export async function GET(request) {
   try {
-    const authResult = await verifyAdminWithResult(request);
+    const authResult = await verifyAdminOrManagerWithResult(request);
     if (!authResult.valid) {
       const status = authResult.error?.includes('Admin') ? 403 : 401;
       return NextResponse.json({ error: authResult.error }, { status });

@@ -89,6 +89,8 @@ export default function Home() {
     setSelectedModelWithRoom,
     restoreRoomModel,
     modelsLoading,
+    userDefaultModelId,
+    saveUserDefaultModel,
   } = useModelManager(userRole);
   // ---------- UI & App State ----------
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -417,6 +419,8 @@ export default function Home() {
           selectedImages={selectedImages}
           setSelectedImages={setSelectedImages}
           maxImagesPerMessage={maxImagesPerMessage}
+          userDefaultModelId={userDefaultModelId}
+          onSetUserDefault={saveUserDefaultModel}
         />
         <NoticePopup target='main' />
       </div>

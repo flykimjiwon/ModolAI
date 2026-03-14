@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import { getAppErrorLogs } from '@/lib/appErrorLogger';
 
 export async function GET(request) {
-  const auth = verifyAdminWithResult(request);
+  const auth = verifyAdminOrManagerWithResult(request);
   if (!auth.valid) {
     return NextResponse.json(
       { success: false, error: auth.error || 'Unauthorized.' },

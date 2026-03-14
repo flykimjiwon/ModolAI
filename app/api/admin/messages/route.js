@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyAdminWithResult } from '@/lib/auth';
+import { verifyAdminWithResult, verifyAdminOrManagerWithResult } from '@/lib/auth';
 import { query } from '@/lib/postgres';
 import { createAuthError, createServerError } from '@/lib/errorHandler';
 
@@ -153,7 +153,7 @@ function findModelLabel(modelId, modelLabelMap, allModels) {
 
 export async function GET(request) {
   // Verify admin privileges
-  const authResult = verifyAdminWithResult(request);
+  const authResult = verifyAdminOrManagerWithResult(request);
   if (!authResult.valid) {
     return createAuthError(authResult.error);
   }

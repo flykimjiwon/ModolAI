@@ -15,8 +15,11 @@ import {
   RefreshCw,
   Search,
   Save,
+  Eye,
+  EyeOff,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 const DEFAULT_AGENT_SETTINGS = {
   selectedModelId: '',
@@ -35,6 +38,7 @@ const PERMISSION_TYPE_LABELS = {
 
 const ROLE_LABELS = {
   admin: 'Admin',
+  manager: 'Manager',
   user: 'User',
 };
 
@@ -48,6 +52,7 @@ const STATIC_AGENTS = [
 
 export default function AgentsManagePage() {
   const { alert, confirm } = useAlert();
+  const { isReadOnly } = useAdminAuth();
   const [agents, setAgents] = useState([]);
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -57,6 +62,38 @@ export default function AgentsManagePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsForm, setSettingsForm] = useState(DEFAULT_AGENT_SETTINGS);
+
+  const [agentVisibility, setAgentVisibility] = useState({});
+
+  const toggleAgentVisibility = async (agentId, currentVisibility) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/agents', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          agentId,
+          isVisible: !currentVisibility,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update visibility');
+      }
+
+      setAgentVisibility((prev) => ({
+        ...prev,
+        [agentId]: !currentVisibility,
+      }));
+      alert(`Agent ${!currentVisibility ? 'shown' : 'hidden'}`, 'success', 'Success');
+    } catch (error) {
+      alert(error.message, 'error', 'Error');
+    }
+  };
 
   const [newPermission, setNewPermission] = useState({
     permissionType: 'role',
@@ -123,6 +160,18 @@ export default function AgentsManagePage() {
       setAgents(mergedAgents);
       setUsers(Array.isArray(data.users) ? data.users : []);
       setDepartments(Array.isArray(data.departments) ? data.departments : []);
+
+      try {
+        const visResponse = await fetch('/api/agents/list', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (visResponse.ok) {
+          const visData = await visResponse.json();
+          setAgentVisibility(visData.visibilityMap || {});
+        }
+      } catch (e) {
+        console.warn('Failed to load agent visibility:', e.message);
+      }
       setModelOptions(Array.isArray(settingsData.modelOptions) ? settingsData.modelOptions : []);
 
       if (mergedAgents.length > 0 && !selectedAgent) {
@@ -348,6 +397,29 @@ export default function AgentsManagePage() {
                       {agent.description}
                     </p>
                   </div>
+                  {!isReadOnly ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentVis = agentVisibility[agent.id] !== false;
+                      toggleAgentVisibility(agent.id, currentVis);
+                    }}
+                    className='p-1 rounded hover:bg-accent transition-colors'
+                    title={agentVisibility[agent.id] !== false ? 'Hide from users' : 'Show to users'}
+                  >
+                    {agentVisibility[agent.id] !== false ? (
+                      <Eye className='h-4 w-4 text-primary' />
+                    ) : (
+                      <EyeOff className='h-4 w-4 text-muted-foreground' />
+                    )}
+                  </button>
+                  ) : (
+                    agentVisibility[agent.id] !== false ? (
+                      <Eye className='h-4 w-4 text-muted-foreground' />
+                    ) : (
+                      <EyeOff className='h-4 w-4 text-muted-foreground' />
+                    )
+                  )}
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     (agent.permissions?.length ?? 0) === 0
                       ? 'bg-primary/10 text-primary'
@@ -373,6 +445,7 @@ export default function AgentsManagePage() {
                     {selectedAgent.description}
                   </p>
                 </div>
+                {!isReadOnly && (
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2"
@@ -380,6 +453,7 @@ export default function AgentsManagePage() {
                   <Plus className="h-4 w-4" />
                   Add Permission
                 </button>
+                )}
               </div>
 
               <div className="p-4">
@@ -425,6 +499,7 @@ export default function AgentsManagePage() {
                               <><X className="h-4 w-4" /> Block</>
                             )}
                           </span>
+                          {!isReadOnly && (
                           <button
                             onClick={() => handleDeletePermission(permission.id)}
                             className="p-2 text-muted-foreground hover:text-destructive transition-colors"
@@ -432,6 +507,7 @@ export default function AgentsManagePage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -449,6 +525,7 @@ export default function AgentsManagePage() {
                       Manage default behavior and model policies per agent
                     </p>
                   </div>
+                  {!isReadOnly && (
                   <button
                     onClick={handleSaveSettings}
                     disabled={settingsSaving}
@@ -461,6 +538,7 @@ export default function AgentsManagePage() {
                     )}
                     Save Settings
                   </button>
+                  )}
                 </div>
 
                 {selectedAgent.id === '7' ? (
@@ -636,6 +714,7 @@ export default function AgentsManagePage() {
                     >
                       <option value="">Select</option>
                       <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
                       <option value="user">User</option>
                     </select>
                   </div>

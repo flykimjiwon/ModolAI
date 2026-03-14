@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdmin } from '@/lib/adminAuth';
+import { verifyAdmin, verifyAdminOrManager } from '@/lib/adminAuth';
 
 // Helper function to convert model ID to display name
 async function getModelLabelMap() {
@@ -89,7 +89,7 @@ async function getModelLabelMap() {
 
 export async function GET(request) {
   // Check admin privileges
-  const authResult = verifyAdmin(request);
+  const authResult = verifyAdminOrManager(request);
   if (authResult.error) {
     return authResult;
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdmin } from '@/lib/adminAuth';
+import { verifyAdmin, verifyAdminOrManager } from '@/lib/adminAuth';
 import {
   checkAllModelServerInstances,
   saveendpointStatus,
@@ -10,7 +10,7 @@ import {
 export async function GET(request) {
   try {
     // Check admin privileges
-    const adminCheck = verifyAdmin(request);
+    const adminCheck = verifyAdminOrManager(request);
     if (!adminCheck.success) {
       return adminCheck;
     }

@@ -65,8 +65,8 @@ async function ensureSSOLogsTable() {
 export async function GET(request) {
   try {
     const tokenPayload = verifyToken(request);
-    if (!tokenPayload || tokenPayload.role !== 'admin') {
-      return NextResponse.json({ error: 'Admin privileges required.' }, { status: 403 });
+    if (!tokenPayload || !['admin', 'manager'].includes(tokenPayload.role)) {
+      return NextResponse.json({ error: 'Admin or manager privileges required.' }, { status: 403 });
     }
 
     await ensureSSOLogsTable();

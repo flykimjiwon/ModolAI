@@ -15,6 +15,7 @@ import {
   HelpCircle,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import UserDetailModal from './components/UserDetailModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 export default function UsersPage() {
   const { alert, confirm } = useAlert();
   const { t } = useTranslation();
+  const { isReadOnly } = useAdminAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -538,6 +540,7 @@ export default function UsersPage() {
                       </div>
                     </div>
 
+                    {!isReadOnly && (
                     <div className='col-span-2'>
                       <div className='flex items-center space-x-2'>
                         <Button
@@ -583,6 +586,7 @@ export default function UsersPage() {
                         </Button>
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -37,12 +37,14 @@ export async function getModelsFromTables() {
     const columnCheckResult = await query(
       `SELECT column_name
        FROM information_schema.columns
-       WHERE table_name = 'models' AND column_name IN ('endpoint', 'multi_turn_limit', 'multi_turn_unlimited', 'visible', 'pii_filter_request', 'pii_filter_response', 'pii_request_mxt_vrf', 'pii_request_mask_opt', 'pii_response_mxt_vrf', 'pii_response_mask_opt')`
+       WHERE table_name = 'models' AND column_name IN ('endpoint', 'api_config', 'api_key', 'multi_turn_limit', 'multi_turn_unlimited', 'visible', 'pii_filter_request', 'pii_filter_response', 'pii_request_mxt_vrf', 'pii_request_mask_opt', 'pii_response_mxt_vrf', 'pii_response_mask_opt')`
     );
     const columnNames = new Set(
       columnCheckResult.rows.map((row) => row.column_name)
     );
     const hasEndpointColumn = columnNames.has('endpoint');
+    const hasApiConfigColumn = columnNames.has('api_config');
+    const hasApiKeyColumn = columnNames.has('api_key');
     const hasMultiturnColumns =
       columnNames.has('multi_turn_limit') &&
       columnNames.has('multi_turn_unlimited');
@@ -87,10 +89,11 @@ export async function getModelsFromTables() {
 
     // Query models for each category
     for (const category of categoriesResult.rows) {
-      // Include endpoint column if exists, exclude otherwise
       const selectFields = [
         'id, model_name, label, tooltip, is_default, admin_only, system_prompt',
-        hasEndpointColumn ? 'endpoint, api_config, api_key' : null,
+        hasEndpointColumn ? 'endpoint' : null,
+        hasApiConfigColumn ? 'api_config' : null,
+        hasApiKeyColumn ? 'api_key' : null,
         hasMultiturnColumns ? 'multi_turn_limit, multi_turn_unlimited' : null,
         hasVisibleColumn ? 'visible' : null,
         hasPiiColumns ? 'pii_filter_request, pii_filter_response' : null,
@@ -124,8 +127,8 @@ export async function getModelsFromTables() {
             visible: hasVisibleColumn ? (model.visible !== false) : true, // Default true
             systemPrompt: model.system_prompt || [],
             endpoint: hasEndpointColumn ? model.endpoint || '' : '',
-            apiConfig: hasEndpointColumn ? model.api_config || null : null,
-            apiKey: hasEndpointColumn ? model.api_key || null : null,
+            apiConfig: hasApiConfigColumn ? model.api_config || null : null,
+            apiKey: hasApiKeyColumn ? model.api_key || null : null,
             multiturnLimit: hasMultiturnColumns
               ? model.multi_turn_limit ?? null
               : null,

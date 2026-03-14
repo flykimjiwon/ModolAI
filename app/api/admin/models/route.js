@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
-import { verifyAdmin } from '@/lib/adminAuth';
+import { verifyAdmin, verifyAdminOrManager } from '@/lib/adminAuth';
 import { getModelsFromTables, saveModelsToTables } from '@/lib/modelTables';
 
 function normalizeCategories(categories) {
@@ -40,7 +40,7 @@ function normalizeCategories(categories) {
 export async function GET(request) {
   try {
     // Verify admin permission
-    const adminCheck = verifyAdmin(request);
+    const adminCheck = verifyAdminOrManager(request);
     if (!adminCheck.success) {
       return adminCheck; // Return NextResponse object
     }

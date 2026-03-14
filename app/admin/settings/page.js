@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, AlertTriangle, ImageIcon, Code } from '@/components/icons';
+import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, AlertTriangle, ImageIcon, Code, Database } from '@/components/icons';
 import { THEME_PRESETS } from '@/lib/themePresets';
 import Image from 'next/image'; // Image 컴포넌트 임포트
 import { useAlert } from '@/contexts/AlertContext';
@@ -46,6 +46,10 @@ export default function SettingsPage() {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreMode, setRestoreMode] = useState('full');
+  const [restoreFile, setRestoreFile] = useState(null);
   const [savingSection, setSavingSection] = useState(null); // 현재 저장 중인 섹션 추적
   const [migrationResult, setMigrationResult] = useState(null);
   const [migrationStatus, setMigrationStatus] = useState(null);
@@ -997,6 +1001,90 @@ export default function SettingsPage() {
       next.splice(index, 1);
       return next;
     });
+  };
+
+  const downloadDbBackup = async () => {
+    try {
+      setBackupLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/db-backup', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to download backup.');
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get('content-disposition') || '';
+      const filenameMatch = disposition.match(/filename="?([^\"]+)"?/i);
+      const filename = filenameMatch?.[1] || `modol-backup-${Date.now()}.sql`;
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      alert('Backup downloaded successfully.', 'success', t('common.complete'));
+    } catch (error) {
+      console.error('Failed to download DB backup:', error);
+      alert(error.message || 'Failed to download backup.', 'error', t('admin_settings.failed'));
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const restoreDbBackup = async () => {
+    if (!restoreFile) {
+      alert('Please select a backup .sql file.', 'warning', t('admin_settings.select_required'));
+      return;
+    }
+
+    const isDataOnly = restoreMode === 'data';
+    const confirmed = await confirm(
+      isDataOnly
+        ? 'Restore data only with schema matching?'
+        : 'Run full database restore (schema and data)?',
+      'DB Restore'
+    );
+    if (!confirmed) return;
+
+    try {
+      setRestoreLoading(true);
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', restoreFile);
+      formData.append('mode', restoreMode);
+
+      const response = await fetch('/api/admin/db-restore', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to restore database.');
+      }
+
+      alert(data.message || 'Database restore completed.', 'success', t('common.complete'));
+      setRestoreFile(null);
+    } catch (error) {
+      console.error('Failed to restore DB backup:', error);
+      alert(error.message || 'Failed to restore database.', 'error', t('admin_settings.failed'));
+    } finally {
+      setRestoreLoading(false);
+    }
   };
 
 
@@ -2191,6 +2279,100 @@ models:
         <p className='text-sm text-muted-foreground'>
           {t('admin_settings.view_db_schema_desc')}
         </p>
+      </div>
+
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
+        <div className='flex items-center gap-3 mb-4'>
+          <Database className='h-5 w-5 text-primary' />
+          <h2 className='text-lg font-semibold text-foreground'>
+            DB Backup/Restore
+          </h2>
+        </div>
+
+        <div className='space-y-6'>
+          <div className='border border-border rounded-lg p-4 bg-muted/40'>
+            <h3 className='text-sm font-medium text-foreground mb-2'>
+              Download Backup
+            </h3>
+            <p className='text-sm text-muted-foreground mb-3'>
+              Download a full SQL backup of the current database.
+            </p>
+            <button
+              onClick={downloadDbBackup}
+              disabled={backupLoading || restoreLoading}
+              className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
+            >
+              {backupLoading ? 'Preparing Backup...' : 'Download Backup'}
+            </button>
+          </div>
+
+          <div className='border border-border rounded-lg p-4 bg-muted/40 space-y-3'>
+            <h3 className='text-sm font-medium text-foreground'>
+              Restore Backup
+            </h3>
+            <p className='text-sm text-muted-foreground'>
+              Upload a SQL backup file and choose restore mode.
+            </p>
+
+            <div className='space-y-2'>
+              <label className='block text-sm font-medium text-foreground'>
+                Restore Mode
+              </label>
+              <div className='flex flex-wrap items-center gap-4'>
+                <label className='inline-flex items-center gap-2 text-sm text-foreground cursor-pointer'>
+                  <input
+                    type='radio'
+                    name='restore-mode'
+                    value='full'
+                    checked={restoreMode === 'full'}
+                    onChange={() => setRestoreMode('full')}
+                    className='accent-primary'
+                    disabled={restoreLoading || backupLoading}
+                  />
+                  <span>Full (Schema + Data)</span>
+                </label>
+                <label className='inline-flex items-center gap-2 text-sm text-foreground cursor-pointer'>
+                  <input
+                    type='radio'
+                    name='restore-mode'
+                    value='data'
+                    checked={restoreMode === 'data'}
+                    onChange={() => setRestoreMode('data')}
+                    className='accent-primary'
+                    disabled={restoreLoading || backupLoading}
+                  />
+                  <span>Data-Only (Schema Match)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <label className='block text-sm font-medium text-foreground'>
+                Backup File (.sql)
+              </label>
+              <input
+                type='file'
+                accept='.sql'
+                onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+                className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground file:mr-3 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90'
+                disabled={restoreLoading || backupLoading}
+              />
+              {restoreFile && (
+                <p className='text-xs text-muted-foreground'>
+                  Selected: {restoreFile.name}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={restoreDbBackup}
+              disabled={!restoreFile || restoreLoading || backupLoading}
+              className='inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
+            >
+              {restoreLoading ? 'Restoring...' : 'Restore'}
+            </button>
+          </div>
+        </div>
       </div>
 
     </div>

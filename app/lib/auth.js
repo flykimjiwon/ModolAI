@@ -81,6 +81,27 @@ export function verifyAdminWithResult(request) {
 }
 
 /**
+ * Verify admin or manager privileges
+ */
+export function verifyAdminOrManagerWithResult(request) {
+  const token = extractBearerToken(request);
+  
+  if (!token) {
+    return { valid: false, error: 'No token provided' };
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET || process.env.JWT_SECRET);
+    if (!['admin', 'manager'].includes(decoded.role)) {
+      return { valid: false, error: 'Admin or manager privileges required' };
+    }
+    return { valid: true, user: decoded };
+  } catch (error) {
+    return { valid: false, error: 'Invalid token' };
+  }
+}
+
+/**
  * Middleware for API routes that require authentication
  * @param {Request} request - Next.js Request object
  * @returns {object|null} {user: object} or null (when authentication fails)

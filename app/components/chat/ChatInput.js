@@ -28,6 +28,8 @@ const ChatInput = memo(function ChatInput({
   selectedImages,
   setSelectedImages,
   maxImagesPerMessage = 5,
+  userDefaultModelId,
+  onSetUserDefault,
 }) {
   const { alert } = useAlert();
   const { t } = useTranslation();
@@ -386,6 +388,8 @@ const ChatInput = memo(function ChatInput({
               onTooltipDismiss={onTooltipDismiss}
               sessionTooltipDismissed={sessionTooltipDismissed}
               showCategorySections={false}
+              userDefaultModelId={userDefaultModelId}
+              onSetUserDefault={onSetUserDefault}
             />
           )}
 

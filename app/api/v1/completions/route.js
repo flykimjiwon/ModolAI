@@ -127,6 +127,96 @@ function buildOpenAiUrl(endpoint, path) {
   return `${trimmed}/v1${path}`;
 }
 
+function getValueByPath(source, path) {
+  if (!source || !path) return undefined;
+  const tokens = path
+    .replace(/\[(\d+)\]/g, '.$1')
+    .split('.')
+    .filter(Boolean);
+  let current = source;
+  for (const token of tokens) {
+    if (current == null) return undefined;
+    current = current[token];
+  }
+  return current;
+}
+
+function applyTemplate(value, context) {
+  if (typeof value === 'string') {
+    if (value === '{{prompt}}') return context.prompt;
+    let output = value;
+    if (output.includes('{{OPENAI_API_KEY}}')) {
+      output = output.replaceAll('{{OPENAI_API_KEY}}', context.apiKey || '');
+    }
+    if (output.includes('{{prompt}}')) {
+      output = output.replaceAll(
+        '{{prompt}}',
+        typeof context.prompt === 'string'
+          ? context.prompt
+          : JSON.stringify(context.prompt || '')
+      );
+    }
+    return output;
+  }
+  if (Array.isArray(value)) return value.map((item) => applyTemplate(item, context));
+  if (value && typeof value === 'object') {
+    const next = {};
+    Object.entries(value).forEach(([key, val]) => {
+      next[key] = applyTemplate(val, context);
+    });
+    return next;
+  }
+  return value;
+}
+
+async function getModelConfig() {
+  try {
+    const { getModelsFromTables } = await import('@/lib/modelTables');
+    let categories = await getModelsFromTables();
+    if (!categories) {
+      const { query } = await import('@/lib/postgres');
+      const modelConfigResult = await query(
+        'SELECT config FROM model_config WHERE config_type = $1 LIMIT 1',
+        ['models']
+      );
+      categories = modelConfigResult.rows[0]?.config?.categories || null;
+    }
+    return categories ? { categories } : null;
+  } catch (error) {
+    console.warn('[Model Config] Failed to load model config:', error.message);
+    return null;
+  }
+}
+
+async function findModelRecord(modelId) {
+  if (!modelId) return null;
+  const modelConfig = await getModelConfig();
+  if (!modelConfig?.categories) return null;
+  const allModels = [];
+  Object.values(modelConfig.categories).forEach((category) => {
+    if (category.models && Array.isArray(category.models)) allModels.push(...category.models);
+  });
+  let found = allModels.find((m) => m.id === modelId);
+  if (!found) found = allModels.find((m) => m.modelName === modelId);
+  if (!found) {
+    found = allModels.find(
+      (m) => m.label && m.label.toLowerCase() === String(modelId).toLowerCase()
+    );
+  }
+  if (!found) {
+    const modelBase = String(modelId).split(':')[0];
+    found = allModels.find((m) => {
+      if (!m.modelName) return false;
+      const mNameLower = m.modelName.toLowerCase();
+      return (
+        mNameLower.includes(String(modelId).toLowerCase()) ||
+        mNameLower.startsWith(modelBase.toLowerCase() + ':')
+      );
+    });
+  }
+  return found || null;
+}
+
 // ─── Convert Ollama /api/generate stream to OpenAI SSE ───────────────────────
 function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
   const encoder = new TextEncoder();
@@ -173,6 +263,63 @@ function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
               if (isDone) {
                 controller.enqueue(encoder.encode('data: [DONE]\n\n'));
               }
+            } catch {
+              // Ignore lines that fail parsing
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+        controller.close();
+      }
+    },
+  });
+}
+
+function chatToCompletionSSE(chatStream, model, completionId) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const reader = chatStream.getReader();
+      let buffer = '';
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed === 'data: [DONE]') {
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+              continue;
+            }
+            if (!trimmed.startsWith('data: ')) continue;
+
+            try {
+              const chunk = JSON.parse(trimmed.slice(6));
+              const delta = chunk.choices?.[0]?.delta;
+              const text = delta?.content || '';
+              const finishReason = chunk.choices?.[0]?.finish_reason || null;
+
+              if (!text && !finishReason) continue;
+
+              const sseChunk = {
+                id: completionId,
+                object: 'text_completion',
+                created: Math.floor(Date.now() / 1000),
+                model,
+                choices: [{ text, index: 0, finish_reason: finishReason }],
+              };
+
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify(sseChunk)}\n\n`)
+              );
             } catch {
               // Ignore lines that fail parsing
             }
@@ -262,6 +409,259 @@ export async function POST(request) {
       );
     }
 
+    const completionId = createCompletionId();
+
+    const matchedModel = await findModelRecord(model);
+    const manualEndpoint =
+      matchedModel?.endpoint &&
+      String(matchedModel.endpoint).trim().toLowerCase() === 'manual';
+
+    if (manualEndpoint) {
+      if (!matchedModel?.apiConfig) {
+        return NextResponse.json(
+          {
+            error: {
+              message: 'Manual API configuration is missing.',
+              type: 'invalid_request_error',
+            },
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      let manualConfig;
+      try {
+        manualConfig =
+          typeof matchedModel.apiConfig === 'string'
+            ? JSON.parse(matchedModel.apiConfig)
+            : matchedModel.apiConfig;
+      } catch {
+        return NextResponse.json(
+          {
+            error: {
+              message: 'Failed to parse Manual API configuration JSON.',
+              type: 'invalid_request_error',
+            },
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      const context = {
+        apiKey: (matchedModel.apiKey || process.env.OPENAI_API_KEY || '').trim(),
+        prompt: Array.isArray(prompt) ? prompt.join('') : String(prompt),
+      };
+
+      const manualUrl = applyTemplate(manualConfig?.url, context);
+      if (!manualUrl) {
+        return NextResponse.json(
+          {
+            error: {
+              message: 'Manual API URL is not configured.',
+              type: 'invalid_request_error',
+            },
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      if (manualUrl.includes('/chat/completions')) {
+        const chatHeaders = applyTemplate(manualConfig?.headers || {}, context);
+        if (!chatHeaders['Content-Type']) chatHeaders['Content-Type'] = 'application/json';
+
+        let fimPrompt = context.prompt;
+        if (suffix && !fimPrompt.includes('<|fim_prefix|>')) {
+          fimPrompt = `<|fim_prefix|>${fimPrompt}<|fim_suffix|>${suffix}<|fim_middle|>`;
+        }
+
+        const configBody = applyTemplate(manualConfig?.body, context);
+        const chatModel =
+          configBody && typeof configBody === 'object' && configBody.model
+            ? configBody.model
+            : matchedModel.modelName || model;
+
+        const chatBody = {
+          model: chatModel,
+          messages: [{ role: 'user', content: fimPrompt }],
+          stream: Boolean(isStream),
+        };
+        if (max_tokens != null) chatBody.max_tokens = max_tokens;
+        if (temperature != null) chatBody.temperature = temperature;
+        if (stop != null) chatBody.stop = Array.isArray(stop) ? stop : [stop];
+
+        let chatRes;
+        try {
+          chatRes = await fetch(manualUrl, {
+            method: 'POST',
+            headers: chatHeaders,
+            body: JSON.stringify(chatBody),
+            signal: AbortSignal.timeout(60000),
+          });
+        } catch (error) {
+          return NextResponse.json(
+            {
+              error: {
+                message: `Model server connection error: ${error.message}`,
+                type: 'server_error',
+              },
+            },
+            { status: 500, headers: corsHeaders }
+          );
+        }
+
+        if (!chatRes.ok) {
+          const errorText = await chatRes.text().catch(() => '');
+          return NextResponse.json(
+            {
+              error: {
+                message: `Model server error: ${chatRes.status} ${errorText}`.trim(),
+                type: 'server_error',
+              },
+            },
+            { status: chatRes.status, headers: corsHeaders }
+          );
+        }
+
+        if (isStream && chatRes.body) {
+          const completionStream = chatToCompletionSSE(chatRes.body, model, completionId);
+          return new Response(completionStream, {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              Connection: 'keep-alive',
+            },
+          });
+        }
+
+        const chatData = await chatRes.json().catch(() => ({}));
+        return NextResponse.json(
+          {
+            id: completionId,
+            object: 'text_completion',
+            created: Math.floor(Date.now() / 1000),
+            model,
+            choices: [
+              {
+                text: chatData.choices?.[0]?.message?.content || '',
+                index: 0,
+                finish_reason: chatData.choices?.[0]?.finish_reason || 'stop',
+              },
+            ],
+            usage: chatData.usage || {
+              prompt_tokens: 0,
+              completion_tokens: 0,
+              total_tokens: 0,
+            },
+          },
+          { status: 200, headers: corsHeaders }
+        );
+      }
+
+      const method = (manualConfig?.method || 'POST').toUpperCase();
+      const reqHeaders = applyTemplate(manualConfig?.headers || {}, context);
+      let reqBody = applyTemplate(manualConfig?.body, context);
+      const manualStreamSupported = manualConfig?.stream === true;
+
+      if (isStream && !manualStreamSupported) {
+        return NextResponse.json(
+          {
+            error: {
+              message: 'Manual API does not support streaming on this endpoint.',
+              type: 'invalid_request_error',
+            },
+          },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      if (reqBody && typeof reqBody === 'object') {
+        if (isStream) {
+          reqBody = { ...reqBody, stream: true };
+        } else if (reqBody.stream !== undefined) {
+          reqBody = { ...reqBody, stream: false };
+        }
+      }
+
+      const requestOptions = { method, headers: reqHeaders };
+      if (method !== 'GET' && method !== 'HEAD' && reqBody !== undefined) {
+        requestOptions.body =
+          typeof reqBody === 'string' ? reqBody : JSON.stringify(reqBody);
+      }
+
+      let manualRes;
+      try {
+        manualRes = await fetch(manualUrl, {
+          ...requestOptions,
+          signal: AbortSignal.timeout(60000),
+        });
+      } catch (error) {
+        return NextResponse.json(
+          {
+            error: {
+              message: `Model server connection error: ${error.message}`,
+              type: 'server_error',
+            },
+          },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      if (!manualRes.ok) {
+        const errorText = await manualRes.text().catch(() => '');
+        return NextResponse.json(
+          {
+            error: {
+              message: `Model server error: ${manualRes.status} ${errorText}`.trim(),
+              type: 'server_error',
+            },
+          },
+          { status: manualRes.status, headers: corsHeaders }
+        );
+      }
+
+      if (isStream && manualRes.body) {
+        return new Response(manualRes.body, {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+          },
+        });
+      }
+
+      const manualData = await manualRes.json().catch(() => ({}));
+      const responsePath = manualConfig?.responseMapping?.path;
+      const finalData = responsePath
+        ? {
+            id: completionId,
+            object: 'text_completion',
+            created: Math.floor(Date.now() / 1000),
+            model,
+            choices: [
+              {
+                text: getValueByPath(manualData, responsePath) || '',
+                index: 0,
+                finish_reason: 'stop',
+              },
+            ],
+            usage: {
+              prompt_tokens: 0,
+              completion_tokens: 0,
+              total_tokens: 0,
+            },
+          }
+        : manualData;
+
+      return NextResponse.json(finalData, {
+        status: 200,
+        headers: corsHeaders,
+      });
+    }
+
     // Resolve endpoint
     const endpointInfo = await resolveEndpoint(model);
     if (!endpointInfo) {
@@ -278,7 +678,6 @@ export async function POST(request) {
 
     const { endpoint, provider, modelName, apiKey } = endpointInfo;
     const resolvedModel = modelName || model;
-    const completionId = createCompletionId();
 
     // ── OpenAI-compatible: forward /v1/completions as-is ─────────────────────
     if (provider === 'openai-compatible') {

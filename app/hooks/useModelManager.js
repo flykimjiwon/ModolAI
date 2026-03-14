@@ -48,6 +48,7 @@ export function useModelManager(userRole) {
   const [selectedModel, setSelectedModel] = useState(null);
   const [modelsLoading, setModelsLoading] = useState(true);
   const [currentRoomId, setCurrentRoomId] = useState(null);
+  const [userDefaultModelId, setUserDefaultModelId] = useState(null);
 
   useEffect(() => {
     async function loadModelOptions() {
@@ -103,9 +104,28 @@ export function useModelManager(userRole) {
           setModelConfig(directConfig);
           setModelOptions(allModels);
 
-          const defaultModel =
-            allModels.find((m) => m.isDefault)?.id || allModels[0]?.id;
-          setSelectedModel(defaultModel);
+          // Priority: user default > admin default > first model
+          let resolvedDefault = allModels.find((m) => m.isDefault)?.id || allModels[0]?.id;
+
+          try {
+            const settingsRes = await fetch('/api/user/settings', {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (settingsRes.ok) {
+              const settingsData = await settingsRes.json();
+              if (settingsData.defaultModelId) {
+                const userDefault = allModels.find((m) => m.id === settingsData.defaultModelId);
+                if (userDefault) {
+                  resolvedDefault = userDefault.id;
+                  setUserDefaultModelId(userDefault.id);
+                }
+              }
+            }
+          } catch (err) {
+            logger.warn('Failed to load user default model:', err.message);
+          }
+
+          setSelectedModel(resolvedDefault);
         } else {
           throw new Error(t('model_manager.no_models_available'));
         }
@@ -213,6 +233,28 @@ export function useModelManager(userRole) {
     }
   }, []);
 
+  const saveUserDefaultModel = useCallback(async (modelId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/user/settings', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ defaultModelId: modelId || '' }),
+      });
+      if (res.ok) {
+        setUserDefaultModelId(modelId || null);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      logger.error('Failed to save user default model:', err);
+      return false;
+    }
+  }, []);
+
   return {
     modelOptions,
     modelConfig,
@@ -221,5 +263,7 @@ export function useModelManager(userRole) {
     setSelectedModelWithRoom,
     restoreRoomModel,
     modelsLoading,
+    userDefaultModelId,
+    saveUserDefaultModel,
   };
 }
