@@ -1529,6 +1529,74 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* 차트 색상 */}
+        <div className='border-t border-border pt-4 mt-2'>
+          <p className='text-sm font-medium text-foreground mb-1'>{t('admin_settings.chart_colors')}</p>
+          <p className='text-xs text-muted-foreground mb-3'>{t('admin_settings.chart_colors_desc')}</p>
+          <div className='space-y-2'>
+            {[1, 2, 3].map((n) => {
+              const varName = `--chart-${n}`;
+              const lightVal = themeColors?.light?.[varName] || '';
+              const darkVal = themeColors?.dark?.[varName] || '';
+              return (
+                <div key={n} className='flex items-center gap-3 flex-wrap'>
+                  <span className='text-sm text-muted-foreground w-14'>{t('admin_settings.chart_label')} {n}</span>
+                  <div className='flex items-center gap-1.5'>
+                    <span className='text-xs text-muted-foreground'>L</span>
+                    <input
+                      type='color'
+                      value={lightVal || '#e5a63b'}
+                      onChange={(e) => {
+                        const hex = e.target.value;
+                        setThemeColors((prev) => ({ ...prev, light: { ...prev?.light, [varName]: hex } }));
+                        document.documentElement.style.setProperty(varName, hex);
+                      }}
+                      className='w-7 h-7 rounded border border-border cursor-pointer'
+                    />
+                    <input
+                      type='text'
+                      value={lightVal}
+                      onChange={(e) => {
+                        const hex = e.target.value;
+                        if (/^#[0-9a-fA-F]{0,6}$/.test(hex)) {
+                          setThemeColors((prev) => ({ ...prev, light: { ...prev?.light, [varName]: hex } }));
+                          if (/^#[0-9a-fA-F]{6}$/.test(hex)) document.documentElement.style.setProperty(varName, hex);
+                        }
+                      }}
+                      className='w-24 text-xs px-2 py-1 border border-border rounded bg-background text-foreground font-mono'
+                      placeholder='#e5a63b'
+                    />
+                  </div>
+                  <div className='flex items-center gap-1.5'>
+                    <span className='text-xs text-muted-foreground'>D</span>
+                    <input
+                      type='color'
+                      value={darkVal || '#f5be5b'}
+                      onChange={(e) => {
+                        const hex = e.target.value;
+                        setThemeColors((prev) => ({ ...prev, dark: { ...prev?.dark, [varName]: hex } }));
+                      }}
+                      className='w-7 h-7 rounded border border-border cursor-pointer'
+                    />
+                    <input
+                      type='text'
+                      value={darkVal}
+                      onChange={(e) => {
+                        const hex = e.target.value;
+                        if (/^#[0-9a-fA-F]{0,6}$/.test(hex)) {
+                          setThemeColors((prev) => ({ ...prev, dark: { ...prev?.dark, [varName]: hex } }));
+                        }
+                      }}
+                      className='w-24 text-xs px-2 py-1 border border-border rounded bg-background text-foreground font-mono'
+                      placeholder='#f5be5b'
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 저장/초기화 버튼 */}
         <div className='flex items-center gap-3'>
           <Button

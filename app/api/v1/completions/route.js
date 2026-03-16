@@ -218,7 +218,7 @@ async function findModelRecord(modelId) {
 }
 
 // ─── Convert Ollama /api/generate stream to OpenAI SSE ───────────────────────
-function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
+function ollamaStreamToCompletionSSE(ollamaStream, model, completionId, onComplete) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -226,6 +226,7 @@ function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
     async start(controller) {
       const reader = ollamaStream.getReader();
       let buffer = '';
+      let usage = { promptTokens: 0, completionTokens: 0 };
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -241,6 +242,11 @@ function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
               const chunk = JSON.parse(line);
               const text = chunk.response ?? '';
               const isDone = chunk.done === true;
+
+              if (isDone) {
+                usage.promptTokens = chunk.prompt_eval_count ?? 0;
+                usage.completionTokens = chunk.eval_count ?? 0;
+              }
 
               const sseChunk = {
                 id: completionId,
@@ -271,12 +277,13 @@ function ollamaStreamToCompletionSSE(ollamaStream, model, completionId) {
       } finally {
         reader.releaseLock();
         controller.close();
+        if (onComplete) onComplete(usage);
       }
     },
   });
 }
 
-function chatToCompletionSSE(chatStream, model, completionId) {
+function chatToCompletionSSE(chatStream, model, completionId, onComplete) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
@@ -284,6 +291,7 @@ function chatToCompletionSSE(chatStream, model, completionId) {
     async start(controller) {
       const reader = chatStream.getReader();
       let buffer = '';
+      let usage = { promptTokens: 0, completionTokens: 0 };
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -307,6 +315,11 @@ function chatToCompletionSSE(chatStream, model, completionId) {
               const text = delta?.content || '';
               const finishReason = chunk.choices?.[0]?.finish_reason || null;
 
+              if (chunk.usage) {
+                usage.promptTokens = chunk.usage.prompt_tokens ?? 0;
+                usage.completionTokens = chunk.usage.completion_tokens ?? 0;
+              }
+
               if (!text && !finishReason) continue;
 
               const sseChunk = {
@@ -328,6 +341,7 @@ function chatToCompletionSSE(chatStream, model, completionId) {
       } finally {
         reader.releaseLock();
         controller.close();
+        if (onComplete) onComplete(usage);
       }
     },
   });
@@ -523,7 +537,8 @@ export async function POST(request) {
         }
 
         if (isStream && chatRes.body) {
-          const completionStream = chatToCompletionSSE(chatRes.body, model, completionId);
+          const onComplete = (usage) => { logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model, endpoint: '/v1/completions', promptTokenCount: usage.promptTokens, responseTokenCount: usage.completionTokens, isStream: true, responseTime: Date.now() - startTime, statusCode: 200, clientIP, userAgent }).catch(() => {}); };
+          const completionStream = chatToCompletionSSE(chatRes.body, model, completionId, onComplete);
           return new Response(completionStream, {
             status: 200,
             headers: {
@@ -536,6 +551,9 @@ export async function POST(request) {
         }
 
         const chatData = await chatRes.json().catch(() => ({}));
+
+        logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model, endpoint: '/v1/completions', promptTokenCount: chatData.usage?.prompt_tokens ?? 0, responseTokenCount: chatData.usage?.completion_tokens ?? 0, isStream: false, responseTime: Date.now() - startTime, statusCode: 200, clientIP, userAgent }).catch(() => {});
+
         return NextResponse.json(
           {
             id: completionId,
@@ -622,6 +640,7 @@ export async function POST(request) {
       }
 
       if (isStream && manualRes.body) {
+        logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model, endpoint: '/v1/completions', promptTokenCount: 0, responseTokenCount: 0, isStream: true, responseTime: Date.now() - startTime, statusCode: 200, clientIP, userAgent }).catch(() => {});
         return new Response(manualRes.body, {
           status: 200,
           headers: {
@@ -656,6 +675,7 @@ export async function POST(request) {
           }
         : manualData;
 
+      logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model, endpoint: '/v1/completions', promptTokenCount: finalData.usage?.prompt_tokens ?? 0, responseTokenCount: finalData.usage?.completion_tokens ?? 0, isStream: false, responseTime: Date.now() - startTime, statusCode: 200, clientIP, userAgent }).catch(() => {});
       return NextResponse.json(finalData, {
         status: 200,
         headers: corsHeaders,
@@ -693,6 +713,7 @@ export async function POST(request) {
       });
 
       if (isStream) {
+        logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model: resolvedModel, endpoint: '/v1/completions', promptTokenCount: 0, responseTokenCount: 0, isStream: true, responseTime: Date.now() - startTime, statusCode: 200, clientIP, userAgent }).catch(() => {});
         return new Response(response.body, {
           status: response.status,
           headers: {
@@ -705,6 +726,7 @@ export async function POST(request) {
       }
 
       const data = await response.json().catch(() => ({}));
+      logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model: resolvedModel, endpoint: '/v1/completions', promptTokenCount: data.usage?.prompt_tokens ?? 0, responseTokenCount: data.usage?.completion_tokens ?? 0, isStream: false, responseTime: Date.now() - startTime, statusCode: response.status, clientIP, userAgent }).catch(() => {});
       return NextResponse.json(data, {
         status: response.status,
         headers: corsHeaders,
@@ -760,10 +782,12 @@ export async function POST(request) {
         );
       }
 
+      const onComplete = (usage) => { logExternalApiRequest({ userId: userInfo?.userId, apiType: 'completions', model: resolvedModel, endpoint: '/v1/completions', promptTokenCount: usage.promptTokens, responseTokenCount: usage.completionTokens, isStream: true, responseTime: Date.now() - startTime, statusCode: 200, clientIP, userAgent }).catch(() => {}); };
       const sseStream = ollamaStreamToCompletionSSE(
         ollamaRes.body,
         resolvedModel,
-        completionId
+        completionId,
+        onComplete
       );
 
       return new Response(sseStream, {
@@ -824,22 +848,19 @@ export async function POST(request) {
     };
 
     // External API logging
-    try {
-      await logExternalApiRequest({
-        userId: userInfo?.userId,
-        apiType: 'completions',
-        model: resolvedModel,
-        endpoint: '/v1/completions',
-        requestSize: JSON.stringify(body).length,
-        responseSize: JSON.stringify(openAIResponse).length,
-        responseTime: Date.now() - startTime,
-        statusCode: 200,
-        clientIP,
-        userAgent,
-      });
-    } catch {
-      // Logging failure does not affect the response
-    }
+    logExternalApiRequest({
+      userId: userInfo?.userId,
+      apiType: 'completions',
+      model: resolvedModel,
+      endpoint: '/v1/completions',
+      promptTokenCount: ollamaData.prompt_eval_count ?? 0,
+      responseTokenCount: ollamaData.eval_count ?? 0,
+      isStream: false,
+      responseTime: Date.now() - startTime,
+      statusCode: 200,
+      clientIP,
+      userAgent,
+    }).catch(() => {});
 
     return NextResponse.json(openAIResponse, {
       status: 200,

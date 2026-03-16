@@ -15,7 +15,9 @@ import {
   User,
   Key,
   Mail,
+  Sparkles,
 } from '@/components/icons';
+import PatchNotesModal from '@/components/PatchNotesModal';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertModal, ConfirmModal } from '@/components/ui/modal';
@@ -64,6 +66,7 @@ function Sidebar({
   const [showDmModal, setShowDmModal] = useState(false);
   const [showDmNotification, setShowDmNotification] = useState(false);
   const [newDmCount, setNewDmCount] = useState(0);
+  const [showPatchNotes, setShowPatchNotes] = useState(false);
   const prevUnreadCountRef = useRef(0);
 
   // 읽지 않은 쪽지 개수 조회
@@ -597,8 +600,8 @@ function Sidebar({
             </Button>
           )}
 
-          {/* 관리자 패널 (관리자만 표시) */}
-          {userRole === 'admin' && (
+          {/* 관리자 패널 (관리자 + 매니저 표시) */}
+          {(userRole === 'admin' || userRole === 'manager') && (
             <Button
               id='sidebar-admin-button'
               data-testid='sidebar-admin-button'
@@ -613,6 +616,17 @@ function Sidebar({
               {t('sidebar.admin_page')}
             </Button>
           )}
+
+          {/* 업데이트 노트 버튼 */}
+          <Button
+            variant='ghost'
+            onClick={() => setShowPatchNotes(true)}
+            className='w-full justify-start gap-3 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent'
+            title={t('sidebar.update_notes')}
+          >
+            <Sparkles className='h-4 w-4' />
+            {t('sidebar.update_notes')}
+          </Button>
         </div>
 
         {/* 하단 사용자 정보 */}
@@ -628,6 +642,11 @@ function Sidebar({
               {userRole === 'admin' && (
                 <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mt-1'>
                   {t('common.admin')}
+                </span>
+              )}
+              {userRole === 'manager' && (
+                <span className='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary mt-1'>
+                  {t('sidebar.manager')}
                 </span>
               )}
             </div>
@@ -740,6 +759,8 @@ function Sidebar({
         onClose={() => setShowDmModal(false)}
         onUnreadCountChange={fetchUnreadDmCount}
       />
+
+      <PatchNotesModal isOpen={showPatchNotes} onClose={() => setShowPatchNotes(false)} />
     </>
   );
 }

@@ -399,9 +399,18 @@ async function runColumnMigrations() {
   await query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`).catch(() => {});
   await query(`ALTER TABLE board_posts ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0`).catch(() => {});
 
-  // Indexes
-  await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no) WHERE employee_no IS NOT NULL`).catch(() => {});
-  await query(`CREATE INDEX IF NOT EXISTS idx_models_endpoint ON models(endpoint)`).catch(() => {});
+   // Indexes
+   await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no) WHERE employee_no IS NOT NULL`).catch(() => {});
+   await query(`CREATE INDEX IF NOT EXISTS idx_models_endpoint ON models(endpoint)`).catch(() => {});
+
+   // messages.user_role CHECK constraint update (add manager role)
+   try {
+     await query(`ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_user_role_check`);
+     await query(`ALTER TABLE messages ADD CONSTRAINT messages_user_role_check CHECK (user_role IN ('user', 'admin', 'manager'))`);
+     console.log('[AutoMigrate] ✓ messages_user_role_check constraint updated');
+   } catch (e) {
+     console.warn('[AutoMigrate] messages_user_role_check update failed:', e.message);
+   }
 }
 
 // ─────────────────────────────────────────────

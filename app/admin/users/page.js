@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search,
   Edit2,
@@ -50,6 +50,8 @@ export default function UsersPage() {
 
   const [selectedDetailUser, setSelectedDetailUser] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [roleDropdownUserId, setRoleDropdownUserId] = useState(null);
+  const roleDropdownRef = useRef(null);
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -58,6 +60,16 @@ export default function UsersPage() {
   });
 
   const DEFAULT_DEPTS = ['디지털서비스개발부', '글로벌서비스개발부', '금융서비스개발부', '정보서비스개발부', 'Tech혁신Unit', '기타부서'];
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(e.target)) {
+        setRoleDropdownUserId(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -318,6 +330,9 @@ export default function UsersPage() {
     if (role === 'admin') {
       return <Badge variant='destructive'>{t('admin_users.admin_badge')}</Badge>;
     }
+    if (role === 'manager') {
+      return <Badge variant='outline' className='border-primary text-primary'>{t('admin_users.manager_badge')}</Badge>;
+    }
     return <Badge variant='secondary'>{t('admin_users.user_badge')}</Badge>;
   };
 
@@ -379,6 +394,7 @@ export default function UsersPage() {
             >
               <option value=''>{t('admin.all_roles')}</option>
               <option value='user'>{t('common.user')}</option>
+              <option value='manager'>{t('admin_users.role_manager')}</option>
               <option value='admin'>{t('common.admin')}</option>
             </select>
 
@@ -502,7 +518,30 @@ export default function UsersPage() {
                       </span>
                     </div>
 
-                    <div className='col-span-1'>{getRoleBadge(user.role)}</div>
+                    <div className='col-span-1 relative'>
+                      {!isReadOnly ? (
+                        <div
+                          className='cursor-pointer inline-flex'
+                          onClick={() => setRoleDropdownUserId(roleDropdownUserId === user._id ? null : user._id)}
+                          title={t('admin_users.change_role')}
+                        >
+                          {getRoleBadge(user.role)}
+                        </div>
+                      ) : getRoleBadge(user.role)}
+                      {roleDropdownUserId === user._id && (
+                        <div ref={roleDropdownRef} className='absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-md shadow-lg py-1 min-w-[110px]'>
+                          {['admin', 'manager', 'user'].map((role) => (
+                            <button
+                              key={role}
+                              onClick={() => { updateUserRole(user._id, role); setRoleDropdownUserId(null); }}
+                              className={`w-full text-left px-3 py-1.5 text-sm hover:bg-accent transition-colors ${user.role === role ? 'text-primary font-medium' : 'text-foreground'}`}
+                            >
+                              {role === 'admin' ? t('admin_users.role_admin') : role === 'manager' ? t('admin_users.role_manager') : t('admin_users.role_user')}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                     <div className='col-span-2'>
                       <Badge variant={user.authType === 'sso' ? 'default' : 'secondary'}>

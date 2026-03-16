@@ -746,7 +746,7 @@ export async function PUT(request) {
       }
       const ALLOWED_VARS = [
         '--primary', '--primary-foreground', '--ring',
-        '--chart-1', '--chart-3',
+        '--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5',
         '--sidebar-primary', '--sidebar-primary-foreground', '--sidebar-ring'
       ];
       const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;

@@ -204,51 +204,51 @@ export async function GET(request) {
       // Current period message count
       query(
         `SELECT COUNT(*) as count
-         FROM external_api_logs
-         WHERE (api_type IS NULL OR api_type <> 'pii-detect')
-           AND timestamp >= $1
-           AND timestamp <= $2`,
+         FROM messages
+         WHERE role = 'user'
+           AND created_at >= $1
+           AND created_at <= $2`,
         [startDate, endDate]
       ),
 
       // Previous period message count
       query(
         `SELECT COUNT(*) as count
-         FROM external_api_logs
-         WHERE (api_type IS NULL OR api_type <> 'pii-detect')
-           AND timestamp >= $1
-           AND timestamp <= $2`,
+         FROM messages
+         WHERE role = 'user'
+           AND created_at >= $1
+           AND created_at <= $2`,
         [prevStartDate, prevEndDate]
       ),
 
       // Today's message count
       query(
         `SELECT COUNT(*) as count
-         FROM external_api_logs
-         WHERE (api_type IS NULL OR api_type <> 'pii-detect')
-           AND timestamp >= $1`,
+         FROM messages
+         WHERE role = 'user'
+           AND created_at >= $1`,
         [startOfToday]
       ),
 
       // Current period active users
       query(
         `SELECT COUNT(DISTINCT user_id) as count
-         FROM external_api_logs
-         WHERE timestamp >= $1
-           AND timestamp <= $2
-           AND user_id IS NOT NULL
-           AND (api_type IS NULL OR api_type <> 'pii-detect')`,
+         FROM messages
+         WHERE role = 'user'
+           AND created_at >= $1
+           AND created_at <= $2
+           AND user_id IS NOT NULL`,
         [startDate, endDate]
       ),
 
       // Previous period active users
       query(
         `SELECT COUNT(DISTINCT user_id) as count
-         FROM external_api_logs
-         WHERE timestamp >= $1
-           AND timestamp <= $2
-           AND user_id IS NOT NULL
-           AND (api_type IS NULL OR api_type <> 'pii-detect')`,
+         FROM messages
+         WHERE role = 'user'
+           AND created_at >= $1
+           AND created_at <= $2
+           AND user_id IS NOT NULL`,
         [prevStartDate, prevEndDate]
       ),
 
@@ -291,7 +291,7 @@ export async function GET(request) {
         [startDate, endDate]
       ),
 
-      // Recent activity (latest 20) - normalized with users/models joins
+      // Recent activity (latest 20) - query from messages table to include historical data
       query(
         `SELECT 
            activity.email,
@@ -303,15 +303,15 @@ export async function GET(request) {
          FROM (
            SELECT 
              u.email as email,
-             l.model as model,
-             l.timestamp as created_at,
+             m.model as model,
+             m.created_at as created_at,
              u.department as department,
              u.cell as cell,
-             COALESCE(models.model_name, l.model) as model_name
-            FROM external_api_logs l
-            INNER JOIN users u ON l.user_id = u.id
-            LEFT JOIN models ON l.model = models.id::text OR l.model = models.model_name
-            WHERE (l.api_type IS NULL OR l.api_type <> 'pii-detect')
+             COALESCE(models.model_name, m.model) as model_name
+            FROM messages m
+            INNER JOIN users u ON m.user_id = u.id
+            LEFT JOIN models ON m.model = models.id::text OR m.model = models.model_name
+            WHERE m.role = 'user'
           ) activity
          ORDER BY activity.created_at DESC
          LIMIT 20`

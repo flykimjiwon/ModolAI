@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchDirectModels } from '@/lib/api';
 import { logger } from '@/lib/logger';
-import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { useTranslation } from '@/hooks/useTranslation';
 
 // 클라이언트에서 사용할 기본 모델 (서버 사이드 모듈 import 방지)
@@ -57,18 +56,9 @@ export function useModelManager(userRole) {
         const token = localStorage.getItem('token');
         const headers = { next: { revalidate: 0 } };
 
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          try {
-            const payload = decodeJWTPayload(token);
-            headers['X-User-Role'] = payload.role || 'user';
-          } catch (error) {
-            logger.error('토큰 파싱 실패:', error);
-            headers['X-User-Role'] = 'user';
-          }
-        } else {
-          headers['X-User-Role'] = 'user';
-        }
+         if (token) {
+           headers['Authorization'] = `Bearer ${token}`;
+         }
 
         const directData = await fetchDirectModels(headers);
 

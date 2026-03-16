@@ -346,7 +346,7 @@ export default function ChatWidget() {
                   
                   return (
                     <div key={msg._id} className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} ${isOptimistic ? 'opacity-60' : ''}`}>
-                      <div className="max-w-[75%]">
+                      <div className={`max-w-[85%] flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
                         <div className={`flex items-baseline gap-2 mb-1 ${isMyMessage ? 'justify-end' : 'justify-start'}`}>
                           <p className={`text-xs font-medium ${isMyMessage ? 'text-primary' : 'text-muted-foreground'}`}>
                             {displayName}

@@ -182,10 +182,10 @@ export async function GET(request) {
               MAX(activity.created_at) as "lastActivity",
               ROUND(COUNT(*)::NUMERIC / $1, 2) as "avgPerDay"
             FROM (
-              SELECT user_id, timestamp as created_at
-              FROM external_api_logs
-              WHERE timestamp >= $2
-                AND (api_type IS NULL OR api_type <> 'pii-detect')
+              SELECT user_id, created_at
+              FROM messages
+              WHERE created_at >= $2
+                AND role = 'user'
             ) activity
             INNER JOIN users u ON activity.user_id = u.id
             WHERE u.department = $3${authSql3}
@@ -205,10 +205,10 @@ export async function GET(request) {
               MAX(activity.created_at) as "lastActivity",
               ROUND(COUNT(*)::NUMERIC / $1, 2) as "avgPerDay"
             FROM (
-              SELECT user_id, timestamp as created_at
-              FROM external_api_logs
-              WHERE timestamp >= $2
-                AND (api_type IS NULL OR api_type <> 'pii-detect')
+              SELECT user_id, created_at
+              FROM messages
+              WHERE created_at >= $2
+                AND role = 'user'
             ) activity
             INNER JOIN users u ON activity.user_id = u.id
             GROUP BY u.email, u.name, u.department, u.cell
@@ -256,10 +256,10 @@ export async function GET(request) {
               COUNT(*)::INTEGER as "messageCount",
               COUNT(DISTINCT u.email)::INTEGER as "userCount"
             FROM (
-              SELECT user_id, timestamp as created_at
-              FROM external_api_logs
-              WHERE timestamp >= $1
-                AND (api_type IS NULL OR api_type <> 'pii-detect')
+              SELECT user_id, created_at
+              FROM messages
+              WHERE created_at >= $1
+                AND role = 'user'
             ) activity
             INNER JOIN users u ON activity.user_id = u.id
             WHERE u.department IS NOT NULL
@@ -277,10 +277,10 @@ export async function GET(request) {
               COUNT(*)::INTEGER as "messageCount",
               COUNT(DISTINCT u.email)::INTEGER as "userCount"
             FROM (
-              SELECT user_id, timestamp as created_at
-              FROM external_api_logs
-              WHERE timestamp >= $1
-                AND (api_type IS NULL OR api_type <> 'pii-detect')
+              SELECT user_id, created_at
+              FROM messages
+              WHERE created_at >= $1
+                AND role = 'user'
             ) activity
             INNER JOIN users u ON activity.user_id = u.id
             WHERE u.department = $2${authSql2}
@@ -294,10 +294,10 @@ export async function GET(request) {
               COUNT(*)::INTEGER as "messageCount",
               COUNT(DISTINCT u.email)::INTEGER as "userCount"
             FROM (
-              SELECT user_id, timestamp as created_at
-              FROM external_api_logs
-              WHERE timestamp >= $1
-                AND (api_type IS NULL OR api_type <> 'pii-detect')
+              SELECT user_id, created_at
+              FROM messages
+              WHERE created_at >= $1
+                AND role = 'user'
             ) activity
             INNER JOIN users u ON activity.user_id = u.id
             GROUP BY TO_CHAR(activity.created_at, 'YYYY-MM-DD')
@@ -443,10 +443,10 @@ export async function GET(request) {
           COUNT(*)::INTEGER as "messageCount",
           COUNT(DISTINCT u.email)::INTEGER as "userCount"
         FROM (
-          SELECT user_id, timestamp as created_at
-          FROM external_api_logs
-          WHERE timestamp >= $1
-            AND (api_type IS NULL OR api_type <> 'pii-detect')
+          SELECT user_id, created_at
+          FROM messages
+          WHERE created_at >= $1
+            AND role = 'user'
         ) activity
         INNER JOIN users u ON activity.user_id = u.id
         WHERE u.department = $2${authSql2}
