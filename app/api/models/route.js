@@ -83,9 +83,8 @@ export async function GET(request) {
 
       // Use role from JWT token (not client header)
       const userRole = payload.role || 'user';
-      const isAdmin = userRole === 'admin';
+      const isAdmin = ['admin', 'manager'].includes(userRole);
 
-      // Create a copy for filtering
       const filteredCategories = { ...categories };
       Object.keys(filteredCategories).forEach((categoryKey) => {
         if (filteredCategories[categoryKey].models) {
@@ -93,8 +92,8 @@ export async function GET(request) {
             (model) => model.visible !== false
           );
           if (!isAdmin) {
-            // Regular users can only see models where adminOnly is false
             filtered = filtered.filter((model) => !model.adminOnly);
+            filtered = filtered.map(({ systemPrompt, apiKey, endpoint, apiConfig, ...safeModel }) => safeModel);
           }
           filteredCategories[categoryKey] = {
             ...filteredCategories[categoryKey],

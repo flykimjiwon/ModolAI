@@ -385,7 +385,7 @@ async function getModelOptionsForRole(role = 'user') {
   const categories = await getModelsFromTables();
   if (!categories || typeof categories !== 'object') return [];
 
-  const isAdmin = role === 'admin';
+  const isAdmin = ['admin', 'manager'].includes(role);
   const result = [];
   for (const [categoryKey, category] of Object.entries(categories)) {
     const models = Array.isArray(category?.models) ? category.models : [];

@@ -19,6 +19,7 @@ import {
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 const TOKENS_PER_PAGE = 20;
 const DEFAULT_EXPIRES_IN_DAYS = 90;
@@ -97,6 +98,7 @@ const handleApiError = async (response, defaultMessage, alert, errorTitle) => {
 export default function ApiKeysPage() {
   const { alert, confirm } = useAlert();
   const { t } = useTranslation();
+  const { isReadOnly } = useAdminAuth();
   const [tokens, setTokens] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

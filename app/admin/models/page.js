@@ -15,6 +15,7 @@ import {
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import {
   DndContext,
   closestCenter,
@@ -171,6 +172,7 @@ const buildLabelRoundRobinMap = (categories = {}) => {
 export default function ModelsPage() {
   const { alert, confirm } = useAlert();
   const { t } = useTranslation();
+  const { isReadOnly } = useAdminAuth();
   const [modelConfig, setModelConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

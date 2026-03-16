@@ -79,7 +79,7 @@ export async function PATCH(request, { params }) {
     }
 
     // Handle role change (existing logic)
-    if (!role || !['user', 'admin'].includes(role)) {
+    if (!role || !['user', 'admin', 'manager'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role.' },
         { status: 400 }
@@ -104,7 +104,7 @@ export async function PATCH(request, { params }) {
     }
 
     // Prevent removing your own admin privilege
-    if (authResult.user.sub === id && role === 'user') {
+    if (authResult.user.sub === id && role !== 'admin') {
       return NextResponse.json(
         { error: 'You cannot remove your own admin privilege.' },
         { status: 400 }

@@ -30,10 +30,12 @@ import {
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function MessagesPage() {
   const { alert, confirm } = useAlert();
   const { t } = useTranslation();
+  const { isReadOnly } = useAdminAuth();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

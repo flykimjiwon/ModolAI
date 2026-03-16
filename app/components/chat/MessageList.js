@@ -326,6 +326,13 @@ const SafeMarkdown = memo(function SafeMarkdown({ source }) {
           'data-color-mode': colorMode,
           style: { width: '100%', contain: 'layout' },
         }}
+        components={{
+          a: ({ children, ...props }) => (
+            <a {...props} target='_blank' rel='noopener noreferrer'>
+              {children}
+            </a>
+          ),
+        }}
       />
     </div>
   );
