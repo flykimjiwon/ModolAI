@@ -184,6 +184,15 @@ export function useChatSender({
   const firstUserMessageRef = useRef('');
   const messagesRef = useRef(messages); // 최신 messages 값을 저장하는 ref
   const roomNameGeneratedRef = useRef(new Set()); // 방 이름이 생성된 roomId 추적
+  const roomsRef = useRef(rooms);
+  const loadRoomsRef = useRef(loadRooms);
+  const modelOptionsRef = useRef(modelOptions);
+  const selectedImagesRef = useRef(selectedImages);
+  const imageHistoryByRoomRef = useRef(imageHistoryByRoom);
+  const selectedModelRef = useRef(selectedModel);
+  const imageAnalysisModelRef = useRef(imageAnalysisModel);
+  const imageAnalysisPromptRef = useRef(imageAnalysisPrompt);
+  const maxUserQuestionLengthRef = useRef(maxUserQuestionLength);
 
   // 방이 변경될 때 첫 메시지 플래그 리셋
   useEffect(() => {
@@ -196,6 +205,16 @@ export function useChatSender({
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => { roomsRef.current = rooms; }, [rooms]);
+  useEffect(() => { loadRoomsRef.current = loadRooms; }, [loadRooms]);
+  useEffect(() => { modelOptionsRef.current = modelOptions; }, [modelOptions]);
+  useEffect(() => { selectedImagesRef.current = selectedImages; }, [selectedImages]);
+  useEffect(() => { imageHistoryByRoomRef.current = imageHistoryByRoom; }, [imageHistoryByRoom]);
+  useEffect(() => { selectedModelRef.current = selectedModel; }, [selectedModel]);
+  useEffect(() => { imageAnalysisModelRef.current = imageAnalysisModel; }, [imageAnalysisModel]);
+  useEffect(() => { imageAnalysisPromptRef.current = imageAnalysisPrompt; }, [imageAnalysisPrompt]);
+  useEffect(() => { maxUserQuestionLengthRef.current = maxUserQuestionLength; }, [maxUserQuestionLength]);
 
   const performAPICall = useCallback(
     async (
@@ -211,18 +230,19 @@ export function useChatSender({
       abortControllerRef.current = controller;
       let accumulatedText = '';
 
-      // 디버깅: 전달받은 모델 정보 로깅
+      const currentModelOptions = modelOptionsRef.current;
+
       console.log('[performAPICall] 전달받은 모델 UUID:', currentSelectedModel);
       console.log(
         '[performAPICall] 사용 가능한 모델 옵션:',
-        modelOptions.map((m) => ({
+        currentModelOptions.map((m) => ({
           id: m.id,
           modelName: m.modelName,
           label: m.label,
         }))
       );
 
-      const selectedModelInfo = modelOptions.find(
+      const selectedModelInfo = currentModelOptions.find(
         (model) => model.id === currentSelectedModel
       );
 
@@ -566,7 +586,7 @@ export function useChatSender({
                   }
                 } catch (e) {
                   logger.warn('방 목록 조회 실패, 클로저 값 사용:', e);
-                  currentRoomData = rooms?.find((r) => r._id === currentRoom);
+                  currentRoomData = roomsRef.current?.find((r) => r._id === currentRoom);
                 }
 
                 logger.info('방 이름 생성 시도:', {
@@ -610,8 +630,8 @@ export function useChatSender({
                       roomNameGeneratedRef.current.add(currentRoom);
 
                       // 방 목록 새로고침 (로딩 상태 변경 없이)
-                      if (loadRooms) {
-                        await loadRooms(true);
+                      if (loadRoomsRef.current) {
+                        await loadRoomsRef.current(true);
                       }
                       logger.info('방 이름 자동 생성 완료:', result.roomName);
                     } else {
@@ -751,33 +771,30 @@ export function useChatSender({
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     },
-    [
-      modelOptions,
-      currentRoom,
-      clientIP,
-      setMessages,
-      rooms,
-      loadRooms,
-      inputRef,
-      t,
-    ]
+    [currentRoom, clientIP, setMessages, inputRef]
   );
+
+  const performAPICallRef = useRef(performAPICall);
+  useEffect(() => { performAPICallRef.current = performAPICall; }, [performAPICall]);
 
   const sendMessage = useCallback(
     async (currentInput) => {
       let userQuestion = currentInput.trim();
-      const hasImages = Array.isArray(selectedImages) && selectedImages.length > 0;
+      const currentSelectedImages = selectedImagesRef.current;
+      const currentImageAnalysisPrompt = imageAnalysisPromptRef.current;
+      const currentMaxLen = maxUserQuestionLengthRef.current;
+      const hasImages = Array.isArray(currentSelectedImages) && currentSelectedImages.length > 0;
       if (!userQuestion && hasImages) {
         userQuestion =
-          imageAnalysisPrompt?.trim() || t('chat.image_analysis_prompt');
+          currentImageAnalysisPrompt?.trim() || t('chat.image_analysis_prompt');
       }
       if (!userQuestion || !currentRoom || loading) return;
       if (Date.now() - lastSubmitTime.current < 300) return;
       lastSubmitTime.current = Date.now();
-      const currentSelectedModel = selectedModel;
+      const currentSelectedModel = selectedModelRef.current;
       const responseModel = currentSelectedModel;
-      const analysisModel = imageAnalysisModel;
-      const modelInfoForLimit = modelOptions.find(
+      const analysisModel = imageAnalysisModelRef.current;
+      const modelInfoForLimit = modelOptionsRef.current.find(
         (model) => model.id === responseModel || model.modelName === responseModel
       );
       const multiturnUnlimited = modelInfoForLimit?.multiturnUnlimited === true;
@@ -803,7 +820,7 @@ export function useChatSender({
       }
       const userValidation = validateUserQuestion(
         userQuestion,
-        maxUserQuestionLength,
+        currentMaxLen,
         t
       );
       if (!userValidation.valid) {
@@ -814,7 +831,7 @@ export function useChatSender({
       let piiInputProcessed = false;
       let piiBlocked = false;
       try {
-        const selectedModelInfo = modelOptions.find(
+        const selectedModelInfo = modelOptionsRef.current.find(
           (model) => model.id === responseModel
         );
         if (selectedModelInfo?.piiFilterRequest) {
@@ -853,7 +870,7 @@ export function useChatSender({
         messagesRef.current.filter(
           (m) => m.roomId === currentRoom && m.role === 'user' && !m.isTyping
         ).length + 1;
-      const roomImageHistory = imageHistoryByRoom[currentRoom] || [];
+      const roomImageHistory = imageHistoryByRoomRef.current[currentRoom] || [];
       const minTurnIndex =
         multiturnUnlimited || !multiturnLimit
           ? -Infinity
@@ -869,7 +886,7 @@ export function useChatSender({
               .join('\n')}\n[/image_analysis]`
           : '';
       const imagesForRequest =
-        hasImages && responseModel === analysisModel ? selectedImages : [];
+        hasImages && responseModel === analysisModel ? currentSelectedImages : [];
       const shouldUseAnalysisOnly =
         hasImages && analysisModel && analysisModel !== responseModel;
       if (imagesForRequest.length > 0) {
@@ -890,7 +907,7 @@ export function useChatSender({
           const existing = next[currentRoom] || [];
           next[currentRoom] = [
             ...existing,
-            { turnIndex: userTurnIndex, images: selectedImages },
+            { turnIndex: userTurnIndex, images: currentSelectedImages },
           ];
           return next;
         });
@@ -921,15 +938,15 @@ export function useChatSender({
 
       // 사용자 메시지 저장
       try {
-        const selectedModelInfo = modelOptions.find(
+        const selectedModelInfoForSave = modelOptionsRef.current.find(
           (model) => model.id === responseModel
         );
         const modelNameForHistory =
-          selectedModelInfo?.modelName || responseModel;
+          selectedModelInfoForSave?.modelName || responseModel;
         const messagePayload = {
           role: 'user',
           text: userMsg.text,
-          model: modelNameForHistory, // 모델명 우선 저장
+          model: modelNameForHistory,
         };
 
         console.log(
@@ -985,14 +1002,14 @@ export function useChatSender({
           if (hasImages && analysisModel && shouldUseAnalysisOnly) {
             try {
               const analysisQuestion =
-                imageAnalysisPrompt?.trim() || t('chat.image_analysis_prompt');
+                currentImageAnalysisPrompt?.trim() || t('chat.image_analysis_prompt');
               const analysisPayload = {
                 model: analysisModel,
                 question: analysisQuestion,
                 prompt: analysisQuestion,
                 requestPurpose: 'image-analysis',
                 multiturnHistory: [],
-                images: selectedImages,
+                images: currentSelectedImages,
                 stream: true,
                 options: { temperature: 0.2, max_length: 800 },
                 roomId: currentRoom,
@@ -1033,7 +1050,7 @@ export function useChatSender({
             ? `${combinedAnalysisBlock}\n\n${displayUserQuestion}`
             : displayUserQuestion;
 
-          performAPICall(
+          performAPICallRef.current(
             responseModel,
             displayUserQuestion,
             currentRoomMessages,
@@ -1057,22 +1074,12 @@ export function useChatSender({
       });
     },
     [
-      selectedModel,
-      selectedImages,
-      imageHistoryByRoom,
       setImageHistoryByRoom,
-      imageAnalysisModel,
-      imageAnalysisPrompt,
       setSelectedImages,
       currentRoom,
       loading,
       modelsLoading,
-      modelOptions,
-      maxUserQuestionLength,
-      clientIP,
       setMessages,
-      performAPICall,
-      t,
     ]
   );
 
@@ -1099,13 +1106,13 @@ export function useChatSender({
         e.key === 'Enter' &&
         !loading &&
         (input.trim() ||
-          (Array.isArray(selectedImages) && selectedImages.length > 0))
+          (Array.isArray(selectedImagesRef.current) && selectedImagesRef.current.length > 0))
       ) {
         e.preventDefault();
         sendMessage(input);
       }
     },
-    [loading, sendMessage, input, selectedImages, inputRef, setInput]
+    [loading, sendMessage, input, inputRef, setInput]
   );
 
   const stopStreaming = useCallback(() => {

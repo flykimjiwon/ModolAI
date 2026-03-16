@@ -32,6 +32,7 @@ import {
   Mail,
   Bot,
   ChevronRight,
+  Database,
 } from '@/components/icons';
 import {
   DndContext,
@@ -323,6 +324,7 @@ export default function AdminLayout({ children }) {
         icon: BarChart3,
       },
       { id: 'settings', name: t('admin.settings'), href: '/admin/settings', icon: Settings },
+      { id: 'database', name: t('admin.database'), href: '/admin/database', icon: Database },
       { id: 'home', name: t('admin.go_home'), href: '/', icon: Home },
     ],
     [t]

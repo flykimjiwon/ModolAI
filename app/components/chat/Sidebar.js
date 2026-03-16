@@ -241,10 +241,10 @@ function Sidebar({
       {/* 접힌 사이드바 (아이콘만) */}
       <div
         className={`
-          fixed left-0 top-0 h-full w-16 bg-background border-r border-border z-40
-          flex flex-col items-center py-4
-          transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
+           fixed left-0 top-0 h-full w-16 bg-background border-r border-border z-40
+           flex flex-col items-center py-4 overflow-x-hidden
+           transform transition-transform duration-300 ease-in-out
+           ${sidebarOpen ? '-translate-x-full' : 'translate-x-0'}
         `}
       >
         {/* 메뉴 버튼 (열기/닫기 토글) */}

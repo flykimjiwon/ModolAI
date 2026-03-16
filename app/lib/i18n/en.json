@@ -62,7 +62,8 @@
     "user_updated": "User information updated.",
     "users": "User Management",
     "users_subtitle": "View and manage system users.",
-    "validating": "Validating..."
+    "validating": "Validating...",
+    "database": "DB Viewer"
   },
   "admin_api_logs": {
     "advanced_filters": "Advanced Filters",

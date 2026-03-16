@@ -62,7 +62,8 @@
     "user_updated": "사용자 정보가 수정되었습니다.",
     "users": "사용자 관리",
     "users_subtitle": "시스템 사용자를 조회하고 관리합니다.",
-    "validating": "인증 확인 중..."
+    "validating": "인증 확인 중...",
+    "database": "DB 뷰어"
   },
   "admin_api_logs": {
     "advanced_filters": "고급 필터",

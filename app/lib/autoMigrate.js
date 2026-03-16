@@ -22,7 +22,7 @@ const CORE_TABLES = [
       name VARCHAR(255),
       department VARCHAR(255),
       cell VARCHAR(255),
-      role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+      role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin', 'manager')),
       last_login_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -61,9 +61,34 @@ const CORE_TABLES = [
       multiturn_count INTEGER DEFAULT 10,
       tooltip_enabled BOOLEAN DEFAULT true,
       tooltip_message TEXT,
+      chat_widget_enabled BOOLEAN DEFAULT false,
       site_title VARCHAR(255),
       site_description TEXT,
       favicon_url VARCHAR(255),
+      file_parsing_model VARCHAR(255),
+      file_parsing_enabled BOOLEAN DEFAULT true,
+      room_name_generation_model VARCHAR(255),
+      max_file_size BIGINT,
+      max_files_per_room INTEGER,
+      max_total_size_per_room BIGINT,
+      supported_image_formats JSONB,
+      supported_document_formats JSONB,
+      ollama_endpoints TEXT,
+      endpoint_type VARCHAR(50),
+      custom_endpoints JSONB,
+      openai_compat_base VARCHAR(255),
+      openai_compat_api_key TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'model_categories',
+    sql: `CREATE TABLE IF NOT EXISTS model_categories (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      category_key VARCHAR(50) UNIQUE NOT NULL,
+      label VARCHAR(255) NOT NULL,
+      display_order INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -72,6 +97,7 @@ const CORE_TABLES = [
     name: 'models',
     sql: `CREATE TABLE IF NOT EXISTS models (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      category_id UUID REFERENCES model_categories(id) ON DELETE CASCADE,
       model_name VARCHAR(255) NOT NULL,
       label VARCHAR(255) NOT NULL,
       tooltip TEXT,
@@ -79,6 +105,8 @@ const CORE_TABLES = [
       admin_only BOOLEAN DEFAULT false,
       system_prompt TEXT[],
       endpoint VARCHAR(500),
+      multi_turn_limit INTEGER,
+      multi_turn_unlimited BOOLEAN DEFAULT false,
       display_order INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -241,7 +269,19 @@ const CORE_TABLES = [
       default_theme VARCHAR(20) DEFAULT 'light',
       default_tone VARCHAR(20) DEFAULT 'business',
       allow_user_model_override BOOLEAN DEFAULT false,
+      is_visible BOOLEAN DEFAULT true,
+      display_order INTEGER DEFAULT 0,
       updated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'user_settings',
+    sql: `CREATE TABLE IF NOT EXISTS user_settings (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      default_model_id VARCHAR(255),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -279,6 +319,7 @@ const CORE_INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_dm_created ON direct_messages(created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_agent_permissions_agent_id ON agent_permissions(agent_id)`,
   `CREATE INDEX IF NOT EXISTS idx_agent_settings_agent_id ON agent_settings(agent_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_change_logs_user_id ON user_change_logs(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_change_logs_created_at ON user_change_logs(created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_app_error_logs_created_at ON app_error_logs(created_at DESC)`,
@@ -295,6 +336,9 @@ async function runColumnMigrations() {
   // models table
   await query(`
     ALTER TABLE models
+    ADD COLUMN IF NOT EXISTS category_id UUID,
+    ADD COLUMN IF NOT EXISTS multi_turn_limit INTEGER,
+    ADD COLUMN IF NOT EXISTS multi_turn_unlimited BOOLEAN DEFAULT false,
     ADD COLUMN IF NOT EXISTS api_config JSONB,
     ADD COLUMN IF NOT EXISTS api_key TEXT,
     ADD COLUMN IF NOT EXISTS visible BOOLEAN DEFAULT true,
@@ -305,6 +349,21 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS pii_response_mxt_vrf BOOLEAN DEFAULT true,
     ADD COLUMN IF NOT EXISTS pii_response_mask_opt BOOLEAN DEFAULT true
   `);
+
+  await query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE constraint_name = 'models_category_id_fkey'
+        AND table_name = 'models'
+      ) THEN
+        ALTER TABLE models
+        ADD CONSTRAINT models_category_id_fkey
+        FOREIGN KEY (category_id) REFERENCES model_categories(id) ON DELETE CASCADE;
+      END IF;
+    END $$
+  `).catch(() => {});
 
   // settings table
   await query(`
@@ -320,7 +379,22 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS support_contacts_enabled BOOLEAN DEFAULT true,
     ADD COLUMN IF NOT EXISTS manual_preset_base_url VARCHAR(500) DEFAULT 'https://api.openai.com',
     ADD COLUMN IF NOT EXISTS manual_preset_api_base VARCHAR(500) DEFAULT 'https://api.openai.com',
-    ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local'
+    ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local',
+    ADD COLUMN IF NOT EXISTS ollama_endpoints TEXT,
+    ADD COLUMN IF NOT EXISTS endpoint_type VARCHAR(50),
+    ADD COLUMN IF NOT EXISTS custom_endpoints JSONB,
+    ADD COLUMN IF NOT EXISTS openai_compat_base VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS openai_compat_api_key TEXT,
+    ADD COLUMN IF NOT EXISTS file_parsing_model VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS file_parsing_enabled BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS room_name_generation_model VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS max_file_size BIGINT,
+    ADD COLUMN IF NOT EXISTS max_files_per_room INTEGER,
+    ADD COLUMN IF NOT EXISTS max_total_size_per_room BIGINT,
+    ADD COLUMN IF NOT EXISTS supported_image_formats JSONB,
+    ADD COLUMN IF NOT EXISTS supported_document_formats JSONB,
+    ADD COLUMN IF NOT EXISTS api_config_example TEXT,
+    ADD COLUMN IF NOT EXISTS api_curl_example TEXT
   `);
 
   // external_api_logs table
@@ -403,6 +477,22 @@ async function runColumnMigrations() {
    await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_employee_no ON users(employee_no) WHERE employee_no IS NOT NULL`).catch(() => {});
    await query(`CREATE INDEX IF NOT EXISTS idx_models_endpoint ON models(endpoint)`).catch(() => {});
 
+  // agent_settings: visibility and display order
+  await query(`
+    ALTER TABLE agent_settings
+    ADD COLUMN IF NOT EXISTS is_visible BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0
+  `).catch(() => {});
+
+  // users.role CHECK constraint update (add manager role)
+  try {
+    await query(`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check`);
+    await query(`ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('user', 'admin', 'manager'))`);
+    console.log('[AutoMigrate] ✓ users_role_check constraint updated');
+  } catch (e) {
+    console.warn('[AutoMigrate] users_role_check update failed:', e.message);
+  }
+
    // messages.user_role CHECK constraint update (add manager role)
    try {
      await query(`ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_user_role_check`);
@@ -411,6 +501,14 @@ async function runColumnMigrations() {
    } catch (e) {
      console.warn('[AutoMigrate] messages_user_role_check update failed:', e.message);
    }
+
+  // messages: soft-delete columns
+  await query(`
+    ALTER TABLE messages
+    ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false,
+    ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS deleted_by UUID
+  `).catch(() => {});
 }
 
 // ─────────────────────────────────────────────

@@ -972,6 +972,7 @@ function buildPresetSlideHtml(
     `  .ppt-subtitle { margin: 0.4rem 0 0; font-size: clamp(1.04rem, 1.58vw, 1.35rem); line-height: 1.5; color: ${tokens.bodyColor}; }`,
     `  .ppt-accent { color: ${tokens.accent}; display: inline; }`,
     `  .ppt-cta { display: inline-flex; align-items: center; border-radius: ${tokens.radius}; background: ${tokens.accentBg}; color: #ffffff; font-weight: 700; padding: 0.68rem 1rem; margin-top: 1rem; }`,
+    `  .ppt-watermark { position: absolute; bottom: 0.45rem; right: 0.65rem; margin: 0; font-size: 0.44rem; letter-spacing: 0.04em; color: ${tokens.subColor}; opacity: 0.28; pointer-events: none; z-index: 1; }`,
     '  .ppt-section-title { margin: 0; font-size: clamp(1.56rem, 2.4vw, 2.35rem); line-height: 1.2; }',
     `  .ppt-section-sub { margin: 0.25rem 0 0.9rem; color: ${tokens.subColor}; }`,
     '  .ppt-items-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }',
@@ -1017,6 +1018,7 @@ function buildPresetSlideHtml(
     bodySection,
         '  <p class="ppt-meta">ModolAI PPT Template Engine</p>',
     `  <div class="ppt-source"><!-- PPT_SOURCE_START -->${contentHtml}<!-- PPT_SOURCE_END --></div>`,
+    '  <p class="ppt-watermark">Created by ModolAI</p>',
     '</div>',
     '</section>',
   ].join('\n');
