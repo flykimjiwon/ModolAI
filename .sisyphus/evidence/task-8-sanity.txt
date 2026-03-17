@@ -1,0 +1,36 @@
+## Task 8: Code Sanity Checks - Theme Color Picker Feature
+## Date: Mon Mar 16 2026
+## Worktree: /Users/kimjiwon/Desktop/kimjiwon/ModolAI-theme-picker
+
+### Check 1: themePresets.js has 6 presets
+Command: node -e "const p = require('./app/lib/themePresets.js'); console.log(Object.keys(p.THEME_PRESETS).length)"
+Result: 6
+Keys: amber-soft, blue, green, purple, rose, slate
+Status: PASS ✓
+
+### Check 2: i18n ko.json has design_theme key
+Command: node -e "const k = require('./app/lib/i18n/ko.json'); console.log(k.admin_settings.design_theme)"
+Result: "디자인 테마"
+Status: PASS ✓
+
+### Check 3: globals.css has softened amber (#e5a63b)
+Command: grep -c 'primary: #e5a63b' app/globals.css
+Result: 2 (light + dark mode)
+Status: PASS ✓
+
+### Check 4: SiteSettings.js has applyThemeColors
+Command: grep -c 'applyThemeColors' app/components/SiteSettings.js
+Result: 3 (definition + usages)
+Status: PASS ✓
+
+### Check 5: layout.js has FOUC prevention (modolai-theme)
+Command: grep -c 'modolai-theme' app/layout.js
+Result: 2 (read + apply)
+Status: PASS ✓
+
+### Dev Server Check
+Command: curl -s -o /dev/null -w "%{http_code}" http://localhost:3100/api/public/settings
+Result: 000 (not running)
+Status: SKIPPED (server not running - expected per task instructions)
+
+### OVERALL SANITY: ALL CHECKS PASSED ✓

@@ -1,0 +1,37 @@
+=== Task 2: i18n Keys Verification ===
+Date: 2026-03-13
+
+KOREAN VERIFICATION:
+node -e "const ko = require('./app/lib/i18n/ko.json'); console.log('Korean - design_theme:', ko.admin_settings.design_theme); console.log('Korean - theme_saved:', ko.admin_settings.theme_saved);"
+
+Output:
+Korean - design_theme: 디자인 테마
+Korean - theme_saved: 테마가 저장되었습니다.
+
+ENGLISH VERIFICATION:
+node -e "const en = require('./app/lib/i18n/en.json'); console.log('English - design_theme:', en.admin_settings.design_theme); console.log('English - theme_saved:', en.admin_settings.theme_saved);"
+
+Output:
+English - design_theme: Design Theme
+English - theme_saved: Theme saved.
+
+KEYS ADDED (12 total):
+1. design_theme
+2. design_theme_desc
+3. preset_palettes
+4. custom_color
+5. custom_color_desc
+6. primary_color
+7. current_theme
+8. theme_saved
+9. theme_reset
+10. theme_reset_confirm
+11. theme_preview
+12. apply_theme
+
+LOCATION: admin_settings section (after widget_saved key)
+FILES MODIFIED:
+- app/lib/i18n/ko.json (lines 802-813)
+- app/lib/i18n/en.json (lines 802-813)
+
+STATUS: ✓ COMPLETE

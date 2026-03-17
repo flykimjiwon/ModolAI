@@ -1,0 +1,29 @@
+# Task 4 API Validation Evidence
+Date: 2026-03-13
+
+## public/settings/route.js syntax check
+node --input-type=module --check: ✓ syntax OK
+
+## admin/settings/route.js syntax check
+node --input-type=module --check: ✗ (pre-existing error at line 233 - PostgreSQL array literal in template string; not related to Task 4 changes)
+
+## git diff summary (admin/settings/route.js)
+Added to destructuring (after apiCurlExample):
++ themePreset,
++ themeColors,
+
+Added validation blocks (before "Build PostgreSQL update query"):
++ // Validate and save theme preset
++ if (themePreset !== undefined) { VALID_PRESETS check + updateData.themePreset }
++ // Validate and save theme colors
++ if (themeColors !== undefined) { object check + ALLOWED_VARS + HEX_REGEX loop + updateData.themeColors }
+
+## git diff summary (public/settings/route.js)
++ theme_preset, theme_colors added to SELECT query
++ themePreset: settings.theme_preset || 'amber-soft' added to success response
++ themeColors: settings.theme_colors || {} added to success response
++ themePreset: 'amber-soft' added to error fallback
++ themeColors: {} added to error fallback
+
+## JSONB handling (line 742, pre-existing from Task 1)
+themeColors already in JSONB special-case: key === 'customEndpoints' || key === 'supportContacts' || key === 'themeColors'
