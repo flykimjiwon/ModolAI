@@ -184,7 +184,8 @@ export const useChat = () => {
           model: msg.model,
           timestamp: msg.createdAt,
           feedback: msg.feedback || null,
-          roomId: msg.roomId || roomId // roomId 포함 (API 응답에 없으면 파라미터 사용)
+          roomId: msg.roomId || roomId, // roomId 포함 (API 응답에 없으면 파라미터 사용)
+          ...(msg.drawMode && { drawMode: true }),
         }));
         
         setMessages(formattedMessages);

@@ -37,6 +37,8 @@ const TABLES = [
       user_id UUID REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255),
       message_count INTEGER DEFAULT 0,
+      custom_instruction TEXT DEFAULT '',
+      custom_instruction_active BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -52,6 +54,7 @@ const TABLES = [
       model VARCHAR(255),
       file_references JSONB,
       feedback VARCHAR(50),
+      draw_mode BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
   },

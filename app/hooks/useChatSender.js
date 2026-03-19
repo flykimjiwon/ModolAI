@@ -172,6 +172,10 @@ export function useChatSender({
   imageAnalysisModel = '',
   imageAnalysisPrompt = '',
   maxUserQuestionLength = DEFAULT_MAX_USER_QUESTION_LENGTH,
+  customInstruction = '',
+  customInstructionActive = false,
+  drawMode = false,
+  drawSystemPrompt = '',
 }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -193,6 +197,10 @@ export function useChatSender({
   const imageAnalysisModelRef = useRef(imageAnalysisModel);
   const imageAnalysisPromptRef = useRef(imageAnalysisPrompt);
   const maxUserQuestionLengthRef = useRef(maxUserQuestionLength);
+  const customInstructionRef = useRef(customInstruction);
+  const customInstructionActiveRef = useRef(customInstructionActive);
+  const drawModeRef = useRef(drawMode);
+  const drawSystemPromptRef = useRef(drawSystemPrompt);
 
   // 방이 변경될 때 첫 메시지 플래그 리셋
   useEffect(() => {
@@ -215,6 +223,10 @@ export function useChatSender({
   useEffect(() => { imageAnalysisModelRef.current = imageAnalysisModel; }, [imageAnalysisModel]);
   useEffect(() => { imageAnalysisPromptRef.current = imageAnalysisPrompt; }, [imageAnalysisPrompt]);
   useEffect(() => { maxUserQuestionLengthRef.current = maxUserQuestionLength; }, [maxUserQuestionLength]);
+  useEffect(() => { customInstructionRef.current = customInstruction; }, [customInstruction]);
+  useEffect(() => { customInstructionActiveRef.current = customInstructionActive; }, [customInstructionActive]);
+  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
+  useEffect(() => { drawSystemPromptRef.current = drawSystemPrompt; }, [drawSystemPrompt]);
 
   const performAPICall = useCallback(
     async (
@@ -264,6 +276,14 @@ export function useChatSender({
       // 전달받은 메시지 히스토리 사용
       const currentMessages = currentMessagesForHistory || [];
       const questionForPayload = questionOverride || userQuestion;
+      const activeCustomInstruction = customInstructionActiveRef.current
+        ? customInstructionRef.current
+        : '';
+      const isDrawMode = drawModeRef.current;
+      const activeDrawPrompt = isDrawMode ? drawSystemPromptRef.current : '';
+      const combinedInstruction = [activeCustomInstruction, activeDrawPrompt]
+        .filter(Boolean)
+        .join('\n\n');
       const payload = {
         model: model, // RAG는 UUID, 일반 모델은 model_name 전송
         question: questionForPayload,
@@ -275,6 +295,8 @@ export function useChatSender({
         options: { temperature: 0.7, max_length: 500 },
         roomId: currentRoom,
         clientIP: clientIP,
+        customInstruction: combinedInstruction,
+        drawMode: isDrawMode,
       };
 
       try {
@@ -445,6 +467,7 @@ export function useChatSender({
             role: 'assistant',
             text: accumulatedText,
             model: currentSelectedModel, // 모델 UUID
+            ...(isDrawMode && { drawMode: true }),
           };
 
           console.log(
@@ -861,10 +884,12 @@ export function useChatSender({
         console.warn('[PII] 입력 사전검사 실패 - 서버 필터 fallback 사용');
       }
 
+      const isDrawActive = drawModeRef.current;
       const userMsg = {
         role: 'user',
         text: displayUserQuestion,
         roomId: currentRoom,
+        ...(isDrawActive && { drawMode: true }),
       };
       const userTurnIndex =
         messagesRef.current.filter(
@@ -947,6 +972,7 @@ export function useChatSender({
           role: 'user',
           text: userMsg.text,
           model: modelNameForHistory,
+          ...(isDrawActive && { drawMode: true }),
         };
 
         console.log(
@@ -1069,6 +1095,7 @@ export function useChatSender({
             model: responseModel,
             isTyping: true,
             roomId: currentRoom,
+            ...(isDrawActive && { drawMode: true }),
           },
         ];
       });

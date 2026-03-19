@@ -354,6 +354,7 @@ export async function POST(request) {
       images = [],
       piiInputProcessed = false,
       requestPurpose = 'chat',
+      customInstruction = '',
       ...llmPayload
     } = await request.json();
 
@@ -470,6 +471,16 @@ export async function POST(request) {
         '[generate] Failed to fetch system prompt:',
         systemPromptError.message
       );
+    }
+
+    if (
+      customInstruction &&
+      typeof customInstruction === 'string' &&
+      customInstruction.trim()
+    ) {
+      systemPrompt = systemPrompt
+        ? `${systemPrompt}\n\n[Custom Instruction]\n${customInstruction.trim()}`
+        : customInstruction.trim();
     }
 
     let maxUserQuestionLength = 300000;
@@ -2332,6 +2343,7 @@ export async function POST(request) {
 
       // Build message array for Ollama /api/chat
       const ollamaMessages = [
+        ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
         ...filteredMultiturnHistory.map((msg) => ({
           role: msg.role,
           content: typeof msg.text === 'string' ? msg.text : msg.text || '',
@@ -2356,12 +2368,7 @@ export async function POST(request) {
           model: actualModelName, // Use value converted from UUID -> actual model name
           messages: ollamaMessages,
           stream: true,
-          options: systemPrompt
-            ? {
-                ...llmPayload.options,
-                system: systemPrompt,
-              }
-            : llmPayload.options,
+          options: llmPayload.options || {},
         }),
       });
 

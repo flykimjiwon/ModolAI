@@ -19,6 +19,7 @@ import MessageList from '@/components/chat/MessageList';
 import ScrollButtons from '@/components/chat/ScrollButtons';
 import ChatLayout from '@/components/chat/ChatLayout';
 import ChatInput from '@/components/chat/ChatInput';
+import DrawPreviewPanel from '@/components/chat/DrawPreviewPanel';
 import NoticePopup from '@/components/NoticePopup';
 import { Button } from '@/components/ui/button';
 import { X, Loader2, ChevronDown } from '@/components/icons';
@@ -106,6 +107,11 @@ export default function Home() {
   const [profileEditEnabled, setProfileEditEnabled] = useState(false);
   const [boardEnabled, setBoardEnabled] = useState(true);
   const [maxUserQuestionLength, setMaxUserQuestionLength] = useState(300000);
+  const [drawMode, setDrawMode] = useState(false);
+  const [drawEnabled, setDrawEnabled] = useState(false);
+  const [drawSystemPrompt, setDrawSystemPrompt] = useState(
+    "Generate a complete HTML page based on the user's request. Always wrap the response in a ```html code block. Only Tailwind CSS CDN (https://cdn.tailwindcss.com) is allowed. No other external libraries. Implement charts with Canvas API and diagrams with SVG."
+  );
   const [authChecked, setAuthChecked] = useState(false);
 
   // ---------- Refs for UI manipulation ----------
@@ -142,6 +148,8 @@ export default function Home() {
     imageAnalysisModel,
     imageAnalysisPrompt,
     maxUserQuestionLength,
+    drawMode,
+    drawSystemPrompt,
   });
 
   const isUIBusy = loading;
@@ -280,6 +288,13 @@ export default function Home() {
         setBoardEnabled(
           data.boardEnabled !== undefined ? data.boardEnabled : true
         );
+        setDrawEnabled(
+          data.drawEnabled !== undefined ? data.drawEnabled : false
+        );
+        setDrawSystemPrompt(
+          data.drawSystemPrompt ||
+            "Generate a complete HTML page based on the user's request. Always wrap the response in a ```html code block. Only Tailwind CSS CDN (https://cdn.tailwindcss.com) is allowed. No other external libraries. Implement charts with Canvas API and diagrams with SVG."
+        );
       })
       .catch((error) =>
         logger.error('이미지 설정 로드 실패:', error.message)
@@ -345,6 +360,8 @@ export default function Home() {
         currentRoom={currentRoom}
         imageHistoryByRoom={imageHistoryByRoom}
         listRef={listRef}
+        loading={loading}
+        DrawPreviewPanelComponent={DrawPreviewPanel}
       />
       <ScrollButtons show={showScrollButtons} containerRef={listRef} />
       <div
@@ -422,6 +439,9 @@ export default function Home() {
           maxImagesPerMessage={maxImagesPerMessage}
           userDefaultModelId={userDefaultModelId}
           onSetUserDefault={saveUserDefaultModel}
+          drawEnabled={drawEnabled}
+          drawMode={drawMode}
+          onDrawModeToggle={() => setDrawMode((prev) => !prev)}
         />
         <NoticePopup target='main' />
       </div>

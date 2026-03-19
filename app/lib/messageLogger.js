@@ -26,6 +26,7 @@ export async function saveMessageDual(messageData) {
     model = null,
     userRole = 'user',
     clientIP = null,
+    drawMode = false,
   } = messageData;
 
   // Convert text to JSON string when it is an object or array
@@ -48,14 +49,38 @@ export async function saveMessageDual(messageData) {
   }
 
   try {
+    const colCheck = await query(
+      `SELECT 1 FROM information_schema.columns
+       WHERE table_name = 'chat_history' AND column_name = 'draw_mode' LIMIT 1`
+    ).catch(() => ({ rows: [] }));
+    const hasDrawMode = colCheck.rows.length > 0;
+
     return await transaction(async (client) => {
       // 1. Personal conversation storage (chat_history)
-      const chatHistoryResult = await client.query(
-        `INSERT INTO chat_history (room_id, user_id, role, text, model, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id`,
-        [roomId, userId || null, role, textToSave, model, currentTime]
-      );
+      let chatHistoryResult;
+      if (hasDrawMode) {
+        chatHistoryResult = await client.query(
+          `INSERT INTO chat_history (room_id, user_id, role, text, model, draw_mode, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING id`,
+          [
+            roomId,
+            userId || null,
+            role,
+            textToSave,
+            model,
+            drawMode === true,
+            currentTime,
+          ]
+        );
+      } else {
+        chatHistoryResult = await client.query(
+          `INSERT INTO chat_history (room_id, user_id, role, text, model, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id`,
+          [roomId, userId || null, role, textToSave, model, currentTime]
+        );
+      }
 
       // 2. Admin logging (messages)
       // Normalization: remove email, name, department, cell (query via JOIN from users table)

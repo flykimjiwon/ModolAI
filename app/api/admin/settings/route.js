@@ -90,6 +90,21 @@ async function ensureSettingsColumns() {
       'ADD COLUMN IF NOT EXISTS api_curl_example TEXT'
     );
   }
+  if (!columns.has('draw_enabled')) {
+    missing.push(
+      'ADD COLUMN IF NOT EXISTS draw_enabled BOOLEAN DEFAULT false'
+    );
+  }
+  if (!columns.has('draw_model')) {
+    missing.push(
+      'ADD COLUMN IF NOT EXISTS draw_model VARCHAR(255)'
+    );
+  }
+  if (!columns.has('draw_system_prompt')) {
+    missing.push(
+      'ADD COLUMN IF NOT EXISTS draw_system_prompt TEXT'
+    );
+  }
   if (!columns.has('theme_preset')) {
     missing.push(
       "ADD COLUMN IF NOT EXISTS theme_preset VARCHAR(30) DEFAULT 'amber-soft'"
@@ -152,6 +167,9 @@ export async function GET(request) {
         loginType: settings.login_type,
         apiConfigExample: settings.api_config_example,
         apiCurlExample: settings.api_curl_example,
+        drawEnabled: settings.draw_enabled,
+        drawModel: settings.draw_model,
+        drawSystemPrompt: settings.draw_system_prompt,
         themePreset: settings.theme_preset,
         themeColors: settings.theme_colors,
         createdAt: settings.created_at,
@@ -341,6 +359,10 @@ models:
         // API key page example settings
         apiConfigExample: settings.apiConfigExample || '',
         apiCurlExample: settings.apiCurlExample || '',
+        drawEnabled:
+          settings.drawEnabled !== undefined ? settings.drawEnabled : false,
+        drawModel: settings.drawModel || '',
+        drawSystemPrompt: settings.drawSystemPrompt || '',
         themePreset: settings.themePreset || 'amber-soft',
         themeColors: settings.themeColors || {},
       },
@@ -391,6 +413,9 @@ export async function PUT(request) {
       loginType,
       apiConfigExample,
       apiCurlExample,
+      drawEnabled,
+      drawModel,
+      drawSystemPrompt,
       themePreset,
       themeColors,
     } = await request.json();
@@ -726,6 +751,36 @@ export async function PUT(request) {
         );
       }
       updateData.apiCurlExample = apiCurlExample || '';
+    }
+
+    if (drawEnabled !== undefined) {
+      if (typeof drawEnabled !== 'boolean') {
+        return createValidationError(
+          'Draw enabled must be a boolean value.'
+        );
+      }
+      updateData.drawEnabled = drawEnabled;
+    }
+
+    if (drawModel !== undefined) {
+      if (drawModel !== null && typeof drawModel !== 'string') {
+        return createValidationError(
+          'Draw model must be a string or null.'
+        );
+      }
+      updateData.drawModel = drawModel || '';
+    }
+
+    if (drawSystemPrompt !== undefined) {
+      if (
+        drawSystemPrompt !== null &&
+        typeof drawSystemPrompt !== 'string'
+      ) {
+        return createValidationError(
+          'Draw system prompt must be a string or null.'
+        );
+      }
+      updateData.drawSystemPrompt = drawSystemPrompt || '';
     }
 
     // Validate and save theme preset

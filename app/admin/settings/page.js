@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, AlertTriangle, ImageIcon, Code, Database } from '@/components/icons';
+import { PenNib } from '@phosphor-icons/react';
+import { Upload, Save, RefreshCw, Globe, MessageCircle, Lightbulb, Trash2, ImageIcon, Code } from '@/components/icons';
 import { THEME_PRESETS } from '@/lib/themePresets';
 import Image from 'next/image'; // Image 컴포넌트 임포트
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +36,26 @@ export default function SettingsPage() {
   const [imageAnalysisPrompt, setImageAnalysisPrompt] = useState(
     t('chat.image_analysis_prompt')
   );
+  const [drawEnabled, setDrawEnabled] = useState(false);
+  const [drawModel, setDrawModel] = useState('');
+  const DEFAULT_DRAW_PROMPT = `Generate a complete HTML page based on the user's request. Always wrap the response in a \`\`\`html code block.
+
+[Allowed resources]
+- Tailwind CSS CDN (<script src="https://cdn.tailwindcss.com"></script>)
+- Plain HTML + inline CSS + vanilla JavaScript
+- Canvas API, SVG for charts/graphs/diagrams
+
+[Forbidden]
+- Any external CDN, URL, or library not listed above
+
+[Rules]
+- Build clean, modern UI using Tailwind CSS
+- Implement charts/graphs directly with Canvas API (bar, line, pie, donut, etc.)
+- Implement diagrams/flowcharts directly with SVG
+- Prefer dark mode support (Tailwind dark: classes or prefers-color-scheme)
+- Apply responsive design
+- Use CSS transitions/animations or requestAnimationFrame for motion`;
+  const [drawSystemPrompt, setDrawSystemPrompt] = useState(DEFAULT_DRAW_PROMPT);
   const [endpoints, setEndpoints] = useState(''); // 콤마 구분 문자열
   const [endpointType, setEndpointType] = useState('ollama'); // 'ollama' | 'openai-compatible'
   const [openaiCompatBase, setOpenaiCompatBase] = useState('');
@@ -46,18 +65,7 @@ export default function SettingsPage() {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [backupLoading, setBackupLoading] = useState(false);
-  const [restoreLoading, setRestoreLoading] = useState(false);
-  const [restoreMode, setRestoreMode] = useState('full');
-  const [restoreFile, setRestoreFile] = useState(null);
   const [savingSection, setSavingSection] = useState(null); // 현재 저장 중인 섹션 추적
-  const [migrationResult, setMigrationResult] = useState(null);
-  const [migrationStatus, setMigrationStatus] = useState(null);
-  const [initSchemaResult, setInitSchemaResult] = useState(null);
-  const [dbResetType, setDbResetType] = useState('partial'); // 'partial' | 'all'
-  const [dbResetTables, setDbResetTables] = useState(new Set());
-  const [dbResetConfirmText, setDbResetConfirmText] = useState('');
-  const [dbResetResult, setDbResetResult] = useState(null);
   const [loginType, setLoginType] = useState('local'); // 'local' | 'sso'
   const [apiConfigExample, setApiConfigExample] = useState('');
   const [apiCurlExample, setApiCurlExample] = useState('');
@@ -65,84 +73,10 @@ export default function SettingsPage() {
   const [themeColors, setThemeColors] = useState({});
   const [themeCustomPrimary, setThemeCustomPrimary] = useState('#e5a63b');
 
-  const dbResetTableOptions = [
-    {
-      key: 'chat_history',
-      label: t('admin_settings.table_chat_history'),
-      description: t('admin_settings.table_chat_history_desc'),
-    },
-    {
-      key: 'chat_rooms',
-      label: t('admin_settings.table_chat_rooms'),
-      description: t('admin_settings.table_chat_rooms_desc'),
-    },
-    {
-      key: 'messages',
-      label: t('admin_settings.table_messages'),
-      description: t('admin_settings.table_messages_desc'),
-    },
-    {
-      key: 'chat_files',
-      label: t('admin_settings.table_chat_files'),
-      description: t('admin_settings.table_chat_files_desc'),
-    },
-    {
-      key: 'model_logs',
-      label: t('admin_settings.table_model_logs'),
-      description: t('admin_settings.table_model_logs_desc'),
-    },
-    {
-      key: 'model_server_error_history',
-      label: 'model_server_error_history',
-      description: t('admin_settings.table_model_server_error_desc'),
-    },
-    {
-      key: 'model_server_status',
-      label: 'model_server_status',
-      description: t('admin_settings.table_model_server_status_desc'),
-    },
-    {
-      key: 'external_api_prompts',
-      label: 'external_api_prompts',
-      description: t('admin_settings.table_external_api_prompts_desc'),
-    },
-    {
-      key: 'external_api_logs',
-      label: 'external_api_logs',
-      description: t('admin_settings.table_external_api_logs_desc'),
-    },
-    {
-      key: 'api_tokens',
-      label: 'api_tokens',
-      description: t('admin_settings.table_api_tokens_desc'),
-    },
-    {
-      key: 'notices',
-      label: 'notices',
-      description: t('admin_settings.table_notices_desc'),
-    },
-    {
-      key: 'user_chats',
-      label: 'user_chats',
-      description: t('admin_settings.table_user_chats_desc'),
-    },
-    {
-      key: 'qa_logs',
-      label: 'qa_logs',
-      description: t('admin_settings.table_qa_logs_desc'),
-    },
-    {
-      key: 'app_error_logs',
-      label: 'app_error_logs',
-      description: t('admin_settings.table_app_error_logs_desc'),
-    },
-  ];
-
   // 설정 로드
   useEffect(() => {
     fetchSettings();
     fetchAvailableModels();
-    fetchMigrationStatus();
   }, []);
 
   // 사용 가능한 모델 목록 로드 (관리자 모델 설정 기준)
@@ -253,6 +187,11 @@ export default function SettingsPage() {
           setImageAnalysisPrompt(
             data.imageAnalysisPrompt || t('chat.image_analysis_prompt')
           );
+          setDrawEnabled(
+            data.drawEnabled !== undefined ? data.drawEnabled : false
+          );
+          setDrawModel(data.drawModel || '');
+          setDrawSystemPrompt(data.drawSystemPrompt || DEFAULT_DRAW_PROMPT);
         setEndpoints(
           typeof data.endpoints === 'string'
             ? data.endpoints
@@ -281,6 +220,9 @@ export default function SettingsPage() {
       setSiteDescription('ModolAI');
         setFaviconUrl(null);
         setRoomNameGenerationModel('gemma3:4b');
+        setDrawEnabled(false);
+        setDrawModel('');
+        setDrawSystemPrompt(DEFAULT_DRAW_PROMPT);
         setMaxUserQuestionLength(300000);
         setEndpoints('http://localhost:11434');
         setEndpointType('ollama');
@@ -303,6 +245,9 @@ export default function SettingsPage() {
       setSiteTitle('ModolAI');
       setSiteDescription('ModolAI');
         setFaviconUrl(null);
+        setDrawEnabled(false);
+        setDrawModel('');
+        setDrawSystemPrompt(DEFAULT_DRAW_PROMPT);
         setEndpoints('http://localhost:11434');
         setMaxUserQuestionLength(300000);
       setEndpointType('ollama');
@@ -317,157 +262,40 @@ export default function SettingsPage() {
     }
   };
 
-  const fetchMigrationStatus = async () => {
+  const saveDrawSettings = async () => {
     try {
+      setSavingSection('draw');
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/migrate-models', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) {
-        return;
-      }
-      const data = await response.json();
-      setMigrationStatus(data);
-    } catch (error) {
-      console.warn(t('admin_settings.log_schema_check_failed'), error);
-    }
-  };
-
-
-  const runModelMigration = async () => {
-    const confirmed = await confirm(
-      t('admin_settings.confirm_migration'),
-      t('admin_settings.db_schema_fix')
-    );
-    if (!confirmed) return;
-
-    try {
-      setSavingSection('db-migration');
-      setMigrationResult(null);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/migrate-models', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || t('admin_settings.migration_failed_error'));
-      }
-
-      const data = await response.json();
-      setMigrationResult(data);
-      setMigrationStatus(data);
-      alert(data.message || t('admin_settings.migration_complete'), 'success', t('common.complete'));
-    } catch (error) {
-      console.error(t('admin_settings.log_migration_failed'), error);
-      alert(
-        error.message || t('admin_settings.migration_error'),
-        'error',
-        t('admin_settings.failed')
-      );
-    } finally {
-      setSavingSection(null);
-    }
-  };
-
-  const handleInitSchema = async () => {
-    const confirmed = await confirm(
-      t('admin_settings.confirm_init_schema'),
-      t('admin_settings.init_schema')
-    );
-    if (!confirmed) return;
-
-    try {
-      setSavingSection('init-schema');
-      setInitSchemaResult(null);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/init-schema', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || t('admin_settings.schema_create_failed'));
-      }
-
-      const data = await response.json();
-      setInitSchemaResult(data);
-      alert(data.message || t('admin_settings.schema_create_complete'), 'success', t('common.complete'));
-    } catch (error) {
-      alert(error.message || t('admin_settings.schema_create_error'), 'error', t('admin_settings.failed'));
-    } finally {
-      setSavingSection(null);
-    }
-  };
-
-  const toggleDbResetTable = (tableKey) => {
-    setDbResetTables((prev) => {
-      const next = new Set(prev);
-      if (next.has(tableKey)) {
-        next.delete(tableKey);
-      } else {
-        next.add(tableKey);
-      }
-      return next;
-    });
-  };
-
-  const resetDatabase = async () => {
-    const isAll = dbResetType === 'all';
-    const warningText = isAll
-      ? t('admin_settings.warning_full_reset')
-      : t('admin_settings.warning_partial_reset');
-    const confirmed = await confirm(
-      t('admin_settings.confirm_execute', { warning: warningText }),
-      isAll ? t('admin_settings.confirm_db_reset_all_title') : t('admin_settings.confirm_db_reset_partial_title')
-    );
-    if (!confirmed) return;
-
-    if (dbResetConfirmText.trim().toUpperCase() !== 'RESET') {
-      alert(t('admin_settings.confirm_text_invalid'), 'error', t('admin_settings.confirm_required'));
-      return;
-    }
-
-    if (!isAll && dbResetTables.size === 0) {
-      alert(t('admin_settings.select_tables'), 'warning', t('admin_settings.select_required'));
-      return;
-    }
-
-    try {
-      setSavingSection('db-reset');
-      setDbResetResult(null);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/db-reset', {
-        method: 'POST',
+      const body = {
+        drawEnabled,
+        drawModel,
+        drawSystemPrompt,
+      };
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          type: isAll ? 'all' : 'partial',
-          tables: isAll ? undefined : Array.from(dbResetTables),
-        }),
+        body: JSON.stringify(body),
       });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || t('admin_settings.db_reset_failed_error'));
+      if (response.ok) {
+        alert('Draw settings saved.', 'success', 'Save complete');
+        fetchSettings();
+      } else {
+        let errorMessage = t('admin_settings.settings_save_failed');
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (error) {
+          console.warn(t('admin_settings.log_catch_failed'), error.message);
+        }
+        throw new Error(errorMessage);
       }
-
-      const data = await response.json();
-      setDbResetResult(data);
-      alert(data.message || t('admin_settings.db_reset_complete'), 'success', t('common.complete'));
-      setDbResetConfirmText('');
-      setDbResetTables(new Set());
     } catch (error) {
-      console.error(t('admin_settings.log_db_reset_failed'), error);
-      alert(
-        error.message || t('admin_settings.db_reset_error'),
-        'error',
-        t('admin_settings.failed')
-      );
+      console.error(t('admin_settings.log_settings_save_failed'), error);
+      alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
     } finally {
       setSavingSection(null);
     }
@@ -1002,91 +830,6 @@ export default function SettingsPage() {
       return next;
     });
   };
-
-  const downloadDbBackup = async () => {
-    try {
-      setBackupLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/db-backup', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to download backup.');
-      }
-
-      const blob = await response.blob();
-      const disposition = response.headers.get('content-disposition') || '';
-      const filenameMatch = disposition.match(/filename="?([^\"]+)"?/i);
-      const filename = filenameMatch?.[1] || `modol-backup-${Date.now()}.sql`;
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      alert('Backup downloaded successfully.', 'success', t('common.complete'));
-    } catch (error) {
-      console.error('Failed to download DB backup:', error);
-      alert(error.message || 'Failed to download backup.', 'error', t('admin_settings.failed'));
-    } finally {
-      setBackupLoading(false);
-    }
-  };
-
-  const restoreDbBackup = async () => {
-    if (!restoreFile) {
-      alert('Please select a backup .sql file.', 'warning', t('admin_settings.select_required'));
-      return;
-    }
-
-    const isDataOnly = restoreMode === 'data';
-    const confirmed = await confirm(
-      isDataOnly
-        ? 'Restore data only with schema matching?'
-        : 'Run full database restore (schema and data)?',
-      'DB Restore'
-    );
-    if (!confirmed) return;
-
-    try {
-      setRestoreLoading(true);
-      const token = localStorage.getItem('token');
-      const formData = new FormData();
-      formData.append('file', restoreFile);
-      formData.append('mode', restoreMode);
-
-      const response = await fetch('/api/admin/db-restore', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to restore database.');
-      }
-
-      alert(data.message || 'Database restore completed.', 'success', t('common.complete'));
-      setRestoreFile(null);
-    } catch (error) {
-      console.error('Failed to restore DB backup:', error);
-      alert(error.message || 'Failed to restore database.', 'error', t('admin_settings.failed'));
-    } finally {
-      setRestoreLoading(false);
-    }
-  };
-
 
   return (
     <div className='space-y-6'>
@@ -1966,6 +1709,120 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
+        <div className='flex items-center justify-between mb-4'>
+          <div className='flex items-center gap-3'>
+            <PenNib className='h-5 w-5 text-primary' />
+            <h2 className='text-lg font-semibold text-foreground'>
+              Draw (Canvas)
+            </h2>
+          </div>
+          <button
+            onClick={saveDrawSettings}
+            disabled={savingSection === 'draw' || loading}
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
+          >
+            <Save className='h-3.5 w-3.5' />
+            {savingSection === 'draw' ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <label className='block text-sm font-medium text-foreground mb-1'>
+                Enable Draw mode
+              </label>
+              <p className='text-sm text-muted-foreground'>
+                Let users generate interactive HTML canvas content like charts and dashboards.
+              </p>
+            </div>
+            <button
+              onClick={() => setDrawEnabled(!drawEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out ${
+                drawEnabled ? 'bg-primary' : 'bg-muted'
+              }`}
+              disabled={loading}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform duration-200 ease-in-out ${
+                  drawEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {drawEnabled && (
+            <>
+              <div>
+                <div className='flex items-center justify-between mb-2'>
+                  <label className='block text-sm font-medium text-foreground'>
+                    Draw model
+                  </label>
+                  <button
+                    onClick={fetchAvailableModels}
+                    disabled={modelsLoading}
+                    className='flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50'
+                    title='Refresh model list'
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${modelsLoading ? 'animate-spin' : ''}`}
+                    />
+                    Refresh
+                  </button>
+                </div>
+                <select
+                  value={drawModel}
+                  onChange={(e) => setDrawModel(e.target.value)}
+                  className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground'
+                  disabled={loading || modelsLoading}
+                >
+                  <option value=''>No fixed model (use user-selected model)</option>
+                  {modelsLoading ? (
+                    <option value=''>Loading models...</option>
+                  ) : availableModels.length === 0 ? (
+                    <option value=''>No models available</option>
+                  ) : (
+                    availableModels.map((server) => (
+                      <optgroup
+                        key={server.serverName}
+                        label={`${server.serverName} (${server.provider})`}
+                      >
+                        {server.models.map((model) => (
+                          <option key={model.label} value={model.label}>
+                            {model.label}
+                            {model.tooltip ? ` - ${model.tooltip}` : ''}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))
+                  )}
+                </select>
+                <p className='text-sm text-muted-foreground mt-1'>
+                  Choose the model used for Draw mode. If empty, the current chat model is used.
+                </p>
+              </div>
+
+              <div>
+                <label className='block text-sm font-medium text-foreground mb-2'>
+                  Draw system prompt
+                </label>
+                <Textarea
+                  value={drawSystemPrompt}
+                  onChange={(e) => setDrawSystemPrompt(e.target.value)}
+                  className='w-full min-h-[140px]'
+                  placeholder='Enter the system prompt for Draw mode.'
+                  disabled={loading}
+                />
+                <p className='text-sm text-muted-foreground mt-1'>
+                  This prompt is sent to the model whenever Draw mode is active.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* 사용자 안내 툴팁 설정 */}
       <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
         <div className='flex items-center justify-between mb-4'>
@@ -2126,319 +1983,6 @@ models:
             <p className='text-sm text-muted-foreground mt-1'>
               {t('admin_settings.curl_example_hint')}
             </p>
-          </div>
-        </div>
-      </div>
-
-      {/* DB 스키마 보정 */}
-      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
-        <div className='flex items-center justify-between mb-4'>
-          <div className='flex items-center gap-3'>
-            <RefreshCw className='h-5 w-5 text-muted-foreground' />
-            <h2 className='text-lg font-semibold text-foreground'>
-              {t('admin_settings.db_schema_fix')}
-            </h2>
-          </div>
-          <div className='flex items-center gap-2'>
-            <button
-              onClick={fetchMigrationStatus}
-              disabled={savingSection === 'db-migration' || loading}
-              className='inline-flex items-center justify-center rounded-md border border-border bg-muted px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
-            >
-              <RefreshCw className='h-3.5 w-3.5' />
-              {t('admin_settings.check_status')}
-            </button>
-            <button
-              onClick={runModelMigration}
-              disabled={savingSection === 'db-migration' || loading}
-              className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
-            >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${
-                  savingSection === 'db-migration' ? 'animate-spin' : ''
-                }`}
-              />
-              {savingSection === 'db-migration'
-                ? t('admin_settings.running')
-                : t('admin_settings.run_migration')}
-            </button>
-          </div>
-        </div>
-        <p className='text-sm text-muted-foreground'>
-          {t('admin_settings.db_schema_fix_desc')}
-        </p>
-        {migrationStatus && (
-          <div className='mt-3 text-xs text-muted-foreground'>
-            {t('admin_settings.status_label')} {migrationStatus.isUpToDate ? t('admin_settings.up_to_date') : t('admin_settings.needs_fix')}
-            {migrationStatus.missing?.length > 0 && (
-              <span className='ml-2'>
-                {t('admin_settings.missing_columns')} {migrationStatus.missing.map((c) => c.name).join(', ')}
-              </span>
-            )}
-            {migrationStatus.missingTables?.length > 0 && (
-              <span className='ml-2'>
-                {t('admin_settings.missing_tables')} {migrationStatus.missingTables.join(', ')}
-              </span>
-            )}
-          </div>
-        )}
-        {migrationResult?.columns && (
-          <div className='mt-3 text-xs text-muted-foreground'>
-            {t('admin_settings.current_column_count')} {migrationResult.columns.length}
-          </div>
-        )}
-      </div>
-
-      {/* 초기 스키마 생성 */}
-      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
-        <div className='flex items-center justify-between mb-4'>
-          <div className='flex items-center gap-3'>
-            <RefreshCw className='h-5 w-5 text-muted-foreground' />
-            <h2 className='text-lg font-semibold text-foreground'>
-              {t('admin_settings.init_schema')}
-            </h2>
-          </div>
-          <button
-            onClick={handleInitSchema}
-            disabled={savingSection === 'init-schema' || loading}
-            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
-          >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${
-                savingSection === 'init-schema' ? 'animate-spin' : ''
-              }`}
-            />
-            {savingSection === 'init-schema' ? t('admin_settings.creating') : t('admin_settings.run_schema_create')}
-          </button>
-        </div>
-        <p className='text-sm text-muted-foreground'>
-          {t('admin_settings.init_schema_desc')}
-        </p>
-        {initSchemaResult && (
-          <div className='mt-3 space-y-1 text-xs text-muted-foreground'>
-            <div>{initSchemaResult.message}</div>
-            {initSchemaResult.created?.length > 0 && (
-              <div className='text-primary'>
-                {t('admin_settings.created_label')} {initSchemaResult.created.join(', ')}
-              </div>
-            )}
-            {initSchemaResult.skipped?.length > 0 && (
-              <div className='text-muted-foreground'>
-                {t('admin_settings.already_exists')} {initSchemaResult.skipped.join(', ')}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* DB 초기화 */}
-      <div className='bg-card border border-border rounded-xl shadow-sm p-6 border border-red-200 dark:border-red-800 bg-red-50/40 dark:bg-red-900/10'>
-        <div className='flex items-center justify-between mb-4'>
-          <div className='flex items-center gap-3'>
-            <AlertTriangle className='h-5 w-5 text-red-600' />
-            <h2 className='text-lg font-semibold text-red-900 dark:text-red-200'>
-              {t('admin_settings.db_reset_title')}
-            </h2>
-          </div>
-          <button
-            onClick={resetDatabase}
-            disabled={savingSection === 'db-reset' || loading}
-            className='inline-flex items-center justify-center rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
-          >
-            <Trash2 className='h-3.5 w-3.5' />
-            {savingSection === 'db-reset' ? t('common.processing') : t('admin_settings.run_reset')}
-          </button>
-        </div>
-
-        <p className='text-sm text-red-700 dark:text-red-300'>
-          {t('admin_settings.db_reset_info')}
-        </p>
-
-        <div className='mt-4 space-y-4'>
-          <div className='flex flex-wrap items-center gap-4'>
-            <label className='inline-flex items-center gap-2 text-sm text-foreground'>
-              <input
-                type='radio'
-                name='db-reset-type'
-                value='partial'
-                checked={dbResetType === 'partial'}
-                onChange={() => setDbResetType('partial')}
-                className='accent-red-600'
-                disabled={loading}
-              />
-              {t('admin_settings.partial_reset')}
-            </label>
-            <label className='inline-flex items-center gap-2 text-sm text-foreground'>
-              <input
-                type='radio'
-                name='db-reset-type'
-                value='all'
-                checked={dbResetType === 'all'}
-                onChange={() => setDbResetType('all')}
-                className='accent-red-600'
-                disabled={loading}
-              />
-              {t('admin_settings.full_reset')}
-            </label>
-          </div>
-
-          {dbResetType === 'partial' && (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-              {dbResetTableOptions.map((table) => (
-                <label
-                  key={table.key}
-                  className='flex items-start gap-2 text-sm text-foreground bg-muted/70 border border-destructive/30 rounded-md px-3 py-2'
-                >
-                  <input
-                    type='checkbox'
-                    checked={dbResetTables.has(table.key)}
-                    onChange={() => toggleDbResetTable(table.key)}
-                    className='accent-red-600 mt-1'
-                    disabled={loading}
-                  />
-                  <div>
-                    <div className='font-medium'>{table.label}</div>
-                    <div className='text-xs text-muted-foreground'>
-                      {table.description}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          )}
-
-          <div>
-            <label className='block text-sm font-medium text-foreground mb-2'>
-              {t('admin_settings.confirm_text_label')}
-            </label>
-            <input
-              type='text'
-              value={dbResetConfirmText}
-              onChange={(e) => setDbResetConfirmText(e.target.value)}
-              className='w-full px-3 py-2 border border-red-200 dark:border-red-800 rounded-md bg-background text-foreground'
-              placeholder='RESET'
-              disabled={loading}
-            />
-          </div>
-
-          {dbResetResult?.deletedTables?.length > 0 && (
-            <div className='text-xs text-foreground'>
-              {t('admin_settings.last_processed')} {dbResetResult.deletedTables.join(', ')}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
-        <div className='flex items-center justify-between mb-4'>
-          <div className='flex items-center gap-3'>
-            <Globe className='h-5 w-5 text-muted-foreground' />
-            <h2 className='text-lg font-semibold text-foreground'>
-              {t('admin_settings.view_db_schema')}
-            </h2>
-          </div>
-          <Link
-            href='/admin/db-schema'
-            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none text-sm px-3 py-1.5'
-          >
-            {t('admin_settings.go')}
-          </Link>
-        </div>
-        <p className='text-sm text-muted-foreground'>
-          {t('admin_settings.view_db_schema_desc')}
-        </p>
-      </div>
-
-      <div className='bg-card border border-border rounded-xl shadow-sm p-6'>
-        <div className='flex items-center gap-3 mb-4'>
-          <Database className='h-5 w-5 text-primary' />
-          <h2 className='text-lg font-semibold text-foreground'>
-            DB Backup/Restore
-          </h2>
-        </div>
-
-        <div className='space-y-6'>
-          <div className='border border-border rounded-lg p-4 bg-muted/40'>
-            <h3 className='text-sm font-medium text-foreground mb-2'>
-              Download Backup
-            </h3>
-            <p className='text-sm text-muted-foreground mb-3'>
-              Download a full SQL backup of the current database.
-            </p>
-            <button
-              onClick={downloadDbBackup}
-              disabled={backupLoading || restoreLoading}
-              className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
-            >
-              {backupLoading ? 'Preparing Backup...' : 'Download Backup'}
-            </button>
-          </div>
-
-          <div className='border border-border rounded-lg p-4 bg-muted/40 space-y-3'>
-            <h3 className='text-sm font-medium text-foreground'>
-              Restore Backup
-            </h3>
-            <p className='text-sm text-muted-foreground'>
-              Upload a SQL backup file and choose restore mode.
-            </p>
-
-            <div className='space-y-2'>
-              <label className='block text-sm font-medium text-foreground'>
-                Restore Mode
-              </label>
-              <div className='flex flex-wrap items-center gap-4'>
-                <label className='inline-flex items-center gap-2 text-sm text-foreground cursor-pointer'>
-                  <input
-                    type='radio'
-                    name='restore-mode'
-                    value='full'
-                    checked={restoreMode === 'full'}
-                    onChange={() => setRestoreMode('full')}
-                    className='accent-primary'
-                    disabled={restoreLoading || backupLoading}
-                  />
-                  <span>Full (Schema + Data)</span>
-                </label>
-                <label className='inline-flex items-center gap-2 text-sm text-foreground cursor-pointer'>
-                  <input
-                    type='radio'
-                    name='restore-mode'
-                    value='data'
-                    checked={restoreMode === 'data'}
-                    onChange={() => setRestoreMode('data')}
-                    className='accent-primary'
-                    disabled={restoreLoading || backupLoading}
-                  />
-                  <span>Data-Only (Schema Match)</span>
-                </label>
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <label className='block text-sm font-medium text-foreground'>
-                Backup File (.sql)
-              </label>
-              <input
-                type='file'
-                accept='.sql'
-                onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
-                className='w-full px-3 py-2 border border-input rounded-md bg-background text-foreground file:mr-3 file:rounded file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90'
-                disabled={restoreLoading || backupLoading}
-              />
-              {restoreFile && (
-                <p className='text-xs text-muted-foreground'>
-                  Selected: {restoreFile.name}
-                </p>
-              )}
-            </div>
-
-            <button
-              onClick={restoreDbBackup}
-              disabled={!restoreFile || restoreLoading || backupLoading}
-              className='inline-flex items-center justify-center rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
-            >
-              {restoreLoading ? 'Restoring...' : 'Restore'}
-            </button>
           </div>
         </div>
       </div>

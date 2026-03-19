@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import {
   Database,
   Search,
@@ -15,13 +16,16 @@ import {
   X,
   Copy,
   RefreshCw,
-  ArrowUpDown,
-  Table2,
+  Table,
   Eye,
   EyeOff,
   Hash,
   AlertTriangle,
-} from 'lucide-react';
+  Download,
+  Upload,
+  Globe,
+  Server,
+} from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { getColumnDescription, getTableDescription } from '@/lib/dbColumnDescriptions';
@@ -105,7 +109,7 @@ function CellValue({ value, colType, isPrimaryKey }) {
           onClick={() => setExpanded(true)}
           className='ml-1 text-[10px] text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
         >
-          더보기
+          More
         </button>
       )}
       {expanded && (
@@ -113,7 +117,7 @@ function CellValue({ value, colType, isPrimaryKey }) {
           onClick={() => setExpanded(false)}
           className='ml-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
         >
-          접기
+          Less
         </button>
       )}
     </div>
@@ -249,7 +253,7 @@ function RowFormModal({ schema, primaryKeys, row, onSave, onClose, isEdit }) {
       <div className='relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-gray-200 dark:border-gray-700'>
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
-            {isEdit ? '행 수정' : '행 추가'}
+            {isEdit ? 'Edit Row' : 'Add Row'}
           </h3>
           <button onClick={onClose} className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'>
             <X className='h-5 w-5' />
@@ -285,7 +289,7 @@ function RowFormModal({ schema, primaryKeys, row, onSave, onClose, isEdit }) {
                       disabled={isDisabledPk}
                       className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed text-sm'
                     >
-                      <option value=''>선택...</option>
+                      <option value=''>Select...</option>
                       <option value='true'>true</option>
                       <option value='false'>false</option>
                     </select>
@@ -319,14 +323,14 @@ function RowFormModal({ schema, primaryKeys, row, onSave, onClose, isEdit }) {
             onClick={onClose}
             className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
           >
-            취소
+            Cancel
           </button>
           <button
             type='submit'
             onClick={handleSubmit}
             className='px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors'
           >
-            {isEdit ? '수정' : '추가'}
+            {isEdit ? 'Save' : 'Add'}
           </button>
         </div>
       </div>
@@ -334,9 +338,37 @@ function RowFormModal({ schema, primaryKeys, row, onSave, onClose, isEdit }) {
   );
 }
 
+const DB_TABS = [
+  { id: 'viewer', label: 'DB Viewer', icon: Database },
+  { id: 'migration', label: 'Schema Migration', icon: RefreshCw },
+  { id: 'init-schema', label: 'Init Schema', icon: Plus },
+  { id: 'backup', label: 'Backup / Restore', icon: Server },
+  { id: 'reset', label: 'Reset', icon: AlertTriangle },
+  { id: 'schema-view', label: 'Schema View', icon: Eye },
+];
+
+const dbResetTableOptions = [
+  { key: 'chat_history', label: 'chat_history', description: 'Main chat history (/)' },
+  { key: 'chat_rooms', label: 'chat_rooms', description: 'Main chat room metadata (/)' },
+  { key: 'messages', label: 'messages', description: 'Admin message logs (/admin/messages)' },
+  { key: 'chat_files', label: 'chat_files', description: 'Chat attachment metadata' },
+  { key: 'model_logs', label: 'model_logs', description: 'Model call logs and status data' },
+  { key: 'model_server_error_history', label: 'model_server_error_history', description: 'Model server error history' },
+  { key: 'model_server_status', label: 'model_server_status', description: 'Model server status and health' },
+  { key: 'external_api_prompts', label: 'external_api_prompts', description: 'External API prompt records' },
+  { key: 'external_api_logs', label: 'external_api_logs', description: 'External API call logs' },
+  { key: 'api_tokens', label: 'api_tokens', description: 'API token management data' },
+  { key: 'notices', label: 'notices', description: 'Notice data' },
+  { key: 'user_chats', label: 'user_chats', description: 'Chat widget data' },
+  { key: 'qa_logs', label: 'qa_logs', description: 'Internal Q&A logs' },
+  { key: 'app_error_logs', label: 'app_error_logs', description: 'Application error logs' },
+];
+
 export default function DatabasePage() {
   const { alert, confirm } = useAlert();
   const { isReadOnly } = useAdminAuth();
+
+  const [activeTab, setActiveTab] = useState('viewer');
 
   const [tables, setTables] = useState([]);
   const [tablesLoading, setTablesLoading] = useState(true);
@@ -366,6 +398,20 @@ export default function DatabasePage() {
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const [migrationResult, setMigrationResult] = useState(null);
+  const [migrationStatus, setMigrationStatus] = useState(null);
+  const [initSchemaResult, setInitSchemaResult] = useState(null);
+  const [dbResetType, setDbResetType] = useState('partial');
+  const [dbResetTables, setDbResetTables] = useState(new Set());
+  const [dbResetConfirmText, setDbResetConfirmText] = useState('');
+  const [dbResetResult, setDbResetResult] = useState(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [restoreMode, setRestoreMode] = useState('data');
+  const [restoreFile, setRestoreFile] = useState(null);
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreResult, setRestoreResult] = useState(null);
+  const [savingSection, setSavingSection] = useState(null);
+
   const searchTimerRef = useRef(null);
 
   useEffect(() => {
@@ -388,12 +434,12 @@ export default function DatabasePage() {
     try {
       setTablesLoading(true);
       const res = await fetch('/api/admin/database', { headers: authHeaders });
-      if (!res.ok) throw new Error('테이블 목록 조회 실패');
+      if (!res.ok) throw new Error('Failed to fetch table list');
       const json = await res.json();
       setTables(json.tables || []);
     } catch (err) {
-      console.error('테이블 조회 실패:', err);
-      alert(err.message || '테이블 목록을 불러오는데 실패했습니다.', 'error', '조회 실패');
+      console.error('Failed to fetch table list:', err);
+      alert(err.message || 'Failed to load table list.', 'error', 'Load failed');
     } finally {
       setTablesLoading(false);
     }
@@ -401,7 +447,237 @@ export default function DatabasePage() {
 
   useEffect(() => {
     fetchTables();
+    fetchMigrationStatus();
   }, [fetchTables]);
+
+  const fetchMigrationStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/migrate-models', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+      const responseData = await response.json();
+      setMigrationStatus(responseData);
+    } catch (error) {
+      console.warn('Failed to fetch schema migration status:', error);
+    }
+  };
+
+  const runModelMigration = async () => {
+    const approved = await confirm(
+      'Run model schema migration now?',
+      'Schema Migration'
+    );
+    if (!approved) return;
+
+    try {
+      setSavingSection('db-migration');
+      setMigrationResult(null);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/migrate-models', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Migration failed');
+      }
+
+      const responseData = await response.json();
+      setMigrationResult(responseData);
+      setMigrationStatus(responseData);
+      alert(responseData.message || 'Migration completed.', 'success', 'Complete');
+    } catch (error) {
+      console.error('Migration failed:', error);
+      alert(error.message || 'Migration failed.', 'error', 'Failed');
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const handleBackup = async () => {
+    try {
+      setBackupLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/db-backup', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Backup failed');
+      }
+
+      const blob = await response.blob();
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = disposition.match(/filename="?([^"]+)"?/);
+      const filename = filenameMatch ? filenameMatch[1] : `modolai-backup-${Date.now()}.sql`;
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+
+      alert('Backup file downloaded.', 'success', 'Backup');
+    } catch (error) {
+      alert(error.message || 'Backup failed.', 'error', 'Backup failed');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!restoreFile) {
+      alert('Select a backup file first.', 'warning', 'File required');
+      return;
+    }
+
+    const modeLabel = restoreMode === 'full'
+      ? 'Full restore (schema + data overwrite)'
+      : 'Data-only restore (keep current schema)';
+    const warningText = restoreMode === 'full'
+      ? 'This will fully overwrite the current database. This cannot be undone.'
+      : 'This restores data only for matching tables and columns in the current schema.';
+
+    const approved = await confirm(
+      `${modeLabel}\n\n${warningText}\n\nFile: ${restoreFile.name}\n\nContinue?`,
+      'Restore Database'
+    );
+    if (!approved) return;
+
+    try {
+      setRestoreLoading(true);
+      setRestoreResult(null);
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', restoreFile);
+      formData.append('mode', restoreMode);
+
+      const response = await fetch('/api/admin/db-restore', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Restore failed');
+      }
+
+      setRestoreResult(responseData);
+      setRestoreFile(null);
+      alert(responseData.message || 'Restore completed.', 'success', 'Restore');
+    } catch (error) {
+      alert(error.message || 'Restore failed.', 'error', 'Restore failed');
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
+
+  const handleInitSchema = async () => {
+    const approved = await confirm(
+      'Create all missing tables in the current database?',
+      'Initialize Schema'
+    );
+    if (!approved) return;
+
+    try {
+      setSavingSection('init-schema');
+      setInitSchemaResult(null);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/init-schema', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Schema initialization failed');
+      }
+
+      const responseData = await response.json();
+      setInitSchemaResult(responseData);
+      alert(responseData.message || 'Schema initialization completed.', 'success', 'Complete');
+    } catch (error) {
+      alert(error.message || 'Schema initialization failed.', 'error', 'Failed');
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const toggleDbResetTable = (tableKey) => {
+    setDbResetTables((previous) => {
+      const next = new Set(previous);
+      if (next.has(tableKey)) {
+        next.delete(tableKey);
+      } else {
+        next.add(tableKey);
+      }
+      return next;
+    });
+  };
+
+  const resetDatabase = async () => {
+    const isAllReset = dbResetType === 'all';
+    const warningText = isAllReset
+      ? 'All non-core data will be removed. This cannot be undone.'
+      : 'Selected table data will be permanently deleted.';
+    const approved = await confirm(
+      `Are you sure?\n${warningText}`,
+      isAllReset ? 'Full Database Reset' : 'Partial Database Reset'
+    );
+    if (!approved) return;
+
+    if (dbResetConfirmText.trim().toUpperCase() !== 'RESET') {
+      alert('Type RESET to continue.', 'error', 'Confirmation required');
+      return;
+    }
+
+    if (!isAllReset && dbResetTables.size === 0) {
+      alert('Select at least one table to reset.', 'warning', 'Selection required');
+      return;
+    }
+
+    try {
+      setSavingSection('db-reset');
+      setDbResetResult(null);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/db-reset', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: isAllReset ? 'all' : 'partial',
+          tables: isAllReset ? undefined : Array.from(dbResetTables),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Database reset failed');
+      }
+
+      const responseData = await response.json();
+      setDbResetResult(responseData);
+      alert(responseData.message || 'Database reset completed.', 'success', 'Complete');
+      setDbResetConfirmText('');
+      setDbResetTables(new Set());
+      fetchTables();
+    } catch (error) {
+      console.error('Database reset failed:', error);
+      alert(error.message || 'Database reset failed.', 'error', 'Failed');
+    } finally {
+      setSavingSection(null);
+    }
+  };
 
   const fetchTableData = useCallback(async () => {
     if (!selectedTable) return;
@@ -423,7 +699,7 @@ export default function DatabasePage() {
         `/api/admin/database/${encodeURIComponent(selectedTable)}?${params}`,
         { headers: authHeaders }
       );
-      if (!res.ok) throw new Error('테이블 데이터 조회 실패');
+      if (!res.ok) throw new Error('Failed to fetch table data');
       const json = await res.json();
       setSchema(json.schema || []);
       setPrimaryKeys(json.primaryKeys || []);
@@ -431,8 +707,8 @@ export default function DatabasePage() {
       setTotalRows(json.pagination?.totalRows || 0);
       setTotalPages(json.pagination?.totalPages || 0);
     } catch (err) {
-      console.error('데이터 조회 실패:', err);
-      alert(err.message || '데이터를 불러오는데 실패했습니다.', 'error', '조회 실패');
+      console.error('Failed to fetch table data:', err);
+      alert(err.message || 'Failed to load table data.', 'error', 'Load failed');
     } finally {
       setDataLoading(false);
     }
@@ -474,14 +750,14 @@ export default function DatabasePage() {
         body: JSON.stringify({ row: rowData }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || '행 추가 실패');
-      alert('행이 추가되었습니다.', 'success', '추가 완료');
+      if (!res.ok) throw new Error(json.error || 'Failed to add row');
+      alert('Row added.', 'success', 'Add complete');
       setShowAddModal(false);
       fetchTableData();
       fetchTables();
     } catch (err) {
-      console.error('행 추가 실패:', err);
-      alert(err.message || '행 추가에 실패했습니다.', 'error', '추가 실패');
+      console.error('Failed to add row:', err);
+      alert(err.message || 'Failed to add row.', 'error', 'Add failed');
     }
   }, [selectedTable, authHeaders, alert, fetchTableData, fetchTables]);
 
@@ -497,13 +773,13 @@ export default function DatabasePage() {
         body: JSON.stringify({ primaryKey: pk, row: rowData }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || '행 수정 실패');
-      alert('행이 수정되었습니다.', 'success', '수정 완료');
+      if (!res.ok) throw new Error(json.error || 'Failed to update row');
+      alert('Row updated.', 'success', 'Update complete');
       setEditRow(null);
       fetchTableData();
     } catch (err) {
-      console.error('행 수정 실패:', err);
-      alert(err.message || '행 수정에 실패했습니다.', 'error', '수정 실패');
+      console.error('Failed to update row:', err);
+      alert(err.message || 'Failed to update row.', 'error', 'Update failed');
     }
   }, [selectedTable, primaryKeys, editRow, authHeaders, alert, fetchTableData]);
 
@@ -520,14 +796,14 @@ export default function DatabasePage() {
         body: JSON.stringify({ primaryKey: pk }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || '행 삭제 실패');
-      alert('행이 삭제되었습니다.', 'success', '삭제 완료');
+      if (!res.ok) throw new Error(json.error || 'Failed to delete row');
+      alert('Row deleted.', 'success', 'Delete complete');
       setDeleteTarget(null);
       fetchTableData();
       fetchTables();
     } catch (err) {
-      console.error('행 삭제 실패:', err);
-      alert(err.message || '행 삭제에 실패했습니다.', 'error', '삭제 실패');
+      console.error('Failed to delete row:', err);
+      alert(err.message || 'Failed to delete row.', 'error', 'Delete failed');
     }
   }, [selectedTable, primaryKeys, deleteTarget, authHeaders, alert, fetchTableData, fetchTables]);
 
@@ -556,9 +832,9 @@ export default function DatabasePage() {
 
   const copyToClipboard = useCallback((text) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert('클립보드에 복사되었습니다.', 'success', '복사 완료');
+      alert('Copied to clipboard.', 'success', 'Copy complete');
     }).catch(() => {
-      alert('복사에 실패했습니다.', 'error', '복사 실패');
+      alert('Copy failed.', 'error', 'Copy failed');
     });
   }, [alert]);
 
@@ -578,154 +854,177 @@ export default function DatabasePage() {
           <div>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2'>
               <Database className='h-6 w-6' />
-              DB 뷰어
+              Database Management
             </h1>
             <p className='text-gray-600 dark:text-gray-400 mt-1'>
-              데이터베이스 테이블을 조회하고 관리합니다.
+              Browse tables and run schema maintenance tasks.
             </p>
           </div>
-          <div className='flex items-center gap-3'>
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className='lg:hidden p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors'
-            >
-              <Table2 className='h-5 w-5' />
-            </button>
-            <div className='text-right hidden sm:block'>
-              <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
-                {tables.length}
+          {activeTab === 'viewer' && (
+            <div className='flex items-center gap-3'>
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                className='lg:hidden p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors'
+              >
+                <Table className='h-5 w-5' />
+              </button>
+              <div className='text-right hidden sm:block'>
+                <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+                  {tables.length}
+                </div>
+                <div className='text-sm text-gray-500 dark:text-gray-400'>Total tables</div>
               </div>
-              <div className='text-sm text-gray-500 dark:text-gray-400'>총 테이블</div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      <div className='flex gap-4 min-h-[calc(100vh-220px)]'>
-        {mobileSidebarOpen && (
-          <div className='fixed inset-0 z-40 lg:hidden'>
-            <div className='absolute inset-0 bg-black/40' onClick={() => setMobileSidebarOpen(false)} />
-            <div className='absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col shadow-xl z-50'>
-              <div className='flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700'>
-                <span className='text-sm font-semibold text-gray-900 dark:text-white'>테이블 목록</span>
-                <button onClick={() => setMobileSidebarOpen(false)} className='p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700'>
-                  <X className='h-4 w-4 text-gray-500' />
-                </button>
+      <div className='border-b border-gray-200 dark:border-gray-700 mb-6'>
+        <nav className='flex gap-1 -mb-px overflow-x-auto' aria-label='Database management tabs'>
+          {DB_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+              }`}
+            >
+              <tab.icon className='h-4 w-4' />
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {activeTab === 'viewer' && (
+        <>
+          <div className='flex gap-4 min-h-[calc(100vh-220px)]'>
+            {mobileSidebarOpen && (
+              <div className='fixed inset-0 z-40 lg:hidden'>
+                <div className='absolute inset-0 bg-black/40' onClick={() => setMobileSidebarOpen(false)} />
+                <div className='absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col shadow-xl z-50'>
+                  <div className='flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700'>
+                    <span className='text-sm font-semibold text-gray-900 dark:text-white'>Table list</span>
+                    <button onClick={() => setMobileSidebarOpen(false)} className='p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700'>
+                      <X className='h-4 w-4 text-gray-500' />
+                    </button>
+                  </div>
+                  <div className='p-3'>
+                    <div className='relative'>
+                      <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400' />
+                      <input
+                        type='text'
+                        placeholder='Search tables...'
+                        value={tableFilter}
+                        onChange={(e) => setTableFilter(e.target.value)}
+                        className='w-full pl-8 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
+                      />
+                    </div>
+                  </div>
+                  <div className='flex-1 overflow-y-auto px-2 pb-2'>
+                    {filteredTables.map((t) => (
+                      <button
+                        key={t.name}
+                        onClick={() => handleSelectTable(t.name)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-colors mb-0.5 ${
+                          selectedTable === t.name
+                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <span className='truncate'>{t.name}</span>
+                        <span className='flex-shrink-0 ml-2 text-[11px] tabular-nums text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded'>
+                          {t.rowCount?.toLocaleString()}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className='p-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500 text-center'>
+                    {filteredTables.length} / {tables.length} tables
+                  </div>
+                </div>
               </div>
-              <div className='p-3'>
+            )}
+
+            <div className='hidden lg:flex w-64 flex-shrink-0 flex-col bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
+              <div className='p-3 border-b border-gray-200 dark:border-gray-700'>
                 <div className='relative'>
                   <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400' />
                   <input
                     type='text'
-                    placeholder='테이블 검색...'
+                    placeholder='Search tables...'
                     value={tableFilter}
                     onChange={(e) => setTableFilter(e.target.value)}
                     className='w-full pl-8 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
                   />
                 </div>
               </div>
-              <div className='flex-1 overflow-y-auto px-2 pb-2'>
-                {filteredTables.map((t) => (
-                  <button
-                    key={t.name}
-                    onClick={() => handleSelectTable(t.name)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-colors mb-0.5 ${
-                      selectedTable === t.name
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    <span className='truncate'>{t.name}</span>
-                    <span className='flex-shrink-0 ml-2 text-[11px] tabular-nums text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded'>
-                      {t.rowCount?.toLocaleString()}
-                    </span>
-                  </button>
-                ))}
+
+              <div className='flex-1 overflow-y-auto px-2 py-2'>
+                {tablesLoading ? (
+                  <div className='space-y-2 px-2'>
+                    {[...Array(8)].map((_, i) => (
+                      <div key={i} className='h-9 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse' />
+                    ))}
+                  </div>
+                ) : filteredTables.length === 0 ? (
+                  <div className='text-center py-8 text-sm text-gray-400 dark:text-gray-500'>
+                    No tables found
+                  </div>
+                ) : (
+                  filteredTables.map((t) => (
+                    <button
+                      key={t.name}
+                      onClick={() => handleSelectTable(t.name)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-colors mb-0.5 ${
+                        selectedTable === t.name
+                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className='truncate'>{t.name}</span>
+                      <span className='flex-shrink-0 ml-2 text-[11px] tabular-nums text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded'>
+                        {t.rowCount?.toLocaleString()}
+                      </span>
+                    </button>
+                  ))
+                )}
               </div>
+
               <div className='p-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500 text-center'>
-                {filteredTables.length} / {tables.length} 테이블
+                {filteredTables.length} / {tables.length} tables
               </div>
             </div>
-          </div>
-        )}
 
-        <div className='hidden lg:flex w-64 flex-shrink-0 flex-col bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
-          <div className='p-3 border-b border-gray-200 dark:border-gray-700'>
-            <div className='relative'>
-              <Search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400' />
-              <input
-                type='text'
-                placeholder='테이블 검색...'
-                value={tableFilter}
-                onChange={(e) => setTableFilter(e.target.value)}
-                className='w-full pl-8 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
-              />
-            </div>
-          </div>
-
-          <div className='flex-1 overflow-y-auto px-2 py-2'>
-            {tablesLoading ? (
-              <div className='space-y-2 px-2'>
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className='h-9 bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse' />
-                ))}
-              </div>
-            ) : filteredTables.length === 0 ? (
-              <div className='text-center py-8 text-sm text-gray-400 dark:text-gray-500'>
-                테이블이 없습니다
-              </div>
-            ) : (
-              filteredTables.map((t) => (
-                <button
-                  key={t.name}
-                  onClick={() => handleSelectTable(t.name)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-colors mb-0.5 ${
-                    selectedTable === t.name
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <span className='truncate'>{t.name}</span>
-                  <span className='flex-shrink-0 ml-2 text-[11px] tabular-nums text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded'>
-                    {t.rowCount?.toLocaleString()}
-                  </span>
-                </button>
-              ))
-            )}
-          </div>
-
-          <div className='p-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500 text-center'>
-            {filteredTables.length} / {tables.length} 테이블
-          </div>
-        </div>
-
-        <div className='flex-1 min-w-0 flex flex-col'>
-          {!selectedTable ? (
-            <div className='flex-1 flex items-center justify-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
-              <div className='text-center'>
-                <Database className='mx-auto h-16 w-16 text-gray-300 dark:text-gray-600' />
-                <h3 className='mt-3 text-lg font-medium text-gray-500 dark:text-gray-400'>
-                  테이블을 선택하세요
-                </h3>
-                <p className='mt-1 text-sm text-gray-400 dark:text-gray-500'>
-                  왼쪽 목록에서 테이블을 선택하면 데이터를 조회할 수 있습니다.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className='flex flex-col gap-3'>
+            <div className='flex-1 min-w-0 flex flex-col'>
+              {!selectedTable ? (
+                <div className='flex-1 flex items-center justify-center bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+                  <div className='text-center'>
+                    <Database className='mx-auto h-16 w-16 text-gray-300 dark:text-gray-600' />
+                    <h3 className='mt-3 text-lg font-medium text-gray-500 dark:text-gray-400'>
+                      Select a table
+                    </h3>
+                    <p className='mt-1 text-sm text-gray-400 dark:text-gray-500'>
+                      Choose a table from the list to inspect and edit records.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className='flex flex-col gap-3'>
               <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3'>
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='flex items-center gap-3'>
                     <h2 className='text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2'>
-                      <Table2 className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                      <Table className='h-5 w-5 text-blue-600 dark:text-blue-400' />
                       {selectedTable}
                     </h2>
                     <span className='text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded'>
-                      {totalRows.toLocaleString()} 행
+                      {totalRows.toLocaleString()} rows
                     </span>
                     <span className='text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded'>
-                      {schema.length} 컬럼
+                      {schema.length} columns
                     </span>
                   </div>
                   {getTableDescription(selectedTable) && (
@@ -740,14 +1039,14 @@ export default function DatabasePage() {
                       className='inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
                     >
                       {schemaOpen ? <EyeOff className='h-3.5 w-3.5' /> : <Eye className='h-3.5 w-3.5' />}
-                      스키마
+                      Schema
                     </button>
                     <button
                       onClick={() => { fetchTableData(); fetchTables(); }}
                       className='inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
                     >
                       <RefreshCw className='h-3.5 w-3.5' />
-                      새로고침
+                      Refresh
                     </button>
                     {!isReadOnly && (
                       <button
@@ -755,7 +1054,7 @@ export default function DatabasePage() {
                         className='inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors'
                       >
                         <Plus className='h-3.5 w-3.5' />
-                        행 추가
+                        Add row
                       </button>
                     )}
                   </div>
@@ -767,17 +1066,17 @@ export default function DatabasePage() {
                   <div className='px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50'>
                     <h3 className='text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5'>
                       <Hash className='h-3.5 w-3.5' />
-                      스키마 정보
+                      Schema details
                     </h3>
                   </div>
                   <div className='overflow-x-auto'>
                     <table className='w-full text-sm'>
                       <thead>
                         <tr className='bg-gray-50 dark:bg-gray-700/30'>
-                          <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>컬럼명</th>
-                          <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>타입</th>
+                          <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>Column</th>
+                          <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>Type</th>
                           <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>NULL</th>
-                          <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>기본값</th>
+                          <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>Default</th>
                         </tr>
                       </thead>
                       <tbody className='divide-y divide-gray-100 dark:divide-gray-700'>
@@ -818,7 +1117,7 @@ export default function DatabasePage() {
                     <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                     <input
                       type='text'
-                      placeholder='데이터 검색...'
+                      placeholder='Search data...'
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
                       className='w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white'
@@ -829,7 +1128,7 @@ export default function DatabasePage() {
                     onChange={(e) => { setSearchColumn(e.target.value); setPage(1); }}
                     className='px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white min-w-[140px]'
                   >
-                    <option value=''>모든 컬럼</option>
+                    <option value=''>All columns</option>
                     {schema.map((col) => (
                       <option key={col.name} value={col.name}>{col.name}</option>
                     ))}
@@ -846,10 +1145,10 @@ export default function DatabasePage() {
                   <div className='text-center py-16'>
                     <Database className='mx-auto h-12 w-12 text-gray-300 dark:text-gray-600' />
                     <h3 className='mt-2 text-sm font-medium text-gray-500 dark:text-gray-400'>
-                      데이터가 없습니다
+                      No data found
                     </h3>
                     {debouncedSearch && (
-                      <p className='mt-1 text-xs text-gray-400'>검색 조건을 변경해보세요.</p>
+                      <p className='mt-1 text-xs text-gray-400'>Try a different search.</p>
                     )}
                   </div>
                 ) : (
@@ -883,7 +1182,7 @@ export default function DatabasePage() {
                                         <ChevronDown className='h-3 w-3 text-blue-500' />
                                       )
                                     ) : (
-                                      <ArrowUpDown className='h-3 w-3 text-gray-300 dark:text-gray-600' />
+                                      <ChevronUp className='h-3 w-3 text-gray-300 dark:text-gray-600 opacity-70' />
                                     )}
                                   </span>
                                 </Tooltip>
@@ -892,7 +1191,7 @@ export default function DatabasePage() {
                           })}
                           {!isReadOnly && (
                             <th className='text-right px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400 sticky right-0 bg-gray-50 dark:bg-gray-700/50 whitespace-nowrap min-w-[100px]'>
-                              작업
+                              Actions
                             </th>
                           )}
                         </tr>
@@ -930,21 +1229,21 @@ export default function DatabasePage() {
                                     <button
                                       onClick={() => setEditRow(row)}
                                       className='p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors'
-                                      title='수정'
+                                      title='Edit'
                                     >
                                       <Edit2 className='h-3.5 w-3.5' />
                                     </button>
                                     <button
                                       onClick={() => setDeleteTarget(row)}
                                       className='p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors'
-                                      title='삭제'
+                                      title='Delete'
                                     >
                                       <Trash2 className='h-3.5 w-3.5' />
                                     </button>
                                     <button
                                       onClick={() => copyToClipboard(JSON.stringify(row, null, 2))}
                                       className='p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors'
-                                      title='JSON 복사'
+                                      title='Copy JSON'
                                     >
                                       <Copy className='h-3.5 w-3.5' />
                                     </button>
@@ -964,7 +1263,7 @@ export default function DatabasePage() {
                 <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3'>
                   <div className='flex flex-col sm:flex-row items-center justify-between gap-3'>
                     <div className='text-sm text-gray-600 dark:text-gray-400'>
-                      {totalRows.toLocaleString()}건 중 {startRow.toLocaleString()}~{endRow.toLocaleString()} 표시
+                      Showing {startRow.toLocaleString()}-{endRow.toLocaleString()} of {totalRows.toLocaleString()} rows
                     </div>
 
                     <div className='flex items-center gap-2'>
@@ -973,9 +1272,9 @@ export default function DatabasePage() {
                         onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
                         className='px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white'
                       >
-                        <option value={25}>25행</option>
-                        <option value={50}>50행</option>
-                        <option value={100}>100행</option>
+                          <option value={25}>25 rows</option>
+                          <option value={50}>50 rows</option>
+                          <option value={100}>100 rows</option>
                       </select>
 
                       <div className='flex items-center'>
@@ -1020,71 +1319,299 @@ export default function DatabasePage() {
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </div>
-
-      {showAddModal && (
-        <RowFormModal
-          schema={schema}
-          primaryKeys={primaryKeys}
-          onSave={handleAddRow}
-          onClose={() => setShowAddModal(false)}
-          isEdit={false}
-        />
-      )}
-
-      {editRow && (
-        <RowFormModal
-          schema={schema}
-          primaryKeys={primaryKeys}
-          row={editRow}
-          onSave={handleEditRow}
-          onClose={() => setEditRow(null)}
-          isEdit={true}
-        />
-      )}
-
-      {deleteTarget && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
-          <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={() => setDeleteTarget(null)} />
-          <div className='relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700'>
-            <div className='flex items-start gap-4'>
-              <div className='flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center'>
-                <AlertTriangle className='h-5 w-5 text-red-600 dark:text-red-400' />
-              </div>
-              <div className='flex-1'>
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
-                  정말 삭제하시겠습니까?
-                </h3>
-                <div className='mt-2 space-y-1'>
-                  {primaryKeys.map((k) => (
-                    <p key={k} className='text-sm text-gray-600 dark:text-gray-400'>
-                      <span className='font-medium text-gray-800 dark:text-gray-200'>{k}:</span>{' '}
-                      {String(deleteTarget[k])}
-                    </p>
-                  ))}
-                </div>
-                <p className='mt-3 text-sm text-gray-500 dark:text-gray-400'>
-                  이 작업은 되돌릴 수 없습니다.
-                </p>
-              </div>
-            </div>
-            <div className='flex justify-end gap-3 mt-6'>
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDeleteRow}
-                className='px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors'
-              >
-                삭제
-              </button>
+              )}
             </div>
           </div>
+
+          {showAddModal && (
+            <RowFormModal
+              schema={schema}
+              primaryKeys={primaryKeys}
+              onSave={handleAddRow}
+              onClose={() => setShowAddModal(false)}
+              isEdit={false}
+            />
+          )}
+
+          {editRow && (
+            <RowFormModal
+              schema={schema}
+              primaryKeys={primaryKeys}
+              row={editRow}
+              onSave={handleEditRow}
+              onClose={() => setEditRow(null)}
+              isEdit={true}
+            />
+          )}
+
+          {deleteTarget && (
+            <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
+              <div className='absolute inset-0 bg-black/50 backdrop-blur-sm' onClick={() => setDeleteTarget(null)} />
+              <div className='relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-700'>
+                <div className='flex items-start gap-4'>
+                  <div className='flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center'>
+                    <AlertTriangle className='h-5 w-5 text-red-600 dark:text-red-400' />
+                  </div>
+                  <div className='flex-1'>
+                    <h3 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                      Delete this row?
+                    </h3>
+                    <div className='mt-2 space-y-1'>
+                      {primaryKeys.map((k) => (
+                        <p key={k} className='text-sm text-gray-600 dark:text-gray-400'>
+                          <span className='font-medium text-gray-800 dark:text-gray-200'>{k}:</span>{' '}
+                          {String(deleteTarget[k])}
+                        </p>
+                      ))}
+                    </div>
+                    <p className='mt-3 text-sm text-gray-500 dark:text-gray-400'>
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+                <div className='flex justify-end gap-3 mt-6'>
+                  <button
+                    onClick={() => setDeleteTarget(null)}
+                    className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteRow}
+                    className='px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors'
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'migration' && (
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <RefreshCw className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                Schema Migration
+              </h2>
+            </div>
+            <div className='flex items-center gap-2'>
+              <button
+                onClick={fetchMigrationStatus}
+                disabled={savingSection === 'db-migration'}
+                className='inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              >
+                <RefreshCw className='h-3.5 w-3.5' />
+                Check status
+              </button>
+              {!isReadOnly && (
+                <button
+                  onClick={runModelMigration}
+                  disabled={savingSection === 'db-migration'}
+                  className='inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${savingSection === 'db-migration' ? 'animate-spin' : ''}`} />
+                  {savingSection === 'db-migration' ? 'Running...' : 'Run migration'}
+                </button>
+              )}
+            </div>
+          </div>
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
+            Keep the database schema aligned with the current app version.
+          </p>
+          {migrationStatus && (
+            <div className='text-xs text-gray-600 dark:text-gray-400'>
+              Status: {migrationStatus.isUpToDate ? 'Up to date' : 'Update required'}
+            </div>
+          )}
+          {migrationResult?.columns && (
+            <div className='text-xs text-gray-600 dark:text-gray-400'>
+              Current columns: {migrationResult.columns.length}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'init-schema' && (
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <Plus className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>Init Schema</h2>
+            </div>
+            {!isReadOnly && (
+              <button
+                onClick={handleInitSchema}
+                disabled={savingSection === 'init-schema'}
+                className='inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${savingSection === 'init-schema' ? 'animate-spin' : ''}`} />
+                {savingSection === 'init-schema' ? 'Creating...' : 'Initialize schema'}
+              </button>
+            )}
+          </div>
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
+            Create missing tables in this environment.
+          </p>
+          {initSchemaResult && <div className='text-xs text-gray-600 dark:text-gray-400'>{initSchemaResult.message}</div>}
+        </div>
+      )}
+
+      {activeTab === 'backup' && (
+        <div className='space-y-5'>
+          <div className='flex items-center gap-3 mb-4'>
+            <Server className='h-5 w-5 text-blue-600' />
+            <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>Backup / Restore</h2>
+          </div>
+
+          {isReadOnly ? (
+            <p className='text-sm text-gray-500 dark:text-gray-400'>Read-only users cannot run backup or restore.</p>
+          ) : (
+            <div className='space-y-5'>
+              <div className='flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+                <div>
+                  <div className='font-medium text-gray-900 dark:text-white text-sm'>Download backup</div>
+                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>Export the current database to a SQL file.</p>
+                </div>
+                <button
+                  onClick={handleBackup}
+                  disabled={backupLoading}
+                  className='inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                >
+                  <Download className='h-4 w-4' />
+                  {backupLoading ? 'Downloading...' : 'Download'}
+                </button>
+              </div>
+
+              <div className='p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+                <div>
+                  <div className='font-medium text-gray-900 dark:text-white text-sm'>Restore upload</div>
+                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>Upload a SQL backup and restore the database.</p>
+                </div>
+
+                <div className='flex flex-wrap items-center gap-4'>
+                  <label className='inline-flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200'>
+                    <input type='radio' name='restore-mode' value='data' checked={restoreMode === 'data'} onChange={() => setRestoreMode('data')} className='accent-blue-600' />
+                    Data-only restore
+                  </label>
+                  <label className='inline-flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200'>
+                    <input type='radio' name='restore-mode' value='full' checked={restoreMode === 'full'} onChange={() => setRestoreMode('full')} className='accent-blue-600' />
+                    Full restore
+                  </label>
+                </div>
+
+                <div className='flex items-center gap-3'>
+                  <label className='flex-1'>
+                    <input
+                      type='file'
+                      accept='.sql'
+                      onChange={(e) => {
+                        setRestoreFile(e.target.files?.[0] || null);
+                        setRestoreResult(null);
+                      }}
+                      className='block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-300'
+                      disabled={restoreLoading}
+                    />
+                  </label>
+                  <button
+                    onClick={handleRestore}
+                    disabled={restoreLoading || !restoreFile}
+                    className='inline-flex items-center gap-2 px-4 py-2 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                  >
+                    <Upload className='h-4 w-4' />
+                    {restoreLoading ? 'Restoring...' : 'Restore'}
+                  </button>
+                </div>
+
+                {restoreResult && <div className='text-xs text-gray-600 dark:text-gray-400'>{restoreResult.message}</div>}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'reset' && (
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <AlertTriangle className='h-5 w-5 text-red-600' />
+              <h2 className='text-lg font-semibold text-red-900 dark:text-red-200'>Database Reset</h2>
+            </div>
+            {!isReadOnly && (
+              <button
+                onClick={resetDatabase}
+                disabled={savingSection === 'db-reset'}
+                className='inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50'
+              >
+                <Trash2 className='h-3.5 w-3.5' />
+                {savingSection === 'db-reset' ? 'Processing...' : 'Run reset'}
+              </button>
+            )}
+          </div>
+          <p className='text-sm text-red-700 dark:text-red-300'>Type RESET and confirm to proceed.</p>
+
+          <div className='space-y-4'>
+            <div className='flex flex-wrap items-center gap-4'>
+              <label className='inline-flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200'>
+                <input type='radio' name='db-reset-type' value='partial' checked={dbResetType === 'partial'} onChange={() => setDbResetType('partial')} className='accent-red-600' disabled={isReadOnly} />
+                Partial reset
+              </label>
+              <label className='inline-flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200'>
+                <input type='radio' name='db-reset-type' value='all' checked={dbResetType === 'all'} onChange={() => setDbResetType('all')} className='accent-red-600' disabled={isReadOnly} />
+                Full reset
+              </label>
+            </div>
+
+            {dbResetType === 'partial' && (
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                {dbResetTableOptions.map((tableOption) => (
+                  <label key={tableOption.key} className='flex items-start gap-2 text-sm text-gray-800 dark:text-gray-200 bg-white/70 dark:bg-gray-800/60 border border-red-100 dark:border-red-900/40 rounded-md px-3 py-2'>
+                    <input type='checkbox' checked={dbResetTables.has(tableOption.key)} onChange={() => toggleDbResetTable(tableOption.key)} className='accent-red-600 mt-1' disabled={isReadOnly} />
+                    <div>
+                      <div className='font-medium'>{tableOption.label}</div>
+                      <div className='text-xs text-gray-600 dark:text-gray-400'>{tableOption.description}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div>
+              <label className='block text-sm font-medium text-gray-800 dark:text-gray-200 mb-2'>Confirmation text (RESET)</label>
+              <input
+                type='text'
+                value={dbResetConfirmText}
+                onChange={(e) => setDbResetConfirmText(e.target.value)}
+                className='w-full px-3 py-2 border border-red-200 dark:border-red-800 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                placeholder='RESET'
+                disabled={isReadOnly}
+              />
+            </div>
+
+            {dbResetResult?.deletedTables?.length > 0 && (
+              <div className='text-xs text-gray-700 dark:text-gray-300'>
+                Last processed: {dbResetResult.deletedTables.join(', ')}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'schema-view' && (
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <Globe className='h-5 w-5 text-gray-600 dark:text-gray-400' />
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>Schema View</h2>
+            </div>
+            <Link href='/admin/db-schema' className='inline-flex items-center px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700'>
+              Open schema page
+            </Link>
+          </div>
+          <p className='text-sm text-gray-500 dark:text-gray-400'>Inspect current table and column structures.</p>
         </div>
       )}
     </div>

@@ -19,9 +19,21 @@ import MessageList from './components/chat/MessageList';
 import ScrollButtons from './components/chat/ScrollButtons';
 import ChatLayout from './components/chat/ChatLayout';
 import ChatInput from './components/chat/ChatInput';
+import DrawPreviewPanel from './components/chat/DrawPreviewPanel';
 import NoticePopup from './components/NoticePopup';
 import AgentSelector from './components/AgentSelector';
 import { X, Loader2, ChevronDown } from '@/components/icons';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 
 /* ---------- 메인 컴포넌트 ---------- */
 export default function Home() {
@@ -106,6 +118,15 @@ export default function Home() {
   const [profileEditEnabled, setProfileEditEnabled] = useState(false);
   const [boardEnabled, setBoardEnabled] = useState(true);
   const [maxUserQuestionLength, setMaxUserQuestionLength] = useState(300000);
+  const [customInstruction, setCustomInstruction] = useState('');
+  const [customInstructionActive, setCustomInstructionActive] = useState(false);
+  const [showCustomInstructionModal, setShowCustomInstructionModal] =
+    useState(false);
+  const [drawMode, setDrawMode] = useState(false);
+  const [drawEnabled, setDrawEnabled] = useState(false);
+  const [drawSystemPrompt, setDrawSystemPrompt] = useState(
+    "Generate a complete HTML page based on the user's request. Always wrap the response in a ```html code block. Only Tailwind CSS CDN (https://cdn.tailwindcss.com) is allowed. No other external libraries. Implement charts with Canvas API and diagrams with SVG."
+  );
   const [authChecked, setAuthChecked] = useState(false);
 
   // ---------- Refs for UI manipulation ----------
@@ -142,6 +163,10 @@ export default function Home() {
     imageAnalysisModel,
     imageAnalysisPrompt,
     maxUserQuestionLength,
+    customInstruction,
+    customInstructionActive,
+    drawMode,
+    drawSystemPrompt,
   });
 
   const isUIBusy = loading;
@@ -280,6 +305,13 @@ export default function Home() {
         setBoardEnabled(
           data.boardEnabled !== undefined ? data.boardEnabled : true
         );
+        setDrawEnabled(
+          data.drawEnabled !== undefined ? data.drawEnabled : false
+        );
+        setDrawSystemPrompt(
+          data.drawSystemPrompt ||
+            "Generate a complete HTML page based on the user's request. Always wrap the response in a ```html code block. Only Tailwind CSS CDN (https://cdn.tailwindcss.com) is allowed. No other external libraries. Implement charts with Canvas API and diagrams with SVG."
+        );
       })
       .catch((error) =>
         logger.error('이미지 설정 로드 실패:', error.message)
@@ -308,6 +340,41 @@ export default function Home() {
     setSelectedImages([]);
     setImageHistoryByRoom({});
   }, [currentRoom]);
+
+  useEffect(() => {
+    if (!currentRoom || !rooms.length) return;
+    const room = rooms.find((item) => item._id === currentRoom);
+    setCustomInstruction(room?.customInstruction || '');
+    setCustomInstructionActive(room?.customInstructionActive || false);
+  }, [currentRoom, rooms]);
+
+  const saveCustomInstruction = async (text, active) => {
+    if (!currentRoom) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const response = await fetch(`/api/webapp-chat/room/${currentRoom}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          customInstruction: text,
+          customInstructionActive: active,
+        }),
+      });
+
+      if (response.ok) {
+        setCustomInstruction(text);
+        setCustomInstructionActive(active);
+        await loadRooms(true);
+      }
+    } catch (error) {
+      logger.error('Custom instruction save failed:', error);
+    }
+  };
 
   const handleLogout = async () => {
     clearSession();
@@ -346,6 +413,8 @@ export default function Home() {
         currentRoom={currentRoom}
         imageHistoryByRoom={imageHistoryByRoom}
         listRef={listRef}
+        loading={loading}
+        DrawPreviewPanelComponent={DrawPreviewPanel}
       />
       <ScrollButtons show={showScrollButtons} containerRef={listRef} />
       <div
@@ -421,7 +490,82 @@ export default function Home() {
           maxImagesPerMessage={maxImagesPerMessage}
           userDefaultModelId={userDefaultModelId}
           onSetUserDefault={saveUserDefaultModel}
+          drawEnabled={drawEnabled}
+          drawMode={drawMode}
+          onDrawModeToggle={() => setDrawMode((prev) => !prev)}
+          customInstructionActive={customInstructionActive}
+          onCustomInstructionClick={() => setShowCustomInstructionModal(true)}
         />
+        <Dialog
+          open={showCustomInstructionModal}
+          onOpenChange={setShowCustomInstructionModal}
+        >
+          <DialogContent className='sm:max-w-xl'>
+            <DialogHeader>
+              <DialogTitle>Custom Instruction</DialogTitle>
+              <DialogDescription>
+                Add a persistent instruction for this chat room.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className='space-y-4'>
+              <div className='flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2'>
+                <div>
+                  <p className='text-sm font-medium text-foreground'>Enable</p>
+                  <p className='text-xs text-muted-foreground'>
+                    Include this instruction in future messages.
+                  </p>
+                </div>
+                <Switch
+                  checked={customInstructionActive}
+                  onCheckedChange={setCustomInstructionActive}
+                />
+              </div>
+
+              <Textarea
+                rows={8}
+                value={customInstruction}
+                onChange={(event) => setCustomInstruction(event.target.value)}
+                placeholder='Example: Respond with concise bullet points and include code blocks when relevant.'
+                className='resize-none'
+              />
+            </div>
+
+            <DialogFooter className='sm:justify-between'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={async () => {
+                  await saveCustomInstruction('', false);
+                  setShowCustomInstructionModal(false);
+                }}
+              >
+                Delete
+              </Button>
+              <div className='flex items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => setShowCustomInstructionModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type='button'
+                  onClick={async () => {
+                    await saveCustomInstruction(
+                      customInstruction,
+                      customInstructionActive
+                    );
+                    setShowCustomInstructionModal(false);
+                  }}
+                >
+                  Save
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <NoticePopup target='main' />
       </div>
     </ChatLayout>

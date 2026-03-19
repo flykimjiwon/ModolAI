@@ -35,6 +35,8 @@ const CORE_TABLES = [
       user_id UUID REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255),
       message_count INTEGER DEFAULT 0,
+      custom_instruction TEXT DEFAULT '',
+      custom_instruction_active BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -50,6 +52,7 @@ const CORE_TABLES = [
       model VARCHAR(255),
       file_references JSONB,
       feedback VARCHAR(50),
+      draw_mode BOOLEAN DEFAULT false,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
   },
@@ -78,6 +81,8 @@ const CORE_TABLES = [
       custom_endpoints JSONB,
       openai_compat_base VARCHAR(255),
       openai_compat_api_key TEXT,
+      draw_enabled BOOLEAN DEFAULT false,
+      draw_system_prompt TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
@@ -130,6 +135,8 @@ const CORE_TABLES = [
       model VARCHAR(255),
       provider VARCHAR(255),
       prompt_id UUID REFERENCES external_api_prompts(id) ON DELETE SET NULL,
+      prompt TEXT,
+      messages JSONB,
       response_token_count INTEGER DEFAULT 0,
       prompt_token_count INTEGER DEFAULT 0,
       total_token_count INTEGER DEFAULT 0,
@@ -433,11 +440,13 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS request_headers JSONB,
     ADD COLUMN IF NOT EXISTS request_body JSONB,
     ADD COLUMN IF NOT EXISTS response_headers JSONB,
-    ADD COLUMN IF NOT EXISTS response_body JSONB,
-    ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 1,
-    ADD COLUMN IF NOT EXISTS prompt_id UUID,
-    ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50)
-  `);
+     ADD COLUMN IF NOT EXISTS response_body JSONB,
+     ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 1,
+     ADD COLUMN IF NOT EXISTS prompt_id UUID,
+     ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50),
+     ADD COLUMN IF NOT EXISTS prompt TEXT,
+     ADD COLUMN IF NOT EXISTS messages JSONB
+   `);
 
   // users table: SSO fields + security enhancement fields
   await query(`
@@ -508,6 +517,11 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false,
     ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP,
     ADD COLUMN IF NOT EXISTS deleted_by UUID
+  `).catch(() => {});
+
+  await query(`
+    ALTER TABLE chat_history
+    ADD COLUMN IF NOT EXISTS draw_mode BOOLEAN DEFAULT false
   `).catch(() => {});
 }
 

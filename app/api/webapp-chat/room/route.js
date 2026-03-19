@@ -30,7 +30,8 @@ export async function GET(request) {
 
     // Fetch user's chat room list (latest updated first)
     const roomsResult = await query(
-      `SELECT id, user_id, name, message_count, created_at, updated_at 
+      `SELECT id, user_id, name, message_count, created_at, updated_at,
+              custom_instruction, custom_instruction_active
        FROM chat_rooms 
        WHERE user_id = $1 
        ORDER BY updated_at DESC`,
@@ -45,6 +46,8 @@ export async function GET(request) {
       messageCount: room.message_count,
       createdAt: room.created_at,
       updatedAt: room.updated_at,
+      customInstruction: room.custom_instruction || '',
+      customInstructionActive: room.custom_instruction_active || false,
     }));
 
     return NextResponse.json({
@@ -103,16 +106,16 @@ export async function POST(request) {
 
     const userId = userResult.rows[0].id;
 
-    // Check user's chat room count (max 20)
+    // Check user's chat room count (max 50)
     const roomCountResult = await query(
       'SELECT COUNT(*) as count FROM chat_rooms WHERE user_id = $1',
       [userId]
     );
     const roomCount = parseInt(roomCountResult.rows[0].count);
     
-    if (roomCount >= 20) {
+    if (roomCount >= 50) {
       return NextResponse.json(
-        { error: 'You can create up to 20 chat rooms.' },
+        { error: 'You can create up to 50 chat rooms.' },
         { status: 400 }
       );
     }

@@ -33,6 +33,7 @@ import {
   Bot,
   ChevronRight,
   Database,
+  Lock,
 } from '@/components/icons';
 import {
   DndContext,
@@ -51,6 +52,8 @@ import {
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+const ADMIN_ONLY_MENU_IDS = ['messages', 'direct-messages', 'external-api-logs', 'database'];
+
 // 드래그 가능한 메뉴 아이템 컴포넌트
 function SortableNavItem({
   id,
@@ -66,6 +69,8 @@ function SortableNavItem({
   pathname,
   isExpanded,
   onToggleExpand,
+  isAdminOnly,
+  userRole,
 }) {
   const {
     attributes,
@@ -181,6 +186,11 @@ function SortableNavItem({
               >
                 <XIcon className='h-4 w-4' />
               </button>
+            </div>
+          ) : isAdminOnly && userRole !== 'admin' ? (
+            <div className='flex items-center justify-between flex-1 opacity-50 cursor-not-allowed' title='Admin only'>
+              <span className='text-sm font-medium'>{item.name}</span>
+              <Lock className='h-3.5 w-3.5 text-red-400' />
             </div>
           ) : (
             // 일반 항목
@@ -440,6 +450,20 @@ export default function AdminLayout({ children }) {
           return;
         }
 
+        if (result.user.role === 'manager') {
+          const adminOnlyPaths = [
+            '/admin/messages',
+            '/admin/direct-messages',
+            '/admin/external-api-logs',
+            '/admin/database',
+          ];
+          if (adminOnlyPaths.some((path) => pathname?.startsWith(path))) {
+            alert('This page is restricted to admins.', 'warning', 'Access restricted');
+            router.replace('/admin/dashboard');
+            return;
+          }
+        }
+
         // 사용자 정보 설정
         setUser({
           ...result.user,
@@ -463,6 +487,21 @@ export default function AdminLayout({ children }) {
       TokenManager.stopPeriodicValidation();
     };
   }, [router, alert, confirm]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'manager') return;
+    const adminOnlyPaths = [
+      '/admin/messages',
+      '/admin/direct-messages',
+      '/admin/external-api-logs',
+      '/admin/database',
+    ];
+
+    if (adminOnlyPaths.some((path) => pathname?.startsWith(path))) {
+      alert('This page is restricted to admins.', 'warning', 'Access restricted');
+      router.replace('/admin/dashboard');
+    }
+  }, [pathname, user, router, alert]);
 
   const handleLogout = async () => {
     const confirmed = await confirm(
@@ -641,6 +680,7 @@ export default function AdminLayout({ children }) {
         <div className='flex-1 overflow-y-auto w-full flex flex-col items-center gap-2'>
           {navigation.map((item) => {
             const hasChildren = item.children && item.children.length > 0;
+            const isRestricted = ADMIN_ONLY_MENU_IDS.includes(item.id) && user?.role !== 'admin';
             const isActive = hasChildren
               ? item.children.some(
                   (child) =>
@@ -664,6 +704,18 @@ export default function AdminLayout({ children }) {
                 >
                   <item.icon className='h-5 w-5' />
                 </button>
+              );
+            }
+            if (isRestricted) {
+              return (
+                <div
+                  key={item.id}
+                  className='p-3 rounded-lg opacity-50 cursor-not-allowed text-muted-foreground'
+                  title='Admin only'
+                  data-testid={`admin-sidebar-menu-icon-${item.id}`}
+                >
+                  <item.icon className='h-5 w-5' />
+                </div>
               );
             }
             return (
@@ -751,12 +803,14 @@ export default function AdminLayout({ children }) {
                     onSaveEdit={saveMenuName}
                     onCancelEdit={cancelEditingName}
                     onEditingNameChange={setEditingName}
-                    pathname={pathname}
-                    isExpanded={!!expandedGroups[item.id]}
-                    onToggleExpand={() => toggleGroup(item.id)}
-                  />
-                ))}
-              </nav>
+                     pathname={pathname}
+                     isExpanded={!!expandedGroups[item.id]}
+                     onToggleExpand={() => toggleGroup(item.id)}
+                     isAdminOnly={ADMIN_ONLY_MENU_IDS.includes(item.id)}
+                     userRole={user?.role}
+                   />
+                 ))}
+               </nav>
             </SortableContext>
           </DndContext>
 

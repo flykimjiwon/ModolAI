@@ -1,6 +1,7 @@
 'use client';
 import { memo, useRef, useState, useEffect, useCallback } from 'react';
 import { LucideImage, Send } from '@/components/icons';
+import { PaintBrush, UserGear } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import ModelSelector from './ModelSelector';
 import { useAlert } from '@/contexts/AlertContext';
@@ -30,6 +31,11 @@ const ChatInput = memo(function ChatInput({
   maxImagesPerMessage = 5,
   userDefaultModelId,
   onSetUserDefault,
+  drawEnabled = false,
+  drawMode = false,
+  onDrawModeToggle,
+  customInstructionActive = false,
+  onCustomInstructionClick,
 }) {
   const { alert } = useAlert();
   const { t } = useTranslation();
@@ -368,6 +374,50 @@ const ChatInput = memo(function ChatInput({
               </span>
             )}
           </Button>
+          {onCustomInstructionClick && (
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon-sm'
+              className={`relative cursor-pointer ${
+                customInstructionActive
+                  ? 'text-primary hover:text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              aria-label='Custom Instruction'
+              title={
+                customInstructionActive
+                  ? 'Custom Instruction enabled'
+                  : 'Custom Instruction'
+              }
+              onClick={onCustomInstructionClick}
+            >
+              <UserGear className='h-4 w-4' weight='duotone' />
+              {customInstructionActive && (
+                <span className='absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-primary' />
+              )}
+            </Button>
+          )}
+          {drawEnabled && onDrawModeToggle && (
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon-sm'
+              className={`relative cursor-pointer ${
+                drawMode
+                  ? 'text-emerald-500 hover:text-emerald-600'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              aria-label='Draw mode'
+              title={drawMode ? 'Draw mode enabled' : 'Draw mode'}
+              onClick={onDrawModeToggle}
+            >
+              <PaintBrush className='h-4 w-4' weight={drawMode ? 'duotone' : 'regular'} />
+              {drawMode && (
+                <span className='absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500' />
+              )}
+            </Button>
+          )}
           {/* 문서 업로드는 추후 기능 추가를 위해 비활성화 */}
           <input
             ref={imageInputRef}

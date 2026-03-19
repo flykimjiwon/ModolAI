@@ -64,8 +64,23 @@ export async function GET(request, { params }) {
 
     // Retrieve chat history (oldest messages first)
     // Exclude room-title generation messages (messages starting with [RoomTitle)
+    let hasDrawModeColumn = true;
+    try {
+      const colCheck = await query(
+        `SELECT column_name FROM information_schema.columns
+         WHERE table_name = 'chat_history' AND column_name = 'draw_mode'`
+      );
+      hasDrawModeColumn = colCheck.rows.length > 0;
+    } catch (_) {
+      hasDrawModeColumn = false;
+    }
+
+    const selectFields = hasDrawModeColumn
+      ? 'id, room_id, user_id, role, text, model, created_at, feedback, draw_mode'
+      : 'id, room_id, user_id, role, text, model, created_at, feedback';
+
     const historyResult = await query(
-      `SELECT id, room_id, user_id, role, text, model, created_at, feedback
+      `SELECT ${selectFields}
        FROM chat_history
        WHERE room_id = $1
        AND (text IS NULL OR text NOT LIKE '[RoomTitle%')
@@ -85,6 +100,7 @@ export async function GET(request, { params }) {
       model: msg.model,
       createdAt: msg.created_at,
       feedback: msg.feedback || null,
+      drawMode: hasDrawModeColumn ? msg.draw_mode === true : false,
     }));
 
     return NextResponse.json({
@@ -114,7 +130,7 @@ export const POST = withErrorHandler(async (request, { params }) => {
 
   const { roomId } = await params;
   const body = await request.json();
-  let { role, text, model } = body;
+  let { role, text, model, drawMode } = body;
 
   // Convert text to JSON string if it is an object or array
   if (text !== null && text !== undefined) {
@@ -194,6 +210,7 @@ export const POST = withErrorHandler(async (request, { params }) => {
       request.headers.get('x-forwarded-for') ||
       request.headers.get('x-real-ip') ||
       null,
+    drawMode: drawMode === true,
   });
 
   // Update chat room message count

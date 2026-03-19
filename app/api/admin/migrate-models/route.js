@@ -93,6 +93,8 @@ const REQUIRED_EXTERNAL_API_LOGS_COLUMNS = [
   { name: 'retry_count', type: 'integer' },
   { name: 'prompt_id', type: 'uuid' },
   { name: 'conversation_id', type: 'varchar' },
+  { name: 'prompt', type: 'text' },
+  { name: 'messages', type: 'jsonb' },
 ];
 const REQUIRED_TABLES = [
   {
@@ -241,6 +243,28 @@ const REQUIRED_TABLES = [
     indexes: [
       `CREATE INDEX IF NOT EXISTS idx_agent_settings_agent_id ON agent_settings(agent_id)`,
       `CREATE INDEX IF NOT EXISTS idx_agent_settings_selected_model ON agent_settings(selected_model_id)`,
+    ],
+  },
+  {
+    name: 'chat_rooms',
+    create: `
+      CREATE TABLE IF NOT EXISTS chat_rooms (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        name VARCHAR(255),
+        message_count INTEGER DEFAULT 0,
+        custom_instruction TEXT DEFAULT '',
+        custom_instruction_active BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `,
+    ensureColumns: [
+      `ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS custom_instruction TEXT DEFAULT ''`,
+      `ALTER TABLE chat_rooms ADD COLUMN IF NOT EXISTS custom_instruction_active BOOLEAN DEFAULT false`,
+    ],
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS idx_chat_rooms_user_id ON chat_rooms(user_id)`,
     ],
   },
   {
@@ -463,7 +487,9 @@ export async function POST(request) {
       ADD COLUMN IF NOT EXISTS response_body JSONB,
       ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 1,
       ADD COLUMN IF NOT EXISTS prompt_id UUID,
-      ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50)
+      ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS prompt TEXT,
+      ADD COLUMN IF NOT EXISTS messages JSONB
     `);
     console.log('[Migration] ✓ Added external_api_logs table columns');
 
@@ -590,6 +616,9 @@ export async function POST(request) {
     // Adjust error log-related tables
     for (const table of REQUIRED_TABLES) {
       await query(table.create);
+      for (const col of table.ensureColumns || []) {
+        await query(col).catch(() => {});
+      }
       for (const indexQuery of table.indexes || []) {
         await query(indexQuery);
       }

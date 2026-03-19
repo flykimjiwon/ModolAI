@@ -400,11 +400,13 @@ export async function initModelServerEndpoints() {
         settingsResult.rows.length > 0 ? settingsResult.rows[0] : null;
 
       // Prefer customEndpoints; fallback to legacy fields if absent
+      // PostgreSQL query() returns snake_case — use custom_endpoints first
+      const customEps = settings?.custom_endpoints || settings?.customEndpoints;
       if (
-        Array.isArray(settings?.customEndpoints) &&
-        settings.customEndpoints.length > 0
+        Array.isArray(customEps) &&
+        customEps.length > 0
       ) {
-        parsed = settings.customEndpoints
+        parsed = customEps
           .filter((e) => e?.url)
           .map((e) => {
             const url = e.url.trim().toLowerCase();
@@ -443,7 +445,7 @@ export async function initModelServerEndpoints() {
           })
           .filter((e) => e.url);
       } else {
-        const rawDb = settings?.llmEndpoints || settings?.ollamaEndpoints || '';
+        const rawDb = settings?.llm_endpoints || settings?.ollama_endpoints || settings?.llmEndpoints || settings?.ollamaEndpoints || '';
         const urlList = rawDb
           .split(',')
           .map((e) => e.trim())

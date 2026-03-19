@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
 import { MessageCircle, Check, Copy, ThumbsUp, ThumbsDown } from '@/components/icons';
+import { PaintBrush } from '@phosphor-icons/react';
 import MarkdownPreview from '@uiw/react-markdown-preview';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import TypingAnimation from '../TypingAnimation';
+import DrawPreviewPanel from './DrawPreviewPanel';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -345,8 +347,11 @@ function MessageList({
   currentRoom = null,
   imageHistoryByRoom = {},
   listRef,
+  loading = false,
+  DrawPreviewPanelComponent,
 }) {
   const { t } = useTranslation();
+  const ResolvedDrawPreviewPanel = DrawPreviewPanelComponent || DrawPreviewPanel;
 
   // 방제목 생성 관련 디버그 메시지 필터링
   const filteredMessages = messages.filter((msg) => {
@@ -555,9 +560,22 @@ function MessageList({
               )}
               {msg.role === 'assistant' && msg.isTyping && msg.text === '' ? (
                 <TypingAnimation />
+              ) : msg.role === 'assistant' &&
+                !(loading && idx === displayMessages.length - 1) &&
+                (msg.text || '').includes('```html') ? (
+                <ResolvedDrawPreviewPanel htmlContent={msg.text} />
               ) : (
                 <SafeMarkdown source={msg.text} />
               )}
+              {loading &&
+                idx === displayMessages.length - 1 &&
+                msg.role === 'assistant' &&
+                (msg.text || '').includes('```html') && (
+                  <div className='mt-2 flex items-center gap-1.5 text-xs text-emerald-600'>
+                    <PaintBrush className='h-3.5 w-3.5' weight='duotone' />
+                    <span>Preview will render after response completes</span>
+                  </div>
+                )}
               {msg.role === 'user' && userImages.length > 0 && (
                 <div className='mt-3'>
                   <div className='text-[11px] text-muted-foreground mb-2'>

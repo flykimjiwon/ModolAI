@@ -16,18 +16,41 @@ export async function PATCH(request, { params }) {
 
     const { id } = await params;
     const body = await request.json();
-    const { name } = body;
+    const { name, customInstruction, customInstructionActive } = body;
 
-    if (!name || name.trim().length === 0) {
+    if (name !== undefined) {
+      if (!name || name.trim().length === 0) {
+        return NextResponse.json(
+          { error: 'Please enter a chat room name.' },
+          { status: 400 }
+        );
+      }
+      if (name.trim().length > 50) {
+        return NextResponse.json(
+          { error: 'Chat room name must be 50 characters or fewer.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (
+      customInstruction !== undefined &&
+      typeof customInstruction === 'string' &&
+      customInstruction.length > 5000
+    ) {
       return NextResponse.json(
-        { error: 'Please enter a chat room name.' },
+        { error: 'Custom instruction must be 5,000 characters or fewer.' },
         { status: 400 }
       );
     }
 
-    if (name.trim().length > 50) {
+    if (
+      name === undefined &&
+      customInstruction === undefined &&
+      customInstructionActive === undefined
+    ) {
       return NextResponse.json(
-        { error: 'Chat room name must be 50 characters or fewer.' },
+        { error: 'Please provide fields to update.' },
         { status: 400 }
       );
     }
@@ -78,13 +101,39 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Update chat room name
+    const setClauses = [];
+    const queryParams = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      setClauses.push(`name = $${paramIndex}`);
+      queryParams.push(name.trim());
+      paramIndex++;
+    }
+
+    if (customInstruction !== undefined) {
+      setClauses.push(`custom_instruction = $${paramIndex}`);
+      queryParams.push(customInstruction);
+      paramIndex++;
+    }
+
+    if (customInstructionActive !== undefined) {
+      setClauses.push(`custom_instruction_active = $${paramIndex}`);
+      queryParams.push(Boolean(customInstructionActive));
+      paramIndex++;
+    }
+
+    setClauses.push('updated_at = CURRENT_TIMESTAMP');
+
+    queryParams.push(id);
+    queryParams.push(userId);
+
     const updateResult = await query(
       `UPDATE chat_rooms 
-       SET name = $1, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = $2 AND user_id = $3
-       RETURNING id`,
-      [name.trim(), id, userId]
+       SET ${setClauses.join(', ')}
+       WHERE id = $${paramIndex} AND user_id = $${paramIndex + 1}
+       RETURNING id, custom_instruction, custom_instruction_active`,
+      queryParams
     );
 
     if (updateResult.rows.length === 0) {
@@ -94,10 +143,17 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Chat room name updated.',
-    });
+    const updated = updateResult.rows[0];
+
+    const response = { success: true };
+    if (name !== undefined) {
+      response.message = 'Chat room name updated.';
+    }
+    response.customInstruction = updated.custom_instruction || '';
+    response.customInstructionActive =
+      updated.custom_instruction_active || false;
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Failed to update chat room:', error);
     return NextResponse.json(
