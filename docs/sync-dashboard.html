@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechAI → ModolAI Sync Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e1e4e8; padding: 24px; }
+  .header { text-align: center; margin-bottom: 32px; }
+  .header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #a371f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header p { color: #8b949e; margin-top: 8px; font-size: 14px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; text-align: center; }
+  .stat-card .number { font-size: 36px; font-weight: 700; }
+  .stat-card .label { color: #8b949e; font-size: 13px; margin-top: 4px; }
+  .stat-card.green .number { color: #3fb950; }
+  .stat-card.blue .number { color: #58a6ff; }
+  .stat-card.purple .number { color: #a371f7; }
+  .stat-card.yellow .number { color: #d29922; }
+  .section { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .section h2 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #30363d; color: #8b949e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px 12px; border-bottom: 1px solid #21262d; font-size: 14px; }
+  tr:hover { background: #1c2128; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .badge.done { background: #1b4332; color: #3fb950; }
+  .badge.new { background: #1a2744; color: #58a6ff; }
+  .badge.skip { background: #2d2200; color: #d29922; }
+  .priority { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .priority.p1 { background: #ff7b72; color: #0d1117; }
+  .priority.p2 { background: #d29922; color: #0d1117; }
+  .priority.p3 { background: #8b949e; color: #0d1117; }
+  .files-section { margin-top: 16px; }
+  .file-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: #8b949e; }
+  .file-item .icon { width: 16px; text-align: center; }
+  .file-item.modified .icon { color: #d29922; }
+  .progress-bar { width: 100%; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #3fb950, #58a6ff); border-radius: 4px; transition: width 0.5s; }
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #30363d; }
+  .timeline-item { position: relative; margin-bottom: 16px; }
+  .timeline-item::before { content: ''; position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #30363d; }
+  .timeline-item.done::before { background: #3fb950; border-color: #3fb950; }
+  .timeline-item .time { color: #8b949e; font-size: 12px; }
+  .timeline-item .desc { margin-top: 2px; font-size: 14px; }
+  .footer { text-align: center; color: #484f58; font-size: 12px; margin-top: 32px; }
+  @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TechAI → ModolAI Sync Dashboard</h1>
+  <p>3rd Synchronization Report &mdash; 2026-03-22</p>
+  <p style="margin-top: 4px; color: #58a6ff;">techai/web <code>173a665</code> → <code>4309851</code> (43 commits)</p>
+</div>
+
+<div class="stats">
+  <div class="stat-card green">
+    <div class="number">43</div>
+    <div class="label">Total Commits Analyzed</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="number">13</div>
+    <div class="label">Already Ported</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="number">4</div>
+    <div class="label">Newly Ported</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="number">6</div>
+    <div class="label">Files Modified</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Overall Progress</h2>
+  <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px;">
+    <span>Sync Completion</span>
+    <span style="color: #3fb950; font-weight: 700;">100%</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" style="width: 100%;"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Feature Porting Status</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Priority</th>
+        <th>Feature</th>
+        <th>Status</th>
+        <th>Detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="priority p1">P1</span></td><td>Draw (Canvas) — HTML Visualization</td><td><span class="badge done">Already Ported</span></td><td>DrawPreviewPanel + ChatInput + admin settings</td></tr>
+      <tr><td><span class="priority p1">P1</span></td><td>Custom Instruction</td><td><span class="badge done">Already Ported</span></td><td>Dialog modal + useChatSender + API</td></tr>
+      <tr><td><span class="priority p2">P2</span></td><td>DB Viewer + Column Tooltips</td><td><span class="badge done">Already Ported</span></td><td>/admin/database + CRUD API</td></tr>
+      <tr><td><span class="priority p2">P2</span></td><td>Message Soft Delete</td><td><span class="badge done">Already Ported</span></td><td>is_deleted + PATCH endpoint</td></tr>
+      <tr><td><span class="priority p2">P2</span></td><td>useChatSender Infinite Render Fix</td><td><span class="badge done">Already Ported</span></td><td>Ref pattern conversion</td></tr>
+      <tr><td><span class="priority p2">P2</span></td><td>Settings Migration (15 columns)</td><td><span class="badge new">Newly Ported</span></td><td>endpoint, file parsing, API config cols</td></tr>
+      <tr><td><span class="priority p2">P2</span></td><td>Messages Soft Delete Migration</td><td><span class="badge new">Newly Ported</span></td><td>migrate-models + try-catch guard</td></tr>
+      <tr><td><span class="priority p2">P2</span></td><td>v1/rerank & embeddings Logging</td><td><span class="badge new">Newly Ported</span></td><td>logExternalApiRequest added</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>AI Disclaimer Text</td><td><span class="badge new">Newly Ported</span></td><td>main page.js + i18n (en/ko)</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>Markdown Link New Tab</td><td><span class="badge done">Already Ported</span></td><td>target="_blank" in MessageList</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>Sidebar Scrollbar Fix</td><td><span class="badge done">Already Ported</span></td><td>overflow-x-hidden</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>PatchNotesModal</td><td><span class="badge done">Already Ported</span></td><td>Component + Sidebar integration</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>Manager Badge / Sidebar Access</td><td><span class="badge done">Already Ported</span></td><td>Sidebar.js role check</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>Role Inline Dropdown (3-level)</td><td><span class="badge done">Already Ported</span></td><td>admin/manager/user dropdown</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>Agent Visibility Toggle</td><td><span class="badge done">Already Ported</span></td><td>Eye/EyeOff in admin agents</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>User Default Model Setting</td><td><span class="badge done">Already Ported</span></td><td>/api/user/settings + user_settings</td></tr>
+      <tr><td><span class="priority p3">P3</span></td><td>snake_case Bug Fix</td><td><span class="badge done">Already Ported</span></td><td>modelServers.js fallback</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Modified Files (This Sync)</h2>
+  <div class="files-section">
+    <div class="file-item modified"><span class="icon">M</span> app/api/admin/migrate-models/route.js</div>
+    <div class="file-item modified"><span class="icon">M</span> app/api/v1/rerank/route.js</div>
+    <div class="file-item modified"><span class="icon">M</span> app/api/v1/embeddings/route.js</div>
+    <div class="file-item modified"><span class="icon">M</span> app/page.js</div>
+    <div class="file-item modified"><span class="icon">M</span> app/lib/i18n/en.json</div>
+    <div class="file-item modified"><span class="icon">M</span> app/lib/i18n/ko.json</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Work Timeline</h2>
+  <div class="timeline">
+    <div class="timeline-item done">
+      <div class="time">Step 1</div>
+      <div class="desc">43 commits analyzed (techai/web 173a665..4309851)</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 2</div>
+      <div class="desc">3 parallel architect agents analyzed P1/P2/P3 features</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 3</div>
+      <div class="desc">13 features confirmed already ported</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 4</div>
+      <div class="desc">migrate-models: 15 settings columns + messages soft-delete + try-catch</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 5</div>
+      <div class="desc">Independent verifier found 3 additional gaps</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 6</div>
+      <div class="desc">v1/rerank + v1/embeddings logExternalApiRequest added</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 7</div>
+      <div class="desc">AI disclaimer text added to main page.js + i18n keys</div>
+    </div>
+    <div class="timeline-item done">
+      <div class="time">Step 8</div>
+      <div class="desc">Build verification passed (SKIP_DB_CONNECTION=true npm run build)</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Generated on 2026-03-22 &mdash; TechAI → ModolAI 3rd Sync
+</div>
+
+</body>
+</html>

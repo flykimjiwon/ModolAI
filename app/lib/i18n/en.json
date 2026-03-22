@@ -1263,6 +1263,7 @@
     "delete_user": "Delete user",
     "auth_local": "Local",
     "count_suffix": "{count} users",
-    "change_role": "Change role"
+    "change_role": "Change role",
+    "ai_disclaimer": "ModolAI can make mistakes. Please verify important information."
   }
 }

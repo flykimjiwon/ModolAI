@@ -496,6 +496,9 @@ export default function Home() {
           customInstructionActive={customInstructionActive}
           onCustomInstructionClick={() => setShowCustomInstructionModal(true)}
         />
+        <p className='text-center text-[11px] text-muted-foreground mt-2.5 leading-normal'>
+          {t('ai_disclaimer')}
+        </p>
         <Dialog
           open={showCustomInstructionModal}
           onOpenChange={setShowCustomInstructionModal}

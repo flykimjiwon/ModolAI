@@ -445,7 +445,22 @@ export async function POST(request) {
       ADD COLUMN IF NOT EXISTS support_contacts_enabled BOOLEAN DEFAULT true,
       ADD COLUMN IF NOT EXISTS manual_preset_base_url VARCHAR(500) DEFAULT 'https://api.openai.com',
       ADD COLUMN IF NOT EXISTS manual_preset_api_base VARCHAR(500) DEFAULT 'https://api.openai.com',
-      ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local'
+      ADD COLUMN IF NOT EXISTS login_type VARCHAR(20) DEFAULT 'local',
+      ADD COLUMN IF NOT EXISTS ollama_endpoints TEXT,
+      ADD COLUMN IF NOT EXISTS endpoint_type VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS custom_endpoints JSONB,
+      ADD COLUMN IF NOT EXISTS openai_compat_base VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS openai_compat_api_key TEXT,
+      ADD COLUMN IF NOT EXISTS file_parsing_model VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS file_parsing_enabled BOOLEAN DEFAULT true,
+      ADD COLUMN IF NOT EXISTS room_name_generation_model VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS max_file_size BIGINT,
+      ADD COLUMN IF NOT EXISTS max_files_per_room INTEGER,
+      ADD COLUMN IF NOT EXISTS max_total_size_per_room BIGINT,
+      ADD COLUMN IF NOT EXISTS supported_image_formats JSONB,
+      ADD COLUMN IF NOT EXISTS supported_document_formats JSONB,
+      ADD COLUMN IF NOT EXISTS api_config_example TEXT,
+      ADD COLUMN IF NOT EXISTS api_curl_example TEXT
     `);
     console.log('[Migration] ✓ Added settings table columns');
 
@@ -526,12 +541,25 @@ export async function POST(request) {
     console.log('[Migration] ✓ Added users.last_active_at column');
     console.log('[Migration] ✓ Added users table SSO columns');
 
-    // model_logs table: add user_id column (for web chat token aggregation)
+    // messages table: add soft-delete columns
     await query(`
-      ALTER TABLE model_logs
-      ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP,
+      ADD COLUMN IF NOT EXISTS deleted_by UUID
     `);
-    console.log('[Migration] ✓ Added model_logs.user_id column');
+    console.log('[Migration] ✓ Added messages soft-delete columns');
+
+    // model_logs table: add user_id column (for web chat token aggregation)
+    try {
+      await query(`
+        ALTER TABLE model_logs
+        ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE SET NULL
+      `);
+      console.log('[Migration] ✓ Added model_logs.user_id column');
+    } catch (e) {
+      console.warn('[Migration] ⚠ model_logs ALTER failed (table may not exist):', e.message);
+    }
 
     // Add view count columns to notices and board_posts
     await query(`
@@ -609,20 +637,30 @@ export async function POST(request) {
     `);
     console.log('[Migration] ✓ Added index');
 
-    await query(`
-      CREATE INDEX IF NOT EXISTS idx_model_logs_user_id ON model_logs(user_id)
-    `);
+    try {
+      await query(`
+        CREATE INDEX IF NOT EXISTS idx_model_logs_user_id ON model_logs(user_id)
+      `);
+    } catch (e) {
+      console.warn('[Migration] ⚠ model_logs index creation failed (table may not exist):', e.message);
+    }
 
     // Adjust error log-related tables
     for (const table of REQUIRED_TABLES) {
-      await query(table.create);
-      for (const col of table.ensureColumns || []) {
-        await query(col).catch(() => {});
+      try {
+        await query(table.create);
+        for (const col of table.ensureColumns || []) {
+          await query(col).catch(() => {});
+        }
+        for (const indexQuery of table.indexes || []) {
+          await query(indexQuery).catch((err) => {
+            console.warn(`[Migration] ⚠ ${table.name} index failed:`, err.message);
+          });
+        }
+        console.log(`[Migration] ✓ Adjusted ${table.name} table`);
+      } catch (tableErr) {
+        console.warn(`[Migration] ⚠ ${table.name} table creation failed:`, tableErr.message);
       }
-      for (const indexQuery of table.indexes || []) {
-        await query(indexQuery);
-      }
-      console.log(`[Migration] ✓ Adjusted ${table.name} table`);
     }
 
     // Check results

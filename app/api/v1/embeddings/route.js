@@ -8,6 +8,7 @@ import {
   getModelServerEndpointByLabel,
   parseModelName,
 } from '@/lib/modelServers';
+import { logExternalApiRequest } from '@/lib/externalApiLogger';
 import { JWT_SECRET } from '@/lib/config';
 
 const corsHeaders = {
@@ -213,6 +214,10 @@ export async function POST(request) {
       );
     }
 
+    const startTime = Date.now();
+    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '';
+    const userAgent = request.headers.get('user-agent') || '';
+
     const body = await request.json().catch(() => ({}));
     const model = body.model || body.modelId;
     const input = body.input;
@@ -338,6 +343,23 @@ export async function POST(request) {
           }
         : manualData;
 
+      logExternalApiRequest({
+        sourceType: 'external',
+        provider: 'manual',
+        apiType: 'embeddings',
+        endpoint: '/v1/embeddings',
+        model,
+        promptTokenCount: 0,
+        responseTokenCount: 0,
+        isStream: false,
+        responseTime: Date.now() - startTime,
+        statusCode: 200,
+        clientIP,
+        userAgent,
+        jwtUserId: verificationResult.tokenInfo?.userId,
+        tokenHash: verificationResult.tokenInfo?.tokenHash,
+      }).catch(() => {});
+
       return NextResponse.json(finalData, {
         status: 200,
         headers: corsHeaders,
@@ -373,6 +395,24 @@ export async function POST(request) {
         signal: AbortSignal.timeout(30000),
       });
       const data = await response.json().catch(() => ({}));
+
+      logExternalApiRequest({
+        sourceType: 'external',
+        provider: endpointInfo.type || 'openai-compatible',
+        apiType: 'embeddings',
+        endpoint: '/v1/embeddings',
+        model: resolvedModel,
+        promptTokenCount: 0,
+        responseTokenCount: 0,
+        isStream: false,
+        responseTime: Date.now() - startTime,
+        statusCode: response.status,
+        clientIP,
+        userAgent,
+        jwtUserId: verificationResult.tokenInfo?.userId,
+        tokenHash: verificationResult.tokenInfo?.tokenHash,
+      }).catch(() => {});
+
       return NextResponse.json(data, {
         status: response.status,
         headers: corsHeaders,
@@ -438,6 +478,23 @@ export async function POST(request) {
         index: i,
       });
     }
+
+    logExternalApiRequest({
+      sourceType: 'external',
+      provider: 'ollama',
+      apiType: 'embeddings',
+      endpoint: '/v1/embeddings',
+      model: resolvedModel,
+      promptTokenCount: 0,
+      responseTokenCount: 0,
+      isStream: false,
+      responseTime: Date.now() - startTime,
+      statusCode: 200,
+      clientIP,
+      userAgent,
+      jwtUserId: verificationResult.tokenInfo?.userId,
+      tokenHash: verificationResult.tokenInfo?.tokenHash,
+    }).catch(() => {});
 
     return NextResponse.json(
       {
