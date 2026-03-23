@@ -4,9 +4,7 @@ import { verifyTokenWithResult } from '@/lib/auth';
 
 const MAX_HISTORY_ITEMS = 50;
 
-let tableChecked = false;
 async function ensureTable() {
-  if (tableChecked) return;
   await query(`CREATE TABLE IF NOT EXISTS agent_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -22,7 +20,6 @@ async function ensureTable() {
     UNIQUE(user_id, agent_id, entry_id)
   )`).catch(() => {});
   await query('CREATE INDEX IF NOT EXISTS idx_agent_history_user_agent ON agent_history(user_id, agent_id)').catch(() => {});
-  tableChecked = true;
 }
 
 export async function GET(request) {

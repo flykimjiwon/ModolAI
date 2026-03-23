@@ -81,12 +81,18 @@ export async function GET(request) {
       );
 
       // Measure per-column size only when rows exist
-      const rowCountCheck = await query(`SELECT COUNT(*)::int AS cnt FROM "${targetTable}"`);
+      const SAFE_IDENT = /^[a-z_][a-z0-9_]*$/;
+      const safeTable = targetTable;
+      if (!SAFE_IDENT.test(safeTable)) {
+        return NextResponse.json({ success: false, error: 'Invalid table name.' }, { status: 400 });
+      }
+
+      const rowCountCheck = await query(`SELECT COUNT(*)::int AS cnt FROM "${safeTable}"`);
       const rowCnt = rowCountCheck.rows[0].cnt;
 
       if (rowCnt > 0) {
         // Per-column pg_column_size avg + NULL ratio
-        const colNames = colsResult.rows.map(c => c.column_name);
+        const colNames = colsResult.rows.map(c => c.column_name).filter(n => SAFE_IDENT.test(n));
         const selectParts = colNames.map(name =>
           `AVG(pg_column_size("${name}"))::numeric(12,1) AS "avg_${name}",
            (COUNT(*) FILTER (WHERE "${name}" IS NULL))::float / GREATEST(COUNT(*), 1) AS "null_${name}"`
@@ -97,7 +103,7 @@ export async function GET(request) {
           SELECT
             AVG(pg_column_size(t.*))::numeric(12,1) AS avg_row_size,
             ${selectParts}
-          FROM "${targetTable}" t
+          FROM "${safeTable}" t
         `;
         const sizeResult = await query(sizeQuery);
         const sizeRow = sizeResult.rows[0];
@@ -184,8 +190,8 @@ export async function POST(request) {
     const beforeBytes = Number(beforeResult.rows[0].bytes);
     const beforePretty = beforeResult.rows[0].pretty;
 
-    // Run VACUUM FULL (exclusive lock — table temporarily inaccessible)
-    await query(`VACUUM FULL "${tableName}"`);
+    // Run VACUUM (non-blocking — allows concurrent reads)
+    await query(`VACUUM "${tableName}"`);
 
     // Size after VACUUM FULL
     const afterResult = await query(

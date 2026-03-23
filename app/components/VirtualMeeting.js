@@ -268,7 +268,7 @@ export default function VirtualMeeting({ sidebarMenu = '', onRequestSidebarMenuC
       } catch {}
     };
     loadCustomPersonas();
-  }, []);
+  }, [t]);
 
   // ── Chat auto-scroll ──
   useEffect(() => {
@@ -441,7 +441,7 @@ export default function VirtualMeeting({ sidebarMenu = '', onRequestSidebarMenuC
         setError(event.message || t('virtual_meeting.meeting_error', 'An error occurred during the meeting.'));
         break;
     }
-  }, []);
+  }, [t]);
 
   // ── Start meeting (custom SSE streaming) ──
   const startMeeting = useCallback(async () => {
@@ -548,7 +548,7 @@ export default function VirtualMeeting({ sidebarMenu = '', onRequestSidebarMenuC
       setError(err.message || t('virtual_meeting.meeting_error', 'An error occurred during the meeting.'));
       setStep('setup');
     }
-  }, [topic, context, selectedPersonas, meetingFormat, roundCount, framework, selectedModel, personaModels, handleMeetingEvent, minSpeechPerRound, leaderId, customFormatText, summaryModel]);
+  }, [topic, context, selectedPersonas, meetingFormat, roundCount, framework, selectedModel, personaModels, handleMeetingEvent, minSpeechPerRound, leaderId, customFormatText, summaryModel, t]);
 
   // ── Save history on result ──
   useEffect(() => {

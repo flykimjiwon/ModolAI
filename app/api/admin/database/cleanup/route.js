@@ -15,6 +15,15 @@ const DEFAULT_RETENTION = {
   qa_logs: 90,
 };
 
+const TABLE_TS_COLUMNS = {
+  app_error_logs: 'created_at',
+  model_logs: 'timestamp',
+  model_server_error_history: 'checked_at',
+  external_api_logs: 'timestamp',
+  external_api_prompts: 'created_at',
+  qa_logs: 'created_at',
+};
+
 /**
  * GET /api/admin/database/cleanup
  * Get status of each log table (row count, size, oldest/newest date)
@@ -29,21 +38,17 @@ export async function GET(request) {
 
     for (const table of tables) {
       try {
-        // Determine timestamp column name
-        const tsCol = table === 'model_logs' ? 'timestamp'
-          : table === 'model_server_error_history' ? 'checked_at'
-          : table === 'external_api_logs' ? 'timestamp'
-          : 'created_at';
+        const tsCol = TABLE_TS_COLUMNS[table] || 'created_at';
 
         const result = await query(`
           SELECT
             COUNT(*)::int AS row_count,
-            pg_size_pretty(pg_total_relation_size('${table}'::regclass)) AS size_pretty,
-            pg_total_relation_size('${table}'::regclass) AS size_bytes,
+            pg_size_pretty(pg_total_relation_size($1::regclass)) AS size_pretty,
+            pg_total_relation_size($1::regclass) AS size_bytes,
             MIN(${tsCol}) AS oldest,
             MAX(${tsCol}) AS newest
           FROM "${table}"
-        `);
+        `, [table]);
         const r = result.rows[0];
         stats.push({
           table,
@@ -87,15 +92,13 @@ export async function POST(request) {
     for (const [table, days] of Object.entries(retentionDays)) {
       if (!DEFAULT_RETENTION[table]) continue; // Only allowed tables
 
-      const tsCol = table === 'model_logs' ? 'timestamp'
-        : table === 'model_server_error_history' ? 'checked_at'
-        : table === 'external_api_logs' ? 'timestamp'
-        : 'created_at';
+      const tsCol = TABLE_TS_COLUMNS[table] || 'created_at';
 
       try {
         if (dryRun) {
           const countResult = await query(
-            `SELECT COUNT(*)::int AS cnt FROM "${table}" WHERE ${tsCol} < NOW() - INTERVAL '${parseInt(days)} days'`
+            `SELECT COUNT(*)::int AS cnt FROM "${table}" WHERE ${tsCol} < NOW() - make_interval(days => $1)`,
+            [parseInt(days)]
           );
           results.push({
             table,
@@ -109,10 +112,11 @@ export async function POST(request) {
           if (table === 'external_api_prompts') {
             const deleteResult = await query(
               `DELETE FROM external_api_prompts
-               WHERE created_at < NOW() - INTERVAL '${parseInt(days)} days'
+               WHERE created_at < NOW() - make_interval(days => $1)
                  AND id NOT IN (
                    SELECT prompt_id FROM external_api_logs WHERE prompt_id IS NOT NULL
-                 )`
+                 )`,
+              [parseInt(days)]
             );
             results.push({
               table,
@@ -121,7 +125,8 @@ export async function POST(request) {
             });
           } else {
             const deleteResult = await query(
-              `DELETE FROM "${table}" WHERE ${tsCol} < NOW() - INTERVAL '${parseInt(days)} days'`
+              `DELETE FROM "${table}" WHERE ${tsCol} < NOW() - make_interval(days => $1)`,
+              [parseInt(days)]
             );
             results.push({
               table,

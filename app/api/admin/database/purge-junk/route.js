@@ -198,10 +198,10 @@ export async function POST(request) {
       } catch (e) { results.push({ id: 'external_api_jsonb', error: e.message }); }
     }
 
-    // VACUUM FULL to reclaim actual disk space
+    // VACUUM to reclaim space (non-blocking — allows concurrent reads)
     const affectedTables = new Set(results.filter(r => (r.deletedRows > 0 || r.updatedRows > 0)).map(r => r.table));
     for (const table of affectedTables) {
-      try { await query(`VACUUM FULL "${table}"`); } catch { /* ignore */ }
+      try { await query(`VACUUM "${table}"`); } catch { /* ignore */ }
     }
 
     return NextResponse.json({

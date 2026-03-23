@@ -5,9 +5,7 @@ import { createServerError } from '@/lib/errorHandler';
 import { getNextModelServerEndpointWithIndex } from '@/lib/modelServers';
 import { logExternalApiRequest } from '@/lib/externalApiLogger';
 
-let tableChecked = false;
 async function ensureMemoryTable() {
-  if (tableChecked) return;
   await query(`
     CREATE TABLE IF NOT EXISTS user_memories (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -16,11 +14,12 @@ async function ensureMemoryTable() {
       last_indexed_id UUID,
       indexed_count INTEGER DEFAULT 0,
       is_indexing BOOLEAN DEFAULT false,
+      locked_at TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
   await query('ALTER TABLE user_memories ADD COLUMN IF NOT EXISTS is_indexing BOOLEAN DEFAULT false').catch(() => {});
-  tableChecked = true;
+  await query('ALTER TABLE user_memories ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP').catch(() => {});
 }
 
 const MEMORY_SYSTEM_PROMPT = `You are a memory summarizer. Output in Korean. Summarize user interests, projects, preferences, tech stack concisely. Merge new info with existing memory. Remove outdated info. Keep under 2000 characters. Use bullet points by category. Return ONLY the updated memory text.`;
@@ -67,19 +66,21 @@ export async function POST(request) {
 
     await ensureMemoryTable();
 
-    // Prevent concurrent indexing
+    // Prevent concurrent indexing (with 10-minute stale lock TTL)
     const lockResult = await query(
-      'UPDATE user_memories SET is_indexing = true WHERE user_id = $1 AND is_indexing = false RETURNING user_id',
+      `UPDATE user_memories SET is_indexing = true, locked_at = NOW()
+       WHERE user_id = $1 AND (is_indexing = false OR locked_at < NOW() - INTERVAL '10 minutes')
+       RETURNING user_id`,
       [userId]
     ).catch(() => ({ rows: [] }));
 
     if (lockResult.rows.length === 0) {
-      const existing = await query('SELECT is_indexing FROM user_memories WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
+      const existing = await query('SELECT is_indexing, locked_at FROM user_memories WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
       if (existing.rows.length > 0 && existing.rows[0].is_indexing) {
         return NextResponse.json({ message: 'Indexing already in progress.', indexed: 0 });
       }
       await query(
-        'INSERT INTO user_memories (user_id, is_indexing) VALUES ($1, true) ON CONFLICT (user_id) DO UPDATE SET is_indexing = true',
+        'INSERT INTO user_memories (user_id, is_indexing, locked_at) VALUES ($1, true, NOW()) ON CONFLICT (user_id) DO UPDATE SET is_indexing = true, locked_at = NOW()',
         [userId]
       ).catch(() => {});
     }
@@ -199,8 +200,9 @@ export async function POST(request) {
         jwtUserId: userId,
       }).catch(() => {});
 
+      const cutIdx = rawMemory.length > 2000 ? rawMemory.lastIndexOf('\n', 2000) : -1;
       const updatedMemory = rawMemory.length > 2000
-        ? rawMemory.slice(0, rawMemory.lastIndexOf('\n', 2000) || 2000)
+        ? rawMemory.slice(0, cutIdx === -1 ? 2000 : cutIdx)
         : rawMemory;
 
       const lastMsg = newMessages.rows[newMessages.rows.length - 1];

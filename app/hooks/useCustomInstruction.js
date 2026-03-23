@@ -16,17 +16,25 @@ export function useCustomInstruction(currentRoom, rooms) {
     if (!currentRoom) return;
     const token = localStorage.getItem('token');
     if (!token) return;
+    const prevText = customInstruction;
+    const prevActive = customInstructionActive;
     setCustomInstruction(text);
     setCustomInstructionActive(active);
 
     try {
-      await fetch(`/api/webapp-chat/room/${currentRoom}`, {
+      const res = await fetch(`/api/webapp-chat/room/${currentRoom}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ customInstruction: text, customInstructionActive: active }),
       });
+      if (!res.ok) {
+        setCustomInstruction(prevText);
+        setCustomInstructionActive(prevActive);
+      }
     } catch (e) {
       console.warn('Failed to save custom instruction:', e);
+      setCustomInstruction(prevText);
+      setCustomInstructionActive(prevActive);
     }
   };
 

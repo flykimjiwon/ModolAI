@@ -4,9 +4,7 @@ import { verifyTokenWithResult } from '@/lib/auth';
 
 const MAX_PERSONAS_PER_USER = 20;
 
-let tableChecked = false;
 async function ensureTable() {
-  if (tableChecked) return;
   await query(`
     CREATE TABLE IF NOT EXISTS user_meeting_personas (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -21,7 +19,6 @@ async function ensureTable() {
     )
   `);
   await query(`CREATE INDEX IF NOT EXISTS idx_user_meeting_personas_user ON user_meeting_personas(user_id)`);
-  tableChecked = true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,6 +77,9 @@ export async function POST(request) {
     if (!role || typeof role !== 'string' || !role.trim()) {
       return NextResponse.json({ error: 'Persona role is required' }, { status: 400 });
     }
+    if (instructions && instructions.length > 5000) {
+      return NextResponse.json({ error: 'Instructions must be 5000 characters or less' }, { status: 400 });
+    }
 
     const countResult = await query(
       `SELECT COUNT(*) AS cnt FROM user_meeting_personas WHERE user_id = $1`,
@@ -97,7 +97,7 @@ export async function POST(request) {
       `INSERT INTO user_meeting_personas (user_id, name, role, instructions, model_id, emoji)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, name, role, instructions, model_id, emoji, created_at, updated_at`,
-      [userId, name.trim(), role.trim(), instructions, model_id, emoji]
+      [userId, name.trim(), role.trim(), (instructions || '').trim(), model_id, emoji]
     );
 
     return NextResponse.json({ persona: insertResult.rows[0] }, { status: 201 });

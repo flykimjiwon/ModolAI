@@ -8,9 +8,7 @@ import { logExternalApiRequest } from '@/lib/externalApiLogger';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_BATCH_USERS = 50;
 
-let tableChecked = false;
 async function ensureTables() {
-  if (tableChecked) return;
   await query(`CREATE TABLE IF NOT EXISTS memory_settings (
     id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
     model_id VARCHAR(255) DEFAULT '', interval_minutes INTEGER DEFAULT 60,
@@ -21,11 +19,11 @@ async function ensureTables() {
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     memory TEXT DEFAULT '', last_indexed_id UUID, indexed_count INTEGER DEFAULT 0,
-    is_indexing BOOLEAN DEFAULT false,
+    is_indexing BOOLEAN DEFAULT false, locked_at TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )`).catch(() => {});
   await query('ALTER TABLE user_memories ADD COLUMN IF NOT EXISTS is_indexing BOOLEAN DEFAULT false').catch(() => {});
-  tableChecked = true;
+  await query('ALTER TABLE user_memories ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP').catch(() => {});
 }
 
 const MEMORY_SYSTEM_PROMPT = `You are a memory summarizer. Output in Korean. Summarize user interests, projects, preferences, tech stack concisely. Merge new info with existing memory. Remove outdated info. Keep under 2000 characters. Use bullet points by category. Return ONLY the updated memory text.`;
@@ -145,18 +143,20 @@ export async function PATCH(request) {
       try {
         // Prevent concurrent indexing
         const lockResult = await query(
-          `UPDATE user_memories SET is_indexing = true WHERE user_id = $1 AND is_indexing = false RETURNING user_id`,
+          `UPDATE user_memories SET is_indexing = true, locked_at = NOW()
+           WHERE user_id = $1 AND (is_indexing = false OR locked_at < NOW() - INTERVAL '10 minutes')
+           RETURNING user_id`,
           [userId]
         ).catch(() => ({ rows: [] }));
 
         if (lockResult.rows.length === 0) {
-          const existing = await query('SELECT is_indexing FROM user_memories WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
+          const existing = await query('SELECT is_indexing, locked_at FROM user_memories WHERE user_id = $1', [userId]).catch(() => ({ rows: [] }));
           if (existing.rows.length > 0 && existing.rows[0].is_indexing) {
             results.push({ userId, status: 'skip', reason: 'Already indexing' });
             continue;
           }
           await query(
-            'INSERT INTO user_memories (user_id, is_indexing) VALUES ($1, true) ON CONFLICT (user_id) DO UPDATE SET is_indexing = true',
+            'INSERT INTO user_memories (user_id, is_indexing, locked_at) VALUES ($1, true, NOW()) ON CONFLICT (user_id) DO UPDATE SET is_indexing = true, locked_at = NOW()',
             [userId]
           ).catch(() => {});
         }
@@ -262,8 +262,9 @@ export async function PATCH(request) {
             }).catch(() => {});
 
             // Truncate at newline boundary to prevent markdown break
+            const cutIdx = rawMemory.length > 2000 ? rawMemory.lastIndexOf('\n', 2000) : -1;
             runningMemory = rawMemory.length > 2000
-              ? rawMemory.slice(0, rawMemory.lastIndexOf('\n', 2000) || 2000)
+              ? rawMemory.slice(0, cutIdx === -1 ? 2000 : cutIdx)
               : rawMemory;
 
             batchLastId = batchRows[batchRows.length - 1].id;
