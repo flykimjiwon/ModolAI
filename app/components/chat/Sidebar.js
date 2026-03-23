@@ -45,6 +45,7 @@ function Sidebar({
   const { t } = useTranslation();
   const [editingRoom, setEditingRoom] = useState(null);
   const [editingName, setEditingName] = useState('');
+  const [visibleRoomCount, setVisibleRoomCount] = useState(10);
   const [alertModal, setAlertModal] = useState({
     isOpen: false,
     title: '',
@@ -387,7 +388,7 @@ function Sidebar({
           className='flex-1 min-h-0'
         >
           <div className='p-4 space-y-2'>
-            {rooms.map((room) => (
+            {rooms.slice(0, visibleRoomCount).map((room) => (
               <div
                 key={room._id}
                 id={`sidebar-room-${room._id}`}
@@ -542,6 +543,16 @@ function Sidebar({
                 </div>
               </div>
             ))}
+            {visibleRoomCount < rooms.length && (
+              <div className='pt-2'>
+                <button
+                  onClick={() => setVisibleRoomCount((prev) => Math.min(prev + 10, rooms.length))}
+                  className='w-full py-1.5 text-xs text-primary hover:text-primary/80 hover:bg-accent rounded-lg transition-colors'
+                >
+                  {t('sidebar_show_more', `Show more (${rooms.length - visibleRoomCount} remaining)`)}
+                </button>
+              </div>
+            )}
           </div>
         </ScrollArea>
 

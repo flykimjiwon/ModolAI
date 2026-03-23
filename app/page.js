@@ -122,6 +122,8 @@ export default function Home() {
   const [customInstructionActive, setCustomInstructionActive] = useState(false);
   const [showCustomInstructionModal, setShowCustomInstructionModal] =
     useState(false);
+  const [userMemory, setUserMemory] = useState('');
+  const [memoryEnabled, setMemoryEnabled] = useState(true);
   const [drawMode, setDrawMode] = useState(false);
   const [drawEnabled, setDrawEnabled] = useState(false);
   const [drawSystemPrompt, setDrawSystemPrompt] = useState(
@@ -165,6 +167,7 @@ export default function Home() {
     maxUserQuestionLength,
     customInstruction,
     customInstructionActive,
+    userMemory: memoryEnabled ? userMemory : '',
     drawMode,
     drawSystemPrompt,
   });
@@ -172,6 +175,23 @@ export default function Home() {
   const isUIBusy = loading;
 
   // ---------- Effects ----------
+
+  // Load user memory on mount
+  useEffect(() => {
+    const loadMemory = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch('/api/user/memory', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setUserMemory(data.memory || '');
+        }
+      } catch { /* ignore */ }
+    };
+    loadMemory();
+  }, []);
+
   useEffect(() => {
     if (!currentRoom) return;
     if (loading || chatLoading || modelsLoading) return;

@@ -9,13 +9,29 @@ import AgentSidebar from '@/components/chat/AgentSidebar';
 import ChatLayout from '@/components/chat/ChatLayout';
 import AgentSelector from '@/components/AgentSelector';
 import PPTMaker from '@/components/PPTMaker';
+import ChartMaker from '@/components/ChartMaker';
+import VirtualMeeting from '@/components/VirtualMeeting';
 
 // Agent information
 const AGENT_INFO = {
+  '1': {
+    name: 'Virtual Meeting',
+    description: 'Simulate multi-persona meetings with AI-driven discussions and summaries',
+    icon: Bot,
+    color: 'text-foreground',
+    bgColor: 'bg-muted',
+  },
   '7': {
     name: 'PPT Maker',
     description: 'Enter a topic and format, and AI generates a presentation',
     icon: Presentation,
+    color: 'text-foreground',
+    bgColor: 'bg-muted',
+  },
+  '10': {
+    name: 'Chart Maker',
+    description: 'Select chart type, color theme, and enter data to generate charts with AI',
+    icon: Bot,
     color: 'text-foreground',
     bgColor: 'bg-muted',
   },
@@ -104,9 +120,13 @@ export default function AgentPage() {
   useEffect(() => {
     if (agentId === '7') {
       setActiveAgentMenu('ppt-compose');
-      return;
+    } else if (agentId === '10') {
+      setActiveAgentMenu('chart-compose');
+    } else if (agentId === '1') {
+      setActiveAgentMenu('meeting-setup');
+    } else {
+      setActiveAgentMenu('');
     }
-    setActiveAgentMenu('');
   }, [agentId]);
 
   const handleLogout = async () => {
@@ -250,10 +270,24 @@ export default function AgentPage() {
           </div>
         </div>
 
-        <PPTMaker
-          sidebarMenu={activeAgentMenu}
-          onRequestSidebarMenuChange={setActiveAgentMenu}
-        />
+        {agentId === '7' && (
+          <PPTMaker
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
+        {agentId === '10' && (
+          <ChartMaker
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
+        {agentId === '1' && (
+          <VirtualMeeting
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
       </div>
     </ChatLayout>
   );

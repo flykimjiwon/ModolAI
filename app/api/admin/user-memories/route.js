@@ -235,7 +235,19 @@ export async function PATCH(request) {
                 responseTime: llmElapsed, statusCode: llmRes.status, error: `Memory indexing failed: HTTP ${llmRes.status}`,
                 jwtUserId: userId,
               }).catch(() => {});
-              results.push({ userId, status: 'error', reason: `LLM ${llmRes.status} (batch ${batch + 1})` });
+              results.push({
+                userId,
+                status: 'error',
+                reason: `LLM ${llmRes.status} (batch ${batch + 1})`,
+                detail: {
+                  statusCode: llmRes.status,
+                  endpoint: llmUrl,
+                  model: targetModel,
+                  provider: endpoint.provider || 'model-server',
+                  responseTime: llmElapsed,
+                  errorBody: errText.slice(0, 500),
+                },
+              });
               break;
             }
 

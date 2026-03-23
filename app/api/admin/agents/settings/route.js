@@ -38,6 +38,10 @@ async function ensureAgentSettingsTable() {
   await query(
     'CREATE INDEX IF NOT EXISTS idx_agent_settings_selected_model ON agent_settings(selected_model_id)'
   );
+  await query(`
+    ALTER TABLE agent_settings
+    ADD COLUMN IF NOT EXISTS extra_config JSONB DEFAULT '{}'
+  `).catch(() => {});
 }
 
 function flattenModels(categories) {
@@ -115,7 +119,7 @@ export async function GET(request) {
 
     const [settingsResult, modelOptions] = await Promise.all([
       query(
-        `SELECT agent_id, selected_model_id, default_slide_count, default_theme, default_tone, allow_user_model_override
+        `SELECT agent_id, selected_model_id, default_slide_count, default_theme, default_tone, allow_user_model_override, extra_config
          FROM agent_settings`
       ),
       getModelOptions(),
@@ -129,6 +133,7 @@ export async function GET(request) {
         defaultTheme: row.default_theme || DEFAULT_SETTINGS.defaultTheme,
         defaultTone: row.default_tone || DEFAULT_SETTINGS.defaultTone,
         allowUserModelOverride: row.allow_user_model_override === true,
+        extraConfig: row.extra_config || {},
       };
     }
 
@@ -197,6 +202,8 @@ export async function POST(request) {
         model.dbId === normalized.value.selectedModelId
     )?.id;
 
+    const extraConfig = normalized.value.extraConfig || {};
+
     const result = await query(
       `INSERT INTO agent_settings (
          agent_id,
@@ -205,9 +212,10 @@ export async function POST(request) {
          default_theme,
          default_tone,
          allow_user_model_override,
+         extra_config,
          updated_by
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (agent_id)
        DO UPDATE SET
          selected_model_id = EXCLUDED.selected_model_id,
@@ -215,9 +223,10 @@ export async function POST(request) {
          default_theme = EXCLUDED.default_theme,
          default_tone = EXCLUDED.default_tone,
          allow_user_model_override = EXCLUDED.allow_user_model_override,
+         extra_config = EXCLUDED.extra_config,
          updated_by = EXCLUDED.updated_by,
          updated_at = CURRENT_TIMESTAMP
-       RETURNING agent_id, selected_model_id, default_slide_count, default_theme, default_tone, allow_user_model_override`,
+       RETURNING agent_id, selected_model_id, default_slide_count, default_theme, default_tone, allow_user_model_override, extra_config`,
       [
         agentId,
         normalizedSelectedModel || null,
@@ -225,6 +234,7 @@ export async function POST(request) {
         normalized.value.defaultTheme,
         normalized.value.defaultTone,
         normalized.value.allowUserModelOverride,
+        JSON.stringify(extraConfig),
         authResult.user.id,
       ]
     );

@@ -235,12 +235,29 @@ export default function UserMemoriesPage() {
           <div className="font-medium text-green-800 dark:text-green-300 mb-2">{indexResults.message}</div>
           <div className="grid grid-cols-3 gap-2 text-sm">
             {indexResults.results?.map((r, i) => (
-              <div key={i} className={`px-2 py-1 rounded ${
-                r.status === 'success' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
-                : r.status === 'skip' ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
-              }`}>
-                {r.status === 'success' ? `+${r.indexed}` : r.reason}
+              <div key={i}>
+                <div className={`px-2 py-1 rounded ${
+                  r.status === 'success' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                  : r.status === 'skip' ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                  : 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300'
+                }`}>
+                  {r.status === 'success' ? `+${r.indexed}` : r.reason}
+                </div>
+                {r.status === 'error' && r.detail && (
+                  <div className="mt-1 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-[10px] text-red-700 dark:text-red-300 space-y-0.5">
+                    {r.detail.statusCode && <div><span className="font-semibold">Status:</span> {r.detail.statusCode}</div>}
+                    {r.detail.endpoint && <div><span className="font-semibold">Endpoint:</span> {r.detail.endpoint}</div>}
+                    {r.detail.model && <div><span className="font-semibold">Model:</span> {r.detail.model}</div>}
+                    {r.detail.provider && <div><span className="font-semibold">Provider:</span> {r.detail.provider}</div>}
+                    {r.detail.responseTime != null && <div><span className="font-semibold">Response time:</span> {r.detail.responseTime}ms</div>}
+                    {r.detail.errorBody && (
+                      <div className="mt-1 break-all">
+                        <span className="font-semibold">Response:</span>{' '}
+                        <code className="text-[9px] bg-red-100 dark:bg-red-900/30 px-1 py-0.5 rounded">{r.detail.errorBody}</code>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -5,7 +5,9 @@ import { createServerError } from '@/lib/errorHandler';
 
 // Define agent list
 const AGENTS = [
+  { id: '1', name: 'Virtual Meeting', description: 'Simulate multi-persona meetings with AI-driven discussions and summaries' },
   { id: '7', name: 'PPT Maker', description: 'Enter a topic and format, and AI generates a presentation' },
+  { id: '10', name: 'Chart Maker', description: 'Select chart type, color theme, and enter data to generate charts with AI' },
 ];
 
 // GET: Retrieve agent list and permissions

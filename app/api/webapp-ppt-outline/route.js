@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
 import { verifyTokenWithResult } from '@/lib/auth';
 import { resolveModelId, getDefaultModel } from '@/lib/modelServers';
+import { logExternalApiRequest } from '@/lib/externalApiLogger';
 
 const ALLOWED_THEMES = new Set(['light', 'dark']);
 const ALLOWED_TONES = new Set(['business', 'casual']);
@@ -214,6 +215,8 @@ export async function POST(request) {
 
     const origin = new URL(request.url).origin;
     const authHeader = request.headers.get('authorization') || '';
+    const userId = authResult.user?.sub || authResult.user?.id || '';
+    const llmStartTime = Date.now();
 
     const upstreamResponse = await fetch(`${origin}/api/webapp-generate`, {
       method: 'POST',
@@ -236,6 +239,13 @@ export async function POST(request) {
     });
 
     if (!upstreamResponse.ok) {
+      logExternalApiRequest({
+        sourceType: 'internal', provider: 'model-server', apiType: 'ppt-outline',
+        endpoint: `${origin}/api/webapp-generate`, model: resolvedModelName,
+        promptTokenCount: userPrompt.length, responseTokenCount: 0,
+        responseTime: Date.now() - llmStartTime, statusCode: upstreamResponse.status,
+        isStream: true, jwtUserId: userId, error: `HTTP ${upstreamResponse.status}`,
+      }).catch(() => {});
       // Fallback to placeholder outlines
       const slides = generatePlaceholderOutlines(topic, slideCount);
       return NextResponse.json({ slides, fallback: true });
@@ -266,6 +276,15 @@ export async function POST(request) {
     }
 
     const accumulatedText = accumulateSseStream(rawText);
+
+    logExternalApiRequest({
+      sourceType: 'internal', provider: 'model-server', apiType: 'ppt-outline',
+      endpoint: `${origin}/api/webapp-generate`, model: resolvedModelName,
+      promptTokenCount: userPrompt.length, responseTokenCount: accumulatedText.length,
+      responseTime: Date.now() - llmStartTime, statusCode: 200,
+      isStream: true, jwtUserId: userId,
+    }).catch(() => {});
+
     const parsed = extractJsonFromText(accumulatedText);
 
     if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length === 0) {

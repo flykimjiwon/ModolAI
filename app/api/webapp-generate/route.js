@@ -1910,8 +1910,9 @@ export async function POST(request) {
         headers['Authorization'] = `Bearer ${openaiCompatApiKey}`;
 
       // Build message array for OpenAI-compatible API
+      const hasSystemInHistory = filteredMultiturnHistory.some((m) => m.role === 'system');
       const openaiMessages = [
-        ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
+        ...(systemPrompt && !hasSystemInHistory ? [{ role: 'system', content: systemPrompt }] : []),
         ...filteredMultiturnHistory.map((msg) => ({
           role: msg.role,
           content: typeof msg.text === 'string' ? msg.text : msg.text || '',
@@ -1925,11 +1926,20 @@ export async function POST(request) {
         },
       ];
 
+      // actualModelName is already DB-mapped via resolveModelId() — use as-is
       const body = {
-        model: actualModelName, // Use value converted from UUID -> actual model name
-        stream: true,
+        model: actualModelName,
+        stream: llmPayload?.stream !== false,
         messages: openaiMessages,
       };
+
+      // Extract temperature, max_tokens from options if provided
+      if (llmPayload?.options?.temperature != null) {
+        body.temperature = llmPayload.options.temperature;
+      }
+      if (llmPayload?.options?.max_tokens != null) {
+        body.max_tokens = llmPayload.options.max_tokens;
+      }
 
       const startAt = Date.now();
       const openaiRes = await fetch(openaiUrl, {

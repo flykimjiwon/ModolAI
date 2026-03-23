@@ -174,6 +174,7 @@ export function useChatSender({
   maxUserQuestionLength = DEFAULT_MAX_USER_QUESTION_LENGTH,
   customInstruction = '',
   customInstructionActive = false,
+  userMemory = '',
   drawMode = false,
   drawSystemPrompt = '',
 }) {
@@ -199,6 +200,7 @@ export function useChatSender({
   const maxUserQuestionLengthRef = useRef(maxUserQuestionLength);
   const customInstructionRef = useRef(customInstruction);
   const customInstructionActiveRef = useRef(customInstructionActive);
+  const userMemoryRef = useRef(userMemory);
   const drawModeRef = useRef(drawMode);
   const drawSystemPromptRef = useRef(drawSystemPrompt);
 
@@ -225,6 +227,7 @@ export function useChatSender({
   useEffect(() => { maxUserQuestionLengthRef.current = maxUserQuestionLength; }, [maxUserQuestionLength]);
   useEffect(() => { customInstructionRef.current = customInstruction; }, [customInstruction]);
   useEffect(() => { customInstructionActiveRef.current = customInstructionActive; }, [customInstructionActive]);
+  useEffect(() => { userMemoryRef.current = userMemory; }, [userMemory]);
   useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
   useEffect(() => { drawSystemPromptRef.current = drawSystemPrompt; }, [drawSystemPrompt]);
 
@@ -281,7 +284,8 @@ export function useChatSender({
         : '';
       const isDrawMode = drawModeRef.current;
       const activeDrawPrompt = isDrawMode ? drawSystemPromptRef.current : '';
-      const combinedInstruction = [activeCustomInstruction, activeDrawPrompt]
+      const activeMemory = userMemoryRef.current ? `[User Memory]\n${userMemoryRef.current}` : '';
+      const combinedInstruction = [activeMemory, activeCustomInstruction, activeDrawPrompt]
         .filter(Boolean)
         .join('\n\n');
       const payload = {
