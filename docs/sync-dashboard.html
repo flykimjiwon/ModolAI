@@ -6,172 +6,340 @@
 <title>TechAI → ModolAI Sync Dashboard</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1117; color: #e1e4e8; padding: 24px; }
-  .header { text-align: center; margin-bottom: 32px; }
-  .header h1 { font-size: 28px; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #a371f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .header p { color: #8b949e; margin-top: 8px; font-size: 14px; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-  .stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; text-align: center; }
-  .stat-card .number { font-size: 36px; font-weight: 700; }
-  .stat-card .label { color: #8b949e; font-size: 13px; margin-top: 4px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0c10; color: #e1e4e8; padding: 24px; min-height: 100vh; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 36px; position: relative; }
+  .header h1 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #58a6ff 0%, #a371f7 50%, #f778ba 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+  .header .subtitle { color: #8b949e; margin-top: 8px; font-size: 14px; }
+  .header .sync-info { margin-top: 6px; font-size: 13px; color: #58a6ff; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .header .last-updated { margin-top: 4px; font-size: 11px; color: #484f58; }
+
+  /* Stats Grid */
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 18px; text-align: center; transition: border-color 0.2s, transform 0.2s; }
+  .stat-card:hover { border-color: #484f58; transform: translateY(-2px); }
+  .stat-card .number { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .stat-card .label { color: #8b949e; font-size: 12px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
   .stat-card.green .number { color: #3fb950; }
   .stat-card.blue .number { color: #58a6ff; }
   .stat-card.purple .number { color: #a371f7; }
   .stat-card.yellow .number { color: #d29922; }
-  .section { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
-  .section h2 { font-size: 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .stat-card.red .number { color: #f85149; }
+
+  /* Sections */
+  .section { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .section h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section h2 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .section h2 .dot.green { background: #3fb950; }
+  .section h2 .dot.blue { background: #58a6ff; }
+  .section h2 .dot.yellow { background: #d29922; }
+  .section h2 .dot.red { background: #f85149; }
+  .section h2 .dot.purple { background: #a371f7; }
+
+  /* Two Column Layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* Table */
   table { width: 100%; border-collapse: collapse; }
-  th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #30363d; color: #8b949e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  td { padding: 10px 12px; border-bottom: 1px solid #21262d; font-size: 14px; }
+  th { text-align: left; padding: 8px 12px; border-bottom: 2px solid #30363d; color: #8b949e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 8px 12px; border-bottom: 1px solid #21262d; font-size: 13px; }
   tr:hover { background: #1c2128; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
   .badge.done { background: #1b4332; color: #3fb950; }
-  .badge.new { background: #1a2744; color: #58a6ff; }
+  .badge.pending { background: #1a2744; color: #58a6ff; }
   .badge.skip { background: #2d2200; color: #d29922; }
-  .priority { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-  .priority.p1 { background: #ff7b72; color: #0d1117; }
+  .badge.new { background: #3b1541; color: #f778ba; }
+  .priority { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
+  .priority.p1 { background: #f85149; color: #fff; }
   .priority.p2 { background: #d29922; color: #0d1117; }
   .priority.p3 { background: #8b949e; color: #0d1117; }
-  .files-section { margin-top: 16px; }
-  .file-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: #8b949e; }
-  .file-item .icon { width: 16px; text-align: center; }
+
+  /* Progress */
+  .progress-bar { width: 100%; height: 10px; background: #21262d; border-radius: 5px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 5px; transition: width 0.6s ease; }
+  .progress-fill.green { background: linear-gradient(90deg, #238636, #3fb950); }
+  .progress-fill.gradient { background: linear-gradient(90deg, #3fb950, #58a6ff, #a371f7); }
+
+  /* File Items */
+  .file-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; color: #8b949e; border-radius: 6px; }
+  .file-item:hover { background: #1c2128; }
+  .file-item .icon { width: 16px; text-align: center; font-weight: 700; }
+  .file-item.added .icon { color: #3fb950; }
   .file-item.modified .icon { color: #d29922; }
-  .progress-bar { width: 100%; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; margin-top: 8px; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, #3fb950, #58a6ff); border-radius: 4px; transition: width 0.5s; }
-  .timeline { position: relative; padding-left: 24px; }
-  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #30363d; }
-  .timeline-item { position: relative; margin-bottom: 16px; }
-  .timeline-item::before { content: ''; position: absolute; left: -20px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #30363d; }
-  .timeline-item.done::before { background: #3fb950; border-color: #3fb950; }
-  .timeline-item .time { color: #8b949e; font-size: 12px; }
-  .timeline-item .desc { margin-top: 2px; font-size: 14px; }
-  .footer { text-align: center; color: #484f58; font-size: 12px; margin-top: 32px; }
-  @media (max-width: 768px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .file-item .lines { margin-left: auto; font-size: 11px; }
+  .file-item .lines .plus { color: #3fb950; }
+  .file-item .lines .minus { color: #f85149; }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 28px; }
+  .timeline::before { content: ''; position: absolute; left: 9px; top: 4px; bottom: 4px; width: 2px; background: linear-gradient(180deg, #3fb950, #58a6ff, #a371f7); border-radius: 1px; }
+  .timeline-item { position: relative; margin-bottom: 14px; }
+  .timeline-item::before { content: ''; position: absolute; left: -23px; top: 5px; width: 10px; height: 10px; border-radius: 50%; }
+  .timeline-item.done::before { background: #3fb950; box-shadow: 0 0 6px rgba(63, 185, 80, 0.4); }
+  .timeline-item.current::before { background: #58a6ff; box-shadow: 0 0 6px rgba(88, 166, 255, 0.4); }
+  .timeline-item .time { color: #8b949e; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .timeline-item .desc { margin-top: 2px; font-size: 13px; }
+
+  /* Commit Log */
+  .commit-log { max-height: 300px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #30363d #161b22; }
+  .commit { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid #21262d; }
+  .commit:last-child { border-bottom: none; }
+  .commit .hash { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; color: #58a6ff; min-width: 64px; }
+  .commit .msg { font-size: 13px; color: #c9d1d9; }
+
+  /* Diff Summary */
+  .diff-bar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 6px; gap: 1px; }
+  .diff-bar .seg { height: 100%; }
+  .diff-bar .seg.done { background: #3fb950; }
+  .diff-bar .seg.pending { background: #58a6ff; }
+  .diff-bar .seg.skip { background: #484f58; }
+
+  /* Legend */
+  .legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11px; color: #8b949e; }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Footer */
+  .footer { text-align: center; color: #484f58; font-size: 11px; margin-top: 28px; padding-top: 16px; border-top: 1px solid #21262d; }
+
+  @media (max-width: 900px) {
+    .stats { grid-template-columns: repeat(3, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    body { padding: 12px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>TechAI → ModolAI Sync Dashboard</h1>
-  <p>3rd Synchronization Report &mdash; 2026-03-22</p>
-  <p style="margin-top: 4px; color: #58a6ff;">techai/web <code>173a665</code> → <code>4309851</code> (43 commits)</p>
+  <div class="subtitle">4th Synchronization Complete &mdash; 2026-03-23</div>
+  <div class="sync-info">techai/web <code>173a665</code> → <code>c64ab5b</code> (44 commits total)</div>
+  <div class="last-updated">Last updated: 2026-03-23 | Next check: every 10 commits on web/main</div>
 </div>
 
+<!-- Stats -->
 <div class="stats">
   <div class="stat-card green">
-    <div class="number">43</div>
-    <div class="label">Total Commits Analyzed</div>
+    <div class="number">174</div>
+    <div class="label">Total Commits</div>
   </div>
   <div class="stat-card blue">
-    <div class="number">13</div>
-    <div class="label">Already Ported</div>
+    <div class="number">24</div>
+    <div class="label">Ported Features</div>
   </div>
   <div class="stat-card purple">
-    <div class="number">4</div>
-    <div class="label">Newly Ported</div>
+    <div class="number">0</div>
+    <div class="label">Pending Port</div>
   </div>
   <div class="stat-card yellow">
-    <div class="number">6</div>
-    <div class="label">Files Modified</div>
+    <div class="number">0</div>
+    <div class="label">Files to Sync</div>
+  </div>
+  <div class="stat-card green">
+    <div class="number">0</div>
+    <div class="label">New APIs Missing</div>
   </div>
 </div>
 
+<!-- Overall Progress -->
 <div class="section">
-  <h2>Overall Progress</h2>
-  <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px;">
-    <span>Sync Completion</span>
+  <h2><span class="dot green"></span> Overall Sync Progress</h2>
+  <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+    <span>Ported 24 / 24 features</span>
     <span style="color: #3fb950; font-weight: 700;">100%</span>
   </div>
   <div class="progress-bar">
-    <div class="progress-fill" style="width: 100%;"></div>
+    <div class="progress-fill green" style="width: 100%;"></div>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#3fb950;"></div> Ported</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;"></div> Pending</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#484f58;"></div> Skipped (techai-only)</div>
+  </div>
+  <div class="diff-bar" style="margin-top: 12px;">
+    <div class="seg done" style="flex:24;"></div>
   </div>
 </div>
 
-<div class="section">
-  <h2>Feature Porting Status</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Priority</th>
-        <th>Feature</th>
-        <th>Status</th>
-        <th>Detail</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><span class="priority p1">P1</span></td><td>Draw (Canvas) — HTML Visualization</td><td><span class="badge done">Already Ported</span></td><td>DrawPreviewPanel + ChatInput + admin settings</td></tr>
-      <tr><td><span class="priority p1">P1</span></td><td>Custom Instruction</td><td><span class="badge done">Already Ported</span></td><td>Dialog modal + useChatSender + API</td></tr>
-      <tr><td><span class="priority p2">P2</span></td><td>DB Viewer + Column Tooltips</td><td><span class="badge done">Already Ported</span></td><td>/admin/database + CRUD API</td></tr>
-      <tr><td><span class="priority p2">P2</span></td><td>Message Soft Delete</td><td><span class="badge done">Already Ported</span></td><td>is_deleted + PATCH endpoint</td></tr>
-      <tr><td><span class="priority p2">P2</span></td><td>useChatSender Infinite Render Fix</td><td><span class="badge done">Already Ported</span></td><td>Ref pattern conversion</td></tr>
-      <tr><td><span class="priority p2">P2</span></td><td>Settings Migration (15 columns)</td><td><span class="badge new">Newly Ported</span></td><td>endpoint, file parsing, API config cols</td></tr>
-      <tr><td><span class="priority p2">P2</span></td><td>Messages Soft Delete Migration</td><td><span class="badge new">Newly Ported</span></td><td>migrate-models + try-catch guard</td></tr>
-      <tr><td><span class="priority p2">P2</span></td><td>v1/rerank & embeddings Logging</td><td><span class="badge new">Newly Ported</span></td><td>logExternalApiRequest added</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>AI Disclaimer Text</td><td><span class="badge new">Newly Ported</span></td><td>main page.js + i18n (en/ko)</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>Markdown Link New Tab</td><td><span class="badge done">Already Ported</span></td><td>target="_blank" in MessageList</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>Sidebar Scrollbar Fix</td><td><span class="badge done">Already Ported</span></td><td>overflow-x-hidden</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>PatchNotesModal</td><td><span class="badge done">Already Ported</span></td><td>Component + Sidebar integration</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>Manager Badge / Sidebar Access</td><td><span class="badge done">Already Ported</span></td><td>Sidebar.js role check</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>Role Inline Dropdown (3-level)</td><td><span class="badge done">Already Ported</span></td><td>admin/manager/user dropdown</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>Agent Visibility Toggle</td><td><span class="badge done">Already Ported</span></td><td>Eye/EyeOff in admin agents</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>User Default Model Setting</td><td><span class="badge done">Already Ported</span></td><td>/api/user/settings + user_settings</td></tr>
-      <tr><td><span class="priority p3">P3</span></td><td>snake_case Bug Fix</td><td><span class="badge done">Already Ported</span></td><td>modelServers.js fallback</td></tr>
-    </tbody>
-  </table>
-</div>
+<!-- Two Column: Features + Pending -->
+<div class="two-col">
 
-<div class="section">
-  <h2>Modified Files (This Sync)</h2>
-  <div class="files-section">
-    <div class="file-item modified"><span class="icon">M</span> app/api/admin/migrate-models/route.js</div>
-    <div class="file-item modified"><span class="icon">M</span> app/api/v1/rerank/route.js</div>
-    <div class="file-item modified"><span class="icon">M</span> app/api/v1/embeddings/route.js</div>
-    <div class="file-item modified"><span class="icon">M</span> app/page.js</div>
-    <div class="file-item modified"><span class="icon">M</span> app/lib/i18n/en.json</div>
-    <div class="file-item modified"><span class="icon">M</span> app/lib/i18n/ko.json</div>
+  <!-- Feature Table -->
+  <div class="section">
+    <h2><span class="dot blue"></span> Feature Porting Status</h2>
+    <table>
+      <thead>
+        <tr><th>P</th><th>Feature</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="priority p1">P1</span></td><td>Draw (Canvas) HTML Visualization</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>Custom Instruction</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>DB Viewer + Column Tooltips</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>DB Capacity Analysis + Logging Optimization</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>Message Soft Delete</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>useChatSender Infinite Render Fix</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>Settings Migration (15 cols)</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>Messages Soft Delete Migration</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>v1/rerank & embeddings Logging</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>AI Disclaimer Text</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>Markdown Link New Tab</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>Sidebar Scrollbar Fix</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>PatchNotesModal</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>Manager Badge / Sidebar</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>Role Inline Dropdown</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>Agent Visibility Toggle</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>User Default Model Setting</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p3">P3</span></td><td>snake_case Bug Fix</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>Agent History (DB persistence + hook)</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>User Conversation Memory (indexing + admin)</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>Multi Custom Prompt (CRUD, 10 max)</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p1">P1</span></td><td>Security: userId null checks + UUID validation</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>Schema: agent_history + user_memories + memory_settings</td><td><span class="badge done">Ported</span></td></tr>
+        <tr><td><span class="priority p2">P2</span></td><td>DDL tableChecked caching (perf)</td><td><span class="badge done">Ported</span></td></tr>
+      </tbody>
+    </table>
   </div>
+
+  <!-- Pending Detail -->
+  <div>
+    <div class="section">
+      <h2><span class="dot green"></span> Completed: DB Capacity Analysis + Logging Optimization</h2>
+      <p style="font-size: 13px; color: #c9d1d9; margin-bottom: 12px;">
+        techai commit <code style="color:#58a6ff;">c64ab5b</code> — DB capacity analysis tab, BLOAT detection, junk log purge, logging optimization
+      </p>
+      <div style="font-size: 12px; color: #3fb950; margin-bottom: 12px;">All 6 files ported (externalApiLogger.js skipped — ModolAI has independent impl)</div>
+      <h3 style="font-size: 13px; margin-bottom: 8px; color: #3fb950;">Ported to ModolAI:</h3>
+      <div class="file-item added"><span class="icon">A</span> app/api/admin/database/cleanup/route.js <span class="lines"><span class="plus">+162</span></span></div>
+      <div class="file-item added"><span class="icon">A</span> app/api/admin/database/purge-junk/route.js <span class="lines"><span class="plus">+226</span></span></div>
+      <div class="file-item added"><span class="icon">A</span> app/api/admin/database/size/route.js <span class="lines"><span class="plus">+218</span></span></div>
+      <div class="file-item modified"><span class="icon">M</span> app/admin/database/page.js <span class="lines">+Capacity tab, purge UI, handlers</span></div>
+      <div class="file-item modified"><span class="icon">M</span> app/lib/appErrorLogger.js <span class="lines">+60s throttle dedup</span></div>
+      <div class="file-item modified"><span class="icon">M</span> app/lib/errorHandler.js <span class="lines">4xx → console.warn only</span></div>
+    </div>
+
+    <!-- Skipped (techai-only) -->
+    <div class="section">
+      <h2><span class="dot yellow"></span> Skipped (techai-only)</h2>
+      <table>
+        <thead><tr><th>Feature</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td>AICR Module</td><td><span class="badge skip">techai 전용</span></td></tr>
+          <tr><td>Notebook</td><td><span class="badge skip">techai 전용</span></td></tr>
+          <tr><td>swinglogin</td><td><span class="badge skip">기업 SSO</span></td></tr>
+          <tr><td>chat1 UI 세부 조정 (10+ commits)</td><td><span class="badge skip">techai 디자인</span></td></tr>
+          <tr><td>DarkModeToggle 스타일</td><td><span class="badge skip">techai 디자인</span></td></tr>
+          <tr><td>Dataset/Notebook/Embedding</td><td><span class="badge skip">techai-api 의존</span></td></tr>
+          <tr><td>Lunch Recommender Easter Egg</td><td><span class="badge skip">techai 전용</span></td></tr>
+          <tr><td>GraphChat (LangGraph)</td><td><span class="badge skip">별도 아키텍처</span></td></tr>
+          <tr><td>better-sqlite3 제거</td><td><span class="badge skip">ModolAI 해당없음</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
+<!-- Sync History -->
 <div class="section">
-  <h2>Work Timeline</h2>
+  <h2><span class="dot purple"></span> Sync History</h2>
   <div class="timeline">
     <div class="timeline-item done">
-      <div class="time">Step 1</div>
-      <div class="desc">43 commits analyzed (techai/web 173a665..4309851)</div>
+      <div class="time">Sync #1 — 2026-03-17</div>
+      <div class="desc">Initial port: user default model, agent visibility, db backup/restore, manager role, v1 endpoint</div>
     </div>
     <div class="timeline-item done">
-      <div class="time">Step 2</div>
-      <div class="desc">3 parallel architect agents analyzed P1/P2/P3 features</div>
+      <div class="time">Sync #2 — 2026-03-19</div>
+      <div class="desc">Full sync: chat designs, DB viewer, soft-delete, chart color picker, PatchNotes, bugfixes</div>
     </div>
     <div class="timeline-item done">
-      <div class="time">Step 3</div>
-      <div class="desc">13 features confirmed already ported</div>
+      <div class="time">Sync #3 — 2026-03-22</div>
+      <div class="desc">43 commits analyzed → 4 newly ported (settings migration, API logging, disclaimer, migrate-models)</div>
     </div>
     <div class="timeline-item done">
-      <div class="time">Step 4</div>
-      <div class="desc">migrate-models: 15 settings columns + messages soft-delete + try-catch</div>
+      <div class="time">Sync #4 — 2026-03-23</div>
+      <div class="desc">1 commit ported: DB capacity analysis + logging optimization (3 new API routes, 3 files updated)</div>
     </div>
     <div class="timeline-item done">
-      <div class="time">Step 5</div>
-      <div class="desc">Independent verifier found 3 additional gaps</div>
+      <div class="time">Sync #5 — 2026-03-23</div>
+      <div class="desc">130+ commits analyzed (c64ab5b→ae4d703). Ported 6 features: agent history, user memory, multi-prompt, security fixes, schema updates, DDL caching. Created 5 new files, modified 4 existing.</div>
     </div>
-    <div class="timeline-item done">
-      <div class="time">Step 6</div>
-      <div class="desc">v1/rerank + v1/embeddings logExternalApiRequest added</div>
+  </div>
+</div>
+
+<!-- Recent Commits -->
+<div class="two-col">
+  <div class="section">
+    <h2><span class="dot blue"></span> techai/web Recent Commits</h2>
+    <div class="commit-log">
+      <div class="commit"><span class="hash">ae4d703</span><span class="msg" style="color:#58a6ff; font-weight:600;">chore: session-prompts HTML 파일 삭제 ← LATEST</span></div>
+      <div class="commit"><span class="hash">9a64cc2</span><span class="msg">feat: 5개 에이전트 업그레이드 — 히스토리·스트리밍·페르소나</span></div>
+      <div class="commit"><span class="hash">0088f75</span><span class="msg">feat: 차트 메이커 히스토리 DB 영구 저장</span></div>
+      <div class="commit"><span class="hash">ef33b57</span><span class="msg">fix: 보안/안정성/성능 14개 이슈 수정</span></div>
+      <div class="commit"><span class="hash">2e641a0</span><span class="msg">feat: 사용자 대화 메모리 — 자동 색인 + 시스템 프롬프트 주입</span></div>
+      <div class="commit"><span class="hash">752cc54</span><span class="msg">feat: 사용자 지정 프롬프트 다중 관리 + 입력창 UI 개선</span></div>
+      <div class="commit"><span class="hash">86208cc</span><span class="msg">feat: 에이전트 인프라 — agent_history DB + 공용 훅</span></div>
+      <div class="commit"><span class="hash">c64ab5b</span><span class="msg">feat: DB 용량 분석 + 로깅 최적화</span></div>
+      <div class="commit"><span class="hash">4309851</span><span class="msg">fix: Draw iframe 보안 guard 스크립트 방식 전환</span></div>
+      <div class="commit"><span class="hash">a8732f1</span><span class="msg">feat: Draw(캔버스) 기능 추가</span></div>
+      <div class="commit"><span class="hash">b07e225</span><span class="msg">fix: external_api_logs 누락 컬럼 추가</span></div>
+      <div class="commit"><span class="hash">6450d46</span><span class="msg">feat: Custom Instruction 기능 추가</span></div>
+      <div class="commit"><span class="hash">3352ee4</span><span class="msg">fix: snake_case 버그 수정</span></div>
+      <div class="commit"><span class="hash">4708c7b</span><span class="msg">fix: 접힌 사이드바 스크롤바 제거</span></div>
+      <div class="commit"><span class="hash">ff8bd34</span><span class="msg">feat: 메인 페이지를 chat1 디자인으로 교체</span></div>
+      <div class="commit"><span class="hash">df9d4e7</span><span class="msg">fix: chat1 스크롤 버튼 디자인 개선</span></div>
+      <div class="commit"><span class="hash">0e29a03</span><span class="msg">fix: useChatSender 무한 렌더링 수정</span></div>
     </div>
-    <div class="timeline-item done">
-      <div class="time">Step 7</div>
-      <div class="desc">AI disclaimer text added to main page.js + i18n keys</div>
+  </div>
+  <div class="section">
+    <h2><span class="dot green"></span> ModolAI Recent Commits</h2>
+    <div class="commit-log">
+      <div class="commit"><span class="hash">ccb7def</span><span class="msg">feat: 3rd techai sync — migrate-models, API logging, disclaimer</span></div>
+      <div class="commit"><span class="hash">86a5d8f</span><span class="msg">feat: port techai — Custom Instruction, Draw, DB tabs, snake_case</span></div>
+      <div class="commit"><span class="hash">a2d811e</span><span class="msg">test: add API test suite — 16 endpoint tests</span></div>
+      <div class="commit"><span class="hash">57485b3</span><span class="msg">fix: remaining techai sync — manager, sensitive fields, link target</span></div>
+      <div class="commit"><span class="hash">f0e0ab2</span><span class="msg">feat: full techai sync — chat, DB viewer, soft-delete, bugfixes</span></div>
+      <div class="commit"><span class="hash">edba614</span><span class="msg">docs: add TECHAI_SYNC and WORKTREE_GUIDE</span></div>
+      <div class="commit"><span class="hash">d969d36</span><span class="msg">feat: port techai + chart color picker + PatchNotes + manager</span></div>
+      <div class="commit"><span class="hash">6dcfd5f</span><span class="msg">feat: port 5 features from techai</span></div>
+      <div class="commit"><span class="hash">ca599db</span><span class="msg">docs: competitive analysis & market research</span></div>
+      <div class="commit"><span class="hash">cf22802</span><span class="msg">fix(theme): settings columns, GET mapping, defaults</span></div>
     </div>
-    <div class="timeline-item done">
-      <div class="time">Step 8</div>
-      <div class="desc">Build verification passed (SKIP_DB_CONNECTION=true npm run build)</div>
+  </div>
+</div>
+
+<!-- Package Diff -->
+<div class="section">
+  <h2><span class="dot yellow"></span> Package Differences</h2>
+  <div class="two-col" style="gap: 12px;">
+    <div>
+      <h3 style="font-size: 12px; color: #d29922; margin-bottom: 8px;">techai/web only</h3>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> @radix-ui/react-dialog</div>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> better-sqlite3</div>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> date-fns</div>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> mermaid</div>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> os</div>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> @playwright/test (dev)</div>
+      <div class="file-item"><span class="icon" style="color:#58a6ff;">+</span> agentation (dev)</div>
+    </div>
+    <div>
+      <h3 style="font-size: 12px; color: #3fb950; margin-bottom: 8px;">ModolAI only</h3>
+      <div class="file-item"><span class="icon" style="color:#3fb950;">+</span> @phosphor-icons/react</div>
+      <div class="file-item"><span class="icon" style="color:#3fb950;">+</span> radix-ui (umbrella)</div>
+      <div class="file-item"><span class="icon" style="color:#3fb950;">+</span> sonner (toast)</div>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Generated on 2026-03-22 &mdash; TechAI → ModolAI 3rd Sync
+  Generated on 2026-03-23 &mdash; TechAI → ModolAI Sync Dashboard v4<br>
+  Auto-update policy: every 10 commits on techai/web/main
 </div>
 
 </body>

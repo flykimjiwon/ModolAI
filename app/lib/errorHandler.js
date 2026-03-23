@@ -18,16 +18,16 @@ export function createErrorResponse(error, status = 500) {
   }
 
   console.error(`[ERROR ${status}]`, error);
-  if (status >= 400) {
-    const source = status >= 500 ? 'server' : 'api';
-    const level = status >= 500 ? 'error' : 'warn';
+  if (status >= 500) {
     logAppError({
-      source,
-      level,
+      source: 'server',
+      level: 'error',
       message: error.message || String(error),
       stack: error.stack,
       context: { status },
     });
+  } else if (status >= 400) {
+    console.warn(`[WARN ${status}]`, error.message || error);
   }
 
   return NextResponse.json(errorResponse, { status });

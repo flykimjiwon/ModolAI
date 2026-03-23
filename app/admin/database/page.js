@@ -25,6 +25,7 @@ import {
   Upload,
   Globe,
   Server,
+  BarChart3,
 } from '@/components/icons';
 import { useAlert } from '@/contexts/AlertContext';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -54,6 +55,14 @@ function formatCellValue(value, colType) {
     }
   }
   return String(value);
+}
+
+function formatSizeBytes(bytes) {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'kB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const val = bytes / Math.pow(1024, i);
+  return `${val < 10 ? val.toFixed(1) : Math.round(val)} ${units[i]}`;
 }
 
 function truncateText(text, max = 100) {
@@ -345,6 +354,7 @@ const DB_TABS = [
   { id: 'backup', label: 'Backup / Restore', icon: Server },
   { id: 'reset', label: 'Reset', icon: AlertTriangle },
   { id: 'schema-view', label: 'Schema View', icon: Eye },
+  { id: 'size', label: 'Capacity', icon: BarChart3 },
 ];
 
 const dbResetTableOptions = [
@@ -411,6 +421,19 @@ export default function DatabasePage() {
   const [restoreLoading, setRestoreLoading] = useState(false);
   const [restoreResult, setRestoreResult] = useState(null);
   const [savingSection, setSavingSection] = useState(null);
+
+  // Junk log purge state
+  const [purgePreview, setPurgePreview] = useState(null);
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [purgeResult, setPurgeResult] = useState(null);
+
+  // Capacity analysis tab state
+  const [sizeData, setSizeData] = useState(null);
+  const [sizeLoading, setSizeLoading] = useState(false);
+  const [sizeSelectedTable, setSizeSelectedTable] = useState(null);
+  const [sizeColumnData, setSizeColumnData] = useState(null);
+  const [sizeColumnLoading, setSizeColumnLoading] = useState(false);
+  const [vacuumLoading, setVacuumLoading] = useState(null);
 
   const searchTimerRef = useRef(null);
 
@@ -718,6 +741,112 @@ export default function DatabasePage() {
     fetchTableData();
   }, [fetchTableData]);
 
+  // Junk log purge handlers
+  const fetchPurgePreview = useCallback(async () => {
+    try {
+      setPurgeLoading(true);
+      setPurgeResult(null);
+      const res = await fetch('/api/admin/database/purge-junk', { headers: authHeaders });
+      if (!res.ok) throw new Error('Failed to fetch');
+      const json = await res.json();
+      setPurgePreview(json);
+    } catch (err) {
+      alert(err.message, 'error', 'Fetch failed');
+    } finally {
+      setPurgeLoading(false);
+    }
+  }, [authHeaders, alert]);
+
+  const executePurge = useCallback(async () => {
+    const confirmed = await confirm(
+      'Remove all junk logs? (4xx errors, duplicates, heartbeat, normal response raw data)',
+      'Purge Junk Logs'
+    );
+    if (!confirmed) return;
+    try {
+      setPurgeLoading(true);
+      const res = await fetch('/api/admin/database/purge-junk', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) throw new Error('Deletion failed');
+      const json = await res.json();
+      setPurgeResult(json);
+      setPurgePreview(null);
+      alert('Junk logs have been purged.', 'success', 'Complete');
+      fetchTables();
+    } catch (err) {
+      alert(err.message, 'error', 'Deletion failed');
+    } finally {
+      setPurgeLoading(false);
+    }
+  }, [authHeaders, alert, confirm, fetchTables]);
+
+  // Capacity analysis handlers
+  const fetchSizeData = useCallback(async () => {
+    try {
+      setSizeLoading(true);
+      setSizeData(null);
+      setSizeSelectedTable(null);
+      setSizeColumnData(null);
+      const res = await fetch('/api/admin/database/size', { headers: authHeaders });
+      if (!res.ok) throw new Error('Failed to query capacity');
+      const json = await res.json();
+      setSizeData(json);
+    } catch (err) {
+      console.error('Failed to query capacity:', err);
+      alert(err.message || 'Failed to load capacity data.', 'error', 'Fetch failed');
+    } finally {
+      setSizeLoading(false);
+    }
+  }, [authHeaders, alert]);
+
+  const vacuumFullTable = useCallback(async (tableName) => {
+    const confirmed = await confirm(
+      `Run VACUUM FULL on "${tableName}"?\nThe table will be temporarily inaccessible during execution.`,
+      'Reclaim Space (VACUUM FULL)'
+    );
+    if (!confirmed) return;
+    try {
+      setVacuumLoading(tableName);
+      const res = await fetch('/api/admin/database/size', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ table: tableName }),
+      });
+      if (!res.ok) throw new Error('VACUUM FULL failed');
+      const json = await res.json();
+      alert(
+        `${tableName}: ${json.before.pretty} → ${json.after.pretty} (${json.freedPretty} freed)`,
+        'success',
+        'Space Reclaimed'
+      );
+      fetchSizeData();
+    } catch (err) {
+      alert(err.message, 'error', 'VACUUM Failed');
+    } finally {
+      setVacuumLoading(null);
+    }
+  }, [authHeaders, alert, confirm, fetchSizeData]);
+
+  const fetchColumnSize = useCallback(async (tableName) => {
+    try {
+      setSizeColumnLoading(true);
+      setSizeSelectedTable(tableName);
+      setSizeColumnData(null);
+      const res = await fetch(`/api/admin/database/size?table=${encodeURIComponent(tableName)}`, { headers: authHeaders });
+      if (!res.ok) throw new Error('Failed to query column sizes');
+      const json = await res.json();
+      setSizeColumnData(json.columns);
+    } catch (err) {
+      console.error('Failed to query column sizes:', err);
+      alert(err.message || 'Failed to load column data.', 'error', 'Fetch failed');
+    } finally {
+      setSizeColumnLoading(false);
+    }
+  }, [authHeaders, alert]);
+
   const handleSelectTable = useCallback((tableName) => {
     setSelectedTable(tableName);
     setPage(1);
@@ -860,24 +989,111 @@ export default function DatabasePage() {
               Browse tables and run schema maintenance tasks.
             </p>
           </div>
-          {activeTab === 'viewer' && (
-            <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-3'>
+            {!isReadOnly && (
               <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className='lg:hidden p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors'
+                onClick={purgePreview ? () => setPurgePreview(null) : fetchPurgePreview}
+                disabled={purgeLoading}
+                className='inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700 dark:hover:bg-amber-900/50 transition-colors'
               >
-                <Table className='h-5 w-5' />
+                {purgeLoading ? <Loader2 className='h-4 w-4 animate-spin' /> : <Trash2 className='h-4 w-4' />}
+                Purge Junk Logs
               </button>
-              <div className='text-right hidden sm:block'>
-                <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
-                  {tables.length}
+            )}
+            {activeTab === 'viewer' && (
+              <>
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className='lg:hidden p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors'
+                >
+                  <Table className='h-5 w-5' />
+                </button>
+                <div className='text-right hidden sm:block'>
+                  <div className='text-2xl font-bold text-blue-600 dark:text-blue-400'>
+                    {tables.length}
+                  </div>
+                  <div className='text-sm text-gray-500 dark:text-gray-400'>Total tables</div>
                 </div>
-                <div className='text-sm text-gray-500 dark:text-gray-400'>Total tables</div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Junk log purge panel */}
+      {(purgePreview || purgeResult) && (
+        <div className='mb-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg overflow-hidden'>
+          <div className='px-4 py-3 border-b border-amber-200 dark:border-amber-700 flex items-center justify-between'>
+            <h3 className='text-sm font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2'>
+              <Trash2 className='h-4 w-4' />
+              Purge Junk Logs
+            </h3>
+            <button
+              onClick={() => { setPurgePreview(null); setPurgeResult(null); }}
+              className='p-1 rounded hover:bg-amber-200 dark:hover:bg-amber-800 text-amber-600 dark:text-amber-400'
+            >
+              <X className='h-4 w-4' />
+            </button>
+          </div>
+
+          {purgePreview && (
+            <div className='p-4 space-y-3'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                {purgePreview.targets?.map((t) => (
+                  <div key={t.id} className='bg-white dark:bg-gray-800 rounded-lg border border-amber-100 dark:border-amber-800/50 p-3'>
+                    <div className='flex items-center justify-between mb-1'>
+                      <span className='text-xs font-mono font-bold text-gray-700 dark:text-gray-300'>{t.table}</span>
+                      <span className='text-xs font-semibold text-amber-600 dark:text-amber-400'>{t.sizePretty}</span>
+                    </div>
+                    <p className='text-xs text-gray-500 dark:text-gray-400'>{t.description}</p>
+                    <div className='mt-1 text-xs text-gray-400 dark:text-gray-500'>
+                      {t.count?.toLocaleString()} rows {t.id === 'external_api_jsonb' ? '(NULL-ify)' : '(delete)'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className='flex items-center justify-between pt-2 border-t border-amber-200 dark:border-amber-700'>
+                <div className='text-sm text-amber-800 dark:text-amber-300'>
+                  Total <strong>{purgePreview.summary?.totalCount?.toLocaleString()}</strong> rows · <strong>{purgePreview.summary?.totalPretty}</strong> estimated
+                </div>
+                <button
+                  onClick={executePurge}
+                  disabled={purgeLoading || purgePreview.summary?.totalCount === 0}
+                  className='inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-colors'
+                >
+                  {purgeLoading ? <Loader2 className='h-4 w-4 animate-spin' /> : <Trash2 className='h-4 w-4' />}
+                  {purgeLoading ? 'Processing...' : 'Execute Purge'}
+                </button>
               </div>
             </div>
           )}
+
+          {purgeResult && (
+            <div className='p-4 space-y-2'>
+              <div className='text-sm font-medium text-emerald-700 dark:text-emerald-400'>Completed</div>
+              {purgeResult.results?.map((r) => (
+                <div key={r.id} className='flex items-center justify-between text-xs text-gray-600 dark:text-gray-400'>
+                  <span className='font-mono'>{r.table} ({r.id})</span>
+                  <span className='font-semibold'>
+                    {r.error ? (
+                      <span className='text-red-500'>{r.error}</span>
+                    ) : r.deletedRows != null ? (
+                      `${r.deletedRows.toLocaleString()} rows deleted`
+                    ) : r.updatedRows != null ? (
+                      `${r.updatedRows.toLocaleString()} rows NULL-ified`
+                    ) : '-'}
+                  </span>
+                </div>
+              ))}
+              {purgeResult.vacuumed?.length > 0 && (
+                <div className='text-[11px] text-gray-400 dark:text-gray-500 mt-1'>
+                  VACUUM completed: {purgeResult.vacuumed.join(', ')}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
       <div className='border-b border-gray-200 dark:border-gray-700 mb-6'>
         <nav className='flex gap-1 -mb-px overflow-x-auto' aria-label='Database management tabs'>
@@ -1614,6 +1830,343 @@ export default function DatabasePage() {
           <p className='text-sm text-gray-500 dark:text-gray-400'>Inspect current table and column structures.</p>
         </div>
       )}
+
+      {activeTab === 'size' && (
+        <div className='space-y-5'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <BarChart3 className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                DB Capacity Analysis
+              </h2>
+            </div>
+            <button
+              onClick={fetchSizeData}
+              disabled={sizeLoading}
+              className='inline-flex items-center gap-2 text-sm px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors'
+            >
+              {sizeLoading ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <RefreshCw className='h-4 w-4' />
+              )}
+              {sizeLoading ? 'Analyzing...' : sizeData ? 'Refresh' : 'Analyze Capacity'}
+            </button>
+          </div>
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
+            Analyze total database size, per-table size, and per-column average size. Click a table to inspect column-level details.
+          </p>
+
+          {!sizeData && !sizeLoading && (
+            <div className='text-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+              <BarChart3 className='mx-auto h-16 w-16 text-gray-300 dark:text-gray-600' />
+              <h3 className='mt-3 text-lg font-medium text-gray-500 dark:text-gray-400'>
+                Start capacity analysis
+              </h3>
+              <p className='mt-1 text-sm text-gray-400 dark:text-gray-500'>
+                Click the &quot;Analyze Capacity&quot; button above to query DB size information.
+              </p>
+            </div>
+          )}
+
+          {sizeLoading && (
+            <div className='flex items-center justify-center py-16 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+              <Loader2 className='h-8 w-8 text-blue-500 animate-spin' />
+            </div>
+          )}
+
+          {sizeData && !sizeLoading && (
+            <>
+              {/* DB summary cards */}
+              <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+                <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4'>
+                  <div className='text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Total DB Size</div>
+                  <div className='mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400'>
+                    {sizeData.database.sizePretty}
+                  </div>
+                  <div className='mt-0.5 text-xs text-gray-400 dark:text-gray-500'>
+                    {sizeData.database.name}
+                  </div>
+                </div>
+                <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4'>
+                  <div className='text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Tables</div>
+                  <div className='mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400'>
+                    {sizeData.tables.length}
+                  </div>
+                  <div className='mt-0.5 text-xs text-gray-400 dark:text-gray-500'>public schema</div>
+                </div>
+                <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4'>
+                  <div className='text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>Total Rows</div>
+                  <div className='mt-1 text-2xl font-bold text-amber-600 dark:text-amber-400'>
+                    {sizeData.tables.reduce((sum, t) => sum + t.rowCount, 0).toLocaleString()}
+                  </div>
+                  <div className='mt-0.5 text-xs text-gray-400 dark:text-gray-500'>approximate</div>
+                </div>
+              </div>
+
+              {/* Capacity distribution bar */}
+              <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
+                <div className='px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50'>
+                  <h3 className='text-sm font-semibold text-gray-700 dark:text-gray-300'>Size Distribution</h3>
+                </div>
+                <div className='p-4'>
+                  <div className='flex h-6 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700'>
+                    {(() => {
+                      const totalBytes = sizeData.tables.reduce((s, t) => s + t.totalBytes, 0) || 1;
+                      const colors = [
+                        'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500',
+                        'bg-cyan-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500',
+                        'bg-pink-500', 'bg-purple-500',
+                      ];
+                      const topTables = sizeData.tables.slice(0, 10);
+                      const otherBytes = sizeData.tables.slice(10).reduce((s, t) => s + t.totalBytes, 0);
+                      return (
+                        <>
+                          {topTables.map((t, i) => {
+                            const pct = (t.totalBytes / totalBytes) * 100;
+                            if (pct < 0.5) return null;
+                            return (
+                              <Tooltip key={t.name} text={`${t.name}: ${t.totalPretty} (${pct.toFixed(1)}%)`}>
+                                <div
+                                  className={`${colors[i % colors.length]} h-full transition-all hover:opacity-80`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </Tooltip>
+                            );
+                          })}
+                          {otherBytes > 0 && (
+                            <Tooltip text={`Other ${sizeData.tables.length - 10} tables`}>
+                              <div
+                                className='bg-gray-400 dark:bg-gray-500 h-full'
+                                style={{ width: `${(otherBytes / totalBytes) * 100}%` }}
+                              />
+                            </Tooltip>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1'>
+                    {(() => {
+                      const colors = [
+                        'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500',
+                        'bg-cyan-500', 'bg-indigo-500', 'bg-orange-500', 'bg-teal-500',
+                        'bg-pink-500', 'bg-purple-500',
+                      ];
+                      return sizeData.tables.slice(0, 10).map((t, i) => (
+                        <span key={t.name} className='flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400'>
+                          <span className={`inline-block w-2.5 h-2.5 rounded-sm ${colors[i % colors.length]}`} />
+                          {t.name}
+                        </span>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Per-table size list */}
+              <div className='bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden'>
+                <div className='px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50'>
+                  <h3 className='text-sm font-semibold text-gray-700 dark:text-gray-300'>Per-table Size (click for column details)</h3>
+                </div>
+                <div className='overflow-x-auto'>
+                  <table className='w-full text-sm'>
+                    <thead>
+                      <tr className='bg-gray-50 dark:bg-gray-700/30'>
+                        <th className='text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>Table</th>
+                        <th className='text-right px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>Total Size</th>
+                        <th className='text-right px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>Data</th>
+                        <th className='text-right px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>Index</th>
+                        <th className='text-right px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>TOAST</th>
+                        <th className='text-right px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>Rows</th>
+                        <th className='text-left px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400 w-[200px]'>Ratio</th>
+                        <th className='text-center px-4 py-2.5 font-medium text-gray-500 dark:text-gray-400'>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-100 dark:divide-gray-700'>
+                      {sizeData.tables.map((t) => {
+                        const maxBytes = sizeData.tables[0]?.totalBytes || 1;
+                        const pct = (t.totalBytes / maxBytes) * 100;
+                        const isSelected = sizeSelectedTable === t.name;
+                        // Bloat detection: abnormally high avg size per row
+                        const avgBytesPerRow = t.rowCount > 0 ? t.tableBytes / t.rowCount : 0;
+                        const isBloated = (t.rowCount === 0 && t.tableBytes > 65536)
+                          || (t.rowCount > 0 && t.rowCount < 100 && t.tableBytes > 1048576)
+                          || (avgBytesPerRow > 102400);
+                        return (
+                          <tr
+                            key={t.name}
+                            onClick={() => fetchColumnSize(t.name)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-blue-50 dark:bg-blue-900/20'
+                                : isBloated
+                                  ? 'bg-red-50/50 dark:bg-red-900/10'
+                                  : 'hover:bg-gray-50 dark:hover:bg-gray-700/20'
+                            }`}
+                          >
+                            <td className='px-4 py-2'>
+                              <span className={`font-mono text-xs ${isSelected ? 'text-blue-700 dark:text-blue-300 font-bold' : 'text-gray-900 dark:text-gray-100'}`}>
+                                {t.name}
+                              </span>
+                              {isBloated && (
+                                <span className='ml-2 text-[9px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 font-semibold'>
+                                  BLOAT
+                                </span>
+                              )}
+                            </td>
+                            <td className='px-4 py-2 text-right font-mono text-xs text-gray-700 dark:text-gray-300 font-semibold'>
+                              {t.totalPretty}
+                            </td>
+                            <td className='px-4 py-2 text-right font-mono text-xs text-gray-500 dark:text-gray-400'>
+                              {t.tablePretty}
+                            </td>
+                            <td className='px-4 py-2 text-right font-mono text-xs text-gray-500 dark:text-gray-400'>
+                              {t.indexPretty}
+                            </td>
+                            <td className='px-4 py-2 text-right font-mono text-xs text-gray-500 dark:text-gray-400'>
+                              {t.toastBytes > 0 ? formatSizeBytes(t.toastBytes) : '-'}
+                            </td>
+                            <td className='px-4 py-2 text-right font-mono text-xs text-gray-500 dark:text-gray-400'>
+                              {t.rowCount.toLocaleString()}
+                            </td>
+                            <td className='px-4 py-2'>
+                              <div className='flex items-center gap-2'>
+                                <div className='flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden'>
+                                  <div
+                                    className='h-full rounded-full bg-blue-500 dark:bg-blue-400 transition-all'
+                                    style={{ width: `${Math.max(pct, 1)}%` }}
+                                  />
+                                </div>
+                                <span className='text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right'>
+                                  {pct >= 1 ? `${pct.toFixed(0)}%` : '<1%'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className='px-4 py-2 text-center'>
+                              {isBloated && !isReadOnly ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); vacuumFullTable(t.name); }}
+                                  disabled={vacuumLoading === t.name}
+                                  className='inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60 transition-colors'
+                                >
+                                  {vacuumLoading === t.name ? (
+                                    <Loader2 className='h-3 w-3 animate-spin' />
+                                  ) : (
+                                    <RefreshCw className='h-3 w-3' />
+                                  )}
+                                  {vacuumLoading === t.name ? 'Running' : 'Reclaim'}
+                                </button>
+                              ) : (
+                                <span className='text-[10px] text-emerald-500 dark:text-emerald-400'>OK</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Per-column detail */}
+              {sizeSelectedTable && (
+                <div className='bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-700 overflow-hidden'>
+                  <div className='px-4 py-3 border-b border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20'>
+                    <h3 className='text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2'>
+                      <Hash className='h-3.5 w-3.5' />
+                      {sizeSelectedTable} — Column Size Analysis
+                    </h3>
+                  </div>
+                  {sizeColumnLoading ? (
+                    <div className='flex items-center justify-center py-12'>
+                      <Loader2 className='h-6 w-6 text-blue-500 animate-spin' />
+                    </div>
+                  ) : sizeColumnData ? (
+                    <div>
+                      <div className='px-4 py-3 flex flex-wrap gap-4 text-xs border-b border-gray-100 dark:border-gray-700'>
+                        <span className='text-gray-600 dark:text-gray-400'>
+                          Rows: <strong className='text-gray-900 dark:text-gray-100'>{sizeColumnData.rowCount.toLocaleString()}</strong>
+                        </span>
+                        <span className='text-gray-600 dark:text-gray-400'>
+                          Avg row size: <strong className='text-gray-900 dark:text-gray-100'>{sizeColumnData.avgRowSize} bytes</strong>
+                        </span>
+                        <span className='text-gray-600 dark:text-gray-400'>
+                          Columns: <strong className='text-gray-900 dark:text-gray-100'>{sizeColumnData.items.length}</strong>
+                        </span>
+                      </div>
+                      <div className='overflow-x-auto'>
+                        <table className='w-full text-sm'>
+                          <thead>
+                            <tr className='bg-gray-50 dark:bg-gray-700/30'>
+                              <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>Column</th>
+                              <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>Type</th>
+                              <th className='text-right px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>Avg Size</th>
+                              <th className='text-right px-4 py-2 font-medium text-gray-500 dark:text-gray-400'>NULL Ratio</th>
+                              <th className='text-left px-4 py-2 font-medium text-gray-500 dark:text-gray-400 w-[200px]'>Size Ratio</th>
+                            </tr>
+                          </thead>
+                          <tbody className='divide-y divide-gray-100 dark:divide-gray-700'>
+                            {sizeColumnData.items
+                              .slice()
+                              .sort((a, b) => b.avgBytes - a.avgBytes)
+                              .map((col) => {
+                                const maxColBytes = Math.max(...sizeColumnData.items.map(c => c.avgBytes)) || 1;
+                                const pct = (col.avgBytes / maxColBytes) * 100;
+                                return (
+                                  <tr key={col.name} className='hover:bg-gray-50 dark:hover:bg-gray-700/20'>
+                                    <td className='px-4 py-2'>
+                                      <Tooltip text={getColumnDescription(sizeSelectedTable, col.name) || col.type}>
+                                        <span className='font-mono text-xs text-gray-900 dark:text-gray-100'>
+                                          {col.name}
+                                        </span>
+                                      </Tooltip>
+                                    </td>
+                                    <td className='px-4 py-2 font-mono text-xs text-gray-500 dark:text-gray-400'>
+                                      {col.type}
+                                    </td>
+                                    <td className='px-4 py-2 text-right font-mono text-xs text-gray-700 dark:text-gray-300 font-semibold'>
+                                      {col.avgBytes > 0 ? `${col.avgBytes} B` : '-'}
+                                    </td>
+                                    <td className='px-4 py-2 text-right'>
+                                      <span className={`text-xs font-mono ${
+                                        col.nullRatio > 50
+                                          ? 'text-amber-600 dark:text-amber-400'
+                                          : col.nullRatio > 0
+                                            ? 'text-gray-500 dark:text-gray-400'
+                                            : 'text-emerald-600 dark:text-emerald-400'
+                                      }`}>
+                                        {col.nullRatio > 0 ? `${col.nullRatio}%` : '0%'}
+                                      </span>
+                                    </td>
+                                    <td className='px-4 py-2'>
+                                      <div className='flex items-center gap-2'>
+                                        <div className='flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden'>
+                                          <div
+                                            className='h-full rounded-full bg-blue-400 dark:bg-blue-500 transition-all'
+                                            style={{ width: `${Math.max(pct, col.avgBytes > 0 ? 2 : 0)}%` }}
+                                          />
+                                        </div>
+                                        <span className='text-[10px] text-gray-400 dark:text-gray-500 tabular-nums w-10 text-right'>
+                                          {pct >= 1 ? `${pct.toFixed(0)}%` : col.avgBytes > 0 ? '<1%' : '-'}
+                                        </span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }

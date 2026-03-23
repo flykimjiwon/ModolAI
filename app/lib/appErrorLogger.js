@@ -1,5 +1,26 @@
 import { query } from '@/lib/postgres';
 
+const _recentErrors = new Map();
+const THROTTLE_WINDOW_MS = 60_000;
+
+function shouldThrottle(message) {
+  const key = String(message).substring(0, 200);
+  const now = Date.now();
+  const lastSeen = _recentErrors.get(key);
+  if (lastSeen && now - lastSeen < THROTTLE_WINDOW_MS) {
+    return true;
+  }
+  _recentErrors.set(key, now);
+  // Auto-cleanup when map exceeds 1000 entries
+  if (_recentErrors.size > 1000) {
+    const cutoff = now - THROTTLE_WINDOW_MS;
+    for (const [k, v] of _recentErrors) {
+      if (v < cutoff) _recentErrors.delete(k);
+    }
+  }
+  return false;
+}
+
 let tableEnsured = false;
 
 async function ensureErrorLogTable() {
@@ -45,6 +66,7 @@ export async function logAppError({
   userAgent = null,
 } = {}) {
   if (!message) return;
+  if (shouldThrottle(message)) return;
 
   try {
     await ensureErrorLogTable();

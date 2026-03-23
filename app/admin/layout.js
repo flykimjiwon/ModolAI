@@ -34,6 +34,7 @@ import {
   ChevronRight,
   Database,
   Lock,
+  Brain,
 } from '@/components/icons';
 import {
   DndContext,
@@ -305,6 +306,12 @@ export default function AdminLayout({ children }) {
         icon: Bot,
       },
 
+      {
+        id: 'user-memories',
+        name: 'User Memories',
+        href: '/admin/user-memories',
+        icon: Brain,
+      },
       {
         id: 'external-api-logs',
         name: t('admin.external_api_logs'),

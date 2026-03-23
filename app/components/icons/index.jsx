@@ -38,6 +38,7 @@ import {
   ClockCounterClockwise as PhClockCounterClockwise,
   Code as PhCode,
   Coins as PhCoins,
+  Crown as PhCrown,
   Copy as PhCopy,
   Cpu as PhCpu,
   Database as PhDatabase,
@@ -57,6 +58,7 @@ import {
   Hash as PhHash,
   House as PhHouse,
   Image as PhImage,
+  Brain as PhBrain,
   Info as PhInfo,
   Key as PhKey,
   Lightning as PhLightning,
@@ -67,6 +69,7 @@ import {
   MagnifyingGlass as PhMagnifyingGlass,
   Monitor as PhMonitor,
   Moon as PhMoon,
+  Palette as PhPalette,
   PaperPlaneTilt as PhPaperPlaneTilt,
   Pause as PhPause,
   Pencil as PhPencil,
@@ -221,13 +224,16 @@ export const Users           = w(PhUsers);
 
 // ─── Misc ────────────────────────────────────────────────────────────────────
 export const Briefcase = w(PhBriefcase);
+export const Crown     = w(PhCrown);
 export const Globe     = w(PhGlobe);
 export const Hash      = w(PhHash);
 export const Moon      = w(PhMoon);
+export const Palette   = w(PhPalette);
 export const Phone     = w(PhPhone);
 export const Sun       = w(PhSun);
 export const Star      = w(PhStar);
 export const Zap       = w(PhLightning);
+export const Brain     = w(PhBrain);
 
 // ─── shadcn/ui 프리미티브 전용 ────────────────────────────────────────────────
 // checkbox, select, dropdown, radio-group, sheet, dialog, sonner 내부에서 사용

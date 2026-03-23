@@ -307,6 +307,44 @@ const CORE_TABLES = [
       user_agent  TEXT
     )`,
   },
+  {
+    name: 'agent_history',
+    sql: `CREATE TABLE IF NOT EXISTS agent_history (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      agent_id VARCHAR(50) NOT NULL,
+      entry_id VARCHAR(100) NOT NULL,
+      title VARCHAR(500),
+      input_data JSONB,
+      output_data JSONB,
+      output_text TEXT,
+      metadata JSONB DEFAULT '{}',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, agent_id, entry_id)
+    )`,
+  },
+  {
+    name: 'user_memories',
+    sql: `CREATE TABLE IF NOT EXISTS user_memories (
+      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+      user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      memory TEXT DEFAULT '',
+      last_indexed_id UUID,
+      indexed_count INTEGER DEFAULT 0,
+      is_indexing BOOLEAN DEFAULT false,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
+  {
+    name: 'memory_settings',
+    sql: `CREATE TABLE IF NOT EXISTS memory_settings (
+      id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+      model_id VARCHAR(255) DEFAULT '',
+      interval_minutes INTEGER DEFAULT 60,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+  },
 ];
 
 const CORE_INDEXES = [
@@ -333,6 +371,8 @@ const CORE_INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash)`,
   `CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_agent_history_user_agent ON agent_history(user_id, agent_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_user_memories_user_id ON user_memories(user_id)`,
 ];
 
 // ─────────────────────────────────────────────
@@ -492,6 +532,16 @@ async function runColumnMigrations() {
     ADD COLUMN IF NOT EXISTS is_visible BOOLEAN DEFAULT true,
     ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0
   `).catch(() => {});
+
+  // user_settings: custom instructions (multi-prompt)
+  await query(`
+    ALTER TABLE user_settings
+    ADD COLUMN IF NOT EXISTS custom_instructions JSONB DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS ci_global_enabled BOOLEAN DEFAULT true
+  `).catch(() => {});
+
+  // memory_settings: seed default row
+  await query('INSERT INTO memory_settings (id) VALUES (1) ON CONFLICT DO NOTHING').catch(() => {});
 
   // users.role CHECK constraint update (add manager role)
   try {
