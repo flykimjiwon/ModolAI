@@ -1,7 +1,7 @@
 {
   "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"/Users/kimjiwon/Desktop/kimjiwon/techai/web/app/api/user/memory/route.js\"}",
-  "error": "File does not exist. Note: your current working directory is /Users/kimjiwon/Desktop/kimjiwon/ModolAI.",
-  "timestamp": "2026-03-23T08:21:07.545Z",
-  "retry_count": 3
+  "tool_input_preview": "{\"file_path\":\"/Users/jiwonkim/Desktop/kimjiwon/ModolAI/app/components/VirtualMeeting.js\",\"offset\":700,\"limit\":700}",
+  "error": "File content (11235 tokens) exceeds maximum allowed tokens (10000). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
+  "timestamp": "2026-03-23T13:03:58.127Z",
+  "retry_count": 4
 }
