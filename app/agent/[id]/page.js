@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Bot, ShieldX, Loader2, Presentation } from '@/components/icons';
+import { Bot, ShieldX, Loader2, Presentation, Code, Database, Edit, AlertTriangle } from '@/components/icons';
 import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import AgentSidebar from '@/components/chat/AgentSidebar';
@@ -11,6 +11,10 @@ import AgentSelector from '@/components/AgentSelector';
 import PPTMaker from '@/components/PPTMaker';
 import ChartMaker from '@/components/ChartMaker';
 import VirtualMeeting from '@/components/VirtualMeeting';
+import CodeConverter from '@/components/CodeConverter';
+import TextToSql from '@/components/TextToSql';
+import TextRewriter from '@/components/TextRewriter';
+import ErrorHelper from '@/components/ErrorHelper';
 
 // Agent information
 const AGENT_INFO = {
@@ -32,6 +36,34 @@ const AGENT_INFO = {
     name: 'Chart Maker',
     description: 'Select chart type, color theme, and enter data to generate charts with AI',
     icon: Bot,
+    color: 'text-foreground',
+    bgColor: 'bg-muted',
+  },
+  '2': {
+    name: 'Code Converter',
+    description: 'Convert code from one programming language to another',
+    icon: Code,
+    color: 'text-foreground',
+    bgColor: 'bg-muted',
+  },
+  '3': {
+    name: 'Text to SQL',
+    description: 'Convert natural language queries into SQL statements',
+    icon: Database,
+    color: 'text-foreground',
+    bgColor: 'bg-muted',
+  },
+  '4': {
+    name: 'Text Rewriter',
+    description: 'Rewrite text with different tones and purposes',
+    icon: Edit,
+    color: 'text-foreground',
+    bgColor: 'bg-muted',
+  },
+  '5': {
+    name: 'Error Helper',
+    description: 'Paste an error message and get AI-powered debugging help',
+    icon: AlertTriangle,
     color: 'text-foreground',
     bgColor: 'bg-muted',
   },
@@ -284,6 +316,30 @@ export default function AgentPage() {
         )}
         {agentId === '1' && (
           <VirtualMeeting
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
+        {agentId === '2' && (
+          <CodeConverter
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
+        {agentId === '3' && (
+          <TextToSql
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
+        {agentId === '4' && (
+          <TextRewriter
+            sidebarMenu={activeAgentMenu}
+            onRequestSidebarMenuChange={setActiveAgentMenu}
+          />
+        )}
+        {agentId === '5' && (
+          <ErrorHelper
             sidebarMenu={activeAgentMenu}
             onRequestSidebarMenuChange={setActiveAgentMenu}
           />

@@ -15,8 +15,10 @@ import {
   Heartbeat as PhHeartbeat,
   ArrowCounterClockwise as PhArrowCounterClockwise,
   ArrowLeft as PhArrowLeft,
+  ArrowsLeftRight as PhArrowsLeftRight,
   ArrowSquareOut as PhArrowSquareOut,
   ArrowsClockwise as PhArrowsClockwise,
+  Bug as PhBug,
   Bell as PhBell,
   Briefcase as PhBriefcase,
   Building as PhBuilding,
@@ -37,6 +39,8 @@ import {
   Clock as PhClock,
   ClockCounterClockwise as PhClockCounterClockwise,
   Code as PhCode,
+  FileCode as PhFileCode,
+  FileText as PhFileText,
   Coins as PhCoins,
   Crown as PhCrown,
   Copy as PhCopy,
@@ -52,6 +56,7 @@ import {
   FloppyDisk as PhFloppyDisk,
   Funnel as PhFunnel,
   Gear as PhGear,
+  Ghost as PhGhost,
   Globe as PhGlobe,
   GridFour as PhGridFour,
   HardDrives as PhHardDrives,
@@ -125,7 +130,9 @@ function w(Icon, defaultWeight = 'light') {
 
 // ─── Navigation ────────────────────────────────────────────────────────────
 export const ArrowLeft       = w(PhArrowLeft);
+export const ArrowRightLeft  = w(PhArrowsLeftRight);
 export const Bell            = w(PhBell);
+export const Bug             = w(PhBug);
 export const ChevronDown     = w(PhCaretDown);
 export const ChevronLeft     = w(PhCaretLeft);
 export const ChevronRight    = w(PhCaretRight);
@@ -204,6 +211,10 @@ export const Building2       = w(PhBuilding);   // 단일 건물
 export const Calendar        = w(PhCalendar);
 export const Clock           = w(PhClock);
 export const Code            = w(PhCode);
+export const Code2           = w(PhCode);       // alias for Code2 (lucide compat)
+export const FileCode        = w(PhFileCode);
+export const FileText        = w(PhFileText);
+export const Table2          = w(PhTable);      // alias for Table2 (lucide compat)
 export const Coins           = w(PhCoins);
 export const Cpu             = w(PhCpu);
 export const Database        = w(PhDatabase);
@@ -234,6 +245,7 @@ export const Sun       = w(PhSun);
 export const Star      = w(PhStar);
 export const Zap       = w(PhLightning);
 export const Brain     = w(PhBrain);
+export const Ghost     = w(PhGhost);
 
 // ─── shadcn/ui 프리미티브 전용 ────────────────────────────────────────────────
 // checkbox, select, dropdown, radio-group, sheet, dialog, sonner 내부에서 사용
