@@ -7,7 +7,7 @@ import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import AgentSidebar from '@/components/chat/AgentSidebar';
 import ChatLayout from '@/components/chat/ChatLayout';
-import AgentSelector from '@/components/AgentSelector';
+import SiteMenuSelector from '@/components/SiteMenuSelector';
 import PPTMaker from '@/components/PPTMaker';
 import ChartMaker from '@/components/ChartMaker';
 import VirtualMeeting from '@/components/VirtualMeeting';
@@ -195,7 +195,7 @@ export default function AgentPage() {
           activeAgentMenu={activeAgentMenu}
           onAgentMenuSelect={agentId === '7' ? setActiveAgentMenu : null}
         />
-        <AgentSelector />
+        <SiteMenuSelector />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md">
             <div className="mx-auto w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
@@ -240,7 +240,7 @@ export default function AgentPage() {
           activeAgentMenu={activeAgentMenu}
           onAgentMenuSelect={agentId === '7' ? setActiveAgentMenu : null}
         />
-        <AgentSelector />
+        <SiteMenuSelector />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-foreground mb-2">
@@ -281,7 +281,7 @@ export default function AgentPage() {
         activeAgentMenu={activeAgentMenu}
         onAgentMenuSelect={agentId === '7' ? setActiveAgentMenu : null}
       />
-      <AgentSelector />
+      <SiteMenuSelector />
 
       {/* Agent main content */}
       <div className="flex-1 flex flex-col overflow-hidden">

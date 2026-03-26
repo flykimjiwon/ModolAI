@@ -21,7 +21,7 @@ import ChatLayout from './components/chat/ChatLayout';
 import ChatInput from './components/chat/ChatInput';
 import DrawPreviewPanel from './components/chat/DrawPreviewPanel';
 import NoticePopup from './components/NoticePopup';
-import AgentSelector from './components/AgentSelector';
+import SiteMenuSelector from './components/SiteMenuSelector';
 import { X, Loader2, ChevronDown } from '@/components/icons';
 import {
   Dialog,
@@ -424,7 +424,7 @@ export default function Home() {
         profileEditEnabled={profileEditEnabled}
         boardEnabled={boardEnabled}
       />
-      <AgentSelector />
+      <SiteMenuSelector />
       <ChatHeader />
       <MessageList
         messages={messages}

@@ -67,11 +67,13 @@ import {
   Info as PhInfo,
   Key as PhKey,
   Lightning as PhLightning,
+  LinkIcon as PhLink,
   Lightbulb as PhLightbulb,
   List as PhList,
   ListBullets as PhListBullets,
   Lock as PhLock,
   MagnifyingGlass as PhMagnifyingGlass,
+  MinusIcon as PhMinus,
   Monitor as PhMonitor,
   Moon as PhMoon,
   Palette as PhPalette,
@@ -265,3 +267,7 @@ export const XIcon             = w(PhX, 'regular');
 // ─── 추가 alias (일부 파일에서 Icon suffix로 import) ─────────────────────────
 export const ImageIcon    = w(PhImage);
 export const PieChartIcon = w(PhChartPie);
+
+// ─── Workflow / Screen Builder / Menu 추가 아이콘 ─────────────────────────────
+export const Link         = w(PhLink);
+export const Minus        = w(PhMinus);
