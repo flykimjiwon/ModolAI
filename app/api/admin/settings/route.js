@@ -115,6 +115,16 @@ async function ensureSettingsColumns() {
       "ADD COLUMN IF NOT EXISTS theme_colors JSONB DEFAULT '{}'::jsonb"
     );
   }
+  if (!columns.has('ghost_mode_enabled')) {
+    missing.push(
+      'ADD COLUMN IF NOT EXISTS ghost_mode_enabled BOOLEAN DEFAULT false'
+    );
+  }
+  if (!columns.has('ghost_bubble_enabled')) {
+    missing.push(
+      'ADD COLUMN IF NOT EXISTS ghost_bubble_enabled BOOLEAN DEFAULT true'
+    );
+  }
 
   if (missing.length > 0) {
     await query(`ALTER TABLE settings ${missing.join(', ')}`);
@@ -172,6 +182,8 @@ export async function GET(request) {
         drawSystemPrompt: settings.draw_system_prompt,
         themePreset: settings.theme_preset,
         themeColors: settings.theme_colors,
+        ghostModeEnabled: settings.ghost_mode_enabled,
+        ghostBubbleEnabled: settings.ghost_bubble_enabled,
         createdAt: settings.created_at,
         updatedAt: settings.updated_at,
       };
@@ -365,6 +377,10 @@ models:
         drawSystemPrompt: settings.drawSystemPrompt || '',
         themePreset: settings.themePreset || 'amber-soft',
         themeColors: settings.themeColors || {},
+        ghostModeEnabled:
+          settings.ghostModeEnabled !== undefined ? settings.ghostModeEnabled : false,
+        ghostBubbleEnabled:
+          settings.ghostBubbleEnabled !== undefined ? settings.ghostBubbleEnabled : true,
       },
       {
         headers: NO_STORE_HEADERS,
@@ -418,6 +434,8 @@ export async function PUT(request) {
       drawSystemPrompt,
       themePreset,
       themeColors,
+      ghostModeEnabled,
+      ghostBubbleEnabled,
     } = await request.json();
 
     // Validate input values
@@ -821,6 +839,24 @@ export async function PUT(request) {
         }
       }
       updateData.themeColors = themeColors;
+    }
+
+    if (ghostModeEnabled !== undefined) {
+      if (typeof ghostModeEnabled !== 'boolean') {
+        return createValidationError(
+          'Ghost mode enabled must be a boolean value.'
+        );
+      }
+      updateData.ghostModeEnabled = ghostModeEnabled;
+    }
+
+    if (ghostBubbleEnabled !== undefined) {
+      if (typeof ghostBubbleEnabled !== 'boolean') {
+        return createValidationError(
+          'Ghost bubble enabled must be a boolean value.'
+        );
+      }
+      updateData.ghostBubbleEnabled = ghostBubbleEnabled;
     }
 
     // Build PostgreSQL update query

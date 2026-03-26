@@ -72,6 +72,8 @@ export default function SettingsPage() {
   const [themePreset, setThemePreset] = useState('amber-soft');
   const [themeColors, setThemeColors] = useState({});
   const [themeCustomPrimary, setThemeCustomPrimary] = useState('#e5a63b');
+  const [ghostModeEnabled, setGhostModeEnabled] = useState(false);
+  const [ghostBubbleEnabled, setGhostBubbleEnabled] = useState(true);
 
   // 설정 로드
   useEffect(() => {
@@ -192,6 +194,12 @@ export default function SettingsPage() {
           );
           setDrawModel(data.drawModel || '');
           setDrawSystemPrompt(data.drawSystemPrompt || DEFAULT_DRAW_PROMPT);
+        setGhostModeEnabled(
+          data.ghostModeEnabled !== undefined ? data.ghostModeEnabled : false
+        );
+        setGhostBubbleEnabled(
+          data.ghostBubbleEnabled !== undefined ? data.ghostBubbleEnabled : true
+        );
         setEndpoints(
           typeof data.endpoints === 'string'
             ? data.endpoints
@@ -704,6 +712,34 @@ export default function SettingsPage() {
     } catch (error) {
       console.error(t('admin_settings.log_settings_save_failed'), error);
       alert(error.message || t('admin_settings.settings_save_failed'), 'error', t('admin_settings.save_error'));
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const saveGhostSettings = async () => {
+    try {
+      setSavingSection('ghost');
+      const token = localStorage.getItem('token');
+      const body = {
+        ghostModeEnabled,
+        ghostBubbleEnabled,
+      };
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || t('errors.save_failed'));
+      }
+      await alert(t('common.save_success'), 'success');
+    } catch (error) {
+      await alert(error.message, 'error', t('errors.title'));
     } finally {
       setSavingSection(null);
     }
@@ -1984,6 +2020,77 @@ models:
               {t('admin_settings.curl_example_hint')}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Ghost Mode 설정 */}
+      <div className='bg-card shadow rounded-lg p-6'>
+        <div className='flex items-center justify-between mb-4'>
+          <div>
+            <h2 className='text-lg font-semibold text-foreground'>
+              Ghost Mode
+            </h2>
+          </div>
+          <button
+            onClick={saveGhostSettings}
+            disabled={savingSection === 'ghost' || loading}
+            className='inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2 text-sm px-3 py-1.5'
+          >
+            <Save className='h-3.5 w-3.5' />
+            {savingSection === 'ghost' ? t('common.saving') : t('common.save')}
+          </button>
+        </div>
+
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <label className='block text-sm font-medium text-foreground mb-1'>
+                Enable Ghost Mode
+              </label>
+              <p className='text-sm text-muted-foreground'>
+                Show ghost mode button on the main screen. When active, chat messages are not logged to analytics.
+              </p>
+            </div>
+            <button
+              onClick={() => setGhostModeEnabled(!ghostModeEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out ${
+                ghostModeEnabled ? 'bg-primary' : 'bg-muted'
+              }`}
+              disabled={loading}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform duration-200 ease-in-out ${
+                  ghostModeEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {ghostModeEnabled && (
+            <div className='flex items-center justify-between'>
+              <div>
+                <label className='block text-sm font-medium text-foreground mb-1'>
+                  Show speech bubble tooltip
+                </label>
+                <p className='text-sm text-muted-foreground'>
+                  A speech bubble appears periodically above the ghost mode button.
+                </p>
+              </div>
+              <button
+                onClick={() => setGhostBubbleEnabled(!ghostBubbleEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out ${
+                  ghostBubbleEnabled ? 'bg-primary' : 'bg-muted'
+                }`}
+                disabled={loading}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform duration-200 ease-in-out ${
+                    ghostBubbleEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

@@ -23,13 +23,14 @@ export async function fetchDirectModels(headers) {
  * @param {AbortSignal} signal - AbortSignal for request cancellation
  * @returns {Promise<Response>} fetch response object
  */
-export async function sendChatMessage(apiEndpoint, payload, signal) {
+export async function sendChatMessage(apiEndpoint, payload, signal, extraHeaders = {}) {
   try {
     const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+        ...extraHeaders,
       },
       body: JSON.stringify(payload),
       signal: signal,

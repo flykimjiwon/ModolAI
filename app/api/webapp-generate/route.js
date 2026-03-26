@@ -316,6 +316,10 @@ export async function POST(request) {
     // Extract client IP and user info
     const clientIP = getClientIP(request);
     const userAgent = request.headers.get('user-agent') || '';
+    const isGhostMode = request.headers.get('x-ghost-mode') === 'true';
+    const maybeLogExternalApi = isGhostMode
+      ? async () => {}
+      : logExternalApiRequest;
 
     // Request start log
     logInfo('AI generation request started', {
@@ -737,7 +741,7 @@ export async function POST(request) {
       if (!manualRes.ok) {
         const errorText = await manualRes.text().catch(() => '');
         try {
-          await logExternalApiRequest({
+          await maybeLogExternalApi({
             sourceType: 'internal',
             provider: 'manual',
             apiType: apiTypeForLog,
@@ -983,7 +987,7 @@ export async function POST(request) {
                 previewEvents,
               });
               try {
-                await logExternalApiRequest({
+                await maybeLogExternalApi({
                   sourceType: 'internal',
                   provider: 'manual',
                   apiType: apiTypeForLog,
@@ -1079,7 +1083,7 @@ export async function POST(request) {
       const responseString =
         typeof mapped === 'string' ? mapped : JSON.stringify(mapped);
       try {
-        await logExternalApiRequest({
+        await maybeLogExternalApi({
           sourceType: 'internal',
           provider: 'manual',
           apiType: apiTypeForLog,
@@ -1449,7 +1453,7 @@ export async function POST(request) {
 
         // Also record failed calls in external API logs
         try {
-          await logExternalApiRequest({
+          await maybeLogExternalApi({
             sourceType: 'internal',
             provider: 'gemini',
             apiType: apiTypeForLog,
@@ -1837,7 +1841,7 @@ export async function POST(request) {
             }
           } finally {
             try {
-              await logExternalApiRequest({
+              await maybeLogExternalApi({
                 sourceType: 'internal',
                 provider: 'gemini',
                 apiType: apiTypeForLog,
@@ -1988,7 +1992,7 @@ export async function POST(request) {
 
         // Also record failed calls in external API logs
         try {
-          await logExternalApiRequest({
+          await maybeLogExternalApi({
             sourceType: 'internal',
             provider: 'openai-compatible',
             apiType: apiTypeForLog,
@@ -2041,7 +2045,7 @@ export async function POST(request) {
             errorText = `HTTP ${openaiRes.status}: ${openaiRes.statusText}`;
           }
 
-          await logExternalApiRequest({
+          await maybeLogExternalApi({
             sourceType: 'internal',
             provider: 'openai-compatible',
             apiType: apiTypeForLog,
@@ -2104,7 +2108,7 @@ export async function POST(request) {
                   // External API logging when stream completes (openai-compatible)
                   try {
                     const responseTime = Date.now() - startAt;
-                    await logExternalApiRequest({
+                    await maybeLogExternalApi({
                       sourceType: 'internal',
                       provider: 'openai-compatible',
                       apiType: apiTypeForLog,
@@ -2225,7 +2229,7 @@ export async function POST(request) {
             // External API logging on natural stream end (openai-compatible)
             try {
               const responseTime = Date.now() - startAt;
-              await logExternalApiRequest({
+              await maybeLogExternalApi({
                 sourceType: 'internal',
                 provider: 'openai-compatible',
                 apiType: apiTypeForLog,
@@ -2430,7 +2434,7 @@ export async function POST(request) {
             errorText = `HTTP ${llmRes.status}: ${llmRes.statusText}`;
           }
 
-          await logExternalApiRequest({
+          await maybeLogExternalApi({
             sourceType: 'internal',
             provider: 'model-server',
             apiType: apiTypeForLog,
@@ -2621,7 +2625,7 @@ export async function POST(request) {
                 const jwtName = payload?.name || null;
                 const jwtRole = payload?.role || null;
 
-                await logExternalApiRequest({
+                await maybeLogExternalApi({
                   sourceType: 'internal',
                   provider: 'model-server',
                   apiType: apiTypeForLog,

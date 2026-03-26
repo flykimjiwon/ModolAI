@@ -558,3 +558,9 @@
 .dark .chat-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #78716c;
 }
+
+/* Ghost Mode animation */
+@keyframes ghostFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}

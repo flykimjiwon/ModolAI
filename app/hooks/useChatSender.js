@@ -177,6 +177,7 @@ export function useChatSender({
   userMemory = '',
   drawMode = false,
   drawSystemPrompt = '',
+    ghostMode = false,
 }) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -230,6 +231,8 @@ export function useChatSender({
   useEffect(() => { userMemoryRef.current = userMemory; }, [userMemory]);
   useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
   useEffect(() => { drawSystemPromptRef.current = drawSystemPrompt; }, [drawSystemPrompt]);
+  const ghostModeRef = useRef(ghostMode);
+  useEffect(() => { ghostModeRef.current = ghostMode; }, [ghostMode]);
 
   const performAPICall = useCallback(
     async (
@@ -304,10 +307,15 @@ export function useChatSender({
       };
 
       try {
+        const extraHeaders = {};
+        if (ghostModeRef.current) {
+          extraHeaders['X-Ghost-Mode'] = 'true';
+        }
         const res = await sendChatMessage(
           apiEndpoint,
           payload,
-          controller.signal
+          controller.signal,
+          extraHeaders
         );
         const reader = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
