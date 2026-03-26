@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModolAI techai Sync - Session Prompts</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0a;
+    color: #e5e5e5;
+    padding: 24px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .subtitle {
+    color: #888;
+    margin-bottom: 32px;
+    font-size: 14px;
+  }
+  .overview {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .overview-card {
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .overview-card.active {
+    border-color: #3b82f6;
+    background: #0c1929;
+  }
+  .overview-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .overview-card .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .badge-blue { background: #1e3a5f; color: #60a5fa; }
+  .badge-purple { background: #2e1065; color: #a78bfa; }
+  .badge-amber { background: #451a03; color: #fbbf24; }
+  .overview-card .lines {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .overview-card ul {
+    list-style: none;
+    font-size: 13px;
+    color: #aaa;
+  }
+  .overview-card ul li::before {
+    content: ">";
+    color: #555;
+    margin-right: 6px;
+  }
+  .session {
+    margin-bottom: 48px;
+  }
+  .session-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .session-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .copy-btn {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: #1d4ed8; }
+  .copy-btn.copied {
+    background: #16a34a;
+  }
+  .prompt-box {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 20px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 600px;
+    overflow-y: auto;
+    color: #ccc;
+    position: relative;
+  }
+  .prompt-box::-webkit-scrollbar { width: 6px; }
+  .prompt-box::-webkit-scrollbar-track { background: transparent; }
+  .prompt-box::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  .divider {
+    border: none;
+    border-top: 1px solid #222;
+    margin: 40px 0;
+  }
+  .tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-right: 4px;
+  }
+  .tag-green { background: #052e16; color: #4ade80; }
+  .tag-yellow { background: #422006; color: #facc15; }
+  .tag-red { background: #450a0a; color: #f87171; }
+  @media (max-width: 768px) {
+    .overview { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>techai -> ModolAI Sync Prompts</h1>
+<p class="subtitle">3개 Claude Code 세션에서 병렬 진행. 각 프롬프트를 복사해서 새 세션에 붙여넣기.</p>
+
+<div class="overview">
+  <div class="overview-card active">
+    <span class="badge badge-blue">Session A - 현재 세션</span>
+    <h3>Agent Components + API</h3>
+    <div class="lines">~12,152줄 | 14개 파일</div>
+    <ul>
+      <li>useAgentGenerate 훅</li>
+      <li>VirtualMeeting 실행 API</li>
+      <li>CodeConverter (Agent #2)</li>
+      <li>TextToSql (Agent #3)</li>
+      <li>TextRewriter (Agent #4)</li>
+      <li>ErrorHelper (Agent #5)</li>
+      <li>agent/[id]/page.js 업데이트</li>
+    </ul>
+  </div>
+  <div class="overview-card">
+    <span class="badge badge-purple">Session B - 새 세션</span>
+    <h3>Workflow + Screen + Menu</h3>
+    <div class="lines">~7,223줄 | 25개 파일</div>
+    <ul>
+      <li>Workflow Builder (DAG)</li>
+      <li>Screen Builder (UI 빌더)</li>
+      <li>Site Menu System</li>
+      <li>DB 테이블 6개 생성</li>
+    </ul>
+  </div>
+  <div class="overview-card">
+    <span class="badge badge-amber">Session C - 새 세션</span>
+    <h3>Ghost + Analytics + Models</h3>
+    <div class="lines">~1,500줄+ diff 병합</div>
+    <ul>
+      <li>Ghost Mode (관리자 스텔스)</li>
+      <li>Analytics 강화</li>
+      <li>Admin 모델 서브라우트 4개</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- SESSION B -->
+<div class="session">
+  <div class="session-header">
+    <h2>Session B — Workflow + Screen Builder + Site Menu</h2>
+    <button class="copy-btn" onclick="copyPrompt('prompt-b', this)">Copy Prompt</button>
+  </div>
+  <div class="prompt-box" id="prompt-b">techai/web의 Workflow Builder, Screen Builder, Site Menu System을 ModolAI로 포팅해줘.
+
+## 프로젝트 경로
+- techai: /Users/jiwonkim/Desktop/kimjiwon/techai/web
+- ModolAI: /Users/jiwonkim/Desktop/kimjiwon/ModolAI
+
+## 포팅 규칙
+1. lucide-react → @/components/icons (ModolAI는 Phosphor Icons 사용). 없는 아이콘은 @/components/icons/index.jsx에 추가
+2. i18n: 한국어 하드코딩 → useTranslation t() 함수 + 영어 fallback. en.json/ko.json에 키 추가
+3. ModolAI 디자인 토큰 사용 (bg-background, text-foreground, border-border 등 shadcn/ui 패턴)
+4. DB: CREATE TABLE IF NOT EXISTS 패턴 사용 (tableChecked 플래그 쓰지 마)
+5. 인증: verifyTokenWithResult (일반), verifyAdminWithResult (관리자)
+6. SQL은 반드시 파라미터화 쿼리 ($1, $2...) 사용
+
+## Task 1: Workflow Builder (~3,658줄)
+techai 파일들:
+- app/workflow/page.js (325줄) → ModolAI app/workflow/page.js
+- app/workflow/[id]/page.js (231줄) → ModolAI app/workflow/[id]/page.js
+- app/components/workflow/NodePalette.js (94줄)
+- app/components/workflow/PropertyPanel.js (814줄)
+- app/components/workflow/TestPanel.js (201줄)
+- app/components/workflow/WorkflowCanvas.js (471줄)
+- app/components/workflow/WorkflowNode.js (173줄)
+- app/api/workflows/route.js (40줄)
+- app/api/workflows/[id]/route.js (117줄)
+- app/api/workflows/[id]/execute/route.js (213줄)
+- app/api/workflows/[id]/publish/route.js (47줄)
+- app/api/workflows/[id]/test/route.js (110줄)
+- app/api/workflows/[id]/endpoints/route.js
+- app/lib/workflow-engine.js (822줄)
+
+DB 테이블: workflows, workflow_nodes, workflow_edges (ensureTable 패턴으로 자동 생성)
+추가 패키지 불필요 (reactflow 미사용, @dnd-kit 이미 설치됨)
+
+## Task 2: Screen Builder (~2,033줄)
+techai 파일들:
+- app/screen-builder/page.js (325줄) → ModolAI app/screen-builder/page.js
+- app/screen-builder/[id]/page.js (664줄)
+- app/components/screen-builder/ComponentPropertyPanel.js (293줄)
+- app/components/screen-builder/EditableComponent.js (185줄)
+- app/components/screen-builder/ScreenRenderer.js (419줄)
+- app/api/screens/route.js (45줄)
+- app/api/screens/[id]/route.js (102줄)
+- app/api/screens/[id]/execute/route.js
+- app/api/screens/[id]/publish/route.js
+- app/api/screens/share/[shareId]/route.js
+- app/s/[shareId]/page.js (공개 공유 뷰어)
+
+DB 테이블: screens, screen_components
+
+## Task 3: Site Menu System (~1,532줄)
+techai 파일들:
+- app/components/SiteMenuSelector.js (290줄) → ModolAI (AgentSelector를 대체)
+- app/admin/menus/page.js (906줄)
+- app/api/admin/menus/route.js (268줄)
+- app/api/menus/list/route.js (68줄)
+
+DB 테이블: site_menus
+agent_settings 테이블에 menu_name 컬럼 추가 필요
+
+SiteMenuSelector 포팅 후 app/page.js와 app/agent/[id]/page.js에서 AgentSelector → SiteMenuSelector 교체
+
+## 완료 조건
+- npm run build 성공
+- 각 페이지 라우트가 빌드에 포함되는지 확인
+- 커밋 메시지: feat: port Workflow Builder, Screen Builder, Site Menu from techai</div>
+</div>
+
+<hr class="divider">
+
+<!-- SESSION C -->
+<div class="session">
+  <div class="session-header">
+    <h2>Session C — Ghost Mode + Analytics + Admin Models</h2>
+    <button class="copy-btn" onclick="copyPrompt('prompt-c', this)">Copy Prompt</button>
+  </div>
+  <div class="prompt-box" id="prompt-c">techai/web의 Ghost Mode, Analytics 강화, Admin 모델 서브라우트를 ModolAI로 포팅해줘.
+
+## 프로젝트 경로
+- techai: /Users/jiwonkim/Desktop/kimjiwon/techai/web
+- ModolAI: /Users/jiwonkim/Desktop/kimjiwon/ModolAI
+
+## 포팅 규칙
+1. lucide-react → @/components/icons (Phosphor Icons). 없는 아이콘은 index.jsx에 추가
+2. i18n: useTranslation t() + 영어 fallback
+3. shadcn/ui 디자인 토큰 (bg-background, text-foreground 등)
+4. DB: CREATE TABLE IF NOT EXISTS (tableChecked 플래그 쓰지 마)
+5. SQL 파라미터화 쿼리 필수
+
+## Task 1: Ghost Mode
+techai에서 ghostMode 관련 코드를 추출해서 ModolAI에 적용:
+
+1. app/admin/settings/page.js — ghostMode 토글 UI 추가 (techai 파일에서 ghostMode 관련 부분만 diff 추출)
+2. app/api/admin/settings/route.js — ghost_mode 컬럼 저장/로드
+3. app/page.js — ghost 아이콘 + 툴팁 ("유령은 모든걸 통과하죠") 표시, useChatSender에 ghostMode 전달
+4. app/globals.css — ghost 관련 CSS 애니메이션
+
+주의: ModolAI의 page.js는 techai보다 훨씬 작음 (597줄 vs 134KB). cherry-pick 방식으로 ghostMode 관련 코드만 추가할 것.
+
+ghostMode 동작: 관리자가 활성화하면 해당 세션의 채팅이 analytics/external_api_logs에 기록되지 않음.
+- useChatSender에서 ghostMode=true면 API 호출 시 header에 X-Ghost-Mode: true 추가
+- webapp-generate/route.js에서 X-Ghost-Mode 헤더 확인 → logExternalApiRequest 스킵
+
+## Task 2: Analytics 강화
+techai의 admin/analytics/page.js와 ModolAI의 admin/analytics/page.js를 비교해서 누락된 차트/통계 추가.
+- git log로 techai의 analytics 관련 최근 커밋 확인
+- 새로 추가된 차트/메트릭만 cherry-pick
+
+## Task 3: Admin 모델 서브라우트 (4개 API)
+techai 파일들을 ModolAI로 포팅:
+- app/api/admin/embedding-models/route.js
+- app/api/admin/rerank-models/route.js
+- app/api/admin/vision-models/route.js
+- app/api/admin/models/aicr-default/route.js
+
+각각 독립적인 CRUD API. ModolAI의 기존 admin/models 라우트와 충돌하지 않게 주의.
+aicr-default는 ModolAI에 AICR가 없으므로 "default model" 관리 기능으로 일반화해서 포팅.
+
+## 완료 조건
+- npm run build 성공
+- ghost mode가 admin settings에 나타나는지 확인
+- 커밋 메시지: feat: port Ghost Mode, analytics enhancement, admin model sub-routes from techai</div>
+</div>
+
+<hr class="divider">
+
+<!-- SESSION A (참고) -->
+<div class="session">
+  <div class="session-header">
+    <h2>Session A — Agent Components (현재 세션에서 진행 중)</h2>
+    <button class="copy-btn" onclick="copyPrompt('prompt-a', this)">Copy Prompt</button>
+  </div>
+  <div class="prompt-box" id="prompt-a">techai/web의 Agent 컴포넌트들 (useAgentGenerate, VirtualMeeting API, CodeConverter, TextToSql, TextRewriter, ErrorHelper)을 ModolAI로 포팅해줘.
+
+## 프로젝트 경로
+- techai: /Users/jiwonkim/Desktop/kimjiwon/techai/web
+- ModolAI: /Users/jiwonkim/Desktop/kimjiwon/ModolAI
+
+## 포팅 규칙
+1. lucide-react → @/components/icons (ModolAI는 Phosphor Icons 사용). 없는 아이콘은 @/components/icons/index.jsx에 추가
+2. i18n: 한국어 하드코딩 → useTranslation t() 함수 + 영어 fallback. en.json/ko.json에 키 추가
+3. ModolAI 디자인 토큰 사용 (bg-background, text-foreground, border-border 등 shadcn/ui 패턴)
+4. DB: CREATE TABLE IF NOT EXISTS 패턴 사용 (tableChecked 플래그 쓰지 마)
+5. 인증: verifyTokenWithResult (일반)
+6. SQL은 반드시 파라미터화 쿼리 ($1, $2...) 사용
+
+## Task 1: useAgentGenerate 훅 (전제조건)
+- techai: app/hooks/useAgentGenerate.js (201줄)
+- → ModolAI: app/hooks/useAgentGenerate.js
+- SSE 스트리밍 공통 훅. Agent 2-5가 모두 사용
+
+## Task 2: VirtualMeeting 실행 API (누락된 기능 완성)
+- techai: app/api/webapp-virtual-meeting/route.js (563줄)
+- → ModolAI: app/api/webapp-virtual-meeting/route.js
+- ModolAI에 VirtualMeeting 컴포넌트는 있지만 실행 API가 누락됨!
+
+## Task 3: CodeConverter (Agent #2)
+- techai: app/components/CodeConverter.js (599줄)
+- techai: app/api/webapp-code-convert/route.js (437줄)
+- techai: app/lib/agent-data/code-converter.js (1068줄)
+
+## Task 4: TextToSql (Agent #3)
+- techai: app/components/TextToSql.js (992줄)
+- techai: app/api/webapp-text-to-sql/route.js (446줄)
+- techai: app/lib/agent-data/text-to-sql.js (2267줄)
+
+## Task 5: TextRewriter (Agent #4)
+- techai: app/components/TextRewriter.js (422줄)
+- techai: app/api/webapp-text-rewriter/route.js (404줄)
+- techai: app/lib/agent-data/text-rewriter.js (881줄)
+
+## Task 6: ErrorHelper (Agent #5)
+- techai: app/components/ErrorHelper.js (515줄)
+- techai: app/api/webapp-error-helper/route.js (497줄)
+- techai: app/lib/agent-data/error-helper.js (2860줄)
+
+## Task 7: agent/[id]/page.js 업데이트
+ModolAI의 app/agent/[id]/page.js에 Agent 2-5 등록:
+- 현재: Agent 1(VirtualMeeting), 7(PPT), 10(ChartMaker)만 등록
+- 추가: 2(CodeConverter), 3(TextToSql), 4(TextRewriter), 5(ErrorHelper)
+- AGENT_INFO에 추가 + import + 렌더링 분기
+
+## 완료 조건
+- npm run build 성공
+- /agent/2, /agent/3, /agent/4, /agent/5 라우트가 빌드에 포함
+- 커밋 메시지: feat: port useAgentGenerate, VirtualMeeting API, CodeConverter, TextToSql, TextRewriter, ErrorHelper from techai</div>
+</div>
+
+<script>
+function copyPrompt(id, btn) {
+  const el = document.getElementById(id);
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy Prompt';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>

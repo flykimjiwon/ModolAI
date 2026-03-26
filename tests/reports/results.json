@@ -1,0 +1,3323 @@
+{
+  "config": {
+    "configFile": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/playwright.config.ts",
+    "rootDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "auth-setup",
+        "name": "auth-setup",
+        "testDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/auth\\.setup\\.ts/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium-1",
+        "name": "chromium-1",
+        "testDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e",
+        "testIgnore": [
+          "/api\\./"
+        ],
+        "testMatch": [
+          "/\\.(e2e|spec)\\.(ts|js)$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium-2",
+        "name": "chromium-2",
+        "testDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e",
+        "testIgnore": [
+          "/api\\./"
+        ],
+        "testMatch": [
+          "/\\.(e2e|spec)\\.(ts|js)$/"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results",
+        "repeatEach": 1,
+        "retries": 1,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "api-tests",
+        "name": "api-tests",
+        "testDir": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "/api\\..*(spec|test)\\.(ts|js)$/"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "tests/reports/html",
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "tests/reports/results.json"
+        }
+      ],
+      [
+        "list",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate via login page",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "auth-setup",
+              "projectName": "auth-setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 15658,
+                  "error": {
+                    "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"login-form\"]') to be visible\u001b[22m\n",
+                    "stack": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"login-form\"]') to be visible\u001b[22m\n\n    at /Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts:10:14",
+                    "location": {
+                      "file": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts",
+                      "column": 14,
+                      "line": 10
+                    },
+                    "snippet": "   8 |\n   9 |   // Wait for login form\n> 10 |   await page.waitForSelector('[data-testid=\"login-form\"]', { timeout: 15_000 });\n     |              ^\n  11 |\n  12 |   // Fill credentials\n  13 |   await page.fill('[data-testid=\"login-email\"]', 'flykimjiwon@kakao.com');"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts",
+                        "column": 14,
+                        "line": 10
+                      },
+                      "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"login-form\"]') to be visible\u001b[22m\n\n\n   8 |\n   9 |   // Wait for login form\n> 10 |   await page.waitForSelector('[data-testid=\"login-form\"]', { timeout: 15_000 });\n     |              ^\n  11 |\n  12 |   // Fill credentials\n  13 |   await page.fill('[data-testid=\"login-email\"]', 'flykimjiwon@kakao.com');\n    at /Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts:10:14"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-26T14:03:34.950Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup/video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts",
+                    "column": 14,
+                    "line": 10
+                  }
+                },
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 15505,
+                  "error": {
+                    "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"login-form\"]') to be visible\u001b[22m\n",
+                    "stack": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"login-form\"]') to be visible\u001b[22m\n\n    at /Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts:10:14",
+                    "location": {
+                      "file": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts",
+                      "column": 14,
+                      "line": 10
+                    },
+                    "snippet": "   8 |\n   9 |   // Wait for login form\n> 10 |   await page.waitForSelector('[data-testid=\"login-form\"]', { timeout: 15_000 });\n     |              ^\n  11 |\n  12 |   // Fill credentials\n  13 |   await page.fill('[data-testid=\"login-email\"]', 'flykimjiwon@kakao.com');"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts",
+                        "column": 14,
+                        "line": 10
+                      },
+                      "message": "TimeoutError: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"login-form\"]') to be visible\u001b[22m\n\n\n   8 |\n   9 |   // Wait for login form\n> 10 |   await page.waitForSelector('[data-testid=\"login-form\"]', { timeout: 15_000 });\n     |              ^\n  11 |\n  12 |   // Fill credentials\n  13 |   await page.fill('[data-testid=\"login-email\"]', 'flykimjiwon@kakao.com');\n    at /Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts:10:14"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 1,
+                  "startTime": "2026-03-26T14:03:51.698Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup-retry1/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup-retry1/video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup-retry1/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/test-results/auth.setup.ts-authenticate-via-login-page-auth-setup-retry1/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/jiwonkim/Desktop/kimjiwon/ModolAI/tests/e2e/auth.setup.ts",
+                    "column": 14,
+                    "line": 10
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-89ebca0a881c0eb9d794",
+          "file": "auth.setup.ts",
+          "line": 6,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "chat.e2e.ts",
+      "file": "chat.e2e.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Chat - 메인 채팅 인터페이스",
+          "file": "chat.e2e.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "메인 페이지 로드 및 UI 표시",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-d37bb6e80dcbeb05b285",
+              "file": "chat.e2e.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "채팅방 생성",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-02b8911d3cd2a4193373",
+              "file": "chat.e2e.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "메시지 입력 영역 동작",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-2cf755bc9e7a02456267",
+              "file": "chat.e2e.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "사이드바 표시/숨기기",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-97514939117e56381652",
+              "file": "chat.e2e.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "모델 선택 드롭다운",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-b3c1937f32e5c1a158ab",
+              "file": "chat.e2e.ts",
+              "line": 49,
+              "column": 7
+            },
+            {
+              "title": "메인 페이지 로드 및 UI 표시",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-6c3f7c1b435b5cc8a2ed",
+              "file": "chat.e2e.ts",
+              "line": 11,
+              "column": 7
+            },
+            {
+              "title": "채팅방 생성",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-2d7e189289929b9b9c7f",
+              "file": "chat.e2e.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "메시지 입력 영역 동작",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-9188b56fbe3f4995a82f",
+              "file": "chat.e2e.ts",
+              "line": 25,
+              "column": 7
+            },
+            {
+              "title": "사이드바 표시/숨기기",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-e718bef8413608059ebc",
+              "file": "chat.e2e.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "모델 선택 드롭다운",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-c5694f7957bfaf57bad7",
+              "file": "chat.e2e.ts",
+              "line": 49,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Chat Variants - 다중 채팅 디자인",
+          "file": "chat.e2e.ts",
+          "line": 58,
+          "column": 6,
+          "specs": [
+            {
+              "title": "/chat 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-bf6b77df35e9c3bfb34c",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat1 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-7d8bd04e5347af720170",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat2 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-4e5580a0aae5e9a5fc9c",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat3 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-7a202d9cb900cfaf12cc",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-d23e4df4c67f023cee0a",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat1 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-96609537072c3e02c241",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat2 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-855e7189ac9bd795f16e",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            },
+            {
+              "title": "/chat3 페이지 로드",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "26fa658cd8e96e9ebfca-f22b74c6ccd73ed2dfd2",
+              "file": "chat.e2e.ts",
+              "line": 62,
+              "column": 9
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "login.e2e.ts",
+      "file": "login.e2e.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Login Page - 로그인 페이지",
+          "file": "login.e2e.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "로그인 페이지 렌더링",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-773bf051b008299af210",
+              "file": "login.e2e.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "빈 폼 제출 시 에러",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-669e72f131e8af304b18",
+              "file": "login.e2e.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "잘못된 비밀번호로 로그인 시도",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-ae02630bc00cfb6c4db9",
+              "file": "login.e2e.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "정상 로그인 후 메인 페이지 이동",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-4a2a99c4e1d9de574f24",
+              "file": "login.e2e.ts",
+              "line": 33,
+              "column": 7
+            },
+            {
+              "title": "회원가입 링크 이동",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-babb145169ed77e67e1d",
+              "file": "login.e2e.ts",
+              "line": 42,
+              "column": 7
+            },
+            {
+              "title": "다크모드 토글 동작",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-5de8a5456dafc8e0f8ce",
+              "file": "login.e2e.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "로그인 상태에서 /login 접근 시 리다이렉트",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-53e4a755cf3a3151461f",
+              "file": "login.e2e.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "로그인 페이지 렌더링",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-265f0c4c1ae11aa41c57",
+              "file": "login.e2e.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "빈 폼 제출 시 에러",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-8664a79541411dcfd167",
+              "file": "login.e2e.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "잘못된 비밀번호로 로그인 시도",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-595b73886374d36495a0",
+              "file": "login.e2e.ts",
+              "line": 26,
+              "column": 7
+            },
+            {
+              "title": "정상 로그인 후 메인 페이지 이동",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-c35697b861e5118ac1ec",
+              "file": "login.e2e.ts",
+              "line": 33,
+              "column": 7
+            },
+            {
+              "title": "회원가입 링크 이동",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-683a939e9b690d709a0f",
+              "file": "login.e2e.ts",
+              "line": 42,
+              "column": 7
+            },
+            {
+              "title": "다크모드 토글 동작",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-4891e54373c1dacd44db",
+              "file": "login.e2e.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "로그인 상태에서 /login 접근 시 리다이렉트",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "0818e24c5080c2cc5b9f-9400e55436d930208df2",
+              "file": "login.e2e.ts",
+              "line": 55,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "pages.e2e.ts",
+      "file": "pages.e2e.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Profile - 프로필 페이지",
+          "file": "pages.e2e.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "프로필 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-2f274bb90f6bde1d5cc3",
+              "file": "pages.e2e.ts",
+              "line": 13,
+              "column": 7
+            },
+            {
+              "title": "프로필 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-baf6242017e87ea835aa",
+              "file": "pages.e2e.ts",
+              "line": 13,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Board - 게시판",
+          "file": "pages.e2e.ts",
+          "line": 22,
+          "column": 6,
+          "specs": [
+            {
+              "title": "게시판 메인 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-92e1e9b2e0c6740bf306",
+              "file": "pages.e2e.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "게시글 작성 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-62727d17359927241aff",
+              "file": "pages.e2e.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "게시판 메인 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-f13dcb9bbdc367245e39",
+              "file": "pages.e2e.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "게시글 작성 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-bad814120b234f427409",
+              "file": "pages.e2e.ts",
+              "line": 29,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Signup - 회원가입",
+          "file": "pages.e2e.ts",
+          "line": 41,
+          "column": 6,
+          "specs": [
+            {
+              "title": "회원가입 페이지 렌더링",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-79a21c0c41cb8893bc30",
+              "file": "pages.e2e.ts",
+              "line": 50,
+              "column": 7
+            },
+            {
+              "title": "비밀번호 불일치 경고",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-4dbdd72d88511ea2da73",
+              "file": "pages.e2e.ts",
+              "line": 58,
+              "column": 7
+            },
+            {
+              "title": "로그인 링크 이동",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-ae2586dd21351283a6d1",
+              "file": "pages.e2e.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "회원가입 페이지 렌더링",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-b2ba0c252eab197866fe",
+              "file": "pages.e2e.ts",
+              "line": 50,
+              "column": 7
+            },
+            {
+              "title": "비밀번호 불일치 경고",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-6b252785a422b161f80d",
+              "file": "pages.e2e.ts",
+              "line": 58,
+              "column": 7
+            },
+            {
+              "title": "로그인 링크 이동",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-4243784ffea23ea1af82",
+              "file": "pages.e2e.ts",
+              "line": 64,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Admin - 관리자 페이지",
+          "file": "pages.e2e.ts",
+          "line": 72,
+          "column": 6,
+          "specs": [
+            {
+              "title": "관리자 대시보드 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-db53f6fddb5d9c3664fa",
+              "file": "pages.e2e.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "/admin/users 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-25861c021c1484281c52",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/models 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-fd7791fe035666a6bbda",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/agents 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-101382768e8c49bf2c57",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/database 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-3a3a3978e73a83a3cc44",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/settings 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-33d83547c7a8c97df53c",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/analytics 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-0a9fb37be5cca03e4ce2",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/menus 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-0c33da35d345921a6d23",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "관리자 대시보드 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-18eac4f7441e0e02a672",
+              "file": "pages.e2e.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "/admin/users 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-0f5e3826a8d5ded8877d",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/models 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-7b45822c89e589a7c3a8",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/agents 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-b2d68bfd79c456dcf6d0",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/database 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-b108cf5dfad371111225",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/settings 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-43de6dd6b416f98d3e64",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/analytics 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-7fd362ef0273ddd7541b",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            },
+            {
+              "title": "/admin/menus 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-9522da2dd43fcff06d1d",
+              "file": "pages.e2e.ts",
+              "line": 85,
+              "column": 9
+            }
+          ]
+        },
+        {
+          "title": "Workflow & Screen Builder",
+          "file": "pages.e2e.ts",
+          "line": 95,
+          "column": 6,
+          "specs": [
+            {
+              "title": "워크플로우 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-69decc71e42d085a711f",
+              "file": "pages.e2e.ts",
+              "line": 96,
+              "column": 7
+            },
+            {
+              "title": "스크린 빌더 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-6b8ebfe23c9ae1709698",
+              "file": "pages.e2e.ts",
+              "line": 103,
+              "column": 7
+            },
+            {
+              "title": "워크플로우 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-4610fce4f2d4a7e2c47b",
+              "file": "pages.e2e.ts",
+              "line": 96,
+              "column": 7
+            },
+            {
+              "title": "스크린 빌더 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-77fdc5c50d5fa1314142",
+              "file": "pages.e2e.ts",
+              "line": 103,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "SSO Page",
+          "file": "pages.e2e.ts",
+          "line": 113,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SSO 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-ac0380aeeb0bfb51382f",
+              "file": "pages.e2e.ts",
+              "line": 116,
+              "column": 7
+            },
+            {
+              "title": "SSO 페이지 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-e5a5c1de0ffacdf66e37",
+              "file": "pages.e2e.ts",
+              "line": 116,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Navigation - 네비게이션",
+          "file": "pages.e2e.ts",
+          "line": 126,
+          "column": 6,
+          "specs": [
+            {
+              "title": "존재하지 않는 페이지 처리",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-0c1254d2b3e4a5a5386a",
+              "file": "pages.e2e.ts",
+              "line": 127,
+              "column": 7
+            },
+            {
+              "title": "인증 없이 보호 페이지 접근 시 로그인 리다이렉트",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-558b9fc23f18265cba59",
+              "file": "pages.e2e.ts",
+              "line": 134,
+              "column": 7
+            },
+            {
+              "title": "존재하지 않는 페이지 처리",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-f372d1beb2b6d0258e9a",
+              "file": "pages.e2e.ts",
+              "line": 127,
+              "column": 7
+            },
+            {
+              "title": "인증 없이 보호 페이지 접근 시 로그인 리다이렉트",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-9312692154b6e2454423",
+              "file": "pages.e2e.ts",
+              "line": 134,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Responsive Design - 반응형",
+          "file": "pages.e2e.ts",
+          "line": 148,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Mobile (375x812) 레이아웃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-05b5871770267a913a91",
+              "file": "pages.e2e.ts",
+              "line": 156,
+              "column": 9
+            },
+            {
+              "title": "Tablet (768x1024) 레이아웃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-4261457fad1f4efa2f24",
+              "file": "pages.e2e.ts",
+              "line": 156,
+              "column": 9
+            },
+            {
+              "title": "Desktop (1920x1080) 레이아웃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-350436750a4559b903e5",
+              "file": "pages.e2e.ts",
+              "line": 156,
+              "column": 9
+            },
+            {
+              "title": "Mobile (375x812) 레이아웃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-7315b029a2d6170a2abf",
+              "file": "pages.e2e.ts",
+              "line": 156,
+              "column": 9
+            },
+            {
+              "title": "Tablet (768x1024) 레이아웃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-caecdb664d69d8ef59fe",
+              "file": "pages.e2e.ts",
+              "line": 156,
+              "column": 9
+            },
+            {
+              "title": "Desktop (1920x1080) 레이아웃",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-cf9d5e649e71833713b7",
+              "file": "pages.e2e.ts",
+              "line": 156,
+              "column": 9
+            }
+          ]
+        },
+        {
+          "title": "Performance - 성능 체크",
+          "file": "pages.e2e.ts",
+          "line": 170,
+          "column": 6,
+          "specs": [
+            {
+              "title": "로그인 페이지 로드 시간 < 5초",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-62dceef509baae1697ad",
+              "file": "pages.e2e.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "메인 페이지 로드 시간 < 8초",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-8ce672364af39ad10b51",
+              "file": "pages.e2e.ts",
+              "line": 179,
+              "column": 7
+            },
+            {
+              "title": "콘솔 에러 없음 (메인 페이지)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-1",
+                  "projectName": "chromium-1",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-a5675ef99ac4f4ab8c72",
+              "file": "pages.e2e.ts",
+              "line": 187,
+              "column": 7
+            },
+            {
+              "title": "로그인 페이지 로드 시간 < 5초",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-e3298c09d300370cc1e3",
+              "file": "pages.e2e.ts",
+              "line": 171,
+              "column": 7
+            },
+            {
+              "title": "메인 페이지 로드 시간 < 8초",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-4c1720a5ab16a2e49abc",
+              "file": "pages.e2e.ts",
+              "line": 179,
+              "column": 7
+            },
+            {
+              "title": "콘솔 에러 없음 (메인 페이지)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium-2",
+                  "projectName": "chromium-2",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b983d250371d52a224b0-e611207f6c6e03e990ad",
+              "file": "pages.e2e.ts",
+              "line": 187,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "api.spec.ts",
+      "file": "api.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Health & Infrastructure",
+          "file": "api.spec.ts",
+          "line": 23,
+          "column": 6,
+          "specs": [
+            {
+              "title": "서버 접근 가능",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-0a6bccab6ea368b29c93",
+              "file": "api.spec.ts",
+              "line": 24,
+              "column": 7
+            },
+            {
+              "title": "API health check",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-5a0ea61e8017bb91b0fd",
+              "file": "api.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "favicon 존재",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-c6930dfab3602dde5b2f",
+              "file": "api.spec.ts",
+              "line": 37,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Auth Endpoints",
+          "file": "api.spec.ts",
+          "line": 45,
+          "column": 6,
+          "specs": [
+            {
+              "title": "POST /api/auth/login - 정상 로그인",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-bdeb2cd25b6353508f59",
+              "file": "api.spec.ts",
+              "line": 46,
+              "column": 7
+            },
+            {
+              "title": "POST /api/auth/login - 잘못된 비밀번호 거부",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-435c360ef4c3311c552c",
+              "file": "api.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "POST /api/auth/login - 존재하지 않는 이메일 거부",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-3cf8c1a4b5f39055ba2b",
+              "file": "api.spec.ts",
+              "line": 62,
+              "column": 7
+            },
+            {
+              "title": "GET /api/auth/validate - 유효한 토큰",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-693ca5292a82991cc614",
+              "file": "api.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "GET /api/auth/validate - 토큰 없이 401",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-030fc3a375a365db86ad",
+              "file": "api.spec.ts",
+              "line": 76,
+              "column": 7
+            },
+            {
+              "title": "POST /api/auth/refresh - 토큰 갱신",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-fa6229d2e159b36f080c",
+              "file": "api.spec.ts",
+              "line": 81,
+              "column": 7
+            },
+            {
+              "title": "GET /api/auth/check-email - 존재하는 이메일 확인",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-ca42d0b707a568f7ee7c",
+              "file": "api.spec.ts",
+              "line": 89,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Chat & Room Endpoints",
+          "file": "api.spec.ts",
+          "line": 97,
+          "column": 6,
+          "specs": [
+            {
+              "title": "POST /api/webapp-chat/room - 채팅방 생성",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-32e373a8131405b2ff1e",
+              "file": "api.spec.ts",
+              "line": 100,
+              "column": 7
+            },
+            {
+              "title": "GET /api/webapp-chat/room - 채팅방 목록 조회",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-f4770f24b27db816d2b6",
+              "file": "api.spec.ts",
+              "line": 111,
+              "column": 7
+            },
+            {
+              "title": "GET /api/webapp-chat/history - 채팅 히스토리 조회",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-9ea1a0fea59c07b40a02",
+              "file": "api.spec.ts",
+              "line": 120,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Model & Agent Endpoints",
+          "file": "api.spec.ts",
+          "line": 131,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/v1/models - 모델 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-6c38e4060734ee89727f",
+              "file": "api.spec.ts",
+              "line": 132,
+              "column": 7
+            },
+            {
+              "title": "GET /api/models - 내부 모델 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-8ebb350e36439e03e703",
+              "file": "api.spec.ts",
+              "line": 139,
+              "column": 7
+            },
+            {
+              "title": "GET /api/agents - 에이전트 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-ba9f386c497b508e0dab",
+              "file": "api.spec.ts",
+              "line": 146,
+              "column": 7
+            },
+            {
+              "title": "POST /api/v1/chat/completions - 인증 없이 거부",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-8a806753513b96c22c7e",
+              "file": "api.spec.ts",
+              "line": 153,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Admin Endpoints - 권한 검증",
+          "file": "api.spec.ts",
+          "line": 163,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/admin/dashboard - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-93bf11821ffb0bc0f4df",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/dashboard - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-e4dbef31a2c8f0813fbd",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/agents - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-0afd82df2b3ad46bfa4f",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/agents - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-d360249331142813aaea",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/users - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-9a1d2d727c8a3f211ed4",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/users - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-bc2e72863b37356815a6",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/database - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-cdb0793d0997b0aa8519",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/database - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-ccb2595285b8f333ea05",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/analytics - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-8325c71f828647525cca",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/analytics - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-d86e03ed1e881d4d116b",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/api-tokens - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-9f4177bf29687ba0c3ce",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/api-tokens - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-a62d9c1bd2c1972d4391",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/settings - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-48c2c906014ee6794dd2",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/settings - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-925df430ce9396157200",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/models - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-1818423528fd7ec04cf6",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/models - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-eedd53b7bcffb35f98a4",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/menus - 인증 필요",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-27c213e04e708f1f98f2",
+              "file": "api.spec.ts",
+              "line": 177,
+              "column": 9
+            },
+            {
+              "title": "GET /api/admin/menus - 인증된 접근",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-33fbf0fc328a88ce0773",
+              "file": "api.spec.ts",
+              "line": 182,
+              "column": 9
+            }
+          ]
+        },
+        {
+          "title": "Board Endpoints",
+          "file": "api.spec.ts",
+          "line": 192,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/board/posts - 게시글 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-94d4670fe498b7f7f25f",
+              "file": "api.spec.ts",
+              "line": 193,
+              "column": 7
+            },
+            {
+              "title": "POST /api/board/posts - 게시글 작성",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-32314d22f41dee3d189d",
+              "file": "api.spec.ts",
+              "line": 200,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "User Endpoints",
+          "file": "api.spec.ts",
+          "line": 211,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/user/profile - 프로필 조회",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-f92c5ec8421730fb0620",
+              "file": "api.spec.ts",
+              "line": 212,
+              "column": 7
+            },
+            {
+              "title": "GET /api/user/api-tokens - API 토큰 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-53a37268e7576b3bf92f",
+              "file": "api.spec.ts",
+              "line": 219,
+              "column": 7
+            },
+            {
+              "title": "GET /api/user/memory - 유저 메모리 조회",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-f682b3e1492530d7ad73",
+              "file": "api.spec.ts",
+              "line": 226,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Webapp Feature Endpoints",
+          "file": "api.spec.ts",
+          "line": 236,
+          "column": 6,
+          "specs": [
+            {
+              "title": "POST /api/webapp-code-convert - 코드 변환",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-7c920e87efc2c4fd84ff",
+              "file": "api.spec.ts",
+              "line": 237,
+              "column": 7
+            },
+            {
+              "title": "POST /api/webapp-text-rewriter - 텍스트 리라이트",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-8257768a867a65b05307",
+              "file": "api.spec.ts",
+              "line": 245,
+              "column": 7
+            },
+            {
+              "title": "POST /api/webapp-text-to-sql - Text to SQL",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-4cf0b7da18d764c69345",
+              "file": "api.spec.ts",
+              "line": 253,
+              "column": 7
+            },
+            {
+              "title": "POST /api/webapp-chart-generate - 차트 생성",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-7a3c80d28e4e8aa65d07",
+              "file": "api.spec.ts",
+              "line": 261,
+              "column": 7
+            },
+            {
+              "title": "POST /api/webapp-error-helper - 에러 헬퍼",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-b8706a0f29d4f02a700b",
+              "file": "api.spec.ts",
+              "line": 269,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Notice & Menus",
+          "file": "api.spec.ts",
+          "line": 280,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/notice - 공지사항 조회",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-d36d5d5e133d35b6f6bb",
+              "file": "api.spec.ts",
+              "line": 281,
+              "column": 7
+            },
+            {
+              "title": "GET /api/menus - 메뉴 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-1e864283a326e0bd3be4",
+              "file": "api.spec.ts",
+              "line": 288,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Workflow & Screen Endpoints",
+          "file": "api.spec.ts",
+          "line": 298,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/workflows - 워크플로우 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-87d09446303d6a48f5f7",
+              "file": "api.spec.ts",
+              "line": 299,
+              "column": 7
+            },
+            {
+              "title": "GET /api/screens - 스크린 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-e5b4d06424591ad0ffb1",
+              "file": "api.spec.ts",
+              "line": 306,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Security Tests",
+          "file": "api.spec.ts",
+          "line": 316,
+          "column": 6,
+          "specs": [
+            {
+              "title": "SQL Injection 방어 - 로그인",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-8dc946ffe05d26225232",
+              "file": "api.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "XSS 방어 - 게시글 작성",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-0af8db6962c4dcac055f",
+              "file": "api.spec.ts",
+              "line": 324,
+              "column": 7
+            },
+            {
+              "title": "경로 탐색 방어 - 잘못된 경로",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-542fa55b06039a41494e",
+              "file": "api.spec.ts",
+              "line": 333,
+              "column": 7
+            },
+            {
+              "title": "인증 토큰 없는 보호 엔드포인트 접근 거부",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-26ef07e457f6a773c781",
+              "file": "api.spec.ts",
+              "line": 338,
+              "column": 7
+            },
+            {
+              "title": "만료된 JWT 거부",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-c49790f90db2045ecd0c",
+              "file": "api.spec.ts",
+              "line": 350,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Model Server Endpoints",
+          "file": "api.spec.ts",
+          "line": 362,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/model-servers - 모델 서버 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-b3ccc3eb229b2fe38eef",
+              "file": "api.spec.ts",
+              "line": 363,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Upload",
+          "file": "api.spec.ts",
+          "line": 373,
+          "column": 6,
+          "specs": [
+            {
+              "title": "POST /api/upload/image - 빈 요청 거부",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-e72058bf19877ede3a43",
+              "file": "api.spec.ts",
+              "line": 374,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Direct Messages",
+          "file": "api.spec.ts",
+          "line": 384,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/direct-messages - DM 목록",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-19d0b94a36faafc44715",
+              "file": "api.spec.ts",
+              "line": 385,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "PII Endpoints",
+          "file": "api.spec.ts",
+          "line": 395,
+          "column": 6,
+          "specs": [
+            {
+              "title": "POST /api/webapp-pii - PII 감지",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "api-tests",
+                  "projectName": "api-tests",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1ea1b1599cbc08f16936-a7b6131b459032dae7b8",
+              "file": "api.spec.ts",
+              "line": 396,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-26T14:03:34.353Z",
+    "duration": 33285.794,
+    "expected": 0,
+    "skipped": 140,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
