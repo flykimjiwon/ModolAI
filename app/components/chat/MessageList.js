@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo, memo } from 'react';
+import dynamic from 'next/dynamic';
 import { MessageCircle, Check, Copy, ThumbsUp, ThumbsDown } from '@/components/icons';
 import { PaintBrush } from '@phosphor-icons/react';
-import MarkdownPreview from '@uiw/react-markdown-preview';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import TypingAnimation from '../TypingAnimation';
 import DrawPreviewPanel from './DrawPreviewPanel';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
+
+const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-4 bg-muted rounded w-3/4" />,
+});
 
 const CopyButton = memo(function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
