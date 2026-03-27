@@ -6,7 +6,7 @@ import { MessageCircle, Check, Copy, ThumbsUp, ThumbsDown } from '@/components/i
 import { PaintBrush } from '@phosphor-icons/react';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import TypingAnimation from '../TypingAnimation';
-import DrawPreviewPanel from './DrawPreviewPanel';
+const DrawPreviewPanel = dynamic(() => import('./DrawPreviewPanel'), { ssr: false });
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 
