@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { Download, Filter } from '@/components/icons';
-import {
-  UserStatsChart,
-  ModelStatsChart,
-  DepartmentStatsChart,
-  DailyActivityChart,
-  TokenUsageChart,
-  DepartmentTokenUsageChart,
-} from '@/components/admin/AnalyticsCharts';
 import { useTranslation } from '@/hooks/useTranslation';
+
+const UserStatsChart = dynamic(() => import('@/components/admin/AnalyticsCharts').then(m => m.UserStatsChart), { ssr: false });
+const ModelStatsChart = dynamic(() => import('@/components/admin/AnalyticsCharts').then(m => m.ModelStatsChart), { ssr: false });
+const DepartmentStatsChart = dynamic(() => import('@/components/admin/AnalyticsCharts').then(m => m.DepartmentStatsChart), { ssr: false });
+const DailyActivityChart = dynamic(() => import('@/components/admin/AnalyticsCharts').then(m => m.DailyActivityChart), { ssr: false });
+const TokenUsageChart = dynamic(() => import('@/components/admin/AnalyticsCharts').then(m => m.TokenUsageChart), { ssr: false });
+const DepartmentTokenUsageChart = dynamic(() => import('@/components/admin/AnalyticsCharts').then(m => m.DepartmentTokenUsageChart), { ssr: false });
 
 const PERIOD_OPTIONS = [
   { value: '7days', labelKey: 'admin_analytics.period_7days' },
