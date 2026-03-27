@@ -6,8 +6,8 @@ import { Bot, ShieldX, Loader2, Presentation, Code, Database, Edit, AlertTriangl
 import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import dynamic from 'next/dynamic';
-import AgentSidebar from '@/components/chat/AgentSidebar';
 import ChatLayout from '@/components/chat/ChatLayout';
+const AgentSidebar = dynamic(() => import('@/components/chat/AgentSidebar'), { ssr: false });
 const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
 
 const PPTMaker = dynamic(() => import('@/components/PPTMaker'), { ssr: false });
