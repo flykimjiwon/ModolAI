@@ -13,16 +13,18 @@ import { TokenManager } from '@/lib/tokenManager';
 import { loadRoomModel } from '@/hooks/useModelManager';
 
 // Component Imports
+import dynamic from 'next/dynamic';
 import Sidebar from './components/chat/Sidebar';
 import ChatHeader from './components/chat/ChatHeader';
 import MessageList from './components/chat/MessageList';
 import ScrollButtons from './components/chat/ScrollButtons';
 import ChatLayout from './components/chat/ChatLayout';
 import ChatInput from './components/chat/ChatInput';
-import DrawPreviewPanel from './components/chat/DrawPreviewPanel';
-import NoticePopup from './components/NoticePopup';
-import SiteMenuSelector from './components/SiteMenuSelector';
 import { X, Loader2, ChevronDown } from '@/components/icons';
+
+const DrawPreviewPanel = dynamic(() => import('./components/chat/DrawPreviewPanel'), { ssr: false });
+const NoticePopup = dynamic(() => import('./components/NoticePopup'), { ssr: false });
+const SiteMenuSelector = dynamic(() => import('./components/SiteMenuSelector'), { ssr: false });
 import {
   Dialog,
   DialogContent,
