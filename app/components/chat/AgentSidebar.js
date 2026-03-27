@@ -16,7 +16,7 @@ import {
   Presentation,
 } from '@/components/icons';
 import dynamic from 'next/dynamic';
-import { ConfirmModal } from '@/components/ui/modal';
+const ConfirmModal = dynamic(() => import('@/components/ui/modal').then(m => m.ConfirmModal), { ssr: false });
 const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
