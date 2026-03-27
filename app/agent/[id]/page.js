@@ -5,16 +5,18 @@ import { useRouter, useParams } from 'next/navigation';
 import { Bot, ShieldX, Loader2, Presentation, Code, Database, Edit, AlertTriangle } from '@/components/icons';
 import { TokenManager } from '@/lib/tokenManager';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
+import dynamic from 'next/dynamic';
 import AgentSidebar from '@/components/chat/AgentSidebar';
 import ChatLayout from '@/components/chat/ChatLayout';
 import SiteMenuSelector from '@/components/SiteMenuSelector';
-import PPTMaker from '@/components/PPTMaker';
-import ChartMaker from '@/components/ChartMaker';
-import VirtualMeeting from '@/components/VirtualMeeting';
-import CodeConverter from '@/components/CodeConverter';
-import TextToSql from '@/components/TextToSql';
-import TextRewriter from '@/components/TextRewriter';
-import ErrorHelper from '@/components/ErrorHelper';
+
+const PPTMaker = dynamic(() => import('@/components/PPTMaker'), { ssr: false });
+const ChartMaker = dynamic(() => import('@/components/ChartMaker'), { ssr: false });
+const VirtualMeeting = dynamic(() => import('@/components/VirtualMeeting'), { ssr: false });
+const CodeConverter = dynamic(() => import('@/components/CodeConverter'), { ssr: false });
+const TextToSql = dynamic(() => import('@/components/TextToSql'), { ssr: false });
+const TextRewriter = dynamic(() => import('@/components/TextRewriter'), { ssr: false });
+const ErrorHelper = dynamic(() => import('@/components/ErrorHelper'), { ssr: false });
 
 // Agent information
 const AGENT_INFO = {
