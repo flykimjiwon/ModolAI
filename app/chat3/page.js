@@ -52,10 +52,10 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 /* ─── 임포트: 공통 UI 컴포넌트 ─── */
 import ModelSelector from '@/components/chat/ModelSelector';
-import DirectMessageModal from '@/components/DirectMessageModal';
-import PatchNotesModal from '@/components/PatchNotesModal';
 import NoticePopup from '@/components/NoticePopup';
 import AgentSelector from '@/components/AgentSelector';
+const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
+const PatchNotesModal = dynamic(() => import('@/components/PatchNotesModal'), { ssr: false });
 
 /* ─── 임포트: Lucide 아이콘 ─── */
 import {

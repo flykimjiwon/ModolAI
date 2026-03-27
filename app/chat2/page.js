@@ -66,10 +66,10 @@ const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
 });
 import rehypeSanitize from 'rehype-sanitize';
 import ModelSelector from '@/components/chat/ModelSelector';
-import DirectMessageModal from '@/components/DirectMessageModal';
-import PatchNotesModal from '@/components/PatchNotesModal';
 import NoticePopup from '@/components/NoticePopup';
 import AgentSelector from '@/components/AgentSelector';
+const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
+const PatchNotesModal = dynamic(() => import('@/components/PatchNotesModal'), { ssr: false });
 
 /* ═══════════════════════════════════════════
    ─── 유틸리티 함수 ───
