@@ -51,7 +51,7 @@ const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 /* ─── 임포트: 공통 UI 컴포넌트 ─── */
-import ModelSelector from '@/components/chat/ModelSelector';
+const ModelSelector = dynamic(() => import('@/components/chat/ModelSelector'), { ssr: false });
 const NoticePopup = dynamic(() => import('@/components/NoticePopup'), { ssr: false });
 const AgentSelector = dynamic(() => import('@/components/AgentSelector'), { ssr: false });
 const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
