@@ -21,7 +21,7 @@ import ChatInput from '@/components/chat/ChatInput';
 import dynamic from 'next/dynamic';
 const NoticePopup = dynamic(() => import('@/components/NoticePopup'), { ssr: false });
 const AgentSelector = dynamic(() => import('@/components/AgentSelector'), { ssr: false });
-import { X, Loader2, ChevronDown } from 'lucide-react';
+import { X, Loader2, ChevronDown } from '@/components/icons';
 
 /* ---------- 메인 컴포넌트 ---------- */
 export default function Home() {
