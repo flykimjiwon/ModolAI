@@ -8,8 +8,8 @@ import dynamic from 'next/dynamic';
 const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
 import WorkflowCanvas from '@/components/workflow/WorkflowCanvas';
 import NodePalette from '@/components/workflow/NodePalette';
-import PropertyPanel from '@/components/workflow/PropertyPanel';
-import TestPanel from '@/components/workflow/TestPanel';
+const PropertyPanel = dynamic(() => import('@/components/workflow/PropertyPanel'), { ssr: false });
+const TestPanel = dynamic(() => import('@/components/workflow/TestPanel'), { ssr: false });
 
 export default function WorkflowEditorPage() {
   const { id: workflowId } = useParams();
