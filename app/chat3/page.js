@@ -52,8 +52,8 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 /* ─── 임포트: 공통 UI 컴포넌트 ─── */
 import ModelSelector from '@/components/chat/ModelSelector';
-import NoticePopup from '@/components/NoticePopup';
-import AgentSelector from '@/components/AgentSelector';
+const NoticePopup = dynamic(() => import('@/components/NoticePopup'), { ssr: false });
+const AgentSelector = dynamic(() => import('@/components/AgentSelector'), { ssr: false });
 const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
 const PatchNotesModal = dynamic(() => import('@/components/PatchNotesModal'), { ssr: false });
 

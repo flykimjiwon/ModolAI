@@ -66,8 +66,8 @@ const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
 });
 import rehypeSanitize from 'rehype-sanitize';
 import ModelSelector from '@/components/chat/ModelSelector';
-import NoticePopup from '@/components/NoticePopup';
-import AgentSelector from '@/components/AgentSelector';
+const NoticePopup = dynamic(() => import('@/components/NoticePopup'), { ssr: false });
+const AgentSelector = dynamic(() => import('@/components/AgentSelector'), { ssr: false });
 const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
 const PatchNotesModal = dynamic(() => import('@/components/PatchNotesModal'), { ssr: false });
 
