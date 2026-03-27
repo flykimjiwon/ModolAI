@@ -14,7 +14,8 @@ import {
   EyeOff,
 } from '@/components/icons';
 import { useTranslation } from '@/hooks/useTranslation';
-import { AlertModal } from '@/components/ui/modal';
+import dynamic from 'next/dynamic';
+const AlertModal = dynamic(() => import('@/components/ui/modal').then(m => m.AlertModal), { ssr: false });
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
