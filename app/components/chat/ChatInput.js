@@ -2,8 +2,9 @@
 import { memo, useRef, useState, useEffect, useCallback } from 'react';
 import { LucideImage, Send } from '@/components/icons';
 import { PaintBrush, UserGear } from '@phosphor-icons/react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import ModelSelector from './ModelSelector';
+const ModelSelector = dynamic(() => import('./ModelSelector'), { ssr: false });
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
 
