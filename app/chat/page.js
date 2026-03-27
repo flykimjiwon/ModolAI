@@ -19,7 +19,6 @@ import MessageList from '@/components/chat/MessageList';
 import ScrollButtons from '@/components/chat/ScrollButtons';
 import ChatLayout from '@/components/chat/ChatLayout';
 import ChatInput from '@/components/chat/ChatInput';
-import DrawPreviewPanel from '@/components/chat/DrawPreviewPanel';
 import NoticePopup from '@/components/NoticePopup';
 import { Button } from '@/components/ui/button';
 import { X, Loader2, ChevronDown } from '@/components/icons';
@@ -361,7 +360,7 @@ export default function Home() {
         imageHistoryByRoom={imageHistoryByRoom}
         listRef={listRef}
         loading={loading}
-        DrawPreviewPanelComponent={DrawPreviewPanel}
+        DrawPreviewPanelComponent={null}
       />
       <ScrollButtons show={showScrollButtons} containerRef={listRef} />
       <div
