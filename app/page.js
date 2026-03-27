@@ -14,7 +14,7 @@ import { loadRoomModel } from '@/hooks/useModelManager';
 
 // Component Imports
 import dynamic from 'next/dynamic';
-import Sidebar from './components/chat/Sidebar';
+const Sidebar = dynamic(() => import('./components/chat/Sidebar'), { ssr: false });
 import ChatHeader from './components/chat/ChatHeader';
 import MessageList from './components/chat/MessageList';
 import ScrollButtons from './components/chat/ScrollButtons';
