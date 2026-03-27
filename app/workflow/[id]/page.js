@@ -6,8 +6,8 @@ import { Save, ArrowLeft, Play, Loader2, CheckCircle, AlertCircle } from '@/comp
 import { useTranslation } from '@/hooks/useTranslation';
 import dynamic from 'next/dynamic';
 const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
-import WorkflowCanvas from '@/components/workflow/WorkflowCanvas';
-import NodePalette from '@/components/workflow/NodePalette';
+const WorkflowCanvas = dynamic(() => import('@/components/workflow/WorkflowCanvas'), { ssr: false });
+const NodePalette = dynamic(() => import('@/components/workflow/NodePalette'), { ssr: false });
 const PropertyPanel = dynamic(() => import('@/components/workflow/PropertyPanel'), { ssr: false });
 const TestPanel = dynamic(() => import('@/components/workflow/TestPanel'), { ssr: false });
 
