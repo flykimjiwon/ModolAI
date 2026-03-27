@@ -23,8 +23,8 @@ import { CSS } from '@dnd-kit/utilities';
 import dynamic from 'next/dynamic';
 const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
 import EditableComponent from '@/components/screen-builder/EditableComponent';
-import ComponentPropertyPanel from '@/components/screen-builder/ComponentPropertyPanel';
-import ScreenRenderer from '@/components/screen-builder/ScreenRenderer';
+const ComponentPropertyPanel = dynamic(() => import('@/components/screen-builder/ComponentPropertyPanel'), { ssr: false });
+const ScreenRenderer = dynamic(() => import('@/components/screen-builder/ScreenRenderer'), { ssr: false });
 
 const AUTOSAVE_DELAY = 2000;
 
