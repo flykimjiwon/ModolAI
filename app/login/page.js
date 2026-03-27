@@ -3,7 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { LogIn, Mail, Lock, Loader2 } from '@/components/icons';
-import NoticePopup from '../components/NoticePopup';
+import dynamic from 'next/dynamic';
+const NoticePopup = dynamic(() => import('../components/NoticePopup'), { ssr: false });
 import DarkModeToggle from '@/components/DarkModeToggle';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { useTranslation } from '@/hooks/useTranslation';
