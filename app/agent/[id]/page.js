@@ -8,7 +8,7 @@ import { decodeJWTPayload } from '@/lib/jwtUtils';
 import dynamic from 'next/dynamic';
 import AgentSidebar from '@/components/chat/AgentSidebar';
 import ChatLayout from '@/components/chat/ChatLayout';
-import SiteMenuSelector from '@/components/SiteMenuSelector';
+const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
 
 const PPTMaker = dynamic(() => import('@/components/PPTMaker'), { ssr: false });
 const ChartMaker = dynamic(() => import('@/components/ChartMaker'), { ssr: false });

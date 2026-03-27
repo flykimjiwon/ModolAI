@@ -15,7 +15,8 @@ import {
   CheckCircle2,
 } from '@/components/icons';
 import { useTranslation } from '@/hooks/useTranslation';
-import SiteMenuSelector from '@/components/SiteMenuSelector';
+import dynamic from 'next/dynamic';
+const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
 
 // Layout icon inline (not in ModolAI icons)
 function LayoutIcon({ className }) {

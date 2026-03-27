@@ -13,7 +13,8 @@ import {
   FileText,
 } from '@/components/icons';
 import { useTranslation } from '@/hooks/useTranslation';
-import SiteMenuSelector from '@/components/SiteMenuSelector';
+import dynamic from 'next/dynamic';
+const SiteMenuSelector = dynamic(() => import('@/components/SiteMenuSelector'), { ssr: false });
 
 // Status badge component
 function StatusBadge({ status }) {
