@@ -1,8 +1,11 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback } from 'react';
-import { AlertModal, ConfirmModal } from '@/components/ui/modal';
+import dynamic from 'next/dynamic';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+const AlertModal = dynamic(() => import('@/components/ui/modal').then(m => m.AlertModal), { ssr: false });
+const ConfirmModal = dynamic(() => import('@/components/ui/modal').then(m => m.ConfirmModal), { ssr: false });
 
 const AlertContext = createContext(null);
 
