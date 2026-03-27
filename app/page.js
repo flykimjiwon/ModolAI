@@ -19,7 +19,7 @@ import ChatHeader from './components/chat/ChatHeader';
 import MessageList from './components/chat/MessageList';
 import ScrollButtons from './components/chat/ScrollButtons';
 import ChatLayout from './components/chat/ChatLayout';
-import ChatInput from './components/chat/ChatInput';
+const ChatInput = dynamic(() => import('./components/chat/ChatInput'), { ssr: false });
 import { X, Loader2, ChevronDown } from '@/components/icons';
 
 const DrawPreviewPanel = dynamic(() => import('./components/chat/DrawPreviewPanel'), { ssr: false });

@@ -18,7 +18,7 @@ import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
 import ScrollButtons from '@/components/chat/ScrollButtons';
 import ChatLayout from '@/components/chat/ChatLayout';
-import ChatInput from '@/components/chat/ChatInput';
+const ChatInput = dynamic(() => import('@/components/chat/ChatInput'), { ssr: false });
 import dynamic from 'next/dynamic';
 const NoticePopup = dynamic(() => import('@/components/NoticePopup'), { ssr: false });
 import { Button } from '@/components/ui/button';
