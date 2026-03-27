@@ -264,7 +264,12 @@ export default function AdminLayout({ children }) {
   const [editingName, setEditingName] = useState('');
   const [navigation, setNavigation] = useState([]);
   const [expandedGroups, setExpandedGroups] = useState({});
-  const { t } = useTranslation();
+  const { t, loadNamespace } = useTranslation();
+
+  // Load admin translations on mount
+  useEffect(() => {
+    loadNamespace('admin');
+  }, [loadNamespace]);
 
   const toggleGroup = (id) => {
     setExpandedGroups((prev) => ({ ...prev, [id]: !prev[id] }));

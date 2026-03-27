@@ -109,9 +109,29 @@ export function LanguageProvider({ children }) {
     [lang]
   );
 
+  const loadNamespace = useCallback(async (namespace) => {
+    const currentDict = translationsRef.current[lang] || translationsRef.current[DEFAULT_LANG];
+    if (currentDict[namespace]) return; // already loaded
+    try {
+      const mod = await import(`@/lib/i18n/${lang}-${namespace}.json`);
+      translationsRef.current[lang] = { ...translationsRef.current[lang], ...mod.default };
+      // Also load for default lang if different
+      if (lang !== DEFAULT_LANG) {
+        const defMod = await import(`@/lib/i18n/${DEFAULT_LANG}-${namespace}.json`);
+        translationsRef.current[DEFAULT_LANG] = { ...translationsRef.current[DEFAULT_LANG], ...defMod.default };
+      } else {
+        // Load default lang admin
+        translationsRef.current[DEFAULT_LANG] = { ...translationsRef.current[DEFAULT_LANG], ...mod.default };
+      }
+      setLangState((l) => l); // trigger re-render
+    } catch {
+      // namespace file not found
+    }
+  }, [lang]);
+
   const contextValue = useMemo(
-    () => ({ lang, setLang, t, mounted, supportedLangs: SUPPORTED_LANGS }),
-    [lang, setLang, t, mounted]
+    () => ({ lang, setLang, t, mounted, supportedLangs: SUPPORTED_LANGS, loadNamespace }),
+    [lang, setLang, t, mounted, loadNamespace]
   );
 
   return (
