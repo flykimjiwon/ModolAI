@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Loader2, AlertCircle, Lock, ExternalLink } from '@/components/icons';
+import dynamic from 'next/dynamic';
 import { useTranslation } from '@/hooks/useTranslation';
-import ScreenRenderer from '@/components/screen-builder/ScreenRenderer';
+const ScreenRenderer = dynamic(() => import('@/components/screen-builder/ScreenRenderer'), { ssr: false });
 
 // 비밀번호 입력 폼
 function PasswordForm({ screenName, shareId, onSuccess }) {
