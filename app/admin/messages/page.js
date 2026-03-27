@@ -27,7 +27,11 @@ import {
   XCircle,
   BarChart3,
 } from '@/components/icons';
-import MarkdownPreview from '@uiw/react-markdown-preview';
+import dynamic from 'next/dynamic';
+const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-4 bg-muted rounded w-3/4" />,
+});
 import { useAlert } from '@/contexts/AlertContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';

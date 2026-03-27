@@ -43,7 +43,11 @@ import { logger } from '@/lib/logger';
 import { useAlert } from '@/contexts/AlertContext';
 
 /* ─── 임포트: 마크다운 렌더링 & 보안 ─── */
-import MarkdownPreview from '@uiw/react-markdown-preview';
+import dynamic from 'next/dynamic';
+const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-4 bg-muted rounded w-3/4" />,
+});
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 
 /* ─── 임포트: 공통 UI 컴포넌트 ─── */

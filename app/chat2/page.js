@@ -59,7 +59,11 @@ import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { TokenManager } from '@/lib/tokenManager';
 import { logger } from '@/lib/logger';
 import { useAlert } from '@/contexts/AlertContext';
-import MarkdownPreview from '@uiw/react-markdown-preview';
+import dynamic from 'next/dynamic';
+const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-4 bg-muted rounded w-3/4" />,
+});
 import rehypeSanitize from 'rehype-sanitize';
 import ModelSelector from '@/components/chat/ModelSelector';
 import DirectMessageModal from '@/components/DirectMessageModal';

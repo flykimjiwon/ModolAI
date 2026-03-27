@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, ArrowLeft, Eye } from '@/components/icons';
 import dynamic from 'next/dynamic';
-import MarkdownPreview from "@uiw/react-markdown-preview";
+const MarkdownPreview = dynamic(() => import('@uiw/react-markdown-preview'), {
+  ssr: false,
+  loading: () => <div className="animate-pulse h-4 bg-muted rounded w-3/4" />,
+});
 import { useAlert } from '@/contexts/AlertContext';
 import { decodeJWTPayload } from '@/lib/jwtUtils';
 import { Button } from '@/components/ui/button';
