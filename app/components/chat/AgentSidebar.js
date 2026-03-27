@@ -15,8 +15,9 @@ import {
   History,
   Presentation,
 } from '@/components/icons';
+import dynamic from 'next/dynamic';
 import { ConfirmModal } from '@/components/ui/modal';
-import DirectMessageModal from '@/components/DirectMessageModal';
+const DirectMessageModal = dynamic(() => import('@/components/DirectMessageModal'), { ssr: false });
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
