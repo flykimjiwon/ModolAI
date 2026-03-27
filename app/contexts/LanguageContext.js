@@ -1,10 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ko from '@/lib/i18n/ko.json';
-import en from '@/lib/i18n/en.json';
 
-const translations = { ko, en };
 const SUPPORTED_LANGS = ['ko', 'en'];
 const DEFAULT_LANG = 'ko';
 const STORAGE_KEY = 'modolai-lang';
@@ -21,24 +19,35 @@ function resolve(obj, path) {
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(DEFAULT_LANG);
   const [mounted, setMounted] = useState(false);
+  const translationsRef = useRef({ ko });
 
   // Hydrate from localStorage on mount
   useEffect(() => {
+    let initialLang = DEFAULT_LANG;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && SUPPORTED_LANGS.includes(stored)) {
-        setLangState(stored);
+        initialLang = stored;
       } else {
         // Detect browser language
         const browserLang = navigator.language?.slice(0, 2);
         if (SUPPORTED_LANGS.includes(browserLang)) {
-          setLangState(browserLang);
+          initialLang = browserLang;
         }
       }
     } catch {
       // localStorage not available
     }
-    setMounted(true);
+    if (initialLang !== DEFAULT_LANG) {
+      import(`@/lib/i18n/${initialLang}.json`).then((mod) => {
+        translationsRef.current[initialLang] = mod.default;
+        setLangState(initialLang);
+        setMounted(true);
+      });
+    } else {
+      setLangState(initialLang);
+      setMounted(true);
+    }
   }, []);
 
   // Sync html lang attribute
@@ -50,11 +59,21 @@ export function LanguageProvider({ children }) {
 
   const setLang = useCallback((newLang) => {
     if (!SUPPORTED_LANGS.includes(newLang)) return;
-    setLangState(newLang);
-    try {
-      localStorage.setItem(STORAGE_KEY, newLang);
-    } catch {
-      // localStorage not available
+    const apply = () => {
+      setLangState(newLang);
+      try {
+        localStorage.setItem(STORAGE_KEY, newLang);
+      } catch {
+        // localStorage not available
+      }
+    };
+    if (translationsRef.current[newLang]) {
+      apply();
+    } else {
+      import(`@/lib/i18n/${newLang}.json`).then((mod) => {
+        translationsRef.current[newLang] = mod.default;
+        apply();
+      });
     }
   }, []);
 
@@ -65,12 +84,12 @@ export function LanguageProvider({ children }) {
    */
   const t = useCallback(
     (key, params) => {
-      const dict = translations[lang] || translations[DEFAULT_LANG];
+      const dict = translationsRef.current[lang] || translationsRef.current[DEFAULT_LANG];
       let value = resolve(dict, key);
 
       // Fallback to default language if key not found
       if (value === undefined) {
-        value = resolve(translations[DEFAULT_LANG], key);
+        value = resolve(translationsRef.current[DEFAULT_LANG], key);
       }
 
       // If still not found, return the key itself
