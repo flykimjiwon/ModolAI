@@ -406,7 +406,7 @@ export default function AdminLayout({ children }) {
       }));
       setNavigation(navigationWithNames);
     }
-  }, [defaultNavigation]);
+  }, [defaultNavigation, t]);
 
   // 현재 경로에 하위 메뉴가 포함된 그룹은 자동 펼침
   useEffect(() => {
@@ -498,7 +498,7 @@ export default function AdminLayout({ children }) {
     return () => {
       TokenManager.stopPeriodicValidation();
     };
-  }, [router, alert, confirm]);
+  }, [router, alert, confirm, t, pathname]);
 
   useEffect(() => {
     if (!user || user.role !== 'manager') return;

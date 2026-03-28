@@ -398,7 +398,7 @@ export default function ModelsPage() {
     };
 
     checkRoundRobin();
-  }, [editForm.id]);
+  }, [editForm.id, t]);
 
   // 추가 폼의 모델명에 대한 라운드로빈 상태 확인
   useEffect(() => {
@@ -427,7 +427,7 @@ export default function ModelsPage() {
     };
 
     checkRoundRobin();
-  }, [newModel.id]);
+  }, [newModel.id, t]);
 
   // 수정 폼의 표시 이름에 대한 라운드로빈 상태 확인
   useEffect(() => {
@@ -650,7 +650,7 @@ export default function ModelsPage() {
     } catch (e) {
       console.warn(t('admin_models.console_server_list_failed'), e.message);
     }
-  }, [selectedEndpoint]);
+  }, [selectedEndpoint, t]);
 
   const saveManualPresetSettings = async () => {
     try {
@@ -792,7 +792,7 @@ export default function ModelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [alert]);
+  }, [alert, t]);
 
   // LLM 모델 목록 가져오기
   const fetchAvailableModels = useCallback(async () => {
@@ -929,7 +929,7 @@ export default function ModelsPage() {
     } finally {
       setModelsLoading(false);
     }
-  }, [selectedEndpoint, endpoints, alert]);
+  }, [selectedEndpoint, endpoints, alert, t]);
 
   const fetchErrorLogs = async (override = {}) => {
     try {

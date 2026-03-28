@@ -68,7 +68,7 @@ export default function SSOLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, filters]);
+  }, [pagination.page, pagination.limit, filters, t]);
 
   useEffect(() => {
     fetchLogs();

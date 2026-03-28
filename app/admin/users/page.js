@@ -102,7 +102,7 @@ export default function UsersPage() {
         }))
       );
       });
-  }, []);
+  }, [t]);
 
   const fetchUsers = useCallback(async () => {
     try {

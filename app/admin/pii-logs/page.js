@@ -274,7 +274,7 @@ export default function AdminPiiLogsPage() {
         if (showLoading) setLoading(false);
       }
     },
-    [alert, filters]
+    [alert, filters, t]
   );
 
   useEffect(() => {

@@ -43,7 +43,7 @@ export function AlertProvider({ children }) {
       message: String(message),
       type,
     });
-  }, []);
+  }, [t]);
 
   const confirm = useCallback((message, title, type = 'warning') => {
     return new Promise((resolve) => {
@@ -57,7 +57,7 @@ export function AlertProvider({ children }) {
         cancelText: t('common.cancel'),
       });
     });
-  }, []);
+  }, [t]);
 
   const closeAlert = useCallback(() => {
     setAlertModal((prev) => ({ ...prev, isOpen: false }));

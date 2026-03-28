@@ -56,7 +56,7 @@ export default function WorkflowEditorPage() {
         setLoading(false);
       }
     })();
-  }, [workflowId]);
+  }, [workflowId, t]);
 
   // Load models
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function WorkflowEditorPage() {
     } catch {
       setSaveStatus('error');
     }
-  }, [workflowId]);
+  }, [workflowId, t]);
 
   const triggerAutosave = useCallback(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);

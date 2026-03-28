@@ -315,7 +315,7 @@ const SafeMarkdown = memo(function SafeMarkdown({ source }) {
       const timer = setTimeout(addCopyButtons, 200);
       return () => clearTimeout(timer);
     }
-  }, [source]);
+  }, [source, t]);
 
   return (
     <div className='markdown-content w-full' ref={markdownRef}>

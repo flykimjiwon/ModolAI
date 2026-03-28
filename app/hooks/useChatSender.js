@@ -806,7 +806,7 @@ export function useChatSender({
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     },
-    [currentRoom, clientIP, setMessages, inputRef]
+    [currentRoom, clientIP, setMessages, inputRef, t]
   );
 
   const performAPICallRef = useRef(performAPICall);
@@ -1119,6 +1119,8 @@ export function useChatSender({
       loading,
       modelsLoading,
       setMessages,
+      clientIP,
+      t,
     ]
   );
 

@@ -108,7 +108,7 @@ export default function Analytics() {
         }))
       );
       });
-  }, []);
+  }, [t]);
 
   const fetchAnalyticsData = useCallback(async () => {
     setLoading(true);
@@ -138,7 +138,7 @@ export default function Analytics() {
     } finally {
       setLoading(false);
     }
-  }, [selectedPeriod, deptFilter, customStartDate, customEndDate]);
+  }, [selectedPeriod, deptFilter, customStartDate, customEndDate, t]);
 
   useEffect(() => {
     if (selectedPeriod !== 'custom') {
@@ -173,7 +173,7 @@ export default function Analytics() {
     } catch (error) {
       console.error(t('admin_analytics.export_failed'), error);
     }
-  }, [selectedPeriod, deptFilter, customStartDate, customEndDate]);
+  }, [selectedPeriod, deptFilter, customStartDate, customEndDate, t]);
 
   if (loading) {
     return <LoadingSkeleton />;

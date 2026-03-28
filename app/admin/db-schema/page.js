@@ -117,7 +117,7 @@ export default function DbSchemaPage() {
     };
 
     loadSchema();
-  }, [alert, selectedTarget]);
+  }, [alert, selectedTarget, t]);
 
   return (
     <div className='space-y-6'>

@@ -302,7 +302,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   // 방 변경 시 해당 방의 마지막 모델 복원
   useEffect(() => {
