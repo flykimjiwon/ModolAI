@@ -22,12 +22,7 @@ const eslintConfig = [
   },
   {
     rules: {
-      // quotes: [
-      //   'error',
-      //   'single',
-      //   { avoidEscape: true, allowTemplateLiterals: true },
-      // ],
-      // 'jsx-quotes': ['error', 'prefer-single'],
+      '@next/next/no-img-element': 'off',
     },
   },
 ];

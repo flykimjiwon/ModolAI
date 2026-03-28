@@ -741,7 +741,6 @@ export default function PropertyPanel({ node, onNodeUpdate, models = [], workflo
   const [localData, setLocalData] = useState({});
 
   // Sync local state when selected node changes (only on node.id change)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (node) {
       setLocalData(node.data || {});
