@@ -199,7 +199,7 @@ export default function AgentsManagePage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   useEffect(() => {
     if (!selectedAgent) return;
