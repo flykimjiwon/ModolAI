@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/postgres';
+import { verifyAdminWithResult } from '@/lib/auth';
 
 const REQUIRED_MODEL_COLUMNS = [
   { name: 'api_config', type: 'jsonb' },
@@ -385,8 +386,13 @@ async function getSchemaStatus() {
   };
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const adminCheck = verifyAdminWithResult(request);
+    if (!adminCheck.valid) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
     const status = await getSchemaStatus();
     const upToDate =
       status.missing.length === 0 &&
@@ -414,6 +420,11 @@ export async function GET() {
 
 export async function POST(request) {
   try {
+    const adminCheck = verifyAdminWithResult(request);
+    if (!adminCheck.valid) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
     console.log('[Migration] Starting database migration...');
 
     // models table: add api_config, api_key, visible, and PII columns

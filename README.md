@@ -69,26 +69,28 @@ npm install
 ### 3단계: 환경 설정
 
 ```bash
-cp .env.development .env.local
+cp .env.example .env
 ```
 
-`.env.local` 파일을 열어 아래 **필수 값**을 설정하세요:
+`.env` 파일을 열어 아래 **필수 값**을 설정하세요:
 
 ```env
 # 필수 설정
-JWT_SECRET=your-secret-key-here        # JWT 암호화 키 (아무 문자열)
-POSTGRES_URI=postgresql://user:password@localhost:5432/modolai   # PostgreSQL 연결 주소
+JWT_SECRET=<openssl rand -hex 32 으로 생성>
+POSTGRES_URI=postgresql://user:password@localhost:5432/modolai
 ```
 
 **선택 설정** (필요한 경우만):
 
 ```env
 TZ=Asia/Seoul                          # 타임존 (기본: UTC)
-SKIP_DB_CONNECTION=false               # true면 DB 없이 빌드 가능
+PORT=3000                              # 개발 서버 포트
 OAUTH_URL=https://oauth.example.com    # OAuth 서버 주소
 OAUTH_CLIENT_ID=                       # OAuth 클라이언트 ID
 OAUTH_CLIENT_SECRET=                   # OAuth 클라이언트 시크릿
 ```
+
+> 전체 환경변수 목록은 `.env.example` 파일을 참조하세요.
 
 ### 4단계: 데이터베이스 초기화
 

@@ -51,12 +51,7 @@ import {
   ThumbsDown,
   LucideImage,
 } from 'lucide-react';
-import { useChat } from '@/hooks/useChat';
-import { useModelManager, loadRoomModel } from '@/hooks/useModelManager';
-import { useChatSender } from '@/hooks/useChatSender';
-import { detectClientIP } from '@/lib/clientIP';
-import { decodeJWTPayload } from '@/lib/jwtUtils';
-import { TokenManager } from '@/lib/tokenManager';
+import { useChatPage } from '@/hooks/useChatPage';
 import { logger } from '@/lib/logger';
 import { useAlert } from '@/contexts/AlertContext';
 import dynamic from 'next/dynamic';
@@ -73,60 +68,15 @@ const PatchNotesModal = dynamic(() => import('@/components/PatchNotesModal'), { 
 
 /* ═══════════════════════════════════════════
    ─── 유틸리티 함수 ───
-   시간 포맷, 파일 읽기, 이미지 ID 생성, 파일 크기 표시
+   chatUtils.js에서 공유 유틸리티 임포트
    ═══════════════════════════════════════════ */
-
-function formatRoomTime(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now - date;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (minutes < 1) return '방금 전';
-  if (minutes < 60) return `${minutes}분 전`;
-  if (hours < 24) return `${hours}시간 전`;
-  if (days < 7) return `${days}일 전`;
-  return date.toLocaleDateString('ko-KR');
-}
-
-let _imgIdCounter = 0;
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-function generateImageId() {
-  if (typeof crypto !== 'undefined') {
-    if (crypto.randomUUID) return crypto.randomUUID();
-    if (crypto.getRandomValues) {
-      const bytes = new Uint8Array(16);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-    }
-  }
-  return `${Date.now()}-${++_imgIdCounter}`;
-}
-
-function formatSize(size) {
-  if (!Number.isFinite(size)) return '';
-  if (size < 1024) return `${size}B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`;
-  return `${(size / (1024 * 1024)).toFixed(2)}MB`;
-}
-
-function isEditableTarget(target) {
-  if (!target || !(target instanceof HTMLElement)) return false;
-  if (target.isContentEditable) return true;
-  const tag = target.tagName?.toLowerCase();
-  return tag === 'textarea' || tag === 'input';
-}
+import {
+  formatRoomTime,
+  readFileAsDataUrl,
+  generateImageId,
+  formatSize,
+  isEditableTarget,
+} from '@/lib/chatUtils';
 
 /* ═══════════════════════════════════════════
    ─── 테마 인라인 스타일 (다크/라이트) ───
@@ -499,22 +449,6 @@ export default function Chat2Page() {
   const router = useRouter();
   const { alert } = useAlert();
 
-  /* ── 인증 상태 ── */
-  const [userEmail, setUserEmail] = useState('');
-  const [userRole, setUserRole] = useState('user');
-  const [authChecked, setAuthChecked] = useState(false);
-
-  /* ── 앱 상태 (이미지, 설정 등) ── */
-  const [clientIP, setClientIP] = useState(null);
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [maxImagesPerMessage, setMaxImagesPerMessage] = useState(5);
-  const [imageAnalysisModel, setImageAnalysisModel] = useState('');
-  const [imageAnalysisPrompt, setImageAnalysisPrompt] = useState('이 이미지를 설명해줘.');
-  const [imageHistoryByRoom, setImageHistoryByRoom] = useState({});
-  const [maxUserQuestionLength, setMaxUserQuestionLength] = useState(300000);
-  const [profileEditEnabled, setProfileEditEnabled] = useState(false);
-  const [boardEnabled, setBoardEnabled] = useState(true);
-
   /* ── UI 상태 (다크모드, 사이드바, 모달 등) ── */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
@@ -525,8 +459,6 @@ export default function Chat2Page() {
   const [inputFocused, setInputFocused] = useState(false);
   const [patchNotesOpen, setPatchNotesOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [showScrollButtons, setShowScrollButtons] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [isGlobalDragging, setIsGlobalDragging] = useState(false);
 
@@ -537,42 +469,43 @@ export default function Chat2Page() {
   const [newDmCount, setNewDmCount] = useState(0);
   const prevUnreadCountRef = useRef(0);
 
-  /* ── 코어 훅 (채팅, 모델, 전송) ── */
+  const imageInputRef = useRef(null);
+  const dragCounterRef = useRef(0);
+
+  /* ── 공유 훅: 인증, 코어 채팅, 모델, 전송, 설정 ── */
   const {
+    userEmail,
+    userRole,
+    authChecked,
+    clientIP,
+    selectedImages,
+    setSelectedImages,
+    maxImagesPerMessage,
+    imageAnalysisModel,
+    imageAnalysisPrompt,
+    imageHistoryByRoom,
+    setImageHistoryByRoom,
+    maxUserQuestionLength,
+    profileEditEnabled,
+    boardEnabled,
+    showScrollButtons,
+    isAtBottom,
+    setIsAtBottom,
+    bottomRef,
+    inputRef,
+    listRef,
+    lastRestoredRoomRef,
     rooms,
     currentRoom,
     messages,
     setMessages,
-    loading: chatLoading,
+    chatLoading,
     createRoom,
-    renameRoom: originalRenameRoom,
-    deleteRoom: originalDeleteRoom,
+    renameRoom,
+    deleteRoom,
     switchRoom,
     clearSession,
     loadRooms,
-  } = useChat();
-
-  const renameRoom = async (roomId, newName) => {
-    try {
-      await originalRenameRoom(roomId, newName);
-    } catch (error) {
-      alert(error.message, 'error', '채팅방 이름 변경 실패');
-    }
-  };
-
-  const deleteRoom = async (roomId) => {
-    try {
-      return await originalDeleteRoom(roomId);
-    } catch (error) {
-      const is404 = error?.status === 404 ||
-        (typeof error?.message === 'string' && (error.message.includes('404') || error.message.includes('채팅방을 찾을 수 없습니다')));
-      if (is404) return true;
-      alert(error.message, error.type || 'error', error.type === 'warning' ? '경고' : '오류');
-      return false;
-    }
-  };
-
-  const {
     modelOptions,
     modelConfig,
     selectedModel,
@@ -582,42 +515,16 @@ export default function Chat2Page() {
     modelsLoading,
     userDefaultModelId,
     saveUserDefaultModel,
-  } = useModelManager(userRole);
-
-  const inputRef = useRef(null);
-  const bottomRef = useRef(null);
-  const listRef = useRef(null);
-  const lastRestoredRoomRef = useRef(null);
-  const imageInputRef = useRef(null);
-  const dragCounterRef = useRef(0);
-
-  const {
     input,
     setInput,
     loading,
     sendMessage,
     handleKeyDown,
     stopStreaming,
-  } = useChatSender({
-    currentRoom,
-    messages,
-    setMessages,
-    modelOptions,
-    selectedModel,
-    modelsLoading,
-    clientIP,
-    inputRef,
-    renameRoom,
-    rooms,
-    loadRooms,
-    selectedImages,
-    setSelectedImages,
-    imageHistoryByRoom,
-    setImageHistoryByRoom,
-    imageAnalysisModel,
-    imageAnalysisPrompt,
-    maxUserQuestionLength,
-  });
+    handleLogout: _handleLogout,
+    scrollToBottom,
+    scrollToTop,
+  } = useChatPage();
 
   /* ── 계산된 값 (필터, 모델 라벨 등) ── */
   const styles = getStyles(isDark);
@@ -696,79 +603,10 @@ export default function Chat2Page() {
 
   /* ═══════════════════════════════════════════
      ─── 이펙트(Effects) ───
-     인증, IP감지, 설정로드, 모델복원, 스크롤, DM 등
+     인증·IP·설정·모델복원·이미지초기화·포커스·스크롤버튼·IntersectionObserver
+     는 useChatPage()에서 처리됨.
+     아래는 chat2 전용 이펙트만 유지.
      ═══════════════════════════════════════════ */
-
-  // 1. 인증 확인 — 토큰 없으면 로그인 페이지로 리다이렉트
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        const loginUrl = await TokenManager.getLoginUrl();
-        router.replace(loginUrl);
-        return;
-      }
-      try {
-        const payload = decodeJWTPayload(token);
-        setUserEmail(payload.email || '');
-        setUserRole(payload.role || 'user');
-        setAuthChecked(true);
-      } catch (error) {
-        logger.error('토큰 파싱 실패:', error);
-        const loginUrl = await TokenManager.getLoginUrl();
-        router.replace(loginUrl);
-      }
-    };
-    checkAuth();
-  }, [router]);
-
-  // 2. 클라이언트 IP 감지
-  useEffect(() => {
-    detectClientIP()
-      .then(setClientIP)
-      .catch((err) => logger.error('클라이언트 IP 감지 실패:', err));
-  }, []);
-
-  // 3. 관리자 설정 로드 (이미지 제한, 프로필 편집, 게시판 등)
-  useEffect(() => {
-    let isMounted = true;
-    fetch('/api/admin/settings')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data || !isMounted) return;
-        setMaxImagesPerMessage(data.maxImagesPerMessage || 5);
-        setImageAnalysisModel(data.imageAnalysisModel || '');
-        setImageAnalysisPrompt(data.imageAnalysisPrompt || '이 이미지를 설명해줘.');
-        setMaxUserQuestionLength(data.maxUserQuestionLength || 300000);
-        setProfileEditEnabled(data.profileEditEnabled !== undefined ? data.profileEditEnabled : false);
-        setBoardEnabled(data.boardEnabled !== undefined ? data.boardEnabled : true);
-      })
-      .catch((error) => logger.error('설정 로드 실패:', error.message));
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // 4. 방 변경 시 저장된 모델 복원
-  useEffect(() => {
-    if (currentRoom && modelOptions.length > 0 && !modelsLoading) {
-      if (lastRestoredRoomRef.current === currentRoom) return;
-      const savedModel = loadRoomModel(currentRoom);
-      if (savedModel && savedModel === selectedModel) {
-        lastRestoredRoomRef.current = currentRoom;
-        return;
-      }
-      const availableModelIds = modelOptions.map((m) => m.id);
-      restoreRoomModel(currentRoom, availableModelIds);
-      lastRestoredRoomRef.current = currentRoom;
-    }
-  }, [currentRoom, modelOptions, modelsLoading, restoreRoomModel, selectedModel]);
-
-  // 5. 방 변경 시 선택된 이미지 초기화
-  useEffect(() => {
-    setSelectedImages([]);
-    setImageHistoryByRoom({});
-  }, [currentRoom]);
 
   // 6. 다크모드 초기화 — localStorage 또는 HTML class에서 읽기
   useEffect(() => {
@@ -788,56 +626,6 @@ export default function Chat2Page() {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isAtBottom]);
-
-  // 8. 로딩 완료 시 입력 필드에 포커스
-  useEffect(() => {
-    if (!currentRoom) return;
-    if (loading || chatLoading || modelsLoading) return;
-    inputRef.current?.focus();
-  }, [loading, chatLoading, modelsLoading, currentRoom]);
-
-  // 9. 스크롤 버튼 표시 여부 (콘텐츠가 넘칠 때만)
-  useEffect(() => {
-    const container = listRef.current;
-    if (!container) return;
-    const checkScrollbar = () => {
-      setShowScrollButtons(container.scrollHeight > container.clientHeight);
-    };
-    checkScrollbar();
-    container.addEventListener('scroll', checkScrollbar, { passive: true });
-    window.addEventListener('resize', checkScrollbar);
-    return () => {
-      container.removeEventListener('scroll', checkScrollbar);
-      window.removeEventListener('resize', checkScrollbar);
-    };
-  }, [messages]);
-
-  // 10. IntersectionObserver로 하단 도달 여부 추적
-  useEffect(() => {
-    const container = listRef.current || null;
-    const target = bottomRef.current;
-    if (!target || typeof window === 'undefined') return;
-
-    if (!('IntersectionObserver' in window)) {
-      const handleScroll = () => {
-        if (!container) return;
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
-      };
-      container?.addEventListener('scroll', handleScroll, { passive: true });
-      return () => container?.removeEventListener('scroll', handleScroll);
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry) setIsAtBottom(entry.isIntersecting);
-      },
-      { root: container, rootMargin: '0px 0px 50px 0px', threshold: 0.01 }
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [messages]);
 
   // 11. 읽지 않은 쪽지 수 조회 + 60초 간격 폴링
   const fetchUnreadDmCount = useCallback(async () => {
@@ -1011,8 +799,7 @@ export default function Chat2Page() {
   const handleLogout = async () => {
     const ok = window.confirm('로그아웃 하시겠습니까?');
     if (!ok) return;
-    clearSession();
-    await TokenManager.logout();
+    await _handleLogout();
   };
 
   const handleCreateRoom = async () => {
@@ -1097,20 +884,6 @@ export default function Chat2Page() {
   useEffect(() => {
     resizeTextarea();
   }, [input, resizeTextarea]);
-
-  // Scroll handlers
-  const scrollToTop = () => {
-    const container = listRef.current;
-    if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const scrollToBottom = () => {
-    const container = listRef.current;
-    if (container) {
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      setIsAtBottom(true);
-    }
-  };
 
   // Image handlers
   const handleImageChange = async (event) => {

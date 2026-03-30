@@ -103,3 +103,15 @@ check_gpt4_config.sql
 .claude/
 skills/
 skills-lock.json
+
+# Playwright test reports & artifacts
+tests/reports/
+
+# Development workflow state
+.sisyphus/
+.omc/
+
+# Misc generated files
+results.tsv
+run.log
+run*.log

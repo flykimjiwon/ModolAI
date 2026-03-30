@@ -7,23 +7,37 @@ import { isValidUUID } from '@/lib/utils';
 import { createAuthError, createValidationError, createNotFoundError, createServerError } from '@/lib/errorHandler';
 
 // Encryption/decryption functions
+// Format: salt_hex:iv_hex:encrypted_hex (new) or iv_hex:encrypted_hex (legacy)
 function encryptToken(token) {
   const algorithm = 'aes-256-cbc';
-  const key = crypto.scryptSync(process.env.JWT_SECRET, 'salt', 32);
+  const salt = crypto.randomBytes(16);
+  const key = crypto.scryptSync(process.env.JWT_SECRET, salt, 32);
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(algorithm, key, iv);
   let encrypted = cipher.update(token, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  return iv.toString('hex') + ':' + encrypted;
+  return salt.toString('hex') + ':' + iv.toString('hex') + ':' + encrypted;
 }
 
 function decryptToken(encryptedToken) {
   try {
     const algorithm = 'aes-256-cbc';
-    const key = crypto.scryptSync(process.env.JWT_SECRET, 'salt', 32);
     const parts = encryptedToken.split(':');
-    const iv = Buffer.from(parts[0], 'hex');
-    const encrypted = parts[1];
+    let salt, iv, encrypted;
+    if (parts.length === 3) {
+      // New format: salt:iv:encrypted
+      salt = Buffer.from(parts[0], 'hex');
+      iv = Buffer.from(parts[1], 'hex');
+      encrypted = parts[2];
+    } else if (parts.length === 2) {
+      // Legacy format: iv:encrypted (static salt)
+      salt = Buffer.from('salt');
+      iv = Buffer.from(parts[0], 'hex');
+      encrypted = parts[1];
+    } else {
+      return null;
+    }
+    const key = crypto.scryptSync(process.env.JWT_SECRET, salt, 32);
     const decipher = crypto.createDecipheriv(algorithm, key, iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');

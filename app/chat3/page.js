@@ -28,15 +28,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 
-/* ─── 임포트: 커스텀 훅 (채팅, 모델, 전송) ─── */
-import { useChat } from '@/hooks/useChat';
-import { useModelManager, loadRoomModel } from '@/hooks/useModelManager';
-import { useChatSender } from '@/hooks/useChatSender';
+/* ─── 임포트: 공유 채팅 훅 ─── */
+import { useChatPage } from '@/hooks/useChatPage';
 
-/* ─── 임포트: 유틸리티 (IP감지, JWT, 토큰, 로거) ─── */
-import { detectClientIP } from '@/lib/clientIP';
-import { decodeJWTPayload } from '@/lib/jwtUtils';
-import { TokenManager } from '@/lib/tokenManager';
+/* ─── 임포트: 유틸리티 (로거) ─── */
 import { logger } from '@/lib/logger';
 
 /* ─── 임포트: 컨텍스트 ─── */
@@ -93,35 +88,12 @@ import {
   LucideImage,
 } from 'lucide-react';
 
-/* ─── 이미지 헬퍼: 고유 ID 생성, DataURL 변환, 파일 크기 포맷 ─── */
-let _imgIdCounter = 0;
-
-const generateImageId = () => {
-  if (typeof crypto !== 'undefined') {
-    if (crypto.randomUUID) return crypto.randomUUID();
-    if (crypto.getRandomValues) {
-      const bytes = new Uint8Array(16);
-      crypto.getRandomValues(bytes);
-      return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-    }
-  }
-  return `${Date.now()}-${++_imgIdCounter}`;
-};
-
-const readFileAsDataUrl = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-
-const formatSize = (size) => {
-  if (!Number.isFinite(size)) return '';
-  if (size < 1024) return `${size}B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}KB`;
-  return `${(size / (1024 * 1024)).toFixed(2)}MB`;
-};
+/* ─── 이미지 헬퍼: chatUtils.js에서 공유 유틸리티 임포트 ─── */
+import {
+  generateImageId,
+  readFileAsDataUrl,
+  formatSize,
+} from '@/lib/chatUtils';
 
 /* ─── 제안 카드: 웰컴 화면에 표시되는 빠른 시작 프롬프트 ─── */
 const SUGGESTION_CARDS = [
@@ -493,26 +465,8 @@ export default function Chat3Page() {
     localStorage.setItem('theme', next ? 'dark' : 'light');
   };
 
-  /* ─── 인증 상태: 이메일, 역할(admin/manager/user), 인증 완료 여부 ─── */
-  const [userEmail, setUserEmail] = useState('');
-  const [userRole, setUserRole] = useState('user');
-  const [authChecked, setAuthChecked] = useState(false);
-
-  /* ─── 클라이언트 IP: 서버 전송용 ─── */
-  const [clientIP, setClientIP] = useState(null);
-
-  /* ─── 이미지 상태: 선택된 이미지, 업로드 설정, 방별 이미지 이력 ─── */
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [maxImagesPerMessage, setMaxImagesPerMessage] = useState(5);
-  const [imageAnalysisModel, setImageAnalysisModel] = useState('');
-  const [imageAnalysisPrompt, setImageAnalysisPrompt] = useState(
-    '이 이미지를 설명해줘.'
-  );
-  const [imageHistoryByRoom, setImageHistoryByRoom] = useState({});
-  const [maxUserQuestionLength, setMaxUserQuestionLength] = useState(300000);
+  /* ─── UI 상태: 사이드바, 방 편집, 모달 등 (chat3 전용) ─── */
   const [isDragging, setIsDragging] = useState(false);
-
-  /* ─── UI 상태: 사이드바, 방 편집, 모달, 스크롤 위치 등 ─── */
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingRoomId, setEditingRoomId] = useState(null);
   const [editingRoomName, setEditingRoomName] = useState('');
@@ -520,93 +474,62 @@ export default function Chat3Page() {
   const [showDmModal, setShowDmModal] = useState(false);
   const [unreadDmCount, setUnreadDmCount] = useState(0);
   const [previewImage, setPreviewImage] = useState(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const [profileEditEnabled, setProfileEditEnabled] = useState(false);
-  const [boardEnabled, setBoardEnabled] = useState(true);
 
-  /* ─── 핵심 훅: useChat — 방 CRUD, 메시지 관리, 세션 ─── */
-  const {
-    rooms,
-    currentRoom,
-    messages,
-    setMessages,
-    loading: chatLoading,
-    createRoom,
-    renameRoom: originalRenameRoom,
-    deleteRoom: originalDeleteRoom,
-    switchRoom,
-    clearSession,
-    loadRooms,
-  } = useChat();
-
-  const renameRoom = async (roomId, newName) => {
-    try {
-      await originalRenameRoom(roomId, newName);
-    } catch (error) {
-      alert(error.message, 'error', '이름 변경 실패');
-    }
-  };
-
-  const deleteRoom = async (roomId) => {
-    try {
-      return await originalDeleteRoom(roomId);
-    } catch (error) {
-      if (error?.status === 404) return true;
-      alert(error.message, error.type || 'error', '오류');
-      return false;
-    }
-  };
-
-  const {
-    modelOptions,
-    modelConfig,
-    selectedModel,
-    setSelectedModel,
-    setSelectedModelWithRoom,
-    restoreRoomModel,
-    modelsLoading,
-    userDefaultModelId,
-    saveUserDefaultModel,
-  } = useModelManager(userRole);
-
-  /* ─── Refs: DOM 참조 (입력창, 스크롤 하단, 메시지 목록, 이미지 입력) ─── */
-  const inputRef = useRef(null);
-  const bottomRef = useRef(null);
-  const listRef = useRef(null);
-  const lastRestoredRoomRef = useRef(null);
+  /* ─── chat3 전용 Refs ─── */
   const textareaRef = useRef(null);
   const imageInputRef = useRef(null);
   const dragCounterRef = useRef(0);
   const addImagesRef = useRef(null);
 
-  /* ─── 메시지 전송 훅: useChatSender — 입력, 전송, 스트리밍 중단 ─── */
+  /* ─── 공유 훅: 인증, 코어 채팅, 모델, 전송, 설정 ─── */
   const {
+    userEmail,
+    userRole,
+    authChecked,
+    clientIP,
+    selectedImages,
+    setSelectedImages,
+    maxImagesPerMessage,
+    imageHistoryByRoom,
+    setImageHistoryByRoom,
+    maxUserQuestionLength,
+    profileEditEnabled,
+    boardEnabled,
+    isAtBottom,
+    setIsAtBottom,
+    bottomRef,
+    inputRef,
+    listRef,
+    lastRestoredRoomRef,
+    rooms,
+    currentRoom,
+    messages,
+    setMessages,
+    chatLoading,
+    createRoom,
+    renameRoom,
+    deleteRoom,
+    switchRoom,
+    clearSession,
+    loadRooms,
+    modelOptions,
+    modelConfig,
+    selectedModel,
+    setSelectedModel,
+    setSelectedModelWithRoom,
+    modelsLoading,
+    userDefaultModelId,
+    saveUserDefaultModel,
     input,
     setInput,
     loading,
     sendMessage,
     handleKeyDown,
     stopStreaming,
-  } = useChatSender({
-    currentRoom,
-    messages,
-    setMessages,
-    modelOptions,
-    selectedModel,
-    modelsLoading,
-    clientIP,
-    inputRef,
-    renameRoom,
-    rooms,
-    loadRooms,
-    selectedImages,
-    setSelectedImages,
-    imageHistoryByRoom,
-    setImageHistoryByRoom,
-    imageAnalysisModel,
-    imageAnalysisPrompt,
-    maxUserQuestionLength,
-  });
+    handleLogout: _handleLogout,
+    scrollToBottom,
+    scrollToTop,
+  } = useChatPage();
 
   /* ─── 이미지 업로드 로직: 파일 검증(타입/크기) → DataURL 변환 → 상태 추가 ─── */
   const addImagesFromFiles = async (files) => {
@@ -652,133 +575,8 @@ export default function Chat3Page() {
   };
   addImagesRef.current = addImagesFromFiles;
 
-  /* ─── 이펙트: JWT 토큰 검증 → 인증 실패 시 로그인 페이지로 리다이렉트 ─── */
-  useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        const loginUrl = await TokenManager.getLoginUrl();
-        router.replace(loginUrl);
-        return;
-      }
-      try {
-        const payload = decodeJWTPayload(token);
-        setUserEmail(payload.email || '');
-        setUserRole(payload.role || 'user');
-        setAuthChecked(true);
-      } catch (error) {
-        logger.error('토큰 파싱 실패:', error);
-        const loginUrl = await TokenManager.getLoginUrl();
-        router.replace(loginUrl);
-      }
-    };
-    checkAuth();
-  }, [router]);
-
-  /* ─── 이펙트: 클라이언트 IP 감지 ─── */
-  useEffect(() => {
-    detectClientIP()
-      .then(setClientIP)
-      .catch((err) => logger.error('클라이언트 IP 감지 실패:', err));
-  }, []);
-
-  /* ─── 이펙트: 관리자 설정 로드 (이미지 제한, 프로필편집, 게시판 활성화) ─── */
-  useEffect(() => {
-    let isMounted = true;
-    fetch('/api/admin/settings')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data || !isMounted) return;
-        setMaxImagesPerMessage(data.maxImagesPerMessage || 5);
-        setImageAnalysisModel(data.imageAnalysisModel || '');
-        setImageAnalysisPrompt(
-          data.imageAnalysisPrompt || '이 이미지를 설명해줘.'
-        );
-        setMaxUserQuestionLength(data.maxUserQuestionLength || 300000);
-        setProfileEditEnabled(
-          data.profileEditEnabled !== undefined
-            ? data.profileEditEnabled
-            : false
-        );
-        setBoardEnabled(
-          data.boardEnabled !== undefined ? data.boardEnabled : true
-        );
-      })
-      .catch((error) => logger.error('설정 로드 실패:', error.message));
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  /* ─── 이펙트: 방 전환 시 이전에 선택했던 모델 복원 ─── */
-  useEffect(() => {
-    if (currentRoom && modelOptions.length > 0 && !modelsLoading) {
-      if (lastRestoredRoomRef.current === currentRoom) return;
-      const savedModel = loadRoomModel(currentRoom);
-      if (savedModel && savedModel === selectedModel) {
-        lastRestoredRoomRef.current = currentRoom;
-        return;
-      }
-      const availableModelIds = modelOptions.map((m) => m.id);
-      restoreRoomModel(currentRoom, availableModelIds);
-      lastRestoredRoomRef.current = currentRoom;
-    }
-  }, [
-    currentRoom,
-    modelOptions,
-    modelsLoading,
-    restoreRoomModel,
-    selectedModel,
-  ]);
-
-  /* ─── 이펙트: 방 변경 시 이미지 선택 초기화 ─── */
-  useEffect(() => {
-    setSelectedImages([]);
-    setImageHistoryByRoom({});
-  }, [currentRoom]);
-
-  /* ─── Effects: Auto-scroll (stream or already at bottom) ─── */
-  // 스크롤 자동이동: 사용자가 하단에 있을 때만 새 메시지 수신 시 자동 스크롤
-  // loading 제거 — 스트리밍 중 불필요한 스크롤 점프 방지
-  useEffect(() => {
-    if (isAtBottom) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isAtBottom]);
-
-  /* ─── 이펙트: IntersectionObserver로 스크롤 하단 감지 (isAtBottom) ─── */
-  useEffect(() => {
-    const container = listRef.current;
-    const target = bottomRef.current;
-    if (!target) return;
-
-    if (!('IntersectionObserver' in window)) {
-      const handleScroll = () => {
-        if (!container) return;
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        setIsAtBottom(scrollHeight - scrollTop - clientHeight < 50);
-      };
-      container?.addEventListener('scroll', handleScroll, { passive: true });
-      return () => container?.removeEventListener('scroll', handleScroll);
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry) setIsAtBottom(entry.isIntersecting);
-      },
-      { root: container, rootMargin: '0px 0px 50px 0px', threshold: 0.01 }
-    );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [messages]);
-
-  /* ─── 이펙트: 로딩 완료 후 입력창 자동 포커스 ─── */
-  useEffect(() => {
-    if (!currentRoom) return;
-    if (loading || chatLoading || modelsLoading) return;
-    inputRef.current?.focus();
-  }, [loading, chatLoading, modelsLoading, currentRoom]);
+  /* ─── 이펙트: 인증·IP·설정·모델복원·이미지초기화·포커스·스크롤·IntersectionObserver
+     는 useChatPage()에서 처리됨. 아래는 chat3 전용 이펙트만 유지. ─── */
 
   /* ─── 이펙트: 쪽지(DM) 읽지 않은 개수 60초 간격 폴링 ─── */
   const fetchUnreadDmCount = useCallback(async () => {
@@ -873,8 +671,7 @@ export default function Chat3Page() {
   /* ─── 핸들러: 로그아웃, 입력, 전송, 방 관리, 이미지, 스크롤 ─── */
   const handleLogout = async () => {
     if (!window.confirm('로그아웃 하시겠습니까?')) return;
-    clearSession();
-    await TokenManager.logout();
+    await _handleLogout();
   };
 
   const handleTextareaInput = (e) => {
@@ -981,18 +778,6 @@ export default function Chat3Page() {
 
   const handleRemoveImage = (imageId) => {
     setSelectedImages((prev) => prev.filter((img) => img.id !== imageId));
-  };
-
-  const scrollToTop = () => {
-    listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const scrollToBottom = () => {
-    listRef.current?.scrollTo({
-      top: listRef.current?.scrollHeight,
-      behavior: 'smooth',
-    });
-    setIsAtBottom(true);
   };
 
   /* ─── 모델 헬퍼: 모델 라벨 표시명 / 서버 호스트명 추출 ─── */
